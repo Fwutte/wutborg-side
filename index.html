@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Familien Wutborg</title>
+  <meta name="description" content="Velkommen til familien Wutborgs hjemmeside" />
+  <style>
+    :root {
+      --bg-1: #090a18;
+      --bg-2: #101735;
+      --text: #f7f4ea;
+      --muted: #c7c0d8;
+      --gold: #ffd166;
+      --pink: #ef476f;
+      --cyan: #06d6a0;
+      --blue: #118ab2;
+      --glass: rgba(255, 255, 255, 0.10);
+      --glass-border: rgba(255, 255, 255, 0.18);
+      --shadow: 0 30px 90px rgba(0, 0, 0, 0.45);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 15% 20%, rgba(239, 71, 111, 0.38), transparent 32%),
+        radial-gradient(circle at 82% 18%, rgba(6, 214, 160, 0.30), transparent 28%),
+        radial-gradient(circle at 50% 86%, rgba(17, 138, 178, 0.32), transparent 35%),
+        linear-gradient(135deg, var(--bg-1), var(--bg-2));
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+      background-size: 46px 46px;
+      mask-image: radial-gradient(circle at center, black, transparent 72%);
+    }
+
+    .orb {
+      position: fixed;
+      width: 280px;
+      height: 280px;
+      border-radius: 999px;
+      filter: blur(12px);
+      opacity: 0.42;
+      animation: float 9s ease-in-out infinite;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .orb.one {
+      left: -90px;
+      top: 160px;
+      background: var(--pink);
+    }
+
+    .orb.two {
+      right: -80px;
+      bottom: 80px;
+      background: var(--cyan);
+      animation-delay: -3s;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+      50% { transform: translate3d(24px, -34px, 0) scale(1.08); }
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 32px;
+    }
+
+    .hero {
+      width: min(1120px, 100%);
+      padding: clamp(28px, 5vw, 64px);
+      border: 1px solid var(--glass-border);
+      border-radius: 36px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.06));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(22px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: -2px;
+      background: linear-gradient(120deg, transparent 0%, rgba(255, 255, 255, 0.22) 32%, transparent 54%);
+      transform: translateX(-100%);
+      animation: shine 7s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    @keyframes shine {
+      0%, 55% { transform: translateX(-100%); }
+      75%, 100% { transform: translateX(100%); }
+    }
+
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: clamp(52px, 8vw, 92px);
+    }
+
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      font-size: 1.05rem;
+    }
+
+    .logo-mark {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      color: #17120a;
+      background: linear-gradient(135deg, var(--gold), #ff9f1c);
+      box-shadow: 0 12px 26px rgba(255, 209, 102, 0.28);
+      transform: rotate(-6deg);
+    }
+
+    .nav-pill {
+      padding: 10px 16px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 999px;
+      color: var(--muted);
+      background: rgba(0, 0, 0, 0.14);
+      font-size: 0.92rem;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: 1.12fr 0.88fr;
+      align-items: center;
+      gap: clamp(32px, 7vw, 86px);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 18px;
+      padding: 9px 14px;
+      width: fit-content;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 999px;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.08);
+      font-size: 0.95rem;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--cyan);
+      box-shadow: 0 0 22px var(--cyan);
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 850px;
+      font-size: clamp(3rem, 8vw, 7.3rem);
+      line-height: 0.88;
+      letter-spacing: -0.08em;
+      text-wrap: balance;
+    }
+
+    .gradient-text {
+      display: block;
+      color: transparent;
+      background: linear-gradient(90deg, var(--gold), #fff4bd 34%, var(--cyan) 68%, #9ce6ff);
+      background-clip: text;
+      -webkit-background-clip: text;
+    }
+
+    .subtitle {
+      margin: 28px 0 0;
+      max-width: 620px;
+      color: var(--muted);
+      font-size: clamp(1.05rem, 2vw, 1.35rem);
+      line-height: 1.65;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-top: 34px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-height: 52px;
+      padding: 0 22px;
+      border-radius: 999px;
+      text-decoration: none;
+      font-weight: 800;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .button:hover {
+      transform: translateY(-3px);
+    }
+
+    .primary {
+      color: #14100a;
+      background: linear-gradient(135deg, var(--gold), #ffb703);
+      box-shadow: 0 18px 34px rgba(255, 183, 3, 0.24);
+    }
+
+    .secondary {
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .card-stack {
+      position: relative;
+      min-height: 420px;
+    }
+
+    .family-card {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      align-content: space-between;
+      padding: 28px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 32px;
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.07)),
+        radial-gradient(circle at 20% 15%, rgba(255, 209, 102, 0.24), transparent 34%),
+        radial-gradient(circle at 90% 75%, rgba(6, 214, 160, 0.22), transparent 32%);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+      transform: rotate(2.5deg);
+    }
+
+    .mini-card {
+      position: absolute;
+      right: -16px;
+      bottom: 34px;
+      width: min(270px, 80%);
+      padding: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 24px;
+      background: rgba(9, 10, 24, 0.72);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(16px);
+      animation: bounce 4.5s ease-in-out infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0) rotate(-3deg); }
+      50% { transform: translateY(-14px) rotate(-1deg); }
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .badge {
+      padding: 9px 12px;
+      border-radius: 999px;
+      color: #18121d;
+      background: rgba(255, 255, 255, 0.82);
+      font-size: 0.85rem;
+      font-weight: 850;
+    }
+
+    .big-initial {
+      font-size: clamp(7rem, 14vw, 11rem);
+      line-height: 0.8;
+      font-weight: 950;
+      letter-spacing: -0.1em;
+      color: transparent;
+      background: linear-gradient(135deg, #ffffff, var(--gold), var(--pink));
+      background-clip: text;
+      -webkit-background-clip: text;
+      text-shadow: 0 24px 60px rgba(0, 0, 0, 0.15);
+    }
+
+    .card-title {
+      margin: 0;
+      font-size: 1.35rem;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+    }
+
+    .card-text {
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .sparkles {
+      display: flex;
+      justify-content: space-between;
+      font-size: 2rem;
+      opacity: 0.9;
+    }
+
+    .footer-note {
+      margin-top: clamp(42px, 7vw, 76px);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    .feature {
+      padding: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 22px;
+      background: rgba(0, 0, 0, 0.14);
+    }
+
+    .feature strong {
+      display: block;
+      margin-bottom: 6px;
+      color: #fff;
+    }
+
+    .feature span {
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 880px) {
+      .page {
+        padding: 18px;
+      }
+
+      .hero {
+        border-radius: 28px;
+      }
+
+      nav {
+        align-items: flex-start;
+        flex-direction: column;
+        margin-bottom: 46px;
+      }
+
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .card-stack {
+        min-height: 340px;
+      }
+
+      .family-card {
+        transform: rotate(0deg);
+      }
+
+      .mini-card {
+        right: 12px;
+      }
+
+      .footer-note {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="orb one"></div>
+  <div class="orb two"></div>
+
+  <main class="page">
+    <section class="hero" aria-label="Familien Wutborg landingpage">
+      <nav>
+        <div class="logo" aria-label="Wutborg logo">
+          <span class="logo-mark">W</span>
+          <span>Wutborg.dk</span>
+        </div>
+        <div class="nav-pill">Familie • hygge • små spil på vej</div>
+      </nav>
+
+      <div class="content">
+        <div>
+          <p class="eyebrow"><span class="dot"></span> Officielt hjemme på nettet</p>
+          <h1>
+            Velkommen til familien
+            <span class="gradient-text">Wutborgs hjemmeside</span>
+          </h1>
+          <p class="subtitle">
+            Her samler vi små projekter, sjove idéer og måske snart de første hjemmelavede spil.
+            Det her er starten på Wutborg-universet.
+          </p>
+          <div class="actions">
+            <a class="button primary" href="#spil">Se hvad der kommer ✨</a>
+            <a class="button secondary" href="mailto:hej@wutborg.dk">Sig hej</a>
+          </div>
+        </div>
+
+        <div class="card-stack" aria-hidden="true">
+          <div class="family-card">
+            <div class="sparkles"><span>✦</span><span>✺</span><span>✧</span></div>
+            <div class="big-initial">W</div>
+            <div>
+              <p class="card-title">Familien Wutborg</p>
+              <p class="card-text">Et lille digitalt hjem med store planer.</p>
+            </div>
+          </div>
+          <div class="mini-card">
+            <div class="badge-row">
+              <span class="badge">🎮 Spil</span>
+              <span class="badge">🏡 Familie</span>
+              <span class="badge">🚀 Projekter</span>
+            </div>
+            <p class="card-text" style="margin-top: 14px;">
+              Første mission: få siden online. Næste mission: bygge noget sjovt.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-note" id="spil">
+        <div class="feature">
+          <strong>Små spil</strong>
+          <span>Perfekt sted til simple browser-spil lavet i HTML, CSS og JavaScript.</span>
+        </div>
+        <div class="feature">
+          <strong>Familieprojekter</strong>
+          <span>En personlig side med plads til billeder, links, idéer og eksperimenter.</span>
+        </div>
+        <div class="feature">
+          <strong>Bygget simpelt</strong>
+          <span>Én fil, hurtigt at ændre, nemt at lægge på GitHub Pages eller Cloudflare Pages.</span>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
