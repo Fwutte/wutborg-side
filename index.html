@@ -3,21 +3,28 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Familien Wutborg</title>
-  <meta name="description" content="Velkommen til familien Wutborgs hjemmeside" />
+  <meta name="theme-color" content="#081225" />
+  <title>Wutborg Pokémon Adventure</title>
+  <meta
+    name="description"
+    content="Velkommen til familien Wutborgs farverige Pokémon-univers med eventyr, spil og sjove projekter."
+  />
   <style>
     :root {
-      --bg-1: #090a18;
-      --bg-2: #101735;
-      --text: #f7f4ea;
-      --muted: #c7c0d8;
-      --gold: #ffd166;
-      --pink: #ef476f;
-      --cyan: #06d6a0;
-      --blue: #118ab2;
-      --glass: rgba(255, 255, 255, 0.10);
-      --glass-border: rgba(255, 255, 255, 0.18);
-      --shadow: 0 30px 90px rgba(0, 0, 0, 0.45);
+      --night: #07101f;
+      --night-soft: #0d1d37;
+      --ink: #17213c;
+      --paper: #fffdf2;
+      --muted: #a9b9d4;
+      --yellow: #ffd84d;
+      --yellow-deep: #f5ae24;
+      --red: #ff5d67;
+      --blue: #57b8ff;
+      --cyan: #6bf2db;
+      --purple: #a681ff;
+      --glass: rgba(10, 27, 52, 0.72);
+      --glass-border: rgba(255, 255, 255, 0.14);
+      --shadow: 0 30px 90px rgba(0, 0, 0, 0.42);
     }
 
     * {
@@ -30,441 +37,1397 @@
 
     body {
       margin: 0;
+      min-width: 320px;
       min-height: 100vh;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: var(--text);
-      background:
-        radial-gradient(circle at 15% 20%, rgba(239, 71, 111, 0.38), transparent 32%),
-        radial-gradient(circle at 82% 18%, rgba(6, 214, 160, 0.30), transparent 28%),
-        radial-gradient(circle at 50% 86%, rgba(17, 138, 178, 0.32), transparent 35%),
-        linear-gradient(135deg, var(--bg-1), var(--bg-2));
       overflow-x: hidden;
+      color: var(--paper);
+      font-family: Inter, ui-rounded, "Arial Rounded MT Bold", system-ui, sans-serif;
+      background:
+        radial-gradient(circle at 12% 10%, rgba(87, 184, 255, 0.24), transparent 25rem),
+        radial-gradient(circle at 88% 14%, rgba(166, 129, 255, 0.22), transparent 26rem),
+        radial-gradient(circle at 50% 72%, rgba(107, 242, 219, 0.12), transparent 34rem),
+        linear-gradient(145deg, #050b17 0%, #0a1931 48%, #081225 100%);
     }
 
     body::before {
       content: "";
       position: fixed;
       inset: 0;
+      z-index: -2;
       pointer-events: none;
+      opacity: 0.32;
       background-image:
         linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
         linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
-      background-size: 46px 46px;
-      mask-image: radial-gradient(circle at center, black, transparent 72%);
+      background-size: 52px 52px;
+      mask-image: linear-gradient(to bottom, #000, transparent 85%);
     }
 
-    .orb {
+    a,
+    button {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .aurora {
       position: fixed;
-      width: 280px;
-      height: 280px;
-      border-radius: 999px;
-      filter: blur(12px);
-      opacity: 0.42;
-      animation: float 9s ease-in-out infinite;
+      z-index: -1;
+      width: 34rem;
+      height: 34rem;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.18;
       pointer-events: none;
+      animation: aurora-drift 14s ease-in-out infinite alternate;
+    }
+
+    .aurora-one {
+      top: -15rem;
+      left: -8rem;
+      background: var(--blue);
+    }
+
+    .aurora-two {
+      right: -12rem;
+      bottom: -15rem;
+      background: var(--purple);
+      animation-delay: -6s;
+    }
+
+    .cursor-glow {
+      position: fixed;
       z-index: 0;
-    }
-
-    .orb.one {
-      left: -90px;
-      top: 160px;
-      background: var(--pink);
-    }
-
-    .orb.two {
-      right: -80px;
-      bottom: 80px;
-      background: var(--cyan);
-      animation-delay: -3s;
-    }
-
-    @keyframes float {
-      0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
-      50% { transform: translate3d(24px, -34px, 0) scale(1.08); }
+      width: 24rem;
+      height: 24rem;
+      border-radius: 50%;
+      pointer-events: none;
+      opacity: 0;
+      background: radial-gradient(circle, rgba(255, 216, 77, 0.11), transparent 68%);
+      transform: translate(-50%, -50%);
+      transition: opacity 0.3s ease;
     }
 
     .page {
       position: relative;
       z-index: 1;
-      min-height: 100vh;
-      display: grid;
-      place-items: center;
-      padding: 32px;
+      width: min(1240px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 24px 0 48px;
     }
 
-    .hero {
-      width: min(1120px, 100%);
-      padding: clamp(28px, 5vw, 64px);
-      border: 1px solid var(--glass-border);
-      border-radius: 36px;
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.06));
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(22px);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .hero::after {
-      content: "";
-      position: absolute;
-      inset: -2px;
-      background: linear-gradient(120deg, transparent 0%, rgba(255, 255, 255, 0.22) 32%, transparent 54%);
-      transform: translateX(-100%);
-      animation: shine 7s ease-in-out infinite;
-      pointer-events: none;
-    }
-
-    @keyframes shine {
-      0%, 55% { transform: translateX(-100%); }
-      75%, 100% { transform: translateX(100%); }
-    }
-
-    nav {
+    .nav {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      gap: 16px;
-      margin-bottom: clamp(52px, 8vw, 92px);
+      justify-content: space-between;
+      gap: 24px;
+      min-height: 68px;
+      margin-bottom: 18px;
+      padding: 10px 12px 10px 14px;
+      border: 1px solid var(--glass-border);
+      border-radius: 22px;
+      background: rgba(8, 22, 43, 0.64);
+      box-shadow: 0 16px 50px rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(18px);
     }
 
-    .logo {
+    .brand {
       display: inline-flex;
       align-items: center;
       gap: 12px;
-      font-weight: 900;
-      letter-spacing: -0.04em;
-      font-size: 1.05rem;
+      color: var(--paper);
+      text-decoration: none;
+      font-weight: 950;
+      letter-spacing: -0.035em;
     }
 
-    .logo-mark {
-      display: grid;
-      place-items: center;
+    .brand-ball,
+    .pokeball {
+      position: relative;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      background: linear-gradient(to bottom, var(--red) 0 44%, #17213c 44% 56%, #fff 56%);
+      box-shadow: inset -4px -5px 10px rgba(0, 0, 0, 0.18), 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    .brand-ball {
       width: 42px;
       height: 42px;
-      border-radius: 14px;
-      color: #17120a;
-      background: linear-gradient(135deg, var(--gold), #ff9f1c);
-      box-shadow: 0 12px 26px rgba(255, 209, 102, 0.28);
-      transform: rotate(-6deg);
+      animation: ball-wiggle 5s ease-in-out infinite;
     }
 
-    .nav-pill {
-      padding: 10px 16px;
-      border: 1px solid rgba(255, 255, 255, 0.16);
+    .brand-ball::after,
+    .pokeball::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 28%;
+      aspect-ratio: 1;
+      border: 4px solid #17213c;
+      border-radius: 50%;
+      background: #fff;
+      transform: translate(-50%, -50%);
+    }
+
+    .brand small {
+      display: block;
+      margin-top: 1px;
+      color: var(--muted);
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-links a {
+      padding: 10px 14px;
       border-radius: 999px;
       color: var(--muted);
-      background: rgba(0, 0, 0, 0.14);
-      font-size: 0.92rem;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 800;
+      transition: color 0.2s ease, background 0.2s ease, transform 0.2s ease;
     }
 
-    .content {
-      display: grid;
-      grid-template-columns: 1.12fr 0.88fr;
+    .nav-links a:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.08);
+      transform: translateY(-2px);
+    }
+
+    .online-pill {
+      display: inline-flex;
       align-items: center;
-      gap: clamp(32px, 7vw, 86px);
+      gap: 8px;
+      padding: 10px 14px;
+      border: 1px solid rgba(107, 242, 219, 0.2);
+      border-radius: 999px;
+      color: #bcfff2;
+      background: rgba(107, 242, 219, 0.08);
+      font-size: 0.82rem;
+      font-weight: 850;
+    }
+
+    .online-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: 0 0 0 0 rgba(107, 242, 219, 0.7);
+      animation: online-pulse 2s infinite;
+    }
+
+    .hero {
+      position: relative;
+      min-height: 700px;
+      overflow: hidden;
+      border: 1px solid var(--glass-border);
+      border-radius: 38px;
+      background:
+        radial-gradient(circle at 72% 35%, rgba(87, 184, 255, 0.16), transparent 30%),
+        linear-gradient(135deg, rgba(16, 38, 69, 0.9), rgba(7, 19, 38, 0.72));
+      box-shadow: var(--shadow);
+      isolation: isolate;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      opacity: 0.42;
+      background:
+        linear-gradient(115deg, transparent 48%, rgba(255, 255, 255, 0.05) 48.2%, transparent 48.5%),
+        radial-gradient(circle, rgba(255, 255, 255, 0.3) 1px, transparent 1.5px);
+      background-size: auto, 34px 34px;
+      mask-image: linear-gradient(90deg, transparent, #000 55%);
+    }
+
+    .hero-copy {
+      position: relative;
+      z-index: 5;
+      width: 59%;
+      padding: clamp(70px, 8vw, 110px) 0 74px clamp(32px, 6vw, 78px);
     }
 
     .eyebrow {
       display: inline-flex;
       align-items: center;
-      gap: 10px;
-      margin: 0 0 18px;
-      padding: 9px 14px;
-      width: fit-content;
-      border: 1px solid rgba(255, 255, 255, 0.16);
+      gap: 9px;
+      margin: 0 0 20px;
+      padding: 9px 13px;
+      border: 1px solid rgba(255, 216, 77, 0.22);
       border-radius: 999px;
-      color: var(--muted);
-      background: rgba(255, 255, 255, 0.08);
-      font-size: 0.95rem;
+      color: #ffe99a;
+      background: rgba(255, 216, 77, 0.08);
+      font-size: 0.76rem;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
     }
 
-    .dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 999px;
-      background: var(--cyan);
-      box-shadow: 0 0 22px var(--cyan);
+    .eyebrow-star {
+      display: inline-block;
+      color: var(--yellow);
+      animation: star-spin 5s linear infinite;
     }
 
     h1 {
       margin: 0;
-      max-width: 850px;
-      font-size: clamp(3rem, 8vw, 7.3rem);
+      max-width: 760px;
+      font-size: clamp(3.5rem, 7.5vw, 7.6rem);
       line-height: 0.88;
-      letter-spacing: -0.08em;
+      letter-spacing: -0.075em;
       text-wrap: balance;
     }
 
-    .gradient-text {
-      display: block;
+    h1 span {
+      position: relative;
+      display: inline-block;
       color: transparent;
-      background: linear-gradient(90deg, var(--gold), #fff4bd 34%, var(--cyan) 68%, #9ce6ff);
+      background: linear-gradient(105deg, var(--yellow), #fff3a8 45%, #ffbd41 80%);
       background-clip: text;
       -webkit-background-clip: text;
+      filter: drop-shadow(0 10px 30px rgba(255, 216, 77, 0.18));
+    }
+
+    h1 span::after {
+      content: "";
+      position: absolute;
+      left: 2%;
+      right: 0;
+      bottom: -10px;
+      height: 10px;
+      border-radius: 50%;
+      opacity: 0.7;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 20'%3E%3Cpath d='M4 13C72 3 176 3 296 11' fill='none' stroke='%23ffd84d' stroke-width='7' stroke-linecap='round'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
     }
 
     .subtitle {
-      margin: 28px 0 0;
-      max-width: 620px;
-      color: var(--muted);
-      font-size: clamp(1.05rem, 2vw, 1.35rem);
-      line-height: 1.65;
+      max-width: 590px;
+      margin: 32px 0 0;
+      color: #bdcce2;
+      font-size: clamp(1.02rem, 1.7vw, 1.2rem);
+      line-height: 1.7;
     }
 
     .actions {
       display: flex;
       flex-wrap: wrap;
-      gap: 14px;
+      gap: 13px;
       margin-top: 34px;
     }
 
     .button {
+      position: relative;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 10px;
-      min-height: 52px;
+      min-height: 54px;
       padding: 0 22px;
+      overflow: hidden;
+      border: 0;
       border-radius: 999px;
+      cursor: pointer;
       text-decoration: none;
-      font-weight: 800;
+      font-weight: 950;
       transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
     }
 
+    .button::after {
+      content: "";
+      position: absolute;
+      inset: -70% -20%;
+      background: linear-gradient(100deg, transparent 38%, rgba(255, 255, 255, 0.5), transparent 62%);
+      transform: translateX(-75%) rotate(8deg);
+      transition: transform 0.65s ease;
+    }
+
+    .button:hover::after {
+      transform: translateX(75%) rotate(8deg);
+    }
+
     .button:hover {
-      transform: translateY(-3px);
+      transform: translateY(-3px) scale(1.015);
     }
 
-    .primary {
-      color: #14100a;
-      background: linear-gradient(135deg, var(--gold), #ffb703);
-      box-shadow: 0 18px 34px rgba(255, 183, 3, 0.24);
+    .button-primary {
+      color: var(--ink);
+      background: linear-gradient(135deg, #ffe66d, var(--yellow-deep));
+      box-shadow: 0 18px 38px rgba(245, 174, 36, 0.26);
     }
 
-    .secondary {
-      color: var(--text);
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      background: rgba(255, 255, 255, 0.08);
+    .button-secondary {
+      color: var(--paper);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.07);
+      backdrop-filter: blur(10px);
     }
 
-    .card-stack {
+    .button-icon {
       position: relative;
-      min-height: 420px;
+      z-index: 1;
+      display: grid;
+      place-items: center;
+      width: 25px;
+      height: 25px;
+      border: 3px solid currentColor;
+      border-radius: 50%;
     }
 
-    .family-card {
+    .button-icon::after {
+      content: "";
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .button-label,
+    .arrow {
+      position: relative;
+      z-index: 1;
+    }
+
+    .arrow {
+      transition: transform 0.2s ease;
+    }
+
+    .button:hover .arrow {
+      transform: translateX(4px);
+    }
+
+    .stats {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      margin-top: 38px;
+    }
+
+    .stat strong {
+      display: block;
+      color: #fff;
+      font-size: 1.15rem;
+      font-weight: 950;
+    }
+
+    .stat span {
+      color: #8195b4;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .stat-divider {
+      width: 1px;
+      height: 34px;
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .scene {
+      position: absolute;
+      z-index: 2;
+      top: 0;
+      right: 0;
+      width: 49%;
+      height: 100%;
+      perspective: 1100px;
+    }
+
+    .scene-glow {
+      position: absolute;
+      top: 17%;
+      left: 8%;
+      width: 90%;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(87, 184, 255, 0.28), rgba(87, 184, 255, 0.05) 45%, transparent 70%);
+      animation: glow-breathe 4s ease-in-out infinite;
+    }
+
+    .orbit {
+      position: absolute;
+      top: 26%;
+      left: 25%;
+      width: 58%;
+      aspect-ratio: 1;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 50%;
+      animation: orbit-spin 18s linear infinite;
+    }
+
+    .orbit::before,
+    .orbit::after {
+      content: "";
+      position: absolute;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--yellow);
+      box-shadow: 0 0 22px var(--yellow);
+    }
+
+    .orbit::before {
+      top: 11%;
+      left: 17%;
+    }
+
+    .orbit::after {
+      right: 3%;
+      bottom: 30%;
+      background: var(--cyan);
+      box-shadow: 0 0 22px var(--cyan);
+    }
+
+    .dex-card {
+      position: absolute;
+      z-index: 3;
+      top: 18%;
+      left: 13%;
+      width: min(360px, 70%);
+      height: 470px;
+      padding: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 34px;
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.16), rgba(10, 30, 57, 0.68));
+      box-shadow: 0 35px 70px rgba(0, 0, 0, 0.36);
+      backdrop-filter: blur(22px);
+      transform: rotateY(-8deg) rotateX(4deg) rotateZ(3deg);
+      transform-style: preserve-3d;
+      transition: transform 0.2s ease-out;
+    }
+
+    .dex-card::after {
+      content: "";
       position: absolute;
       inset: 0;
+      z-index: 5;
+      border-radius: inherit;
+      pointer-events: none;
+      background: linear-gradient(115deg, transparent 20%, rgba(255, 255, 255, 0.16) 45%, transparent 68%);
+      transform: translateX(-100%);
+      animation: card-shine 6s ease-in-out infinite;
+    }
+
+    .dex-screen {
+      position: relative;
       display: grid;
-      align-content: space-between;
-      padding: 28px;
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      border-radius: 32px;
+      place-items: center;
+      height: 310px;
+      overflow: hidden;
+      border: 5px solid rgba(255, 255, 255, 0.72);
+      border-radius: 24px 24px 52px 24px;
       background:
-        linear-gradient(145deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.07)),
-        radial-gradient(circle at 20% 15%, rgba(255, 209, 102, 0.24), transparent 34%),
-        radial-gradient(circle at 90% 75%, rgba(6, 214, 160, 0.22), transparent 32%);
-      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
-      transform: rotate(2.5deg);
+        radial-gradient(circle at 50% 60%, rgba(255, 255, 255, 0.82), transparent 7%),
+        radial-gradient(circle at 50% 61%, rgba(107, 242, 219, 0.32), transparent 40%),
+        linear-gradient(160deg, #9ef6e5, #4cbbde 58%, #3384c4);
+      box-shadow: inset 0 0 45px rgba(20, 93, 145, 0.35);
     }
 
-    .mini-card {
+    .dex-screen::before {
+      content: "";
       position: absolute;
-      right: -16px;
-      bottom: 34px;
-      width: min(270px, 80%);
-      padding: 18px;
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      border-radius: 24px;
-      background: rgba(9, 10, 24, 0.72);
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
-      backdrop-filter: blur(16px);
-      animation: bounce 4.5s ease-in-out infinite;
+      left: -15%;
+      right: -15%;
+      bottom: -31%;
+      height: 57%;
+      border-radius: 50% 50% 0 0;
+      background: linear-gradient(#5fcf9e, #23946f);
+      box-shadow: 0 -12px 36px rgba(18, 112, 84, 0.22);
     }
 
-    @keyframes bounce {
-      0%, 100% { transform: translateY(0) rotate(-3deg); }
-      50% { transform: translateY(-14px) rotate(-1deg); }
+    .dex-grid {
+      position: absolute;
+      inset: 0;
+      opacity: 0.13;
+      background-image:
+        linear-gradient(#fff 1px, transparent 1px),
+        linear-gradient(90deg, #fff 1px, transparent 1px);
+      background-size: 24px 24px;
+      mask-image: linear-gradient(to bottom, #000, transparent);
     }
 
-    .badge-row {
-      display: flex;
-      flex-wrap: wrap;
+    .main-pokemon {
+      position: relative;
+      z-index: 2;
+      width: 84%;
+      height: 84%;
+      object-fit: contain;
+      image-rendering: auto;
+      filter: drop-shadow(0 22px 14px rgba(15, 63, 75, 0.28));
+      animation: pokemon-idle 3.2s ease-in-out infinite;
+      transition: opacity 0.18s ease, transform 0.18s ease;
+    }
+
+    .main-pokemon.is-changing {
+      opacity: 0;
+      transform: scale(0.7) rotate(-10deg);
+    }
+
+    .scan-line {
+      position: absolute;
+      z-index: 4;
+      top: -20%;
+      left: 0;
+      width: 100%;
+      height: 25%;
+      pointer-events: none;
+      background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.22), transparent);
+      animation: scan 4s linear infinite;
+    }
+
+    .dex-meta {
+      display: grid;
+      grid-template-columns: 1fr auto;
       gap: 10px;
+      padding: 18px 8px 4px;
     }
 
-    .badge {
-      padding: 9px 12px;
+    .pokemon-number {
+      margin: 0 0 4px;
+      color: #8ca5c7;
+      font-size: 0.73rem;
+      font-weight: 900;
+      letter-spacing: 0.16em;
+    }
+
+    .pokemon-name {
+      margin: 0;
+      font-size: 1.65rem;
+      font-weight: 950;
+      letter-spacing: -0.045em;
+    }
+
+    .type-pill {
+      align-self: center;
+      padding: 8px 11px;
       border-radius: 999px;
-      color: #18121d;
-      background: rgba(255, 255, 255, 0.82);
-      font-size: 0.85rem;
+      color: #3e2d00;
+      background: var(--yellow);
+      font-size: 0.72rem;
+      font-weight: 950;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .power-row {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      align-items: center;
+      gap: 10px;
+      margin-top: 7px;
+      color: #9db0cb;
+      font-size: 0.72rem;
+      font-weight: 800;
+    }
+
+    .power-bar {
+      height: 7px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .power-fill {
+      display: block;
+      width: 78%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--cyan), var(--yellow));
+      box-shadow: 0 0 14px rgba(107, 242, 219, 0.35);
+      transition: width 0.45s ease;
+    }
+
+    .floating-pokemon {
+      position: absolute;
+      z-index: 6;
+      object-fit: contain;
+      filter: drop-shadow(0 16px 18px rgba(0, 0, 0, 0.3));
+      user-select: none;
+      pointer-events: none;
+    }
+
+    .floating-pokemon.eevee {
+      top: 8%;
+      right: 4%;
+      width: 128px;
+      animation: float-one 5s ease-in-out infinite;
+    }
+
+    .floating-pokemon.bulbasaur {
+      right: 2%;
+      bottom: 5%;
+      width: 132px;
+      animation: float-two 5.8s ease-in-out infinite -1.2s;
+    }
+
+    .floating-ball {
+      position: absolute;
+      z-index: 5;
+      left: 1%;
+      bottom: 9%;
+      width: 76px;
+      height: 76px;
+      cursor: pointer;
+      border: 0;
+      animation: ball-float 4s ease-in-out infinite;
+      transition: filter 0.2s ease;
+    }
+
+    .floating-ball:hover {
+      filter: brightness(1.12);
+      animation: ball-wiggle 0.55s ease-in-out infinite;
+    }
+
+    .spark {
+      position: absolute;
+      z-index: 1;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 0 14px #fff;
+      animation: spark-float var(--duration) ease-in-out infinite var(--delay);
+    }
+
+    .spark:nth-child(1) { top: 12%; left: 15%; --duration: 4.7s; --delay: -1s; }
+    .spark:nth-child(2) { top: 29%; right: 8%; --duration: 5.2s; --delay: -2.5s; }
+    .spark:nth-child(3) { top: 62%; left: 7%; --duration: 4.2s; --delay: -0.4s; }
+    .spark:nth-child(4) { right: 17%; bottom: 13%; --duration: 5.5s; --delay: -3s; }
+    .spark:nth-child(5) { top: 8%; left: 50%; --duration: 3.8s; --delay: -1.7s; }
+
+    .encounter-toast {
+      position: absolute;
+      z-index: 20;
+      top: 24px;
+      left: 50%;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 999px;
+      color: var(--paper);
+      background: rgba(6, 17, 34, 0.88);
+      box-shadow: 0 16px 50px rgba(0, 0, 0, 0.34);
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, -20px);
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      backdrop-filter: blur(16px);
+      font-size: 0.88rem;
       font-weight: 850;
     }
 
-    .big-initial {
-      font-size: clamp(7rem, 14vw, 11rem);
-      line-height: 0.8;
-      font-weight: 950;
-      letter-spacing: -0.1em;
-      color: transparent;
-      background: linear-gradient(135deg, #ffffff, var(--gold), var(--pink));
-      background-clip: text;
-      -webkit-background-clip: text;
-      text-shadow: 0 24px 60px rgba(0, 0, 0, 0.15);
+    .encounter-toast.is-visible {
+      opacity: 1;
+      transform: translate(-50%, 0);
     }
 
-    .card-title {
+    .toast-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--yellow);
+      box-shadow: 0 0 16px var(--yellow);
+    }
+
+    .adventure-strip {
+      display: grid;
+      grid-template-columns: 1.05fr 1fr 1fr;
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .adventure-card {
+      position: relative;
+      min-height: 178px;
+      overflow: hidden;
+      padding: 25px;
+      border: 1px solid var(--glass-border);
+      border-radius: 28px;
+      background: linear-gradient(145deg, rgba(20, 43, 75, 0.72), rgba(8, 21, 42, 0.82));
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.2);
+      transition: transform 0.25s ease, border-color 0.25s ease;
+    }
+
+    .adventure-card:hover {
+      border-color: rgba(255, 216, 77, 0.32);
+      transform: translateY(-6px);
+    }
+
+    .adventure-card.featured {
+      background:
+        radial-gradient(circle at 90% 20%, rgba(255, 216, 77, 0.2), transparent 35%),
+        linear-gradient(145deg, rgba(37, 57, 83, 0.9), rgba(14, 28, 52, 0.88));
+    }
+
+    .card-kicker {
+      display: block;
+      margin-bottom: 14px;
+      color: var(--yellow);
+      font-size: 0.7rem;
+      font-weight: 950;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    .adventure-card h2 {
       margin: 0;
-      font-size: 1.35rem;
-      font-weight: 900;
+      max-width: 260px;
+      font-size: clamp(1.3rem, 2.3vw, 1.75rem);
+      line-height: 1.05;
       letter-spacing: -0.04em;
     }
 
-    .card-text {
-      margin: 8px 0 0;
-      color: var(--muted);
-      line-height: 1.5;
+    .adventure-card p {
+      max-width: 300px;
+      margin: 12px 0 0;
+      color: #93a7c5;
+      font-size: 0.91rem;
+      line-height: 1.55;
     }
 
-    .sparkles {
-      display: flex;
-      justify-content: space-between;
-      font-size: 2rem;
-      opacity: 0.9;
+    .mini-pokemon {
+      position: absolute;
+      right: -4px;
+      bottom: -13px;
+      width: 120px;
+      filter: drop-shadow(0 14px 18px rgba(0, 0, 0, 0.28));
+      transition: transform 0.3s ease;
     }
 
-    .footer-note {
-      margin-top: clamp(42px, 7vw, 76px);
+    .adventure-card:hover .mini-pokemon {
+      transform: translateY(-8px) rotate(4deg);
+    }
+
+    .icon-tile {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
-    }
-
-    .feature {
-      padding: 18px;
+      place-items: center;
+      width: 46px;
+      height: 46px;
+      margin-bottom: 28px;
       border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 22px;
-      background: rgba(0, 0, 0, 0.14);
+      border-radius: 15px;
+      color: var(--cyan);
+      background: rgba(107, 242, 219, 0.08);
+      font-size: 1.4rem;
+      font-weight: 950;
     }
 
-    .feature strong {
-      display: block;
-      margin-bottom: 6px;
-      color: #fff;
+    .lightning {
+      width: 17px;
+      height: 26px;
+      background: currentColor;
+      clip-path: polygon(58% 0, 10% 52%, 45% 52%, 30% 100%, 90% 39%, 55% 39%);
     }
 
-    .feature span {
-      color: var(--muted);
-      font-size: 0.95rem;
-      line-height: 1.45;
+    .pixel-heart {
+      position: relative;
+      width: 24px;
+      height: 21px;
+      margin-top: 4px;
+      background: var(--red);
+      clip-path: polygon(0 16%, 16% 16%, 16% 0, 42% 0, 50% 12%, 58% 0, 84% 0, 84% 16%, 100% 16%, 100% 58%, 84% 58%, 84% 74%, 68% 74%, 68% 88%, 32% 88%, 32% 74%, 16% 74%, 16% 58%, 0 58%);
     }
 
-    @media (max-width: 880px) {
+    .footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 28px 6px 0;
+      color: #7185a3;
+      font-size: 0.82rem;
+    }
+
+    .footer strong {
+      color: #aebdd2;
+    }
+
+    .footer a {
+      color: #aebdd2;
+      text-underline-offset: 3px;
+    }
+
+    .capture-burst {
+      position: fixed;
+      z-index: 30;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      pointer-events: none;
+      background: var(--yellow);
+      box-shadow: 0 0 20px var(--yellow);
+      animation: burst 0.8s ease-out forwards;
+    }
+
+    @keyframes aurora-drift {
+      to { transform: translate3d(7rem, 3rem, 0) scale(1.15); }
+    }
+
+    @keyframes online-pulse {
+      70% { box-shadow: 0 0 0 9px rgba(107, 242, 219, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(107, 242, 219, 0); }
+    }
+
+    @keyframes star-spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes orbit-spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes glow-breathe {
+      50% { opacity: 0.65; transform: scale(1.12); }
+    }
+
+    @keyframes card-shine {
+      0%, 55% { transform: translateX(-110%); }
+      80%, 100% { transform: translateX(110%); }
+    }
+
+    @keyframes pokemon-idle {
+      0%, 100% { transform: translateY(4px) rotate(-1deg); }
+      48% { transform: translateY(-9px) rotate(1deg); }
+      55% { transform: translateY(-9px) rotate(-2deg); }
+    }
+
+    @keyframes scan {
+      from { transform: translateY(-60%); }
+      to { transform: translateY(500%); }
+    }
+
+    @keyframes float-one {
+      0%, 100% { transform: translateY(0) rotate(5deg); }
+      50% { transform: translateY(-18px) rotate(-2deg); }
+    }
+
+    @keyframes float-two {
+      0%, 100% { transform: translateY(0) rotate(-4deg); }
+      50% { transform: translateY(-14px) rotate(3deg); }
+    }
+
+    @keyframes spark-float {
+      0%, 100% { opacity: 0.25; transform: translateY(8px) scale(0.7); }
+      50% { opacity: 1; transform: translateY(-12px) scale(1.3); }
+    }
+
+    @keyframes ball-float {
+      0%, 100% { transform: translateY(0) rotate(-8deg); }
+      50% { transform: translateY(-14px) rotate(8deg); }
+    }
+
+    @keyframes ball-wiggle {
+      0%, 85%, 100% { transform: rotate(0); }
+      89% { transform: rotate(-12deg); }
+      93% { transform: rotate(12deg); }
+      97% { transform: rotate(-6deg); }
+    }
+
+    @keyframes burst {
+      to {
+        opacity: 0;
+        transform: translate(var(--x), var(--y)) scale(0);
+      }
+    }
+
+    @media (max-width: 1020px) {
+      .hero {
+        min-height: 760px;
+      }
+
+      .hero-copy {
+        width: 62%;
+        padding-left: 44px;
+      }
+
+      .scene {
+        width: 48%;
+      }
+
+      .dex-card {
+        left: 4%;
+        width: 72%;
+      }
+
+      .floating-pokemon.eevee {
+        right: -2%;
+      }
+
+      .floating-pokemon.bulbasaur {
+        right: -4%;
+      }
+    }
+
+    @media (max-width: 800px) {
       .page {
-        padding: 18px;
+        width: min(100% - 24px, 680px);
+        padding-top: 12px;
+      }
+
+      .nav {
+        border-radius: 18px;
+      }
+
+      .nav-links a {
+        display: none;
       }
 
       .hero {
+        min-height: 1200px;
         border-radius: 28px;
       }
 
-      nav {
+      .hero-copy {
+        width: 100%;
+        padding: 58px 28px 0;
+        text-align: center;
+      }
+
+      .eyebrow {
+        margin-inline: auto;
+      }
+
+      .subtitle {
+        margin-inline: auto;
+      }
+
+      .actions,
+      .stats {
+        justify-content: center;
+      }
+
+      .scene {
+        top: auto;
+        bottom: 0;
+        width: 100%;
+        height: 530px;
+      }
+
+      .scene-glow {
+        top: 4%;
+        left: 9%;
+        width: 82%;
+      }
+
+      .orbit {
+        top: 13%;
+        left: 27%;
+        width: 46%;
+      }
+
+      .dex-card {
+        top: 5%;
+        left: 50%;
+        width: min(330px, 68%);
+        height: 440px;
+        transform: translateX(-50%) rotateY(-6deg) rotateX(3deg) rotateZ(2deg);
+      }
+
+      .dex-screen {
+        height: 280px;
+      }
+
+      .floating-pokemon.eevee {
+        top: 4%;
+        right: 1%;
+        width: 110px;
+      }
+
+      .floating-pokemon.bulbasaur {
+        right: 2%;
+        bottom: 2%;
+        width: 112px;
+      }
+
+      .floating-ball {
+        left: 3%;
+        bottom: 8%;
+        width: 66px;
+        height: 66px;
+      }
+
+      .adventure-strip {
+        grid-template-columns: 1fr;
+      }
+
+      .adventure-card {
+        min-height: 185px;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .brand small,
+      .online-pill {
+        display: none;
+      }
+
+      .nav {
+        justify-content: center;
+      }
+
+      .hero {
+        min-height: 1240px;
+      }
+
+      .hero-copy {
+        padding-inline: 20px;
+      }
+
+      h1 {
+        font-size: clamp(3.25rem, 17vw, 5rem);
+      }
+
+      .subtitle {
+        font-size: 0.98rem;
+      }
+
+      .actions {
+        flex-direction: column;
+      }
+
+      .button {
+        width: 100%;
+      }
+
+      .stats {
+        gap: 14px;
+      }
+
+      .stat-divider {
+        height: 28px;
+      }
+
+      .stat strong {
+        font-size: 1rem;
+      }
+
+      .scene {
+        height: 500px;
+      }
+
+      .dex-card {
+        width: min(300px, 78%);
+        height: 414px;
+      }
+
+      .dex-screen {
+        height: 258px;
+      }
+
+      .floating-pokemon.eevee {
+        width: 88px;
+      }
+
+      .floating-pokemon.bulbasaur {
+        width: 94px;
+      }
+
+      .floating-ball {
+        width: 56px;
+        height: 56px;
+      }
+
+      .footer {
         align-items: flex-start;
         flex-direction: column;
-        margin-bottom: 46px;
+        gap: 8px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
       }
 
-      .content {
-        grid-template-columns: 1fr;
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
       }
 
-      .card-stack {
-        min-height: 340px;
-      }
-
-      .family-card {
-        transform: rotate(0deg);
-      }
-
-      .mini-card {
-        right: 12px;
-      }
-
-      .footer-note {
-        grid-template-columns: 1fr;
+      .cursor-glow {
+        display: none;
       }
     }
   </style>
 </head>
 <body>
-  <div class="orb one"></div>
-  <div class="orb two"></div>
+  <div class="aurora aurora-one"></div>
+  <div class="aurora aurora-two"></div>
+  <div class="cursor-glow" aria-hidden="true"></div>
 
-  <main class="page">
-    <section class="hero" aria-label="Familien Wutborg landingpage">
-      <nav>
-        <div class="logo" aria-label="Wutborg logo">
-          <span class="logo-mark">W</span>
-          <span>Wutborg.dk</span>
+  <div class="page">
+    <nav class="nav" aria-label="Hovedmenu">
+      <a class="brand" href="#">
+        <span class="brand-ball" aria-hidden="true"></span>
+        <span>
+          Wutborg.dk
+          <small>Family trainers</small>
+        </span>
+      </a>
+
+      <div class="nav-links">
+        <a href="#eventyr">Eventyr</a>
+        <a href="#projekter">Projekter</a>
+        <a href="mailto:hej@wutborg.dk">Kontakt</a>
+      </div>
+
+      <span class="online-pill">
+        <span class="online-dot"></span>
+        Klar til eventyr
+      </span>
+    </nav>
+
+    <main>
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="encounter-toast" role="status" aria-live="polite">
+          <span class="toast-dot"></span>
+          <span class="toast-text">En vild Pokémon dukkede op!</span>
         </div>
-        <div class="nav-pill">Familie • hygge • små spil på vej</div>
-      </nav>
 
-      <div class="content">
-        <div>
-          <p class="eyebrow"><span class="dot"></span> Officielt hjemme på nettet</p>
-          <h1>
-            Velkommen til familien
-            <span class="gradient-text">Wutborgs hjemmeside</span>
+        <div class="hero-copy">
+          <p class="eyebrow"><span class="eyebrow-star">✦</span> Wutborg Pokémon Adventure</p>
+          <h1 id="hero-title">
+            Fang dagen.
+            <span>Saml minder.</span>
           </h1>
           <p class="subtitle">
-            Her samler vi små projekter, sjove idéer og måske snart de første hjemmelavede spil.
-            Det her er starten på Wutborg-universet.
+            Velkommen til familiens digitale trænerbase. Her samler vi små spil,
+            store idéer og de eventyr, der er bedst, når hele holdet er med.
           </p>
+
           <div class="actions">
-            <a class="button primary" href="#spil">Se hvad der kommer ✨</a>
-            <a class="button secondary" href="mailto:hej@wutborg.dk">Sig hej</a>
+            <button class="button button-primary encounter-button" type="button">
+              <span class="button-icon" aria-hidden="true"></span>
+              <span class="button-label">Find en Pokémon</span>
+            </button>
+            <a class="button button-secondary" href="#eventyr">
+              <span class="button-label">Udforsk basen</span>
+              <span class="arrow" aria-hidden="true">→</span>
+            </a>
+          </div>
+
+          <div class="stats" aria-label="Wutborg trænerstatistik">
+            <div class="stat">
+              <strong>4</strong>
+              <span>Trænere</span>
+            </div>
+            <span class="stat-divider" aria-hidden="true"></span>
+            <div class="stat">
+              <strong class="seen-count">25</strong>
+              <span>Pokémon set</span>
+            </div>
+            <span class="stat-divider" aria-hidden="true"></span>
+            <div class="stat">
+              <strong>∞</strong>
+              <span>Eventyr tilbage</span>
+            </div>
           </div>
         </div>
 
-        <div class="card-stack" aria-hidden="true">
-          <div class="family-card">
-            <div class="sparkles"><span>✦</span><span>✺</span><span>✧</span></div>
-            <div class="big-initial">W</div>
-            <div>
-              <p class="card-title">Familien Wutborg</p>
-              <p class="card-text">Et lille digitalt hjem med store planer.</p>
-            </div>
-          </div>
-          <div class="mini-card">
-            <div class="badge-row">
-              <span class="badge">🎮 Spil</span>
-              <span class="badge">🏡 Familie</span>
-              <span class="badge">🚀 Projekter</span>
-            </div>
-            <p class="card-text" style="margin-top: 14px;">
-              Første mission: få siden online. Næste mission: bygge noget sjovt.
-            </p>
-          </div>
-        </div>
-      </div>
+        <div class="scene" aria-label="Interaktiv Pokédex med Pikachu">
+          <div class="scene-glow"></div>
+          <div class="orbit"></div>
+          <span class="spark"></span>
+          <span class="spark"></span>
+          <span class="spark"></span>
+          <span class="spark"></span>
+          <span class="spark"></span>
 
-      <div class="footer-note" id="spil">
-        <div class="feature">
-          <strong>Små spil</strong>
-          <span>Perfekt sted til simple browser-spil lavet i HTML, CSS og JavaScript.</span>
+          <article class="dex-card">
+            <div class="dex-screen">
+              <div class="dex-grid"></div>
+              <span class="scan-line"></span>
+              <img
+                class="main-pokemon"
+                src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/25.png"
+                alt="Pikachu"
+              />
+            </div>
+            <div class="dex-meta">
+              <div>
+                <p class="pokemon-number">POKÉDEX #025</p>
+                <p class="pokemon-name">Pikachu</p>
+              </div>
+              <span class="type-pill">Elektrisk</span>
+              <div class="power-row">
+                <span>Venskab</span>
+                <span class="power-bar"><span class="power-fill"></span></span>
+              </div>
+            </div>
+          </article>
+
+          <img
+            class="floating-pokemon eevee"
+            src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/133.gif"
+            alt=""
+            aria-hidden="true"
+          />
+          <img
+            class="floating-pokemon bulbasaur"
+            src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/1.gif"
+            alt=""
+            aria-hidden="true"
+          />
+          <button class="pokeball floating-ball" type="button" aria-label="Find en ny Pokémon"></button>
         </div>
-        <div class="feature">
-          <strong>Familieprojekter</strong>
-          <span>En personlig side med plads til billeder, links, idéer og eksperimenter.</span>
-        </div>
-        <div class="feature">
-          <strong>Bygget simpelt</strong>
-          <span>Én fil, hurtigt at ændre, nemt at lægge på GitHub Pages eller Cloudflare Pages.</span>
-        </div>
-      </div>
-    </section>
-  </main>
+      </section>
+
+      <section class="adventure-strip" id="eventyr" aria-label="Wutborg eventyr">
+        <article class="adventure-card featured">
+          <span class="card-kicker">Næste mission</span>
+          <h2>Byg familiens første browser-spil</h2>
+          <p>Et lille spil med point, levels og masser af Wutborg-energi.</p>
+          <img
+            class="mini-pokemon"
+            src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/4.gif"
+            alt="Charmander"
+          />
+        </article>
+
+        <article class="adventure-card" id="projekter">
+          <span class="icon-tile" aria-hidden="true"><span class="lightning"></span></span>
+          <h2>Små idéer med stor energi</h2>
+          <p>Eksperimenter, billeder og projekter får deres helt egen plads her.</p>
+        </article>
+
+        <article class="adventure-card">
+          <span class="icon-tile" aria-hidden="true"><span class="pixel-heart"></span></span>
+          <h2>Lavet af familien</h2>
+          <p>En levende base, der vokser sammen med os og vores næste eventyr.</p>
+        </article>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span><strong>Wutborg.dk</strong> · Trænet med kærlighed i Danmark</span>
+      <a href="mailto:hej@wutborg.dk">hej@wutborg.dk</a>
+    </footer>
+  </div>
+
+  <script>
+    const pokemon = [
+      { id: 25, name: "Pikachu", type: "Elektrisk", color: "#ffd84d", power: 78 },
+      { id: 1, name: "Bulbasaur", type: "Græs", color: "#77d99d", power: 84 },
+      { id: 4, name: "Charmander", type: "Ild", color: "#ff9b57", power: 72 },
+      { id: 7, name: "Squirtle", type: "Vand", color: "#66c6ee", power: 81 },
+      { id: 133, name: "Eevee", type: "Normal", color: "#d7a66d", power: 91 },
+      { id: 39, name: "Jigglypuff", type: "Fe", color: "#f6a9cf", power: 76 },
+      { id: 143, name: "Snorlax", type: "Normal", color: "#8ab6b4", power: 96 }
+    ];
+
+    const card = document.querySelector(".dex-card");
+    const scene = document.querySelector(".scene");
+    const image = document.querySelector(".main-pokemon");
+    const number = document.querySelector(".pokemon-number");
+    const name = document.querySelector(".pokemon-name");
+    const type = document.querySelector(".type-pill");
+    const power = document.querySelector(".power-fill");
+    const toast = document.querySelector(".encounter-toast");
+    const toastText = document.querySelector(".toast-text");
+    const encounterButtons = document.querySelectorAll(".encounter-button, .floating-ball");
+    const seenCount = document.querySelector(".seen-count");
+    const cursorGlow = document.querySelector(".cursor-glow");
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let currentIndex = 0;
+    let encounters = 25;
+    let toastTimer;
+
+    function spriteUrl(id) {
+      return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${id}.png`;
+    }
+
+    function createBurst(origin) {
+      if (reducedMotion) return;
+      const rect = origin.getBoundingClientRect();
+
+      for (let i = 0; i < 12; i += 1) {
+        const particle = document.createElement("span");
+        const angle = (Math.PI * 2 * i) / 12;
+        const distance = 42 + Math.random() * 42;
+        particle.className = "capture-burst";
+        particle.style.left = `${rect.left + rect.width / 2}px`;
+        particle.style.top = `${rect.top + rect.height / 2}px`;
+        particle.style.setProperty("--x", `${Math.cos(angle) * distance}px`);
+        particle.style.setProperty("--y", `${Math.sin(angle) * distance}px`);
+        document.body.appendChild(particle);
+        particle.addEventListener("animationend", () => particle.remove());
+      }
+    }
+
+    function showEncounter(origin) {
+      let nextIndex = currentIndex;
+      while (nextIndex === currentIndex) {
+        nextIndex = Math.floor(Math.random() * pokemon.length);
+      }
+
+      currentIndex = nextIndex;
+      const next = pokemon[currentIndex];
+      image.classList.add("is-changing");
+      createBurst(origin);
+
+      window.setTimeout(() => {
+        image.src = spriteUrl(next.id);
+        image.alt = next.name;
+        number.textContent = `POKÉDEX #${String(next.id).padStart(3, "0")}`;
+        name.textContent = next.name;
+        type.textContent = next.type;
+        type.style.background = next.color;
+        power.style.width = `${next.power}%`;
+        image.classList.remove("is-changing");
+      }, 180);
+
+      encounters += 1;
+      seenCount.textContent = encounters;
+      toastText.textContent = `En vild ${next.name} dukkede op!`;
+      toast.classList.add("is-visible");
+      window.clearTimeout(toastTimer);
+      toastTimer = window.setTimeout(() => toast.classList.remove("is-visible"), 2200);
+    }
+
+    encounterButtons.forEach((button) => {
+      button.addEventListener("click", () => showEncounter(button));
+    });
+
+    if (!reducedMotion) {
+      scene.addEventListener("pointermove", (event) => {
+        const rect = scene.getBoundingClientRect();
+        const x = (event.clientX - rect.left) / rect.width - 0.5;
+        const y = (event.clientY - rect.top) / rect.height - 0.5;
+        const translate = window.innerWidth <= 800 ? "translateX(-50%) " : "";
+        card.style.transform =
+          `${translate}rotateY(${x * 15 - 7}deg) rotateX(${y * -12 + 3}deg) rotateZ(${x * 2 + 2}deg)`;
+      });
+
+      scene.addEventListener("pointerleave", () => {
+        card.style.transform = "";
+      });
+
+      window.addEventListener("pointermove", (event) => {
+        cursorGlow.style.left = `${event.clientX}px`;
+        cursorGlow.style.top = `${event.clientY}px`;
+        cursorGlow.style.opacity = "1";
+      });
+
+      document.addEventListener("mouseleave", () => {
+        cursorGlow.style.opacity = "0";
+      });
+    }
+  </script>
 </body>
 </html>
