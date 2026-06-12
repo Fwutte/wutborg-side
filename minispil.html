@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#081225" />
+  <title>Minispil | Wutborg.dk</title>
+  <meta name="description" content="Spil Fire på stribe og Snake i Wutborg Arcade." />
+  <style>
+    :root {
+      --night: #07101f;
+      --panel: #102746;
+      --paper: #fffdf2;
+      --muted: #a9b9d4;
+      --yellow: #ffd84d;
+      --cyan: #6bf2db;
+      --red: #ff5d67;
+      --border: rgba(255, 255, 255, 0.14);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      min-height: 100vh;
+      color: var(--paper);
+      font-family: Inter, ui-rounded, "Arial Rounded MT Bold", system-ui, sans-serif;
+      background:
+        radial-gradient(circle at 12% 5%, rgba(87, 184, 255, 0.22), transparent 25rem),
+        radial-gradient(circle at 90% 80%, rgba(166, 129, 255, 0.2), transparent 30rem),
+        linear-gradient(145deg, #050b17, #0a1931 55%, #081225);
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.25;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: linear-gradient(#000, transparent 90%);
+    }
+
+    a { color: inherit; }
+
+    .page {
+      position: relative;
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 24px 0 48px;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      background: rgba(8, 22, 43, 0.72);
+      backdrop-filter: blur(18px);
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 11px;
+      text-decoration: none;
+      font-weight: 950;
+    }
+
+    .brand-ball {
+      position: relative;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: linear-gradient(to bottom, var(--red) 0 44%, #17213c 44% 56%, #fff 56%);
+      box-shadow: 0 7px 20px rgba(0, 0, 0, 0.35);
+    }
+
+    .brand-ball::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 11px;
+      height: 11px;
+      border: 4px solid #17213c;
+      border-radius: 50%;
+      background: #fff;
+      transform: translate(-50%, -50%);
+    }
+
+    .back-link {
+      padding: 10px 15px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.86rem;
+      font-weight: 850;
+      transition: color 0.2s ease, transform 0.2s ease;
+    }
+
+    .back-link:hover {
+      color: #fff;
+      transform: translateX(-3px);
+    }
+
+    .hero {
+      padding: clamp(74px, 11vw, 130px) 0 clamp(54px, 8vw, 88px);
+      text-align: center;
+    }
+
+    .kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 20px;
+      padding: 9px 14px;
+      border: 1px solid rgba(255, 216, 77, 0.24);
+      border-radius: 999px;
+      color: var(--yellow);
+      background: rgba(255, 216, 77, 0.08);
+      font-size: 0.75rem;
+      font-weight: 950;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(3.5rem, 10vw, 7.5rem);
+      line-height: 0.9;
+      letter-spacing: -0.075em;
+    }
+
+    h1 span {
+      color: transparent;
+      background: linear-gradient(100deg, var(--yellow), #fff2a8, #ffb83e);
+      background-clip: text;
+      -webkit-background-clip: text;
+    }
+
+    .intro {
+      max-width: 610px;
+      margin: 28px auto 0;
+      color: var(--muted);
+      font-size: clamp(1rem, 2vw, 1.18rem);
+      line-height: 1.7;
+    }
+
+    .games {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 20px;
+    }
+
+    .game-card {
+      position: relative;
+      min-height: 440px;
+      overflow: hidden;
+      padding: 32px;
+      border: 1px solid var(--border);
+      border-radius: 34px;
+      text-decoration: none;
+      background:
+        radial-gradient(circle at 85% 15%, var(--card-glow), transparent 38%),
+        linear-gradient(145deg, rgba(22, 50, 86, 0.92), rgba(7, 20, 40, 0.94));
+      box-shadow: 0 28px 70px rgba(0, 0, 0, 0.28);
+      transition: transform 0.3s ease, border-color 0.3s ease;
+      isolation: isolate;
+    }
+
+    .game-card:hover {
+      border-color: rgba(255, 255, 255, 0.32);
+      transform: translateY(-8px);
+    }
+
+    .game-card.connect { --card-glow: rgba(255, 93, 103, 0.23); }
+    .game-card.snake { --card-glow: rgba(107, 242, 219, 0.2); }
+
+    .game-number {
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 950;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    .game-card h2 {
+      max-width: 360px;
+      margin: 12px 0 0;
+      font-size: clamp(2.3rem, 5vw, 4rem);
+      line-height: 0.95;
+      letter-spacing: -0.055em;
+    }
+
+    .game-card p {
+      max-width: 370px;
+      margin: 18px 0 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .play {
+      position: absolute;
+      left: 32px;
+      bottom: 30px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 18px;
+      border-radius: 999px;
+      color: #17213c;
+      background: var(--yellow);
+      font-weight: 950;
+      box-shadow: 0 14px 30px rgba(255, 216, 77, 0.2);
+    }
+
+    .play::after {
+      content: "→";
+      transition: transform 0.2s ease;
+    }
+
+    .game-card:hover .play::after { transform: translateX(4px); }
+
+    .connect-preview {
+      position: absolute;
+      right: -16px;
+      bottom: 20px;
+      display: grid;
+      grid-template-columns: repeat(7, 38px);
+      gap: 7px;
+      padding: 18px;
+      border-radius: 24px;
+      background: #367be8;
+      box-shadow: 0 22px 50px rgba(0, 0, 0, 0.34);
+      transform: rotate(-7deg);
+      transition: transform 0.3s ease;
+    }
+
+    .game-card:hover .connect-preview { transform: rotate(-3deg) translateY(-8px); }
+
+    .disc {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: #10223d;
+      box-shadow: inset 0 4px 9px rgba(0, 0, 0, 0.35);
+    }
+
+    .disc.red { background: var(--red); }
+    .disc.yellow { background: var(--yellow); }
+
+    .snake-preview {
+      position: absolute;
+      right: 26px;
+      bottom: 28px;
+      width: 235px;
+      height: 190px;
+      border: 1px solid rgba(107, 242, 219, 0.2);
+      border-radius: 25px;
+      background:
+        linear-gradient(rgba(107, 242, 219, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(107, 242, 219, 0.06) 1px, transparent 1px),
+        #07192c;
+      background-size: 22px 22px;
+      transform: rotate(5deg);
+      transition: transform 0.3s ease;
+    }
+
+    .game-card:hover .snake-preview { transform: rotate(2deg) translateY(-8px); }
+
+    .snake-piece,
+    .snake-food {
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      border-radius: 7px;
+      background: var(--cyan);
+      box-shadow: 0 0 16px rgba(107, 242, 219, 0.35);
+    }
+
+    .snake-piece:nth-child(1) { left: 44px; top: 88px; }
+    .snake-piece:nth-child(2) { left: 66px; top: 88px; }
+    .snake-piece:nth-child(3) { left: 88px; top: 88px; }
+    .snake-piece:nth-child(4) { left: 110px; top: 88px; }
+    .snake-piece:nth-child(5) { left: 110px; top: 66px; }
+    .snake-piece:nth-child(6) { left: 110px; top: 44px; }
+
+    .snake-food {
+      right: 42px;
+      top: 42px;
+      border-radius: 50%;
+      background: var(--red);
+      box-shadow: 0 0 18px rgba(255, 93, 103, 0.5);
+      animation: pulse 1.3s ease-in-out infinite;
+    }
+
+    .note {
+      margin: 22px 0 0;
+      padding: 20px 24px;
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      color: var(--muted);
+      background: rgba(8, 22, 43, 0.55);
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    .note strong { color: #fff; }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 30px 4px 0;
+      color: #7185a3;
+      font-size: 0.82rem;
+    }
+
+    @keyframes pulse {
+      50% { transform: scale(1.18); filter: brightness(1.2); }
+    }
+
+    @media (max-width: 850px) {
+      .games { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 540px) {
+      .page { width: min(100% - 20px, 470px); padding-top: 10px; }
+      .nav { border-radius: 17px; }
+      .back-link { font-size: 0; }
+      .back-link::before { content: "← Hjem"; font-size: 0.82rem; }
+      .hero { padding-top: 68px; }
+      .game-card { min-height: 480px; padding: 25px; }
+      .play { left: 25px; bottom: 25px; }
+      .connect-preview {
+        right: -42px;
+        bottom: 90px;
+        grid-template-columns: repeat(7, 30px);
+      }
+      .disc { width: 30px; height: 30px; }
+      .snake-preview { right: -15px; bottom: 84px; transform: scale(0.88) rotate(5deg); }
+      .footer { flex-direction: column; gap: 8px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <nav class="nav" aria-label="Minispil navigation">
+      <a class="brand" href="index.html">
+        <span class="brand-ball" aria-hidden="true"></span>
+        <span>Wutborg Arcade</span>
+      </a>
+      <a class="back-link" href="index.html">← Tilbage til forsiden</a>
+    </nav>
+
+    <main>
+      <header class="hero">
+        <p class="kicker">✦ Vælg dit spil</p>
+        <h1>Små spil.<br /><span>Stor kamp.</span></h1>
+        <p class="intro">
+          Velkommen til Wutborg Arcade. Vælg en klassiker, slå rekorden,
+          og kom tilbage efter mere.
+        </p>
+      </header>
+
+      <section class="games" aria-label="Tilgængelige minispil">
+        <a class="game-card connect" href="fire-paa-stribe.html">
+          <span class="game-number">Spil 01 · To spillere</span>
+          <h2>Fire på stribe</h2>
+          <p>Skift til at slippe brikker ned. Den første med fire på stribe vinder.</p>
+          <span class="play">Start spillet</span>
+          <span class="connect-preview" aria-hidden="true">
+            <i class="disc"></i><i class="disc"></i><i class="disc"></i><i class="disc"></i><i class="disc"></i><i class="disc"></i><i class="disc"></i>
+            <i class="disc"></i><i class="disc"></i><i class="disc"></i><i class="disc"></i><i class="disc"></i><i class="disc"></i><i class="disc"></i>
+            <i class="disc"></i><i class="disc"></i><i class="disc"></i><i class="disc"></i><i class="disc"></i><i class="disc"></i><i class="disc"></i>
+            <i class="disc"></i><i class="disc"></i><i class="disc"></i><i class="disc yellow"></i><i class="disc"></i><i class="disc"></i><i class="disc"></i>
+            <i class="disc"></i><i class="disc"></i><i class="disc red"></i><i class="disc yellow"></i><i class="disc"></i><i class="disc"></i><i class="disc"></i>
+            <i class="disc"></i><i class="disc red"></i><i class="disc red"></i><i class="disc yellow"></i><i class="disc yellow"></i><i class="disc"></i><i class="disc"></i>
+          </span>
+        </a>
+
+        <a class="game-card snake" href="snake.html">
+          <span class="game-number">Spil 02 · En spiller</span>
+          <h2>Snake</h2>
+          <p>Spis æblerne, bliv længere, og hold dig væk fra vægge og din egen hale.</p>
+          <span class="play">Start spillet</span>
+          <span class="snake-preview" aria-hidden="true">
+            <i class="snake-piece"></i><i class="snake-piece"></i><i class="snake-piece"></i>
+            <i class="snake-piece"></i><i class="snake-piece"></i><i class="snake-piece"></i>
+            <i class="snake-food"></i>
+          </span>
+        </a>
+      </section>
+
+      <p class="note">
+        <strong>Bygget til at vokse:</strong> Hvert spil ligger i sin egen HTML-fil,
+        så design og spillogik kan udvikles helt uafhængigt.
+      </p>
+    </main>
+
+    <footer class="footer">
+      <span>Wutborg.dk · Familie, hygge og high scores</span>
+      <span>Flere spil kommer senere</span>
+    </footer>
+  </div>
+</body>
+</html>
