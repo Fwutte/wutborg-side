@@ -192,7 +192,7 @@
 
     .games {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 18px;
     }
 
@@ -236,6 +236,10 @@
 
     .game-card.breaker {
       --card-glow: rgba(214, 165, 66, 0.25);
+    }
+
+    .game-card.tetris {
+      --card-glow: rgba(103, 86, 181, 0.25);
     }
 
     .card-content {
@@ -417,6 +421,42 @@
       animation: pulse 1.2s ease-in-out infinite;
     }
 
+    .tetris-preview {
+      display: grid;
+      grid-template-columns: repeat(5, 35px);
+      grid-template-rows: repeat(5, 35px);
+      gap: 5px;
+      width: 215px;
+      height: 215px;
+      padding: 15px;
+      border: 7px solid #4d416f;
+      border-radius: 25px;
+      background:
+        linear-gradient(rgba(255,255,255,0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.07) 1px, transparent 1px),
+        #28203f;
+      background-size: 40px 40px;
+      box-shadow: 0 17px 32px rgba(64, 62, 76, 0.2);
+      transform: rotate(4deg);
+    }
+
+    .tetris-block {
+      border-radius: 8px;
+      background: var(--block-color);
+      box-shadow:
+        inset -5px -6px 8px rgba(43, 25, 74, 0.18),
+        inset 3px 3px 5px rgba(255,255,255,0.25);
+    }
+
+    .tetris-block.one { grid-column: 2; grid-row: 1; }
+    .tetris-block.two { grid-column: 1; grid-row: 2; }
+    .tetris-block.three { grid-column: 2; grid-row: 2; }
+    .tetris-block.four { grid-column: 3; grid-row: 2; }
+    .tetris-block.five { grid-column: 4; grid-row: 3; }
+    .tetris-block.six { grid-column: 4; grid-row: 4; }
+    .tetris-block.seven { grid-column: 4; grid-row: 5; }
+    .tetris-block.eight { grid-column: 5; grid-row: 5; }
+
     .family-note {
       display: flex;
       align-items: center;
@@ -494,14 +534,8 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
-      .game-card.breaker {
-        grid-column: 1 / -1;
-        min-height: 390px;
-      }
-
-      .game-card.breaker .preview {
-        right: 8%;
-        bottom: 55px;
+      .game-card {
+        min-height: 450px;
       }
     }
 
@@ -510,14 +544,8 @@
         grid-template-columns: 1fr;
       }
 
-      .game-card.breaker {
-        grid-column: auto;
+      .game-card {
         min-height: 470px;
-      }
-
-      .game-card.breaker .preview {
-        right: -18px;
-        bottom: 72px;
       }
     }
 
@@ -564,6 +592,11 @@
       .breaker-preview {
         right: -24px;
         transform: scale(0.9) rotate(-4deg);
+      }
+
+      .tetris-preview {
+        right: -25px;
+        transform: scale(0.87) rotate(4deg);
       }
 
       .family-note,
@@ -677,6 +710,25 @@
             <i class="breaker-ball"></i>
           </span>
         </a>
+
+        <a class="game-card tetris" href="tetris.html">
+          <span class="card-content">
+            <span class="game-number">Spil 04 · En spiller</span>
+            <h2>Tetris</h2>
+            <p>Byg hele rækker, få dem til at forsvinde, og se hvor højt du kan nå.</p>
+          </span>
+          <span class="play">Spil Tetris</span>
+          <span class="preview tetris-preview" aria-hidden="true">
+            <i class="tetris-block one" style="--block-color:#9f72d8"></i>
+            <i class="tetris-block two" style="--block-color:#9f72d8"></i>
+            <i class="tetris-block three" style="--block-color:#9f72d8"></i>
+            <i class="tetris-block four" style="--block-color:#9f72d8"></i>
+            <i class="tetris-block five" style="--block-color:#d9b164"></i>
+            <i class="tetris-block six" style="--block-color:#d9b164"></i>
+            <i class="tetris-block seven" style="--block-color:#d9b164"></i>
+            <i class="tetris-block eight" style="--block-color:#d9b164"></i>
+          </span>
+        </a>
       </section>
 
       <aside class="family-note">
@@ -689,6 +741,7 @@
           <span class="note-symbol">4</span>
           <span class="note-symbol">S</span>
           <span class="note-symbol">●</span>
+          <span class="note-symbol">T</span>
         </span>
       </aside>
     </main>
