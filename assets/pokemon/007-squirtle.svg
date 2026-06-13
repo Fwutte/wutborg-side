@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Squirtle fan-art battle illustration</title>
+  <desc id="desc">A small blue turtle creature with a rounded brown shell, cream belly plates, curled tail, large reddish eyes, and three-toed feet.</desc>
+  <defs>
+    <linearGradient id="skin" x1="0" y1="0" x2="0.9" y2="1">
+      <stop offset="0" stop-color="#76cae3"/>
+      <stop offset="1" stop-color="#378ab7"/>
+    </linearGradient>
+    <linearGradient id="shell" x1="0.1" y1="0" x2="0.9" y2="1">
+      <stop offset="0" stop-color="#a66a3d"/>
+      <stop offset="1" stop-color="#66402e"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#263845" stroke-width="14" stroke-linejoin="round" stroke-linecap="round">
+    <path fill="url(#shell)" d="M169 235c28-56 83-83 143-64 61 19 95 76 79 137-15 61-69 100-131 91-65-8-108-63-102-126 1-13 5-26 11-38Z"/>
+    <path fill="#f1d79d" d="M188 249c25-39 65-55 108-42 44 14 69 55 59 100-10 44-48 72-93 68-47-5-80-44-77-91 0-12 1-23 3-35Z"/>
+    <path fill="none" d="M225 220v145m75-152v153m-112-74h168"/>
+    <path fill="url(#skin)" d="M182 169c-6-68 38-116 102-116 66 0 111 49 104 116-5 47-42 81-102 82-61 1-100-33-104-82Z"/>
+    <path fill="url(#skin)" d="M178 276c-34-21-67-15-88 14-18 25-14 52 10 70 23 17 50 8 72-23l25-36"/>
+    <path fill="url(#skin)" d="M360 274c31-20 63-15 84 12 19 24 16 50-7 69-21 18-48 12-70-17l-28-36"/>
+    <path fill="url(#skin)" d="M196 384c-30 13-45 38-39 66 5 25 26 40 55 36 26-3 42-21 47-53m67-46c29 13 44 38 37 65-6 25-28 39-56 35-26-4-42-22-46-53"/>
+    <path fill="#f7f2de" d="m164 463 23-21 4 29 26-20 2 29m137-16-23-22-5 29-24-21-4 29"/>
+    <path fill="url(#skin)" d="M381 339c58 6 88 31 83 68-4 31-32 45-58 31-20-11-21-34-4-47 14-11 28-5 29 8"/>
+    <path fill="#fff" d="M213 130c17-18 39-18 55 0 1 38-9 57-28 58-19 1-29-18-27-58Zm78 0c17-17 39-15 54 4-1 38-12 56-30 55-19-2-27-21-24-59Z"/>
+    <ellipse cx="242" cy="155" rx="12" ry="19" fill="#9c3b38" stroke="none"/>
+    <ellipse cx="319" cy="155" rx="12" ry="19" fill="#9c3b38" stroke="none"/>
+    <path fill="#8b3937" d="M238 206c28 17 56 16 83-3-2 31-16 48-42 48-25 0-39-15-41-45Z"/>
+    <path fill="#f7eddd" d="m252 211 12 15 10-17m22-1 10 15 11-18"/>
+  </g>
+</svg>

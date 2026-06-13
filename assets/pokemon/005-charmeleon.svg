@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Charmeleon fan-art battle illustration</title>
+  <desc id="desc">A lean red-orange bipedal lizard with a cream underside, a horn on its head, sharp blue eyes, long claws, and a large tail flame.</desc>
+  <defs>
+    <linearGradient id="skin" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#ee7040"/>
+      <stop offset="1" stop-color="#b83c2d"/>
+    </linearGradient>
+    <radialGradient id="flame" cx="0.5" cy="0.8" r="0.85">
+      <stop offset="0" stop-color="#fff17a"/>
+      <stop offset="0.4" stop-color="#ffad28"/>
+      <stop offset="1" stop-color="#d93227"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#4a2928" stroke-width="14" stroke-linejoin="round" stroke-linecap="round">
+    <path fill="url(#skin)" d="M315 365c67 14 111-1 132-44 17-34 16-71-3-111"/>
+    <path fill="url(#flame)" d="M442 219c-40-41-42-87-7-137 4 31 21 48 49 54 26 32 27 66 3 98-14 18-35 20-45-15Z"/>
+    <path fill="url(#skin)" d="m230 76 34-58 29 63c60 7 99 52 93 108-4 36-24 62-56 78 37 45 40 103 9 150-31 47-86 66-139 46-54-20-85-70-76-128 6-38 24-68 54-89-10-26-9-51 3-77 10-22 26-39 49-49Z"/>
+    <path fill="#ffd3a0" d="M201 274c35-34 84-28 111 14 28 43 18 112-22 145-30 24-72 20-96-9-34-42-31-116 7-150Z"/>
+    <path fill="url(#skin)" d="M154 285c-33-9-59 7-72 38-10 25-3 49 19 64 20 14 42 5 57-19l26-42"/>
+    <path fill="#fff0d4" d="m84 354 30-4-18 25 31-8-18 28"/>
+    <path fill="url(#skin)" d="M324 285c30-12 56 0 72 29 13 25 8 50-14 65-20 14-42 6-57-18l-29-40"/>
+    <path fill="#fff0d4" d="m383 344-31 1 21 22-31-5 20 28"/>
+    <path fill="url(#skin)" d="M167 420c-25 5-42 23-44 48-2 23 15 38 43 37 25-1 43-15 52-40m92-44c24 5 41 23 43 47 2 24-16 38-44 36-25-1-42-15-51-40"/>
+    <path fill="#fff0d4" d="m143 496 13-24 15 22 18-22 12 21m82 4 15-24 15 23 18-22 11 20"/>
+    <path fill="#fff" d="M202 139c18-14 39-12 53 6-5 36-17 52-35 49-18-3-24-21-18-55Zm78 0c18-13 39-9 50 11-7 34-20 50-38 45-18-5-22-24-12-56Z"/>
+    <ellipse cx="229" cy="164" rx="11" ry="17" fill="#2d84aa" stroke="none"/>
+    <ellipse cx="303" cy="165" rx="11" ry="17" fill="#2d84aa" stroke="none"/>
+    <path fill="none" d="M220 225c25 12 52 9 78-9"/>
+    <path fill="#f9ead3" d="m239 224 12 20 12-22m17-4 11 18 10-22"/>
+  </g>
+</svg>

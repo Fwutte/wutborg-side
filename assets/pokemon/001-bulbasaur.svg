@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Bulbasaur fan-art battle illustration</title>
+  <desc id="desc">A blue-green quadruped creature with darker patches and a large green plant bulb on its back.</desc>
+  <defs>
+    <linearGradient id="skin" x1="0" y1="0" x2="0.8" y2="1">
+      <stop offset="0" stop-color="#82d2b2"/>
+      <stop offset="1" stop-color="#3d9f83"/>
+    </linearGradient>
+    <linearGradient id="bulb" x1="0.2" y1="0" x2="0.8" y2="1">
+      <stop offset="0" stop-color="#77c66b"/>
+      <stop offset="1" stop-color="#2f8653"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#183843" stroke-width="14" stroke-linejoin="round" stroke-linecap="round">
+    <path fill="url(#bulb)" d="M207 207c-8-45 13-86 58-111 24 14 41 35 50 62 15-25 37-44 67-56 8 43-8 80-47 108-47 14-89 13-128-3Z"/>
+    <path fill="#4fab5f" d="M252 199c0-40 5-70 13-90m44 96c7-42 29-72 66-91m-70 91c-6-31-2-59 10-82"/>
+    <path fill="url(#skin)" d="M117 236c42-56 119-76 194-48 62 23 98 78 91 143-8 72-64 116-149 117-89 2-159-33-174-96-10-42 4-82 38-116Z"/>
+    <path fill="url(#skin)" d="M95 265 60 218l57 9 33-45 20 56"/>
+    <path fill="url(#skin)" d="M102 323c-30 13-44 42-38 75 5 27 24 42 53 42 27 0 42-13 47-38l10-57"/>
+    <path fill="url(#skin)" d="M302 348c-17 31-12 70 12 88 24 18 61 13 74-12 15-27 3-59-21-82"/>
+    <path fill="#dff4d9" d="m94 432 17-15 17 15M327 438l15-18 18 14"/>
+    <path fill="#60b99a" d="M121 241c29-45 86-65 137-44 26 11 43 31 48 60-18 30-50 48-93 51-47 3-80-19-92-67Z"/>
+    <path fill="#285f61" stroke="none" d="m143 248 24-14 22 17-24 17Zm83-32 23-10 18 22-26 12Zm72 69 26-13 18 21-28 16Zm-174 68 25-11 20 20-25 18Z"/>
+    <path fill="#f5fbef" d="M139 280c12-13 28-14 40-2-1 27-8 39-22 39-13 0-19-12-18-37Zm79-4c13-11 29-9 39 5-4 26-12 37-25 35-14-2-18-14-14-40Z"/>
+    <ellipse cx="160" cy="294" rx="9" ry="14" fill="#a52d3d" stroke="none"/>
+    <ellipse cx="237" cy="293" rx="9" ry="14" fill="#a52d3d" stroke="none"/>
+    <path fill="none" d="M163 338c18 13 38 13 57-1"/>
+    <path fill="#f7eee1" d="m183 340 12 19 12-20"/>
+  </g>
+</svg>

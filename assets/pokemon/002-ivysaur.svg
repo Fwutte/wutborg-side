@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Ivysaur fan-art battle illustration</title>
+  <desc id="desc">A sturdy blue-green quadruped with dark patches, red eyes, broad leaves, and a large pink flower bud.</desc>
+  <defs>
+    <linearGradient id="skin" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#70c9ae"/>
+      <stop offset="1" stop-color="#338e78"/>
+    </linearGradient>
+    <linearGradient id="bud" x1="0.3" y1="0" x2="0.7" y2="1">
+      <stop offset="0" stop-color="#f88aa0"/>
+      <stop offset="1" stop-color="#bd3f65"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#173843" stroke-width="14" stroke-linejoin="round" stroke-linecap="round">
+    <path fill="#3e8c4e" d="M216 211c-48-30-72-66-71-107 44 3 79 23 105 61-2-49 16-86 54-111 23 36 28 72 15 108 28-34 63-51 105-51-2 47-25 83-70 108Z"/>
+    <path fill="#59aa5a" d="M243 200c-23-28-51-51-82-69m139 59c30-27 63-45 99-53m-120 54c1-47 10-83 29-110"/>
+    <path fill="#845536" d="M264 206c-7-46 11-84 55-108 39 27 52 65 39 112Z"/>
+    <path fill="url(#bud)" d="M241 111c19-47 54-72 93-72 39 1 72 29 87 77-17 36-48 57-91 61-44-3-74-25-89-66Z"/>
+    <path fill="#ffb0b9" d="M330 48c-13 42-13 80 0 116m-65-53c43 6 83 7 125 3"/>
+    <path fill="url(#skin)" d="M89 238c45-57 124-77 208-46 70 25 111 83 103 151-8 73-66 112-157 112-96 0-169-38-181-105-7-42 2-78 27-112Z"/>
+    <path fill="url(#skin)" d="m83 274-39-58 66 16 38-51 19 73"/>
+    <path fill="url(#skin)" d="M96 337c-32 14-46 47-39 78 6 28 28 43 59 40 28-3 44-21 47-50l7-53"/>
+    <path fill="url(#skin)" d="M290 351c-18 37-9 77 22 94 28 15 65 5 76-25 10-28-3-58-31-81"/>
+    <path fill="#dcebd3" d="m89 445 18-20 19 17m192 10 17-22 21 16"/>
+    <path fill="#24636a" stroke="none" d="m125 272 29-14 22 23-31 18Zm100-54 27-8 19 27-32 11Zm92 64 30-13 20 24-31 17Zm-171 96 28-13 23 20-30 22Z"/>
+    <path fill="#f8f5e9" d="M128 293c14-16 33-17 47-3 0 29-9 43-25 43-16 0-23-14-22-40Zm90-7c16-14 35-11 46 6-3 29-13 42-29 40-16-3-21-17-17-46Z"/>
+    <ellipse cx="151" cy="309" rx="10" ry="16" fill="#c52d45" stroke="none"/>
+    <ellipse cx="239" cy="306" rx="10" ry="16" fill="#c52d45" stroke="none"/>
+    <path fill="none" d="M153 355c21 14 44 14 66-1"/>
+    <path fill="#f8efe0" d="m175 357 13 20 13-22"/>
+  </g>
+</svg>

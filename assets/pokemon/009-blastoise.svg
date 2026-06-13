@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Blastoise fan-art battle illustration</title>
+  <desc id="desc">A massive blue bipedal turtle with a cream plated chest, heavy brown shell, three-clawed limbs, angular ears, and two steel water cannons over its shoulders.</desc>
+  <defs>
+    <linearGradient id="skin" x1="0" y1="0" x2="0.9" y2="1">
+      <stop offset="0" stop-color="#5aa4cf"/>
+      <stop offset="1" stop-color="#286894"/>
+    </linearGradient>
+    <linearGradient id="shell" x1="0.1" y1="0" x2="0.9" y2="1">
+      <stop offset="0" stop-color="#8c5b3b"/>
+      <stop offset="1" stop-color="#4b352d"/>
+    </linearGradient>
+    <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#edf4f2"/>
+      <stop offset="0.45" stop-color="#9fb5ba"/>
+      <stop offset="1" stop-color="#586d75"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#253743" stroke-width="14" stroke-linejoin="round" stroke-linecap="round">
+    <path fill="url(#shell)" d="M104 234c29-99 111-153 205-128 96 25 154 122 127 220-26 95-113 149-209 125-97-24-151-122-123-217Z"/>
+    <path fill="url(#metal)" d="M149 182 119 54c-3-14 6-28 20-31l31-7c15-3 29 7 31 22l20 131Z"/>
+    <path fill="#465c65" d="m122 67 81-19"/>
+    <ellipse cx="130" cy="47" rx="19" ry="31" fill="#172d36" transform="rotate(-13 130 47)"/>
+    <path fill="url(#metal)" d="m341 168 22-131c3-15 17-25 32-21l31 8c14 4 23 18 19 32l-32 128Z"/>
+    <path fill="#465c65" d="m359 48 82 21"/>
+    <ellipse cx="433" cy="48" rx="19" ry="31" fill="#172d36" transform="rotate(14 433 48)"/>
+    <path fill="url(#skin)" d="m192 138-24-51 51 14c21-27 49-41 83-41 34 0 62 15 82 43l52-12-27 51c17 30 20 65 9 101-15 49-58 78-120 77-62-1-104-31-117-81-9-36-5-70 11-101Z"/>
+    <path fill="url(#skin)" d="M163 248c-65 18-105 64-109 132-3 55 22 91 74 107 47 15 85-2 112-50l25-52"/>
+    <path fill="url(#skin)" d="M350 245c65 16 106 61 112 129 4 55-20 92-72 109-47 15-85 0-113-48l-27-51"/>
+    <path fill="#f0d69d" d="M203 238c37-29 92-29 129 1 43 35 61 106 39 163-20 53-66 80-117 68-53-13-84-62-80-122 3-46 13-82 29-110Z"/>
+    <path fill="none" d="M264 231v231m-78-119h178"/>
+    <path fill="url(#skin)" d="M120 343c-47-7-80 12-91 53-10 36 8 65 46 75 35 9 61-8 79-51l13-33"/>
+    <path fill="#f6ecd6" d="m34 427 43-12-23 35 44-16-21 39"/>
+    <path fill="url(#skin)" d="M395 340c47-8 80 11 93 51 11 36-7 65-44 76-35 10-62-7-80-49l-15-34"/>
+    <path fill="#f6ecd6" d="m482 421-43-10 24 34-44-14 23 38"/>
+    <path fill="url(#skin)" d="M171 443c-41 4-66 27-68 63-1 11 37 16 79 9 35-6 57-23 66-52m96-18c40 4 65 28 67 63 0 12-37 16-79 8-35-6-56-23-65-52"/>
+    <path fill="#f6ecd6" d="m118 508 24-30 17 26 29-24 10 27m122 1 25-29 16 27 30-23 9 27"/>
+    <path fill="#fff" d="M226 132c20-15 43-10 56 12-8 39-22 56-42 50-20-5-24-27-14-62Zm86 2c20-14 43-7 53 16-10 38-25 54-45 47-20-7-22-28-8-63Z"/>
+    <ellipse cx="253" cy="160" rx="11" ry="18" fill="#713e3d" stroke="none"/>
+    <ellipse cx="339" cy="162" rx="11" ry="18" fill="#713e3d" stroke="none"/>
+    <path fill="none" d="M248 218c28 7 56 1 83-18"/>
+    <path fill="#f6ecd6" d="m265 214 13 21 13-24m21-5 11 20 12-25"/>
+  </g>
+</svg>

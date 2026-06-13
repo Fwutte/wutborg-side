@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Wartortle fan-art battle illustration</title>
+  <desc id="desc">An indigo turtle creature with a brown shell, cream belly, feather-like pale blue ears, cheek marks, claws, and a thick curled furry tail.</desc>
+  <defs>
+    <linearGradient id="skin" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6f9fdd"/>
+      <stop offset="1" stop-color="#3d62a0"/>
+    </linearGradient>
+    <linearGradient id="fur" x1="0" y1="0" x2="0.8" y2="1">
+      <stop offset="0" stop-color="#d8eff2"/>
+      <stop offset="1" stop-color="#89c2d5"/>
+    </linearGradient>
+    <linearGradient id="shell" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#9f673e"/>
+      <stop offset="1" stop-color="#593d32"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#29394d" stroke-width="14" stroke-linejoin="round" stroke-linecap="round">
+    <path fill="url(#fur)" d="M192 129c-52-6-90-32-113-77 48-1 86 13 116 43 2-39 18-70 47-93 23 43 23 86 0 129Z"/>
+    <path fill="url(#fur)" d="M342 130c51-8 88-35 110-81-48 1-86 16-114 47-3-39-20-69-49-91-22 44-21 87 2 129Z"/>
+    <path fill="url(#shell)" d="M157 251c24-65 81-98 147-82 68 16 109 79 98 149-11 68-67 113-136 108-72-5-122-64-120-135 0-14 4-27 11-40Z"/>
+    <path fill="#eed69f" d="M182 260c21-45 62-67 109-56 50 12 80 58 72 109-8 49-49 82-100 80-52-3-88-45-87-97 0-13 2-25 6-36Z"/>
+    <path fill="none" d="M217 218v165m80-176v178m-119-79h185"/>
+    <path fill="url(#skin)" d="M178 155c-4-72 44-123 113-121 69 1 115 54 106 125-6 50-47 85-110 84-63-1-106-36-109-88Z"/>
+    <path fill="#315384" stroke="none" d="m203 187 40 17-14 17-39-17Zm122 1-40 17 14 17 39-17Z"/>
+    <path fill="url(#skin)" d="M166 290c-36-21-72-13-93 20-18 28-11 57 17 74 25 15 53 2 73-34l20-36"/>
+    <path fill="#f7eed8" d="m75 354 36-12-18 30 37-15-17 34"/>
+    <path fill="url(#skin)" d="M375 286c34-19 69-11 90 19 19 27 13 56-13 74-24 17-52 6-73-28l-23-37"/>
+    <path fill="#f7eed8" d="m462 347-37-7 22 27-38-11 22 33"/>
+    <path fill="url(#skin)" d="M188 407c-30 10-47 35-43 64 4 26 25 41 55 39 27-2 44-20 51-52m80-49c30 10 47 35 42 63-4 26-26 42-56 39-27-3-44-21-50-52"/>
+    <path fill="#f7eed8" d="m153 493 23-24 6 31 27-23 2 30m153-13-23-23-6 30-26-22-3 30"/>
+    <path fill="url(#fur)" d="M381 354c65 0 102 29 101 72-1 37-34 60-70 48-29-9-39-40-22-62 14-18 39-16 50 1 8 13 2 28-12 29-11 1-18-8-14-17"/>
+    <path fill="#fff" d="M209 114c18-16 41-13 55 7-5 37-17 55-37 52-19-3-25-23-18-59Zm83 1c19-15 41-10 53 11-7 37-21 53-40 49-19-5-23-25-13-60Z"/>
+    <ellipse cx="237" cy="141" rx="11" ry="18" fill="#75413d" stroke="none"/>
+    <ellipse cx="319" cy="142" rx="11" ry="18" fill="#75413d" stroke="none"/>
+    <path fill="none" d="M233 226c25 10 50 7 74-10"/>
+    <path fill="#f7eed8" d="m247 224 12 20 12-22m18-5 12 19 10-23"/>
+  </g>
+</svg>

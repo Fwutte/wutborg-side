@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Caterpie fan-art battle illustration</title>
+  <desc id="desc">A bright green segmented caterpillar with a yellow underside, ring markings, large black eyes, tiny suction feet, a teardrop tail, and a red forked antenna.</desc>
+  <defs>
+    <linearGradient id="green" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#83d84f"/>
+      <stop offset="1" stop-color="#3d9f3d"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#29442f" stroke-width="14" stroke-linejoin="round" stroke-linecap="round">
+    <path fill="#e64a38" d="M155 165c-31-42-38-84-20-127 18 19 31 42 38 70 12-28 30-48 54-61 5 47-10 87-46 121Z"/>
+    <path fill="url(#green)" d="M104 193c17-53 59-83 111-73 52 11 80 57 68 110-10 45-46 70-92 68-51-3-87-34-91-81-1-8 0-16 4-24Z"/>
+    <path fill="url(#green)" d="M192 281c37-34 89-35 125-2 35 32 39 83 10 120-30 38-86 48-126 19-41-29-51-85-22-126 4-4 8-8 13-11Z"/>
+    <path fill="url(#green)" d="M300 358c35-25 79-21 104 10 25 31 21 76-10 101-32 26-80 21-104-12-23-32-17-76 10-99Z"/>
+    <path fill="#69bf44" d="M395 409c35-10 67 5 78 35 10 29-5 61-35 72-29 10-59-4-70-32Z"/>
+    <path fill="#e9cb4e" d="M117 221c17 15 38 23 62 23 26 0 48-8 67-24-5 44-31 68-72 67-39-1-58-23-57-66Z"/>
+    <path fill="#e9cb4e" d="M205 332c26 18 58 22 95 10 10 25 8 48-7 69-31 20-64 18-94-5-11-22-9-47 6-74Z"/>
+    <path fill="#e9cb4e" d="M322 402c22 15 47 18 74 10 9 20 7 38-6 55-25 17-49 15-72-4-9-19-7-40 4-61Z"/>
+    <path fill="#fff" d="M121 188c12-30 36-43 66-35 29 8 43 35 34 65-8 28-32 41-59 33-29-8-44-35-41-63Zm90-13c20-21 48-23 69-4 21 19 22 48 3 69-20 22-50 24-71 4-21-19-21-48-1-69Z"/>
+    <ellipse cx="171" cy="203" rx="22" ry="29" fill="#202c28" stroke="none"/>
+    <ellipse cx="244" cy="207" rx="22" ry="29" fill="#202c28" stroke="none"/>
+    <ellipse cx="164" cy="193" rx="6" ry="8" fill="#fff" stroke="none"/>
+    <ellipse cx="237" cy="197" rx="6" ry="8" fill="#fff" stroke="none"/>
+    <path fill="#e9cb4e" d="M101 193c-14 11-22 27-24 48 17 3 31-1 44-13Zm183 2c16 8 26 21 31 40-15 7-31 6-47-4Z"/>
+    <path fill="#efbf52" d="M164 425c-19 6-29 21-27 43 2 18 16 25 35 17 17-7 23-23 17-46Zm83 20c-18 5-29 19-27 40 1 18 14 26 33 19 17-7 24-22 19-45Zm94 31c-16 3-26 15-26 33 1 16 13 23 29 18 15-5 22-18 18-34Zm65-9c-14 5-21 17-17 32 4 14 16 19 29 12 13-7 17-20 11-33Z"/>
+    <circle cx="230" cy="315" r="17" fill="#f0d252"/>
+    <circle cx="274" cy="337" r="15" fill="#f0d252"/>
+    <circle cx="353" cy="391" r="14" fill="#f0d252"/>
+    <path fill="none" d="M176 269c17 10 35 10 52 0"/>
+  </g>
+</svg>

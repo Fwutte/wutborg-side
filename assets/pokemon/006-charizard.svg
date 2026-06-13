@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Charizard fan-art battle illustration</title>
+  <desc id="desc">A powerful orange dragon-like creature with two horns, a cream belly, broad wings with blue-green membranes, and a flaming tail.</desc>
+  <defs>
+    <linearGradient id="skin" x1="0" y1="0" x2="0.9" y2="1">
+      <stop offset="0" stop-color="#f28b3d"/>
+      <stop offset="1" stop-color="#c84d28"/>
+    </linearGradient>
+    <linearGradient id="wing" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#69c8bc"/>
+      <stop offset="1" stop-color="#2f8b8d"/>
+    </linearGradient>
+    <radialGradient id="flame" cx="0.45" cy="0.8" r="0.9">
+      <stop offset="0" stop-color="#fff383"/>
+      <stop offset="0.42" stop-color="#ffab27"/>
+      <stop offset="1" stop-color="#d93426"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#3f2928" stroke-width="13" stroke-linejoin="round" stroke-linecap="round">
+    <path fill="url(#skin)" d="M194 255C119 241 65 190 37 100c64 4 119 33 167 86-3-64 16-117 58-160 42 42 60 95 55 159 48-52 104-80 168-82-31 89-86 139-162 153Z"/>
+    <path fill="url(#wing)" d="M185 230c-53-19-93-54-121-105 47 12 91 43 135 94Zm148 1c53-19 94-53 123-104-48 11-93 42-137 93Z"/>
+    <path fill="url(#skin)" d="M318 364c69 25 118 18 145-22 26-38 23-81-9-129"/>
+    <path fill="url(#flame)" d="M450 225c-49-40-57-91-25-152 10 34 31 51 62 52 32 36 35 75 10 114-17 26-36 23-47-14Z"/>
+    <path fill="url(#skin)" d="m223 95 19-62 33 47 43-37 2 67c48 25 71 67 63 119-5 34-23 60-53 78 31 43 36 95 15 139-24 49-72 72-125 58-55-14-91-60-91-117 0-45 16-80 48-106-15-31-15-65 0-101 11-29 27-55 46-85Z"/>
+    <path fill="#f6cea0" d="M204 277c39-31 91-19 112 29 19 44 8 108-27 140-29 27-73 23-98-9-34-43-27-127 13-160Z"/>
+    <path fill="url(#skin)" d="M156 302c-38-13-69 4-83 40-11 30 0 57 29 70 24 11 49-2 64-35l17-37"/>
+    <path fill="#f8ead3" d="m74 382 38-11-22 32 39-14-20 35"/>
+    <path fill="url(#skin)" d="M342 302c35-13 65 0 82 34 15 29 7 57-20 72-24 13-49 2-65-29l-22-40"/>
+    <path fill="#f8ead3" d="m421 372-38-5 27 28-40-8 27 34"/>
+    <path fill="url(#skin)" d="M164 448c-30 3-49 20-52 45-2 21 19 28 53 25 29-3 49-15 59-38m79-30c29 4 48 22 50 47 2 20-20 27-53 23-29-4-48-17-57-40"/>
+    <path fill="#f8ead3" d="m131 510 17-25 16 22 21-21 13 20m79 3 18-24 16 23 22-19 11 21"/>
+    <path fill="#fff" d="M205 151c18-14 40-10 52 10-7 34-19 50-37 45-18-5-22-24-15-55Zm74 1c19-12 40-7 50 14-9 33-22 48-40 42-17-6-20-26-10-56Z"/>
+    <ellipse cx="230" cy="177" rx="10" ry="16" fill="#408ab2" stroke="none"/>
+    <ellipse cx="302" cy="179" rx="10" ry="16" fill="#408ab2" stroke="none"/>
+    <path fill="#762d29" d="M221 231c28 16 58 12 87-11-1 35-17 55-45 57-27 1-42-15-42-46Z"/>
+    <path fill="#f8ead3" d="m238 235 12 19 12-22m21-3 11 18 12-23"/>
+  </g>
+</svg>

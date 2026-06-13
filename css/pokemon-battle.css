@@ -385,6 +385,20 @@ input[type="search"] {
   background-size: 15px 15px;
 }
 
+.pokemon-art {
+  display: block;
+  max-width: 100%;
+  pointer-events: none;
+  user-select: none;
+}
+
+.selected-art {
+  width: 132px;
+  height: 132px;
+  object-fit: contain;
+  filter: drop-shadow(6px 8px 0 rgba(20, 33, 42, 0.18));
+}
+
 .mini-monster {
   position: relative;
   width: 84px;
@@ -495,9 +509,9 @@ input[type="search"] {
 
 .roster-button {
   display: grid;
-  grid-template-columns: 10px 38px minmax(0, 1fr);
+  grid-template-columns: 42px 38px minmax(0, 1fr);
   align-items: center;
-  min-height: 48px;
+  min-height: 54px;
   padding: 5px 9px;
   border: 2px solid transparent;
   border-radius: 10px;
@@ -517,7 +531,22 @@ input[type="search"] {
   box-shadow: 3px 3px 0 var(--ink);
 }
 
+.roster-visual {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 42px;
+}
+
+.roster-art {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+  filter: drop-shadow(2px 3px 0 rgba(20, 33, 42, 0.15));
+}
+
 .roster-dot {
+  display: block;
   width: 9px;
   height: 9px;
   border-radius: 3px;
@@ -821,6 +850,25 @@ input[type="search"] {
   transform-origin: center bottom;
 }
 
+.monster-art {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(12px 15px 0 rgba(20, 33, 42, 0.19));
+  transform-origin: center bottom;
+}
+
+.monster-stage.has-art .monster-body {
+  display: none;
+}
+
+.monster-stage.has-art .monster-aura {
+  inset: 4%;
+}
+
 .opponent-stage {
   top: 19%;
   right: 13%;
@@ -937,6 +985,10 @@ input[type="search"] {
 }
 
 .is-back .monster-body {
+  transform: scaleX(-1);
+}
+
+.is-back .monster-art {
   transform: scaleX(-1);
 }
 
@@ -1446,6 +1498,11 @@ input[type="search"] {
 
   .mini-monster {
     transform: scale(0.78);
+  }
+
+  .selected-art {
+    width: 105px;
+    height: 105px;
   }
 
   .roster {

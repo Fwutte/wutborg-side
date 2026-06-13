@@ -3,6 +3,7 @@
 
   const engine = window.PokemonBattleEngine;
   const { TYPES, TYPE_COLORS } = window.PokemonTypeChart;
+  const artwork = window.PokemonArtwork || {};
   const storageKey = "wutborg-monster-battle-preferences";
   const methodLabels = {
     wild: "Wild",
@@ -111,6 +112,10 @@
     return pokemonData.find((pokemon) => pokemon.id === selection[side]) || pokemonData[0];
   }
 
+  function artworkPath(pokemon) {
+    return artwork[pokemon.id] || null;
+  }
+
   function typeBadges(types) {
     return types.map((type) =>
       `<span class="type-badge" style="--badge-color:${TYPE_COLORS[type]}">${escapeHtml(type)}</span>`
@@ -121,13 +126,16 @@
     const pokemon = selectedPokemon(side);
     const color = pokemon.sprite?.cssColorHint || TYPE_COLORS[pokemon.types[0]];
     const shape = pokemon.sprite?.shape ?? pokemon.id % 4;
+    const art = artworkPath(pokemon);
     sideDom[side].selected.style.setProperty("--selected-color", color);
     sideDom[side].selected.innerHTML = `
       <div class="selected-visual" aria-hidden="true">
-        <span
-          class="mini-monster"
-          style="--selected-color:${color};--mini-shape:${miniShapes[shape]}"
-        ></span>
+        ${art
+          ? `<img class="pokemon-art selected-art" src="${art}" alt="" />`
+          : `<span
+              class="mini-monster"
+              style="--selected-color:${color};--mini-shape:${miniShapes[shape]}"
+            ></span>`}
       </div>
       <div class="selected-details">
         <span class="selected-number">KANTO #${String(pokemon.id).padStart(3, "0")}</span>
@@ -158,6 +166,7 @@
     sideDom[side].roster.innerHTML = matches.length
       ? matches.map((pokemon) => {
         const color = pokemon.sprite?.cssColorHint || TYPE_COLORS[pokemon.types[0]];
+        const art = artworkPath(pokemon);
         return `
           <button
             class="roster-button"
@@ -167,7 +176,11 @@
             aria-selected="${pokemon.id === selection[side]}"
             style="--entry-color:${color}"
           >
-            <span class="roster-dot" aria-hidden="true"></span>
+            <span class="roster-visual" aria-hidden="true">
+              ${art
+                ? `<img class="pokemon-art roster-art" src="${art}" alt="" loading="lazy" />`
+                : `<span class="roster-dot"></span>`}
+            </span>
             <span class="roster-number">#${String(pokemon.id).padStart(3, "0")}</span>
             <span class="roster-name">${escapeHtml(pokemon.displayName)}</span>
           </button>
@@ -269,15 +282,31 @@
     const stage = sideDom[side].stage;
     const color = pokemon.sprite?.cssColorHint || TYPE_COLORS[pokemon.types[0]];
     const shape = pokemon.sprite?.shape ?? pokemon.id % 4;
+    const art = artworkPath(pokemon);
     stage.className = [
       "monster-stage",
       `${side}-stage`,
       side === "player" ? "is-back" : "",
       `shape-${shape}`,
+      art ? "has-art" : "",
       fainted ? "fainted" : ""
     ].filter(Boolean).join(" ");
     stage.style.setProperty("--monster-color", color);
     stage.style.setProperty("--attack-direction", side === "player" ? "24%" : "-24%");
+
+    let image = stage.querySelector(".monster-art");
+    if (art) {
+      if (!image) {
+        image = document.createElement("img");
+        image.className = "pokemon-art monster-art";
+        image.alt = "";
+        image.decoding = "async";
+        stage.append(image);
+      }
+      image.src = art;
+    } else {
+      image?.remove();
+    }
   }
 
   function updateHp(side, hp, maxHp) {
