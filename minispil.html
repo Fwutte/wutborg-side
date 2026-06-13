@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#081225" />
   <title>Minispil | Wutborg.dk</title>
-  <meta name="description" content="Spil Fire på stribe og Snake i Wutborg Arcade." />
+  <meta name="description" content="Spil Fire på stribe, Snake og Neon Breaker i Wutborg Arcade." />
   <style>
     :root {
       --night: #07101f;
@@ -159,7 +159,7 @@
 
     .games {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 20px;
     }
 
@@ -186,6 +186,7 @@
 
     .game-card.connect { --card-glow: rgba(255, 93, 103, 0.23); }
     .game-card.snake { --card-glow: rgba(107, 242, 219, 0.2); }
+    .game-card.breaker { --card-glow: rgba(166, 129, 255, 0.24); }
 
     .game-number {
       color: var(--muted);
@@ -305,6 +306,59 @@
       animation: pulse 1.3s ease-in-out infinite;
     }
 
+    .breaker-preview {
+      position: absolute;
+      right: 20px;
+      bottom: 68px;
+      display: grid;
+      grid-template-columns: repeat(5, 38px);
+      gap: 7px;
+      width: 218px;
+      height: 190px;
+      padding: 17px;
+      border: 1px solid rgba(166, 129, 255, 0.24);
+      border-radius: 24px;
+      background:
+        linear-gradient(rgba(107, 242, 219, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(107, 242, 219, 0.05) 1px, transparent 1px),
+        #070d21;
+      background-size: 22px 22px;
+      transform: rotate(-4deg);
+      transition: transform 0.3s ease;
+    }
+
+    .game-card:hover .breaker-preview { transform: rotate(-1deg) translateY(-8px); }
+
+    .breaker-brick {
+      height: 18px;
+      border-radius: 5px;
+      background: var(--brick-color);
+      box-shadow: 0 0 12px var(--brick-color);
+    }
+
+    .breaker-paddle {
+      position: absolute;
+      left: 65px;
+      bottom: 18px;
+      width: 88px;
+      height: 10px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--cyan), #fff, #57b8ff);
+      box-shadow: 0 0 15px rgba(107, 242, 219, 0.65);
+    }
+
+    .breaker-ball {
+      position: absolute;
+      right: 54px;
+      bottom: 46px;
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 0 15px var(--cyan);
+      animation: pulse 1.1s ease-in-out infinite;
+    }
+
     .note {
       margin: 22px 0 0;
       padding: 20px 24px;
@@ -331,8 +385,15 @@
       50% { transform: scale(1.18); filter: brightness(1.2); }
     }
 
+    @media (max-width: 1050px) {
+      .games { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .game-card.breaker { grid-column: 1 / -1; min-height: 390px; }
+      .game-card.breaker .breaker-preview { right: 8%; bottom: 42px; }
+    }
+
     @media (max-width: 850px) {
       .games { grid-template-columns: 1fr; }
+      .game-card.breaker { grid-column: auto; min-height: 440px; }
     }
 
     @media (max-width: 540px) {
@@ -350,6 +411,11 @@
       }
       .disc { width: 30px; height: 30px; }
       .snake-preview { right: -15px; bottom: 84px; transform: scale(0.88) rotate(5deg); }
+      .game-card.breaker .breaker-preview {
+        right: -8px;
+        bottom: 82px;
+        transform: scale(0.9) rotate(-4deg);
+      }
       .footer { flex-direction: column; gap: 8px; }
     }
 
@@ -407,6 +473,32 @@
             <i class="snake-piece"></i><i class="snake-piece"></i><i class="snake-piece"></i>
             <i class="snake-piece"></i><i class="snake-piece"></i><i class="snake-piece"></i>
             <i class="snake-food"></i>
+          </span>
+        </a>
+
+        <a class="game-card breaker" href="brick-breaker.html">
+          <span class="game-number">Spil 03 · En spiller</span>
+          <h2>Neon Breaker</h2>
+          <p>Knus neonblokkene, fang vilde power-ups, og ryd alle fire levels.</p>
+          <span class="play">Start spillet</span>
+          <span class="breaker-preview" aria-hidden="true">
+            <i class="breaker-brick" style="--brick-color:#55f6e7"></i>
+            <i class="breaker-brick" style="--brick-color:#55f6e7"></i>
+            <i class="breaker-brick" style="--brick-color:#55f6e7"></i>
+            <i class="breaker-brick" style="--brick-color:#55f6e7"></i>
+            <i class="breaker-brick" style="--brick-color:#55f6e7"></i>
+            <i class="breaker-brick" style="--brick-color:#9b78ff"></i>
+            <i class="breaker-brick" style="--brick-color:#9b78ff"></i>
+            <i class="breaker-brick" style="--brick-color:#9b78ff"></i>
+            <i class="breaker-brick" style="--brick-color:#9b78ff"></i>
+            <i class="breaker-brick" style="--brick-color:#9b78ff"></i>
+            <i class="breaker-brick" style="--brick-color:#ff4fa3"></i>
+            <i class="breaker-brick" style="--brick-color:#ff4fa3"></i>
+            <i class="breaker-brick" style="--brick-color:#ff4fa3"></i>
+            <i class="breaker-brick" style="--brick-color:#ff4fa3"></i>
+            <i class="breaker-brick" style="--brick-color:#ff4fa3"></i>
+            <i class="breaker-paddle"></i>
+            <i class="breaker-ball"></i>
           </span>
         </a>
       </section>

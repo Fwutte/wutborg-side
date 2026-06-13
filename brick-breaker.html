@@ -1,0 +1,1407 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#050817" />
+  <title>Neon Breaker | Wutborg Arcade</title>
+  <meta
+    name="description"
+    content="Spil Neon Breaker, et hurtigt retro-inspireret brick breaker-spil med power-ups og fire levels."
+  />
+  <style>
+    :root {
+      --night: #050817;
+      --panel: #0c1530;
+      --paper: #f8fbff;
+      --muted: #91a2c8;
+      --cyan: #55f6e7;
+      --pink: #ff4fa3;
+      --yellow: #ffe45e;
+      --purple: #9b78ff;
+      --border: rgba(255, 255, 255, 0.14);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      min-height: 100vh;
+      overflow-x: hidden;
+      color: var(--paper);
+      font-family: Inter, ui-rounded, "Arial Rounded MT Bold", system-ui, sans-serif;
+      background:
+        radial-gradient(circle at 14% 15%, rgba(85, 246, 231, 0.16), transparent 27rem),
+        radial-gradient(circle at 88% 78%, rgba(255, 79, 163, 0.15), transparent 30rem),
+        linear-gradient(145deg, #03050d, #081126 58%, #050817);
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.34;
+      background-image:
+        linear-gradient(rgba(85, 246, 231, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(85, 246, 231, 0.035) 1px, transparent 1px);
+      background-size: 46px 46px;
+      mask-image: linear-gradient(#000, transparent 92%);
+    }
+
+    button, a { -webkit-tap-highlight-color: transparent; }
+    button { font: inherit; }
+
+    .page {
+      position: relative;
+      width: min(1240px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 18px 0 38px;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+      padding: 11px 15px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: rgba(6, 12, 29, 0.76);
+      backdrop-filter: blur(18px);
+    }
+
+    .brand {
+      color: #fff;
+      text-decoration: none;
+      font-weight: 950;
+      letter-spacing: -0.035em;
+    }
+
+    .nav-link {
+      padding: 9px 14px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.82rem;
+      font-weight: 850;
+      transition: color 0.2s ease, transform 0.2s ease;
+    }
+
+    .nav-link:hover {
+      color: #fff;
+      transform: translateX(-3px);
+    }
+
+    .game-card {
+      overflow: hidden;
+      border: 1px solid rgba(85, 246, 231, 0.18);
+      border-radius: 30px;
+      background:
+        linear-gradient(145deg, rgba(15, 27, 60, 0.95), rgba(4, 9, 24, 0.97));
+      box-shadow: 0 34px 90px rgba(0, 0, 0, 0.42);
+    }
+
+    .game-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 17px clamp(17px, 3vw, 28px);
+      border-bottom: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.025);
+    }
+
+    .title-block {
+      display: flex;
+      align-items: baseline;
+      gap: 13px;
+      min-width: 0;
+    }
+
+    .title-block h1 {
+      margin: 0;
+      color: transparent;
+      background: linear-gradient(105deg, #fff, var(--cyan) 58%, var(--pink));
+      background-clip: text;
+      -webkit-background-clip: text;
+      font-size: clamp(1.65rem, 4vw, 2.7rem);
+      line-height: 0.9;
+      letter-spacing: -0.055em;
+      white-space: nowrap;
+    }
+
+    .game-number {
+      color: var(--muted);
+      font-size: 0.68rem;
+      font-weight: 950;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .hud {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(72px, 1fr));
+      gap: 8px;
+    }
+
+    .hud-item {
+      min-width: 76px;
+      padding: 8px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 13px;
+      background: rgba(2, 7, 19, 0.48);
+    }
+
+    .hud-item span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.58rem;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .hud-item strong {
+      display: block;
+      margin-top: 2px;
+      font-size: 1.05rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stage {
+      position: relative;
+      width: 100%;
+      background: #030612;
+      isolation: isolate;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 48 / 31;
+      cursor: none;
+      touch-action: none;
+    }
+
+    .scanlines {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      opacity: 0.14;
+      background: repeating-linear-gradient(
+        to bottom,
+        transparent 0,
+        transparent 3px,
+        rgba(255, 255, 255, 0.05) 4px
+      );
+      mix-blend-mode: overlay;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 4;
+      display: grid;
+      place-items: center;
+      padding: 22px;
+      opacity: 0;
+      pointer-events: none;
+      background: rgba(2, 5, 15, 0.68);
+      backdrop-filter: blur(8px);
+      transition: opacity 0.25s ease;
+    }
+
+    .overlay.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .overlay-card {
+      width: min(100%, 540px);
+      padding: clamp(24px, 5vw, 42px);
+      border: 1px solid rgba(85, 246, 231, 0.22);
+      border-radius: 26px;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(85, 246, 231, 0.11), transparent 55%),
+        rgba(7, 14, 34, 0.93);
+      box-shadow: 0 28px 80px rgba(0, 0, 0, 0.5);
+      text-align: center;
+    }
+
+    .overlay-kicker {
+      margin: 0 0 10px;
+      color: var(--cyan);
+      font-size: 0.68rem;
+      font-weight: 950;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .overlay-title {
+      display: block;
+      margin: 0;
+      font-size: clamp(2.7rem, 8vw, 5rem);
+      line-height: 0.86;
+      letter-spacing: -0.07em;
+    }
+
+    .overlay-text {
+      max-width: 410px;
+      margin: 20px auto 0;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .overlay-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 25px;
+    }
+
+    .button {
+      min-height: 46px;
+      padding: 0 19px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      cursor: pointer;
+      color: #fff;
+      background: rgba(255, 255, 255, 0.07);
+      font-weight: 950;
+      transition: transform 0.18s ease, background 0.18s ease;
+    }
+
+    .button:hover {
+      background: rgba(255, 255, 255, 0.13);
+      transform: translateY(-2px);
+    }
+
+    .button.primary {
+      border: 0;
+      color: #071329;
+      background: var(--cyan);
+      box-shadow: 0 13px 32px rgba(85, 246, 231, 0.23);
+    }
+
+    .controls-panel {
+      display: none;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 9px;
+      margin-top: 22px;
+      text-align: left;
+    }
+
+    .controls-panel.visible { display: grid; }
+
+    .control-tip {
+      padding: 12px 14px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.035);
+      font-size: 0.78rem;
+      line-height: 1.35;
+    }
+
+    .control-tip strong {
+      display: block;
+      margin-bottom: 3px;
+      color: #fff;
+    }
+
+    .game-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      min-height: 57px;
+      padding: 10px clamp(17px, 3vw, 28px);
+      border-top: 1px solid var(--border);
+    }
+
+    .status {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 800;
+    }
+
+    .footer-controls {
+      display: flex;
+      gap: 8px;
+    }
+
+    .small-button {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      cursor: pointer;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.04);
+      font-size: 0.75rem;
+      font-weight: 900;
+    }
+
+    .power-legend {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(90px, 1fr));
+      gap: 7px;
+      margin-top: 12px;
+    }
+
+    .power-chip {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 11px;
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      color: var(--muted);
+      background: rgba(8, 15, 35, 0.72);
+      font-size: 0.68rem;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    .power-chip i {
+      display: grid;
+      place-items: center;
+      flex: 0 0 23px;
+      width: 23px;
+      height: 23px;
+      border-radius: 7px;
+      color: #071329;
+      background: var(--power-color);
+      font-style: normal;
+      font-weight: 950;
+    }
+
+    @media (max-width: 940px) {
+      .game-header {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .hud { width: 100%; }
+      .hud-item { min-width: 0; }
+      .power-legend { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 620px) {
+      .page { width: min(100% - 12px, 520px); padding-top: 6px; }
+      .nav { border-radius: 15px; }
+      .game-card { border-radius: 20px; }
+      .title-block { justify-content: space-between; }
+      .game-number { font-size: 0.58rem; }
+      .hud-item { padding: 7px 9px; }
+      .overlay { padding: 10px; }
+      .overlay-card { border-radius: 19px; }
+      .overlay-text { margin-top: 13px; font-size: 0.84rem; }
+      .overlay-actions { margin-top: 16px; }
+      .button { min-height: 42px; padding-inline: 15px; }
+      .controls-panel { grid-template-columns: 1fr; max-height: 145px; overflow: auto; }
+      .game-footer { align-items: flex-start; flex-direction: column; gap: 8px; }
+      .power-legend { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      canvas { cursor: default; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <nav class="nav">
+      <a class="brand" href="minispil.html">Wutborg Arcade</a>
+      <a class="nav-link" href="minispil.html">← Alle spil</a>
+    </nav>
+
+    <main>
+      <section class="game-card" aria-label="Neon Breaker">
+        <header class="game-header">
+          <div class="title-block">
+            <h1>Neon Breaker</h1>
+            <span class="game-number">Spil 03 · En spiller</span>
+          </div>
+
+          <div class="hud" aria-label="Spilstatus">
+            <div class="hud-item"><span>Score</span><strong class="score">0</strong></div>
+            <div class="hud-item"><span>Liv</span><strong class="lives">3</strong></div>
+            <div class="hud-item"><span>Level</span><strong class="level">1 / 4</strong></div>
+          </div>
+        </header>
+
+        <div class="stage">
+          <canvas width="960" height="620" aria-label="Neon Breaker spilleplade"></canvas>
+          <div class="scanlines" aria-hidden="true"></div>
+
+          <div class="overlay visible">
+            <div class="overlay-card">
+              <p class="overlay-kicker">Wutborg Arcade præsenterer</p>
+              <strong class="overlay-title">Neon<br />Breaker</strong>
+              <p class="overlay-text">
+                Ryd alle neonblokke, fang power-ups, og kæmp dig gennem fire stadig hurtigere levels.
+              </p>
+              <div class="overlay-actions">
+                <button class="button primary start-button" type="button">Start Game</button>
+                <button class="button controls-button" type="button">Controls</button>
+              </div>
+              <div class="controls-panel">
+                <div class="control-tip"><strong>Flyt paddle</strong>Mus, touch eller piletaster / A og D</div>
+                <div class="control-tip"><strong>Start bolden</strong>Klik på banen eller tryk mellemrum</div>
+                <div class="control-tip"><strong>Laser</strong>Skyder automatisk, mens power-up'en er aktiv</div>
+                <div class="control-tip"><strong>Pause</strong>Tryk P eller brug knappen under banen</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <footer class="game-footer">
+          <p class="status" role="status" aria-live="polite">Klar til at bryde neonmuren?</p>
+          <div class="footer-controls">
+            <button class="small-button pause-button" type="button">Pause</button>
+            <button class="small-button restart-button" type="button">Genstart</button>
+          </div>
+        </footer>
+      </section>
+
+      <div class="power-legend" aria-label="Power-ups">
+        <span class="power-chip" style="--power-color:#55f6e7"><i>W</i>Større paddle</span>
+        <span class="power-chip" style="--power-color:#ff6e8d"><i>S</i>Mindre paddle</span>
+        <span class="power-chip" style="--power-color:#8dff80"><i>+</i>Ekstra liv</span>
+        <span class="power-chip" style="--power-color:#6eb8ff"><i>↓</i>Langsom bold</span>
+        <span class="power-chip" style="--power-color:#ff9e4a"><i>↑</i>Hurtig bold</span>
+        <span class="power-chip" style="--power-color:#c18bff"><i>M</i>Multi-ball</span>
+        <span class="power-chip" style="--power-color:#ffe45e"><i>L</i>Laser</span>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    class NeonBreaker {
+      constructor(canvas) {
+        this.canvas = canvas;
+        this.context = canvas.getContext("2d");
+        this.width = canvas.width;
+        this.height = canvas.height;
+        this.basePaddleWidth = 138;
+        this.maxBallSpeed = 760;
+        this.minBallSpeed = 350;
+        this.maxBalls = 7;
+        this.state = "menu";
+        this.lastTime = 0;
+        this.animationFrame = null;
+        this.levelTimer = 0;
+        this.flash = 0;
+        this.shake = 0;
+        this.overlayAction = () => this.startGame();
+        this.score = 0;
+        this.lives = 3;
+        this.levelIndex = 0;
+        this.keys = { left: false, right: false };
+        this.pointerActive = false;
+        this.statusTimer = 0;
+
+        // Hvert tegn beskriver en blok; de senere layouts har flere åbninger og rækker.
+        this.levels = [
+          [
+            "11111111111",
+            "11111111111",
+            "11111111111",
+            "01111111110",
+            "00111111100"
+          ],
+          [
+            "10101010101",
+            "01111111110",
+            "11101110111",
+            "01111111110",
+            "10111011101",
+            "00111111100"
+          ],
+          [
+            "11100100111",
+            "11110101111",
+            "01111111110",
+            "11011111011",
+            "11101110111",
+            "01110101110",
+            "00111111100"
+          ],
+          [
+            "11111111111",
+            "10111011101",
+            "11101110111",
+            "01111111110",
+            "11010101011",
+            "11101110111",
+            "01111111110",
+            "10110110101"
+          ]
+        ];
+
+        this.powerDefinitions = {
+          wide: { label: "W", color: "#55f6e7", name: "Større paddle" },
+          small: { label: "S", color: "#ff6e8d", name: "Mindre paddle" },
+          life: { label: "+", color: "#8dff80", name: "Ekstra liv" },
+          slow: { label: "↓", color: "#6eb8ff", name: "Langsommere bold" },
+          fast: { label: "↑", color: "#ff9e4a", name: "Hurtigere bold" },
+          multi: { label: "M", color: "#c18bff", name: "Multi-ball" },
+          laser: { label: "L", color: "#ffe45e", name: "Laser" }
+        };
+
+        this.bindElements();
+        this.bindEvents();
+        this.resetWorld();
+        this.draw();
+      }
+
+      bindElements() {
+        this.scoreElement = document.querySelector(".score");
+        this.livesElement = document.querySelector(".lives");
+        this.levelElement = document.querySelector(".level");
+        this.statusElement = document.querySelector(".status");
+        this.overlay = document.querySelector(".overlay");
+        this.overlayKicker = document.querySelector(".overlay-kicker");
+        this.overlayTitle = document.querySelector(".overlay-title");
+        this.overlayText = document.querySelector(".overlay-text");
+        this.startButton = document.querySelector(".start-button");
+        this.controlsButton = document.querySelector(".controls-button");
+        this.controlsPanel = document.querySelector(".controls-panel");
+        this.pauseButton = document.querySelector(".pause-button");
+        this.restartButton = document.querySelector(".restart-button");
+      }
+
+      bindEvents() {
+        this.startButton.addEventListener("click", () => this.overlayAction());
+        this.controlsButton.addEventListener("click", () => {
+          this.controlsPanel.classList.toggle("visible");
+          this.controlsButton.textContent = this.controlsPanel.classList.contains("visible")
+            ? "Skjul controls"
+            : "Controls";
+        });
+        this.pauseButton.addEventListener("click", () => this.togglePause());
+        this.restartButton.addEventListener("click", () => this.startGame());
+
+        document.addEventListener("keydown", (event) => {
+          if (["ArrowLeft", "ArrowRight", "Space"].includes(event.code)) event.preventDefault();
+          if (event.code === "ArrowLeft" || event.code === "KeyA") this.keys.left = true;
+          if (event.code === "ArrowRight" || event.code === "KeyD") this.keys.right = true;
+          if (event.code === "Space") this.launchServe();
+          if (event.code === "KeyP" || event.code === "Escape") this.togglePause();
+        });
+
+        document.addEventListener("keyup", (event) => {
+          if (event.code === "ArrowLeft" || event.code === "KeyA") this.keys.left = false;
+          if (event.code === "ArrowRight" || event.code === "KeyD") this.keys.right = false;
+        });
+
+        const movePointer = (event) => {
+          const rect = this.canvas.getBoundingClientRect();
+          const scale = this.width / rect.width;
+          this.pointerActive = true;
+          this.paddle.x = this.clamp(
+            (event.clientX - rect.left) * scale - this.paddle.width / 2,
+            0,
+            this.width - this.paddle.width
+          );
+        };
+
+        this.canvas.addEventListener("pointermove", movePointer);
+        this.canvas.addEventListener("pointerdown", (event) => {
+          movePointer(event);
+          this.canvas.setPointerCapture?.(event.pointerId);
+          this.launchServe();
+        });
+      }
+
+      resetWorld() {
+        this.paddle = {
+          x: this.width / 2 - this.basePaddleWidth / 2,
+          y: this.height - 48,
+          width: this.basePaddleWidth,
+          height: 16,
+          speed: 790,
+          sizeMode: "normal",
+          sizeUntil: 0,
+          laserUntil: 0,
+          laserCooldown: 0
+        };
+        this.balls = [];
+        this.bricks = [];
+        this.powerUps = [];
+        this.bullets = [];
+        this.particles = [];
+      }
+
+      startGame() {
+        this.score = 0;
+        this.lives = 3;
+        this.levelIndex = 0;
+        this.state = "serve";
+        this.overlay.classList.remove("visible");
+        this.overlayAction = () => this.startGame();
+        this.controlsPanel.classList.remove("visible");
+        this.controlsButton.textContent = "Controls";
+        this.controlsButton.style.display = "";
+        this.resetWorld();
+        this.loadLevel();
+        this.createServeBall();
+        this.updateHud();
+        this.setStatus("Level 1 · Klik eller tryk mellemrum for at starte");
+        this.pauseButton.textContent = "Pause";
+        this.lastTime = performance.now();
+        cancelAnimationFrame(this.animationFrame);
+        this.animationFrame = requestAnimationFrame((time) => this.loop(time));
+      }
+
+      loadLevel() {
+        const pattern = this.levels[this.levelIndex];
+        const columns = pattern[0].length;
+        const gap = 8;
+        const side = 38;
+        const top = 62;
+        const brickWidth = (this.width - side * 2 - gap * (columns - 1)) / columns;
+        const brickHeight = 26;
+        const palette = ["#55f6e7", "#6eb8ff", "#9b78ff", "#ff4fa3", "#ff7c67", "#ffe45e", "#8dff80", "#55d6ff"];
+
+        this.bricks = [];
+        pattern.forEach((row, rowIndex) => {
+          [...row].forEach((cell, columnIndex) => {
+            if (cell !== "1") return;
+            this.bricks.push({
+              x: side + columnIndex * (brickWidth + gap),
+              y: top + rowIndex * (brickHeight + gap),
+              width: brickWidth,
+              height: brickHeight,
+              color: palette[(rowIndex + this.levelIndex * 2) % palette.length],
+              active: true,
+              pulse: Math.random() * Math.PI * 2
+            });
+          });
+        });
+      }
+
+      createServeBall() {
+        this.balls = [{
+          x: this.paddle.x + this.paddle.width / 2,
+          y: this.paddle.y - 11,
+          vx: 0,
+          vy: 0,
+          radius: 8,
+          trail: [],
+          stuck: true
+        }];
+      }
+
+      launchServe() {
+        if (this.state === "menu" || this.state === "gameover" || this.state === "win") return;
+        if (this.state === "paused") {
+          this.togglePause();
+          return;
+        }
+
+        const stuckBall = this.balls.find((ball) => ball.stuck);
+        if (!stuckBall || this.state !== "serve") return;
+
+        const speed = this.levelSpeed();
+        const direction = Math.random() > 0.5 ? 1 : -1;
+        stuckBall.stuck = false;
+        stuckBall.vx = speed * 0.42 * direction;
+        stuckBall.vy = -Math.sqrt(speed * speed - stuckBall.vx * stuckBall.vx);
+        this.state = "playing";
+        this.setStatus(`Level ${this.levelIndex + 1} er i gang`);
+      }
+
+      levelSpeed() {
+        return 390 + this.levelIndex * 62;
+      }
+
+      loop(time) {
+        const delta = Math.min((time - this.lastTime) / 1000, 0.025);
+        this.lastTime = time;
+
+        if (this.state !== "paused" && this.state !== "menu" && this.state !== "gameover" && this.state !== "win") {
+          this.update(delta);
+        }
+        this.draw();
+        this.animationFrame = requestAnimationFrame((nextTime) => this.loop(nextTime));
+      }
+
+      update(delta) {
+        this.updatePaddle(delta);
+        this.updateEffects(delta);
+        this.updatePowerUps(delta);
+        this.updateBullets(delta);
+        this.updateParticles(delta);
+        this.flash = Math.max(0, this.flash - delta * 3.5);
+        this.shake = Math.max(0, this.shake - delta * 28);
+
+        if (this.statusTimer > 0) this.statusTimer -= delta;
+
+        if (this.state === "serve") {
+          const ball = this.balls[0];
+          if (ball) {
+            ball.x = this.paddle.x + this.paddle.width / 2;
+            ball.y = this.paddle.y - ball.radius - 2;
+          }
+          return;
+        }
+
+        if (this.state === "levelComplete") {
+          this.levelTimer -= delta;
+          if (this.levelTimer <= 0) this.advanceLevel();
+          return;
+        }
+
+        if (this.state !== "playing") return;
+
+        // Små fysiktrin forhindrer hurtige bolde i at springe gennem paddle eller blokke.
+        const maxTravel = Math.max(...this.balls.map((ball) => Math.hypot(ball.vx, ball.vy)), 1) * delta;
+        const steps = Math.max(1, Math.ceil(maxTravel / 5));
+        const stepDelta = delta / steps;
+        for (let step = 0; step < steps; step += 1) {
+          this.updateBalls(stepDelta);
+          if (this.state !== "playing") break;
+        }
+
+        if (this.balls.length === 0 && this.state === "playing") this.loseLife();
+      }
+
+      updatePaddle(delta) {
+        const direction = Number(this.keys.right) - Number(this.keys.left);
+        if (direction !== 0) {
+          this.pointerActive = false;
+          this.paddle.x += direction * this.paddle.speed * delta;
+        }
+        this.paddle.x = this.clamp(this.paddle.x, 0, this.width - this.paddle.width);
+      }
+
+      updateEffects(delta) {
+        const now = performance.now();
+        if (this.paddle.sizeMode !== "normal" && now > this.paddle.sizeUntil) {
+          const center = this.paddle.x + this.paddle.width / 2;
+          this.paddle.width = this.basePaddleWidth;
+          this.paddle.x = this.clamp(center - this.paddle.width / 2, 0, this.width - this.paddle.width);
+          this.paddle.sizeMode = "normal";
+        }
+
+        if (now < this.paddle.laserUntil && this.state === "playing") {
+          this.paddle.laserCooldown -= delta;
+          if (this.paddle.laserCooldown <= 0) {
+            this.fireLaser();
+            this.paddle.laserCooldown = 0.34;
+          }
+        }
+      }
+
+      updateBalls(delta) {
+        for (const ball of [...this.balls]) {
+          const previousX = ball.x;
+          const previousY = ball.y;
+          ball.x += ball.vx * delta;
+          ball.y += ball.vy * delta;
+
+          ball.trail.unshift({ x: ball.x, y: ball.y });
+          if (ball.trail.length > 8) ball.trail.pop();
+
+          if (ball.x - ball.radius <= 0) {
+            ball.x = ball.radius;
+            ball.vx = Math.abs(ball.vx);
+            this.ensurePlayableAngle(ball);
+          } else if (ball.x + ball.radius >= this.width) {
+            ball.x = this.width - ball.radius;
+            ball.vx = -Math.abs(ball.vx);
+            this.ensurePlayableAngle(ball);
+          }
+
+          if (ball.y - ball.radius <= 0) {
+            ball.y = ball.radius;
+            ball.vy = Math.abs(ball.vy);
+            this.ensurePlayableAngle(ball);
+          }
+
+          this.collideWithPaddle(ball, previousY);
+          this.collideWithBricks(ball, previousX, previousY);
+
+          if (ball.y - ball.radius > this.height) {
+            this.balls.splice(this.balls.indexOf(ball), 1);
+          }
+        }
+      }
+
+      collideWithPaddle(ball, previousY) {
+        const paddle = this.paddle;
+        const crossedTop = previousY + ball.radius <= paddle.y && ball.y + ball.radius >= paddle.y;
+        const insideX = ball.x + ball.radius >= paddle.x && ball.x - ball.radius <= paddle.x + paddle.width;
+        if (!crossedTop || !insideX || ball.vy <= 0) return;
+
+        ball.y = paddle.y - ball.radius - 0.5;
+        // Træfpunktet styrer returvinklen: midten går stejlt, kanterne går skråt.
+        const impact = this.clamp(
+          (ball.x - (paddle.x + paddle.width / 2)) / (paddle.width / 2),
+          -1,
+          1
+        );
+        const speed = this.clamp(Math.hypot(ball.vx, ball.vy) * 1.015, this.minBallSpeed, this.maxBallSpeed);
+        const angle = impact * 1.08;
+        ball.vx = speed * Math.sin(angle);
+        ball.vy = -Math.abs(speed * Math.cos(angle));
+        this.ensurePlayableAngle(ball, impact || Math.sign(ball.vx) || 1);
+        this.spawnParticles(ball.x, paddle.y, "#55f6e7", 8);
+      }
+
+      collideWithBricks(ball, previousX, previousY) {
+        for (const brick of this.bricks) {
+          if (!brick.active || !this.circleHitsRect(ball, brick)) continue;
+
+          brick.active = false;
+          this.score += 100 * (this.levelIndex + 1);
+          this.updateHud();
+          this.spawnParticles(brick.x + brick.width / 2, brick.y + brick.height / 2, brick.color, 14);
+          this.shake = Math.min(8, this.shake + 2.2);
+
+          const wasAbove = previousY + ball.radius <= brick.y;
+          const wasBelow = previousY - ball.radius >= brick.y + brick.height;
+          const wasLeft = previousX + ball.radius <= brick.x;
+          const wasRight = previousX - ball.radius >= brick.x + brick.width;
+
+          if (wasAbove) {
+            ball.y = brick.y - ball.radius;
+            ball.vy = -Math.abs(ball.vy);
+          } else if (wasBelow) {
+            ball.y = brick.y + brick.height + ball.radius;
+            ball.vy = Math.abs(ball.vy);
+          } else if (wasLeft) {
+            ball.x = brick.x - ball.radius;
+            ball.vx = -Math.abs(ball.vx);
+          } else if (wasRight) {
+            ball.x = brick.x + brick.width + ball.radius;
+            ball.vx = Math.abs(ball.vx);
+          } else {
+            ball.vy *= -1;
+          }
+
+          this.ensurePlayableAngle(ball);
+          if (Math.random() < 0.2) this.dropPowerUp(brick);
+          this.checkLevelComplete();
+          break;
+        }
+      }
+
+      circleHitsRect(ball, rect) {
+        const nearestX = this.clamp(ball.x, rect.x, rect.x + rect.width);
+        const nearestY = this.clamp(ball.y, rect.y, rect.y + rect.height);
+        const dx = ball.x - nearestX;
+        const dy = ball.y - nearestY;
+        return dx * dx + dy * dy <= ball.radius * ball.radius;
+      }
+
+      ensurePlayableAngle(ball, preferredDirection = 0) {
+        let speed = this.clamp(Math.hypot(ball.vx, ball.vy), this.minBallSpeed, this.maxBallSpeed);
+        let xRatio = Math.abs(ball.vx) / speed;
+        const ySign = Math.sign(ball.vy) || -1;
+        let xSign = Math.sign(ball.vx) || Math.sign(preferredDirection) || (Math.random() > 0.5 ? 1 : -1);
+
+        // Hold bolden væk fra næsten lodrette eller vandrette fastlåste baner.
+        if (xRatio < 0.14) xRatio = 0.14;
+        if (xRatio > 0.9) xRatio = 0.9;
+
+        ball.vx = speed * xRatio * xSign;
+        ball.vy = speed * Math.sqrt(1 - xRatio * xRatio) * ySign;
+      }
+
+      loseLife() {
+        this.lives -= 1;
+        this.updateHud();
+        this.powerUps = [];
+        this.bullets = [];
+        this.resetPaddleEffects();
+
+        if (this.lives <= 0) {
+          this.endGame(false);
+          return;
+        }
+
+        this.state = "serve";
+        this.paddle.x = this.width / 2 - this.paddle.width / 2;
+        this.createServeBall();
+        this.flash = 1;
+        this.setStatus(`Du mistede et liv · ${this.lives} tilbage · Klik for at fortsætte`);
+      }
+
+      checkLevelComplete() {
+        if (this.state !== "playing" || this.bricks.some((brick) => brick.active)) return;
+        this.state = "levelComplete";
+        this.levelTimer = 1.35;
+        this.score += 1000 * (this.levelIndex + 1);
+        this.updateHud();
+        this.setStatus(`Level ${this.levelIndex + 1} klaret!`);
+      }
+
+      advanceLevel() {
+        if (this.levelIndex >= this.levels.length - 1) {
+          this.endGame(true);
+          return;
+        }
+
+        this.levelIndex += 1;
+        this.powerUps = [];
+        this.bullets = [];
+        this.resetPaddleEffects();
+        this.loadLevel();
+        this.createServeBall();
+        this.state = "serve";
+        this.updateHud();
+        this.setStatus(`Level ${this.levelIndex + 1} · Højere fart, nyt layout`);
+      }
+
+      dropPowerUp(brick) {
+        const types = Object.keys(this.powerDefinitions);
+        const type = types[Math.floor(Math.random() * types.length)];
+        this.powerUps.push({
+          type,
+          x: brick.x + brick.width / 2,
+          y: brick.y + brick.height / 2,
+          size: 25,
+          vy: 150,
+          rotation: 0
+        });
+      }
+
+      updatePowerUps(delta) {
+        for (const powerUp of [...this.powerUps]) {
+          powerUp.y += powerUp.vy * delta;
+          powerUp.rotation += delta * 2.4;
+
+          const caught =
+            powerUp.y + powerUp.size / 2 >= this.paddle.y &&
+            powerUp.y - powerUp.size / 2 <= this.paddle.y + this.paddle.height &&
+            powerUp.x + powerUp.size / 2 >= this.paddle.x &&
+            powerUp.x - powerUp.size / 2 <= this.paddle.x + this.paddle.width;
+
+          if (caught) {
+            this.applyPowerUp(powerUp.type);
+            this.powerUps.splice(this.powerUps.indexOf(powerUp), 1);
+          } else if (powerUp.y - powerUp.size > this.height) {
+            this.powerUps.splice(this.powerUps.indexOf(powerUp), 1);
+          }
+        }
+      }
+
+      applyPowerUp(type) {
+        const definition = this.powerDefinitions[type];
+        const now = performance.now();
+
+        // Paddle-effekter udløber; fart, liv og multi-ball virker med det samme.
+        if (type === "wide" || type === "small") {
+          const center = this.paddle.x + this.paddle.width / 2;
+          this.paddle.width = type === "wide" ? 205 : 88;
+          this.paddle.x = this.clamp(center - this.paddle.width / 2, 0, this.width - this.paddle.width);
+          this.paddle.sizeMode = type;
+          this.paddle.sizeUntil = now + 12000;
+        } else if (type === "life") {
+          this.lives += 1;
+          this.updateHud();
+        } else if (type === "slow" || type === "fast") {
+          const factor = type === "slow" ? 0.78 : 1.22;
+          this.balls.forEach((ball) => {
+            ball.vx *= factor;
+            ball.vy *= factor;
+            this.ensurePlayableAngle(ball);
+          });
+        } else if (type === "multi") {
+          this.addMultiBall();
+        } else if (type === "laser") {
+          this.paddle.laserUntil = now + 11000;
+          this.paddle.laserCooldown = 0;
+        }
+
+        this.spawnParticles(
+          this.paddle.x + this.paddle.width / 2,
+          this.paddle.y,
+          definition.color,
+          18
+        );
+        this.setStatus(`Power-up: ${definition.name}`, 2.3);
+      }
+
+      addMultiBall() {
+        const sourceBalls = [...this.balls];
+        for (const source of sourceBalls) {
+          if (this.balls.length >= this.maxBalls || source.stuck) break;
+          const speed = Math.hypot(source.vx, source.vy);
+          const baseAngle = Math.atan2(source.vy, source.vx);
+          for (const offset of [-0.3, 0.3]) {
+            if (this.balls.length >= this.maxBalls) break;
+            this.balls.push({
+              x: source.x,
+              y: source.y,
+              vx: Math.cos(baseAngle + offset) * speed,
+              vy: Math.sin(baseAngle + offset) * speed,
+              radius: source.radius,
+              trail: [],
+              stuck: false
+            });
+          }
+        }
+      }
+
+      fireLaser() {
+        const y = this.paddle.y - 4;
+        this.bullets.push(
+          { x: this.paddle.x + 17, y, vy: -640 },
+          { x: this.paddle.x + this.paddle.width - 17, y, vy: -640 }
+        );
+      }
+
+      updateBullets(delta) {
+        for (const bullet of [...this.bullets]) {
+          bullet.y += bullet.vy * delta;
+
+          for (const brick of this.bricks) {
+            if (
+              brick.active &&
+              bullet.x >= brick.x &&
+              bullet.x <= brick.x + brick.width &&
+              bullet.y >= brick.y &&
+              bullet.y <= brick.y + brick.height
+            ) {
+              brick.active = false;
+              this.score += 100 * (this.levelIndex + 1);
+              this.updateHud();
+              this.spawnParticles(bullet.x, bullet.y, brick.color, 11);
+              if (Math.random() < 0.16) this.dropPowerUp(brick);
+              this.bullets.splice(this.bullets.indexOf(bullet), 1);
+              this.checkLevelComplete();
+              break;
+            }
+          }
+
+          if (bullet.y < -20 && this.bullets.includes(bullet)) {
+            this.bullets.splice(this.bullets.indexOf(bullet), 1);
+          }
+        }
+      }
+
+      resetPaddleEffects() {
+        const center = this.paddle.x + this.paddle.width / 2;
+        this.paddle.width = this.basePaddleWidth;
+        this.paddle.x = this.clamp(center - this.paddle.width / 2, 0, this.width - this.paddle.width);
+        this.paddle.sizeMode = "normal";
+        this.paddle.sizeUntil = 0;
+        this.paddle.laserUntil = 0;
+      }
+
+      spawnParticles(x, y, color, count) {
+        for (let index = 0; index < count; index += 1) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = 45 + Math.random() * 180;
+          this.particles.push({
+            x,
+            y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            life: 0.35 + Math.random() * 0.45,
+            maxLife: 0.8,
+            size: 2 + Math.random() * 4,
+            color
+          });
+        }
+      }
+
+      updateParticles(delta) {
+        for (const particle of [...this.particles]) {
+          particle.x += particle.vx * delta;
+          particle.y += particle.vy * delta;
+          particle.vy += 100 * delta;
+          particle.life -= delta;
+          if (particle.life <= 0) this.particles.splice(this.particles.indexOf(particle), 1);
+        }
+      }
+
+      togglePause() {
+        if (["menu", "gameover", "win"].includes(this.state)) return;
+
+        if (this.state === "paused") {
+          this.state = this.previousState || "playing";
+          this.overlay.classList.remove("visible");
+          this.controlsButton.style.display = "";
+          this.pauseButton.textContent = "Pause";
+          this.lastTime = performance.now();
+          this.setStatus("Spillet fortsætter");
+          return;
+        }
+
+        this.previousState = this.state;
+        this.state = "paused";
+        this.showOverlay(
+          "Pause",
+          "Pause",
+          "Boldene venter. Tryk P, Escape eller knappen for at fortsætte.",
+          "Fortsæt"
+        );
+        this.overlayAction = () => this.togglePause();
+        this.controlsButton.style.display = "none";
+        this.pauseButton.textContent = "Fortsæt";
+      }
+
+      endGame(didWin) {
+        this.state = didWin ? "win" : "gameover";
+        this.showOverlay(
+          didWin ? "Alle levels klaret" : "Ingen liv tilbage",
+          didWin ? "Neon<br />Master!" : "Game<br />Over",
+          didWin
+            ? `Du ryddede hele neonarkaden med ${this.score.toLocaleString("da-DK")} point.`
+            : `Din final score blev ${this.score.toLocaleString("da-DK")} point.`,
+          "Spil igen"
+        );
+        this.overlayAction = () => this.startGame();
+        this.controlsButton.style.display = "";
+        this.pauseButton.textContent = "Pause";
+        this.setStatus(didWin ? "Sejr! Alle fire levels er klaret." : "Game over");
+      }
+
+      showOverlay(kicker, title, text, buttonText) {
+        this.overlayKicker.textContent = kicker;
+        this.overlayTitle.innerHTML = title;
+        this.overlayText.textContent = text;
+        this.startButton.textContent = buttonText;
+        this.overlay.classList.add("visible");
+      }
+
+      setStatus(text, duration = 0) {
+        this.statusElement.textContent = text;
+        this.statusTimer = duration;
+      }
+
+      updateHud() {
+        this.scoreElement.textContent = this.score.toLocaleString("da-DK");
+        this.livesElement.textContent = this.lives;
+        this.levelElement.textContent = `${this.levelIndex + 1} / ${this.levels.length}`;
+      }
+
+      draw() {
+        const ctx = this.context;
+        ctx.save();
+        ctx.clearRect(0, 0, this.width, this.height);
+
+        const shakeX = this.shake > 0 ? (Math.random() - 0.5) * this.shake : 0;
+        const shakeY = this.shake > 0 ? (Math.random() - 0.5) * this.shake : 0;
+        ctx.translate(shakeX, shakeY);
+
+        this.drawBackground(ctx);
+        this.drawBricks(ctx);
+        this.drawPowerUps(ctx);
+        this.drawBullets(ctx);
+        this.drawPaddle(ctx);
+        this.drawBalls(ctx);
+        this.drawParticles(ctx);
+
+        if (this.state === "serve") this.drawCenterMessage(ctx, "KLIK ELLER MELLEMRUM");
+        if (this.state === "levelComplete") this.drawCenterMessage(ctx, `LEVEL ${this.levelIndex + 1} KLARET`);
+
+        if (this.flash > 0) {
+          ctx.fillStyle = `rgba(255, 79, 163, ${this.flash * 0.2})`;
+          ctx.fillRect(0, 0, this.width, this.height);
+        }
+
+        ctx.restore();
+      }
+
+      drawBackground(ctx) {
+        const gradient = ctx.createLinearGradient(0, 0, 0, this.height);
+        gradient.addColorStop(0, "#071127");
+        gradient.addColorStop(0.65, "#04091a");
+        gradient.addColorStop(1, "#02050e");
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, this.width, this.height);
+
+        ctx.strokeStyle = "rgba(85, 246, 231, 0.045)";
+        ctx.lineWidth = 1;
+        for (let x = 0; x <= this.width; x += 48) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, this.height);
+          ctx.stroke();
+        }
+        for (let y = 0; y <= this.height; y += 48) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(this.width, y);
+          ctx.stroke();
+        }
+
+        const floor = ctx.createLinearGradient(0, this.height * 0.72, 0, this.height);
+        floor.addColorStop(0, "rgba(155, 120, 255, 0)");
+        floor.addColorStop(1, "rgba(155, 120, 255, 0.08)");
+        ctx.fillStyle = floor;
+        ctx.fillRect(0, this.height * 0.72, this.width, this.height * 0.28);
+      }
+
+      drawBricks(ctx) {
+        const now = performance.now() * 0.003;
+        for (const brick of this.bricks) {
+          if (!brick.active) continue;
+          const glow = 10 + Math.sin(now + brick.pulse) * 3;
+          ctx.save();
+          ctx.shadowColor = brick.color;
+          ctx.shadowBlur = glow;
+          ctx.fillStyle = brick.color;
+          ctx.beginPath();
+          ctx.roundRect(brick.x, brick.y, brick.width, brick.height, 7);
+          ctx.fill();
+
+          const shine = ctx.createLinearGradient(brick.x, brick.y, brick.x, brick.y + brick.height);
+          shine.addColorStop(0, "rgba(255,255,255,0.48)");
+          shine.addColorStop(0.35, "rgba(255,255,255,0.08)");
+          shine.addColorStop(1, "rgba(0,0,0,0.3)");
+          ctx.fillStyle = shine;
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+
+      drawPaddle(ctx) {
+        const laserActive = performance.now() < this.paddle.laserUntil;
+        ctx.save();
+        ctx.shadowColor = laserActive ? "#ffe45e" : "#55f6e7";
+        ctx.shadowBlur = laserActive ? 25 : 18;
+        const gradient = ctx.createLinearGradient(
+          this.paddle.x,
+          this.paddle.y,
+          this.paddle.x + this.paddle.width,
+          this.paddle.y
+        );
+        gradient.addColorStop(0, laserActive ? "#ffe45e" : "#55f6e7");
+        gradient.addColorStop(0.5, "#f8fbff");
+        gradient.addColorStop(1, laserActive ? "#ff9e4a" : "#6eb8ff");
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.roundRect(this.paddle.x, this.paddle.y, this.paddle.width, this.paddle.height, 8);
+        ctx.fill();
+        ctx.restore();
+
+        if (laserActive) {
+          ctx.fillStyle = "#ffe45e";
+          ctx.fillRect(this.paddle.x + 12, this.paddle.y - 8, 9, 10);
+          ctx.fillRect(this.paddle.x + this.paddle.width - 21, this.paddle.y - 8, 9, 10);
+        }
+      }
+
+      drawBalls(ctx) {
+        for (const ball of this.balls) {
+          ball.trail.forEach((point, index) => {
+            const alpha = (1 - index / ball.trail.length) * 0.2;
+            ctx.fillStyle = `rgba(85, 246, 231, ${alpha})`;
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, Math.max(1, ball.radius - index * 0.7), 0, Math.PI * 2);
+            ctx.fill();
+          });
+
+          ctx.save();
+          ctx.shadowColor = "#55f6e7";
+          ctx.shadowBlur = 22;
+          const ballGradient = ctx.createRadialGradient(
+            ball.x - 3,
+            ball.y - 4,
+            1,
+            ball.x,
+            ball.y,
+            ball.radius
+          );
+          ballGradient.addColorStop(0, "#ffffff");
+          ballGradient.addColorStop(0.45, "#aafff7");
+          ballGradient.addColorStop(1, "#36b8e8");
+          ctx.fillStyle = ballGradient;
+          ctx.beginPath();
+          ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+
+      drawPowerUps(ctx) {
+        for (const powerUp of this.powerUps) {
+          const definition = this.powerDefinitions[powerUp.type];
+          ctx.save();
+          ctx.translate(powerUp.x, powerUp.y);
+          ctx.rotate(Math.sin(powerUp.rotation) * 0.16);
+          ctx.shadowColor = definition.color;
+          ctx.shadowBlur = 18;
+          ctx.fillStyle = definition.color;
+          ctx.beginPath();
+          ctx.roundRect(-powerUp.size / 2, -powerUp.size / 2, powerUp.size, powerUp.size, 7);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = "#071329";
+          ctx.font = "950 15px system-ui";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(definition.label, 0, 0.5);
+          ctx.restore();
+        }
+      }
+
+      drawBullets(ctx) {
+        ctx.save();
+        ctx.strokeStyle = "#ffe45e";
+        ctx.lineWidth = 4;
+        ctx.shadowColor = "#ffe45e";
+        ctx.shadowBlur = 13;
+        for (const bullet of this.bullets) {
+          ctx.beginPath();
+          ctx.moveTo(bullet.x, bullet.y + 12);
+          ctx.lineTo(bullet.x, bullet.y - 7);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      drawParticles(ctx) {
+        for (const particle of this.particles) {
+          ctx.globalAlpha = Math.max(0, particle.life / particle.maxLife);
+          ctx.fillStyle = particle.color;
+          ctx.fillRect(particle.x, particle.y, particle.size, particle.size);
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      drawCenterMessage(ctx, text) {
+        ctx.save();
+        ctx.fillStyle = "rgba(2, 5, 15, 0.72)";
+        ctx.beginPath();
+        ctx.roundRect(this.width / 2 - 160, this.height / 2 - 28, 320, 56, 28);
+        ctx.fill();
+        ctx.strokeStyle = "rgba(85, 246, 231, 0.35)";
+        ctx.stroke();
+        ctx.fillStyle = "#f8fbff";
+        ctx.font = "900 16px system-ui";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(text, this.width / 2, this.height / 2 + 1);
+        ctx.restore();
+      }
+
+      clamp(value, minimum, maximum) {
+        return Math.max(minimum, Math.min(maximum, value));
+      }
+    }
+
+    const game = new NeonBreaker(document.querySelector("canvas"));
+  </script>
+</body>
+</html>
