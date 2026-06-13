@@ -7,7 +7,7 @@
   <title>Familiens minispil | Wutborg.dk</title>
   <meta
     name="description"
-    content="Spil Fire på stribe, Snake og Neon Breaker i familien Wutborgs spillehjørne."
+    content="Spil Fire på stribe, Snake, Neon Breaker, Tetris og Monster Battle Arena i familien Wutborgs spillehjørne."
   />
   <style>
     :root {
@@ -197,16 +197,22 @@
     }
 
     .game-card {
+      --card-bg: rgba(255, 253, 248, 0.82);
+      --card-ink: var(--ink);
+      --card-muted: var(--muted);
+      --card-accent: var(--terracotta);
+      --card-button-ink: #fffaf2;
+      --card-outline: var(--line);
       position: relative;
       display: flex;
       min-height: 470px;
       overflow: hidden;
       padding: 29px;
-      border: 1px solid var(--line);
+      border: 2px solid var(--card-outline);
       border-radius: 28px;
-      color: var(--ink);
+      color: var(--card-ink);
       text-decoration: none;
-      background: rgba(255, 253, 248, 0.82);
+      background: var(--card-bg);
       box-shadow: 0 17px 48px rgba(77, 52, 37, 0.08);
       isolation: isolate;
       transition: transform 0.25s ease, box-shadow 0.25s ease;
@@ -217,8 +223,13 @@
       position: absolute;
       inset: 0;
       z-index: -1;
-      opacity: 0.78;
-      background: radial-gradient(circle at 88% 18%, var(--card-glow), transparent 37%);
+      opacity: 0.9;
+      background:
+        radial-gradient(circle at 88% 18%, var(--card-glow), transparent 37%),
+        linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+      background-size: auto, 22px 22px, 22px 22px;
+      mask-image: linear-gradient(to bottom, #000, rgba(0,0,0,0.55));
     }
 
     .game-card:hover {
@@ -227,23 +238,65 @@
     }
 
     .game-card.connect {
-      --card-glow: rgba(184, 95, 69, 0.22);
+      --card-bg: linear-gradient(145deg, #fffdf8, #f0e9ff);
+      --card-ink: #2a2250;
+      --card-muted: #655c82;
+      --card-accent: #7145d6;
+      --card-button-ink: #fff;
+      --card-outline: rgba(113, 69, 214, 0.22);
+      --card-glow: rgba(113, 69, 214, 0.2);
     }
 
     .game-card.snake {
-      --card-glow: rgba(117, 134, 106, 0.25);
+      --card-bg:
+        radial-gradient(circle at 88% 15%, rgba(125, 204, 90, 0.13), transparent 38%),
+        linear-gradient(145deg, #0c160b, #050b06);
+      --card-ink: #ecf7e8;
+      --card-muted: #87a27a;
+      --card-accent: #7dcc5a;
+      --card-button-ink: #0a1609;
+      --card-outline: rgba(125, 204, 90, 0.23);
+      --card-glow: rgba(125, 204, 90, 0.12);
     }
 
     .game-card.breaker {
-      --card-glow: rgba(214, 165, 66, 0.25);
+      --card-bg:
+        radial-gradient(circle at 90% 10%, rgba(255, 79, 163, 0.12), transparent 32%),
+        linear-gradient(145deg, #101b3a, #030714);
+      --card-ink: #f8fbff;
+      --card-muted: #91a2c8;
+      --card-accent: #55f6e7;
+      --card-button-ink: #061229;
+      --card-outline: rgba(85, 246, 231, 0.22);
+      --card-glow: rgba(85, 246, 231, 0.12);
     }
 
     .game-card.tetris {
-      --card-glow: rgba(103, 86, 181, 0.25);
+      --card-bg:
+        radial-gradient(circle at 88% 12%, rgba(255, 79, 154, 0.17), transparent 34%),
+        linear-gradient(145deg, #2e176f, #10092e);
+      --card-ink: #f8f6ff;
+      --card-muted: #bdb5dc;
+      --card-accent: #43e4e8;
+      --card-button-ink: #19103f;
+      --card-outline: rgba(169, 137, 255, 0.3);
+      --card-glow: rgba(117, 73, 232, 0.2);
     }
 
     .game-card.pokemon {
-      --card-glow: rgba(78, 135, 217, 0.24);
+      grid-column: 1 / -1;
+      min-height: 425px;
+      --card-bg:
+        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(145deg, #162d39, #09171f);
+      --card-ink: #fff;
+      --card-muted: #b7c7cd;
+      --card-accent: #efbd4d;
+      --card-button-ink: #14212a;
+      --card-outline: rgba(239, 189, 77, 0.3);
+      --card-glow: rgba(78, 135, 217, 0.18);
+      background-size: 22px 22px, 22px 22px, auto;
     }
 
     .card-content {
@@ -253,7 +306,7 @@
     }
 
     .game-number {
-      color: var(--terracotta);
+      color: var(--card-accent);
       font-size: 0.68rem;
       font-weight: 950;
       letter-spacing: 0.14em;
@@ -269,12 +322,58 @@
       letter-spacing: -0.05em;
     }
 
+    .game-card.breaker h2,
+    .game-card.tetris h2,
+    .game-card.pokemon h2 {
+      font-family: Inter, ui-rounded, "Arial Rounded MT Bold", system-ui, sans-serif;
+      font-weight: 950;
+      letter-spacing: -0.065em;
+    }
+
+    .game-card.breaker h2 {
+      background: linear-gradient(90deg, #fff, #55f6e7 54%, #ff4fa3);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .game-card.tetris h2 {
+      text-shadow: 4px 5px 0 rgba(7, 3, 30, 0.35);
+    }
+
+    .game-card.pokemon h2 {
+      max-width: 470px;
+      font-family: Impact, "Arial Black", sans-serif;
+      font-size: clamp(3rem, 5vw, 5.1rem);
+      line-height: 0.82;
+      text-transform: uppercase;
+      text-shadow: 6px 7px 0 rgba(0,0,0,0.25);
+    }
+
+    .game-card.pokemon h2 span {
+      display: block;
+      color: var(--card-accent);
+      font-size: 0.72em;
+    }
+
+    .game-card.pokemon .card-content {
+      max-width: 48%;
+    }
+
+    .game-card.pokemon p {
+      max-width: 430px;
+    }
+
     .game-card p {
       max-width: 320px;
       margin: 15px 0 0;
-      color: var(--muted);
+      color: var(--card-muted);
       font-size: 0.91rem;
       line-height: 1.58;
+    }
+
+    .game-card.connect p {
+      max-width: 245px;
     }
 
     .play {
@@ -288,9 +387,9 @@
       min-height: 45px;
       padding: 0 17px;
       border-radius: 999px;
-      color: #fffaf2;
-      background: var(--terracotta);
-      box-shadow: 0 12px 25px rgba(145, 70, 49, 0.2);
+      color: var(--card-button-ink);
+      background: var(--card-accent);
+      box-shadow: 0 12px 25px color-mix(in srgb, var(--card-accent) 30%, transparent);
       font-size: 0.84rem;
       font-weight: 900;
     }
@@ -321,10 +420,12 @@
       grid-template-columns: repeat(7, 31px);
       gap: 6px;
       padding: 15px;
-      border: 5px solid #527ac0;
+      border: 6px solid #7145d6;
       border-radius: 21px;
-      background: #6190dc;
-      box-shadow: 0 17px 32px rgba(64, 62, 76, 0.19);
+      background: #3d85e8;
+      box-shadow:
+        inset 0 -10px 0 rgba(31, 86, 182, 0.38),
+        0 17px 32px rgba(54, 32, 112, 0.23);
       transform: rotate(-5deg);
     }
 
@@ -337,25 +438,36 @@
     }
 
     .disc.red {
-      background: #c85f4d;
+      background: #f04456;
     }
 
     .disc.yellow {
-      background: #e0b34d;
+      background: #ffd43b;
     }
 
     .snake-preview {
-      width: 235px;
-      height: 188px;
-      border: 7px solid #506347;
-      border-radius: 26px;
+      width: 250px;
+      height: 205px;
+      overflow: hidden;
+      border: 2px solid #315624;
+      border-radius: 16px;
       background:
-        linear-gradient(rgba(255, 255, 255, 0.11) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.11) 1px, transparent 1px),
-        #75866a;
-      background-size: 23px 23px;
-      box-shadow: 0 17px 32px rgba(64, 62, 76, 0.18);
-      transform: rotate(5deg);
+        linear-gradient(rgba(125,204,90,0.075) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(125,204,90,0.075) 1px, transparent 1px),
+        #091208;
+      background-size: 20px 20px;
+      box-shadow: 0 0 34px rgba(125,204,90,0.14), 0 17px 32px rgba(0,0,0,0.3);
+      transform: rotate(3deg);
+    }
+
+    .snake-preview::before {
+      content: "SNAKE  ·  MEDIUM";
+      position: absolute;
+      top: 12px;
+      left: 14px;
+      color: #7dcc5a;
+      font: 900 0.63rem/1 ui-monospace, monospace;
+      letter-spacing: 0.12em;
     }
 
     .snake-piece,
@@ -363,65 +475,78 @@
       position: absolute;
       width: 23px;
       height: 23px;
-      border-radius: 8px;
-      background: #dbe7bc;
-      box-shadow: inset -4px -4px 6px rgba(55, 75, 47, 0.17);
+      border-radius: 4px;
+      background: #7dcc5a;
+      box-shadow: 0 0 10px rgba(125,204,90,0.42);
     }
 
-    .snake-piece:nth-child(1) { left: 38px; top: 87px; }
-    .snake-piece:nth-child(2) { left: 61px; top: 87px; }
-    .snake-piece:nth-child(3) { left: 84px; top: 87px; }
-    .snake-piece:nth-child(4) { left: 107px; top: 87px; }
-    .snake-piece:nth-child(5) { left: 107px; top: 64px; }
-    .snake-piece:nth-child(6) { left: 107px; top: 41px; }
+    .snake-piece:nth-child(1) { left: 44px; top: 119px; }
+    .snake-piece:nth-child(2) { left: 67px; top: 119px; }
+    .snake-piece:nth-child(3) { left: 90px; top: 119px; }
+    .snake-piece:nth-child(4) { left: 113px; top: 119px; }
+    .snake-piece:nth-child(5) { left: 113px; top: 96px; }
+    .snake-piece:nth-child(6) { left: 113px; top: 73px; }
 
     .snake-food {
-      top: 41px;
-      right: 38px;
+      top: 71px;
+      right: 40px;
       border-radius: 50%;
-      background: var(--terracotta);
+      background: #f04456;
+      box-shadow: 0 0 14px rgba(240,68,86,0.5);
       animation: pulse 1.4s ease-in-out infinite;
     }
 
     .breaker-preview {
       display: grid;
-      grid-template-columns: repeat(5, 35px);
-      gap: 7px;
-      width: 210px;
-      height: 186px;
-      padding: 16px;
-      border: 7px solid #604a3b;
-      border-radius: 24px;
-      background: #3f332c;
-      box-shadow: 0 17px 32px rgba(64, 62, 76, 0.2);
-      transform: rotate(-4deg);
+      grid-template-columns: repeat(5, 38px);
+      gap: 6px;
+      width: 240px;
+      height: 205px;
+      padding: 43px 14px 14px;
+      border: 2px solid rgba(85,246,231,0.35);
+      border-radius: 16px;
+      background: #030612;
+      box-shadow: 0 0 36px rgba(85,246,231,0.12), 0 17px 32px rgba(0,0,0,0.3);
+      transform: rotate(-3deg);
+    }
+
+    .breaker-preview::before {
+      content: "SCORE 0000   ·   LIV 3";
+      position: absolute;
+      top: 13px;
+      left: 15px;
+      color: #91a2c8;
+      font: 850 0.6rem/1 ui-monospace, monospace;
+      letter-spacing: 0.09em;
     }
 
     .breaker-brick {
-      height: 18px;
+      height: 16px;
       border-radius: 5px;
       background: var(--brick-color);
-      box-shadow: inset 0 -3px 4px rgba(80, 45, 20, 0.12);
+      box-shadow: 0 0 11px color-mix(in srgb, var(--brick-color) 52%, transparent);
     }
 
     .breaker-paddle {
       position: absolute;
       left: 60px;
-      bottom: 17px;
-      width: 86px;
-      height: 11px;
+      bottom: 14px;
+      width: 104px;
+      height: 9px;
       border-radius: 999px;
-      background: var(--cream-light);
+      background: #55f6e7;
+      box-shadow: 0 0 14px rgba(85,246,231,0.62);
     }
 
     .breaker-ball {
       position: absolute;
-      right: 48px;
-      bottom: 44px;
-      width: 14px;
-      height: 14px;
+      right: 40px;
+      bottom: 43px;
+      width: 11px;
+      height: 11px;
       border-radius: 50%;
-      background: var(--mustard);
+      background: #ffe45e;
+      box-shadow: 0 0 12px rgba(255,228,94,0.72);
       animation: pulse 1.2s ease-in-out infinite;
     }
 
@@ -433,14 +558,14 @@
       width: 215px;
       height: 215px;
       padding: 15px;
-      border: 7px solid #4d416f;
-      border-radius: 25px;
+      border: 3px solid #7549e8;
+      border-radius: 18px;
       background:
         linear-gradient(rgba(255,255,255,0.07) 1px, transparent 1px),
         linear-gradient(90deg, rgba(255,255,255,0.07) 1px, transparent 1px),
-        #28203f;
+        #090722;
       background-size: 40px 40px;
-      box-shadow: 0 17px 32px rgba(64, 62, 76, 0.2);
+      box-shadow: 0 0 30px rgba(117,73,232,0.32), 0 17px 32px rgba(10,3,35,0.4);
       transform: rotate(4deg);
     }
 
@@ -462,16 +587,21 @@
     .tetris-block.eight { grid-column: 5; grid-row: 5; }
 
     .pokemon-preview {
-      width: 255px;
-      height: 205px;
+      right: 4%;
+      bottom: 45px;
+      width: min(49%, 560px);
+      height: 300px;
       overflow: hidden;
-      border: 7px solid #263e4b;
-      border-radius: 27px;
+      border: 4px solid #09141b;
+      border-radius: 22px;
       background:
-        radial-gradient(ellipse at 50% 105%, #568a50 0 35%, transparent 36%),
-        linear-gradient(#82c6dc 0 62%, #78a660 62%);
-      box-shadow: 0 17px 32px rgba(64, 62, 76, 0.2);
-      transform: rotate(-3deg);
+        linear-gradient(rgba(255,255,255,0.12) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.12) 1px, transparent 1px),
+        radial-gradient(ellipse at 50% 105%, #4e8b55 0 35%, transparent 36%),
+        linear-gradient(#7fc8df 0 61%, #83ad66 61%);
+      background-size: 18px 18px, 18px 18px, auto, auto;
+      box-shadow: 0 18px 42px rgba(0,0,0,0.28);
+      transform: rotate(-1.5deg);
     }
 
     .pokemon-platform {
@@ -483,59 +613,36 @@
     }
 
     .pokemon-platform.one {
-      right: 18px;
-      bottom: 55px;
+      right: 9%;
+      bottom: 69px;
+      width: 34%;
     }
 
     .pokemon-platform.two {
-      left: 14px;
-      bottom: 22px;
-      width: 125px;
+      left: 6%;
+      bottom: 32px;
+      width: 43%;
     }
 
-    .pokemon-monster {
+    .pokemon-sprite {
       position: absolute;
-      width: 73px;
-      height: 70px;
-      border: 4px solid #263e4b;
-      background: var(--monster-color);
-      box-shadow: inset -9px -10px 0 rgba(25, 39, 48, 0.2), 5px 7px 0 rgba(38, 62, 75, 0.18);
-      clip-path: polygon(8% 25%, 29% 19%, 40% 1%, 57% 18%, 79% 6%, 85% 31%, 100% 48%, 84% 70%, 91% 94%, 60% 89%, 38% 100%, 22% 82%, 1% 67%);
+      width: 42%;
+      height: 64%;
+      object-fit: contain;
+      image-rendering: pixelated;
+      filter: drop-shadow(7px 9px 0 rgba(20,33,42,0.2));
     }
 
-    .pokemon-monster::before,
-    .pokemon-monster::after {
-      content: "";
-      position: absolute;
-      top: 29px;
-      width: 8px;
-      height: 11px;
-      border: 2px solid #263e4b;
-      border-radius: 50%;
-      background: #fff;
+    .pokemon-sprite.opponent {
+      right: 5%;
+      bottom: 25%;
     }
 
-    .pokemon-monster::before {
-      left: 20px;
-    }
-
-    .pokemon-monster::after {
-      right: 17px;
-    }
-
-    .pokemon-monster.one {
-      right: 32px;
-      bottom: 70px;
-      --monster-color: #e7bd42;
-    }
-
-    .pokemon-monster.two {
-      left: 42px;
-      bottom: 40px;
-      width: 88px;
-      height: 84px;
-      --monster-color: #5c91cc;
-      transform: scaleX(-1);
+    .pokemon-sprite.player {
+      left: 3%;
+      bottom: 5%;
+      width: 48%;
+      height: 72%;
     }
 
     .family-note {
@@ -569,17 +676,27 @@
       height: 35px;
       border-radius: 50%;
       color: #fff;
-      background: var(--sage);
+      background: #7145d6;
       font-weight: 900;
     }
 
     .note-symbol:nth-child(2) {
-      background: var(--terracotta);
+      color: #0a1609;
+      background: #7dcc5a;
     }
 
     .note-symbol:nth-child(3) {
-      color: var(--ink);
-      background: var(--mustard);
+      color: #061229;
+      background: #55f6e7;
+    }
+
+    .note-symbol:nth-child(4) {
+      background: #7549e8;
+    }
+
+    .note-symbol:nth-child(5) {
+      color: #14212a;
+      background: #efbd4d;
     }
 
     .footer {
@@ -627,6 +744,21 @@
 
       .game-card {
         min-height: 470px;
+      }
+
+      .game-card.pokemon {
+        min-height: 560px;
+      }
+
+      .game-card.pokemon .card-content {
+        max-width: 100%;
+      }
+
+      .pokemon-preview {
+        right: 3%;
+        bottom: 58px;
+        width: 70%;
+        height: 285px;
       }
     }
 
@@ -678,6 +810,22 @@
       .tetris-preview {
         right: -25px;
         transform: scale(0.87) rotate(4deg);
+      }
+
+      .game-card.pokemon {
+        min-height: 590px;
+      }
+
+      .game-card.pokemon h2 {
+        font-size: clamp(2.75rem, 14vw, 4.1rem);
+      }
+
+      .pokemon-preview {
+        right: -9%;
+        bottom: 64px;
+        width: 96%;
+        height: 300px;
+        transform: scale(0.88) rotate(-1.5deg);
       }
 
       .family-note,
@@ -754,7 +902,7 @@
           <span class="card-content">
             <span class="game-number">Spil 02 · En spiller</span>
             <h2>Snake</h2>
-            <p>Spis maden, bliv længere, og hold dig fri af vægge og din egen hale.</p>
+            <p>Vælg realistisk eller arcade-look, sæt sværhedsgraden, og jagt en ny highscore.</p>
           </span>
           <span class="play">Start spillet</span>
           <span class="preview snake-preview" aria-hidden="true">
@@ -768,25 +916,25 @@
           <span class="card-content">
             <span class="game-number">Spil 03 · En spiller</span>
             <h2>Neon Breaker</h2>
-            <p>Hold bolden i gang, fang power-ups, og ryd alle fire baner.</p>
+            <p>Ryd fire neonbaner, fang syv slags power-ups, og hold styr på liv og score.</p>
           </span>
           <span class="play">Start spillet</span>
           <span class="preview breaker-preview" aria-hidden="true">
-            <i class="breaker-brick" style="--brick-color:#7fbca9"></i>
-            <i class="breaker-brick" style="--brick-color:#7fbca9"></i>
-            <i class="breaker-brick" style="--brick-color:#7fbca9"></i>
-            <i class="breaker-brick" style="--brick-color:#7fbca9"></i>
-            <i class="breaker-brick" style="--brick-color:#7fbca9"></i>
-            <i class="breaker-brick" style="--brick-color:#d9b164"></i>
-            <i class="breaker-brick" style="--brick-color:#d9b164"></i>
-            <i class="breaker-brick" style="--brick-color:#d9b164"></i>
-            <i class="breaker-brick" style="--brick-color:#d9b164"></i>
-            <i class="breaker-brick" style="--brick-color:#d9b164"></i>
-            <i class="breaker-brick" style="--brick-color:#c5735d"></i>
-            <i class="breaker-brick" style="--brick-color:#c5735d"></i>
-            <i class="breaker-brick" style="--brick-color:#c5735d"></i>
-            <i class="breaker-brick" style="--brick-color:#c5735d"></i>
-            <i class="breaker-brick" style="--brick-color:#c5735d"></i>
+            <i class="breaker-brick" style="--brick-color:#55f6e7"></i>
+            <i class="breaker-brick" style="--brick-color:#55f6e7"></i>
+            <i class="breaker-brick" style="--brick-color:#55f6e7"></i>
+            <i class="breaker-brick" style="--brick-color:#55f6e7"></i>
+            <i class="breaker-brick" style="--brick-color:#55f6e7"></i>
+            <i class="breaker-brick" style="--brick-color:#ff4fa3"></i>
+            <i class="breaker-brick" style="--brick-color:#ff4fa3"></i>
+            <i class="breaker-brick" style="--brick-color:#ff4fa3"></i>
+            <i class="breaker-brick" style="--brick-color:#ff4fa3"></i>
+            <i class="breaker-brick" style="--brick-color:#ff4fa3"></i>
+            <i class="breaker-brick" style="--brick-color:#ffe45e"></i>
+            <i class="breaker-brick" style="--brick-color:#ffe45e"></i>
+            <i class="breaker-brick" style="--brick-color:#ffe45e"></i>
+            <i class="breaker-brick" style="--brick-color:#ffe45e"></i>
+            <i class="breaker-brick" style="--brick-color:#ffe45e"></i>
             <i class="breaker-paddle"></i>
             <i class="breaker-ball"></i>
           </span>
@@ -796,33 +944,41 @@
           <span class="card-content">
             <span class="game-number">Spil 04 · En spiller</span>
             <h2>Tetris</h2>
-            <p>Byg hele rækker, få dem til at forsvinde, og se hvor højt du kan nå.</p>
+            <p>Byg, ryd og gentag med next-piece preview, stigende levels og farverige neonbrikker.</p>
           </span>
           <span class="play">Spil Tetris</span>
           <span class="preview tetris-preview" aria-hidden="true">
-            <i class="tetris-block one" style="--block-color:#9f72d8"></i>
-            <i class="tetris-block two" style="--block-color:#9f72d8"></i>
-            <i class="tetris-block three" style="--block-color:#9f72d8"></i>
-            <i class="tetris-block four" style="--block-color:#9f72d8"></i>
-            <i class="tetris-block five" style="--block-color:#d9b164"></i>
-            <i class="tetris-block six" style="--block-color:#d9b164"></i>
-            <i class="tetris-block seven" style="--block-color:#d9b164"></i>
-            <i class="tetris-block eight" style="--block-color:#d9b164"></i>
+            <i class="tetris-block one" style="--block-color:#43e4e8"></i>
+            <i class="tetris-block two" style="--block-color:#43e4e8"></i>
+            <i class="tetris-block three" style="--block-color:#43e4e8"></i>
+            <i class="tetris-block four" style="--block-color:#43e4e8"></i>
+            <i class="tetris-block five" style="--block-color:#ff4f9a"></i>
+            <i class="tetris-block six" style="--block-color:#ff4f9a"></i>
+            <i class="tetris-block seven" style="--block-color:#ff4f9a"></i>
+            <i class="tetris-block eight" style="--block-color:#ffd84e"></i>
           </span>
         </a>
 
         <a class="game-card pokemon" href="pokemon-battle.html">
           <span class="card-content">
             <span class="game-number">Spil 05 · En spiller</span>
-            <h2>Monster Battle Arena</h2>
-            <p>Vælg to Pokémon, sæt deres level, og kæmp i en taktisk retro-duel.</p>
+            <h2>Monster <span>Battle Arena</span></h2>
+            <p>Vælg blandt 151 Pokémon, sæt level og AI, og kæmp med autentiske FireRed-sprites.</p>
           </span>
           <span class="play">Start battle</span>
           <span class="preview pokemon-preview" aria-hidden="true">
             <i class="pokemon-platform one"></i>
             <i class="pokemon-platform two"></i>
-            <i class="pokemon-monster one"></i>
-            <i class="pokemon-monster two"></i>
+            <img
+              class="pokemon-sprite opponent"
+              src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-iii/firered-leafgreen/4.png"
+              alt=""
+            />
+            <img
+              class="pokemon-sprite player"
+              src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-iii/firered-leafgreen/back/25.png"
+              alt=""
+            />
           </span>
         </a>
       </section>
