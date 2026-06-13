@@ -3,28 +3,27 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#081225" />
-  <title>Wutborg Pokémon Adventure</title>
+  <meta name="theme-color" content="#f3eadc" />
+  <title>Wutborg.dk · Hjemme hos os</title>
   <meta
     name="description"
-    content="Velkommen til familien Wutborgs farverige Pokémon-univers med eventyr, spil og sjove projekter."
+    content="Velkommen hjem til familien Wutborgs lille hjørne af nettet med spil, projekter og hyggelige stunder."
   />
   <style>
     :root {
-      --night: #07101f;
-      --night-soft: #0d1d37;
-      --ink: #17213c;
-      --paper: #fffdf2;
-      --muted: #a9b9d4;
-      --yellow: #ffd84d;
-      --yellow-deep: #f5ae24;
-      --red: #ff5d67;
-      --blue: #57b8ff;
-      --cyan: #6bf2db;
-      --purple: #a681ff;
-      --glass: rgba(10, 27, 52, 0.72);
-      --glass-border: rgba(255, 255, 255, 0.14);
-      --shadow: 0 30px 90px rgba(0, 0, 0, 0.42);
+      --cream: #f7f0e5;
+      --cream-light: #fffaf2;
+      --paper: #fffdf8;
+      --ink: #3b312b;
+      --muted: #786a60;
+      --terracotta: #b85f45;
+      --terracotta-dark: #914631;
+      --sage: #75866a;
+      --sage-light: #d9e0cf;
+      --mustard: #d6a542;
+      --wood: #8b6045;
+      --line: rgba(70, 50, 38, 0.13);
+      --shadow: 0 24px 70px rgba(77, 52, 37, 0.12);
     }
 
     * {
@@ -40,27 +39,22 @@
       min-width: 320px;
       min-height: 100vh;
       overflow-x: hidden;
-      color: var(--paper);
+      color: var(--ink);
       font-family: Inter, ui-rounded, "Arial Rounded MT Bold", system-ui, sans-serif;
       background:
-        radial-gradient(circle at 12% 10%, rgba(87, 184, 255, 0.24), transparent 25rem),
-        radial-gradient(circle at 88% 14%, rgba(166, 129, 255, 0.22), transparent 26rem),
-        radial-gradient(circle at 50% 72%, rgba(107, 242, 219, 0.12), transparent 34rem),
-        linear-gradient(145deg, #050b17 0%, #0a1931 48%, #081225 100%);
+        radial-gradient(circle at 10% 5%, rgba(214, 165, 66, 0.12), transparent 24rem),
+        radial-gradient(circle at 92% 18%, rgba(117, 134, 106, 0.13), transparent 28rem),
+        var(--cream);
     }
 
     body::before {
       content: "";
       position: fixed;
       inset: 0;
-      z-index: -2;
+      z-index: -1;
       pointer-events: none;
-      opacity: 0.32;
-      background-image:
-        linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
-      background-size: 52px 52px;
-      mask-image: linear-gradient(to bottom, #000, transparent 85%);
+      opacity: 0.34;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.09'/%3E%3C/svg%3E");
     }
 
     a,
@@ -72,50 +66,10 @@
       font: inherit;
     }
 
-    .aurora {
-      position: fixed;
-      z-index: -1;
-      width: 34rem;
-      height: 34rem;
-      border-radius: 50%;
-      filter: blur(80px);
-      opacity: 0.18;
-      pointer-events: none;
-      animation: aurora-drift 14s ease-in-out infinite alternate;
-    }
-
-    .aurora-one {
-      top: -15rem;
-      left: -8rem;
-      background: var(--blue);
-    }
-
-    .aurora-two {
-      right: -12rem;
-      bottom: -15rem;
-      background: var(--purple);
-      animation-delay: -6s;
-    }
-
-    .cursor-glow {
-      position: fixed;
-      z-index: 0;
-      width: 24rem;
-      height: 24rem;
-      border-radius: 50%;
-      pointer-events: none;
-      opacity: 0;
-      background: radial-gradient(circle, rgba(255, 216, 77, 0.11), transparent 68%);
-      transform: translate(-50%, -50%);
-      transition: opacity 0.3s ease;
-    }
-
     .page {
-      position: relative;
-      z-index: 1;
-      width: min(1240px, calc(100% - 40px));
+      width: min(1180px, calc(100% - 40px));
       margin: 0 auto;
-      padding: 24px 0 48px;
+      padding: 22px 0 42px;
     }
 
     .nav {
@@ -123,118 +77,124 @@
       align-items: center;
       justify-content: space-between;
       gap: 24px;
-      min-height: 68px;
+      min-height: 70px;
       margin-bottom: 18px;
-      padding: 10px 12px 10px 14px;
-      border: 1px solid var(--glass-border);
-      border-radius: 22px;
-      background: rgba(8, 22, 43, 0.64);
-      box-shadow: 0 16px 50px rgba(0, 0, 0, 0.2);
-      backdrop-filter: blur(18px);
+      padding: 10px 12px 10px 16px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: rgba(255, 253, 248, 0.78);
+      box-shadow: 0 10px 35px rgba(77, 52, 37, 0.07);
+      backdrop-filter: blur(16px);
     }
 
     .brand {
       display: inline-flex;
       align-items: center;
       gap: 12px;
-      color: var(--paper);
+      color: var(--ink);
       text-decoration: none;
-      font-weight: 950;
+      font-weight: 900;
       letter-spacing: -0.035em;
     }
 
-    .brand-ball,
-    .pokeball {
+    .brand-mark {
       position: relative;
-      flex: 0 0 auto;
-      border-radius: 50%;
-      background: linear-gradient(to bottom, var(--red) 0 44%, #17213c 44% 56%, #fff 56%);
-      box-shadow: inset -4px -5px 10px rgba(0, 0, 0, 0.18), 0 8px 24px rgba(0, 0, 0, 0.3);
+      display: grid;
+      place-items: end center;
+      width: 43px;
+      height: 43px;
+      overflow: hidden;
+      border-radius: 14px;
+      color: var(--cream-light);
+      background: var(--terracotta);
+      box-shadow: inset 0 -5px 12px rgba(90, 39, 25, 0.16);
     }
 
-    .brand-ball {
-      width: 42px;
-      height: 42px;
-      animation: ball-wiggle 5s ease-in-out infinite;
+    .brand-mark::before {
+      content: "";
+      width: 24px;
+      height: 20px;
+      margin-bottom: 7px;
+      border-radius: 3px;
+      background: currentColor;
+      clip-path: polygon(0 40%, 50% 0, 100% 40%, 88% 40%, 88% 100%, 12% 100%, 12% 40%);
     }
 
-    .brand-ball::after,
-    .pokeball::after {
+    .brand-mark::after {
       content: "";
       position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 28%;
-      aspect-ratio: 1;
-      border: 4px solid #17213c;
-      border-radius: 50%;
-      background: #fff;
-      transform: translate(-50%, -50%);
+      bottom: 7px;
+      width: 5px;
+      height: 9px;
+      border-radius: 3px 3px 0 0;
+      background: var(--terracotta);
     }
 
     .brand small {
       display: block;
       margin-top: 1px;
       color: var(--muted);
-      font-size: 0.68rem;
+      font-size: 0.67rem;
       font-weight: 800;
-      letter-spacing: 0.14em;
+      letter-spacing: 0.13em;
       text-transform: uppercase;
     }
 
     .nav-links {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 4px;
     }
 
     .nav-links a {
-      padding: 10px 14px;
+      padding: 10px 13px;
       border-radius: 999px;
       color: var(--muted);
       text-decoration: none;
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       font-weight: 800;
       transition: color 0.2s ease, background 0.2s ease, transform 0.2s ease;
     }
 
     .nav-links a:hover {
-      color: #fff;
-      background: rgba(255, 255, 255, 0.08);
+      color: var(--terracotta-dark);
+      background: rgba(184, 95, 69, 0.08);
       transform: translateY(-2px);
     }
 
-    .online-pill {
+    .welcome-pill {
       display: inline-flex;
       align-items: center;
       gap: 8px;
       padding: 10px 14px;
-      border: 1px solid rgba(107, 242, 219, 0.2);
+      border: 1px solid rgba(117, 134, 106, 0.2);
       border-radius: 999px;
-      color: #bcfff2;
-      background: rgba(107, 242, 219, 0.08);
-      font-size: 0.82rem;
+      color: #53604b;
+      background: rgba(117, 134, 106, 0.1);
+      font-size: 0.8rem;
       font-weight: 850;
     }
 
-    .online-dot {
+    .welcome-dot {
       width: 8px;
       height: 8px;
       border-radius: 50%;
-      background: var(--cyan);
-      box-shadow: 0 0 0 0 rgba(107, 242, 219, 0.7);
-      animation: online-pulse 2s infinite;
+      background: var(--sage);
+      box-shadow: 0 0 0 0 rgba(117, 134, 106, 0.45);
+      animation: soft-pulse 2.4s infinite;
     }
 
     .hero {
       position: relative;
-      min-height: 700px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.04fr) minmax(390px, 0.96fr);
+      min-height: 660px;
       overflow: hidden;
-      border: 1px solid var(--glass-border);
-      border-radius: 38px;
+      border: 1px solid var(--line);
+      border-radius: 34px;
       background:
-        radial-gradient(circle at 72% 35%, rgba(87, 184, 255, 0.16), transparent 30%),
-        linear-gradient(135deg, rgba(16, 38, 69, 0.9), rgba(7, 19, 38, 0.72));
+        radial-gradient(circle at 10% 100%, rgba(214, 165, 66, 0.12), transparent 30%),
+        linear-gradient(135deg, rgba(255, 253, 248, 0.96), rgba(239, 228, 211, 0.94));
       box-shadow: var(--shadow);
       isolation: isolate;
     }
@@ -242,89 +202,88 @@
     .hero::before {
       content: "";
       position: absolute;
-      inset: 0;
+      top: 0;
+      right: 0;
       z-index: -1;
-      opacity: 0.42;
-      background:
-        linear-gradient(115deg, transparent 48%, rgba(255, 255, 255, 0.05) 48.2%, transparent 48.5%),
-        radial-gradient(circle, rgba(255, 255, 255, 0.3) 1px, transparent 1.5px);
-      background-size: auto, 34px 34px;
-      mask-image: linear-gradient(90deg, transparent, #000 55%);
+      width: 48%;
+      height: 100%;
+      opacity: 0.32;
+      background-image:
+        linear-gradient(rgba(117, 134, 106, 0.13) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(117, 134, 106, 0.13) 1px, transparent 1px);
+      background-size: 30px 30px;
+      mask-image: linear-gradient(90deg, transparent, #000 38%);
     }
 
     .hero-copy {
-      position: relative;
-      z-index: 5;
-      width: 59%;
-      padding: clamp(70px, 8vw, 110px) 0 74px clamp(32px, 6vw, 78px);
+      align-self: center;
+      padding: 78px 20px 78px clamp(30px, 6vw, 72px);
     }
 
     .eyebrow {
       display: inline-flex;
       align-items: center;
       gap: 9px;
-      margin: 0 0 20px;
+      margin: 0 0 22px;
       padding: 9px 13px;
-      border: 1px solid rgba(255, 216, 77, 0.22);
+      border: 1px solid rgba(184, 95, 69, 0.18);
       border-radius: 999px;
-      color: #ffe99a;
-      background: rgba(255, 216, 77, 0.08);
-      font-size: 0.76rem;
+      color: var(--terracotta-dark);
+      background: rgba(184, 95, 69, 0.08);
+      font-size: 0.74rem;
       font-weight: 900;
-      letter-spacing: 0.12em;
+      letter-spacing: 0.11em;
       text-transform: uppercase;
     }
 
-    .eyebrow-star {
-      display: inline-block;
-      color: var(--yellow);
-      animation: star-spin 5s linear infinite;
+    .eyebrow-heart {
+      color: var(--terracotta);
+      font-size: 0.9rem;
+      animation: heart-beat 2.6s ease-in-out infinite;
     }
 
     h1 {
       margin: 0;
-      max-width: 760px;
-      font-size: clamp(3.5rem, 7.5vw, 7.6rem);
-      line-height: 0.88;
-      letter-spacing: -0.075em;
+      max-width: 640px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(3.7rem, 7vw, 7rem);
+      font-weight: 700;
+      line-height: 0.91;
+      letter-spacing: -0.065em;
       text-wrap: balance;
     }
 
     h1 span {
       position: relative;
       display: inline-block;
-      color: transparent;
-      background: linear-gradient(105deg, var(--yellow), #fff3a8 45%, #ffbd41 80%);
-      background-clip: text;
-      -webkit-background-clip: text;
-      filter: drop-shadow(0 10px 30px rgba(255, 216, 77, 0.18));
+      color: var(--terracotta);
+      font-style: italic;
     }
 
     h1 span::after {
       content: "";
       position: absolute;
-      left: 2%;
-      right: 0;
+      left: 4%;
+      right: -2%;
       bottom: -10px;
-      height: 10px;
-      border-radius: 50%;
-      opacity: 0.7;
-      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 20'%3E%3Cpath d='M4 13C72 3 176 3 296 11' fill='none' stroke='%23ffd84d' stroke-width='7' stroke-linecap='round'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+      height: 9px;
+      opacity: 0.58;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 20'%3E%3Cpath d='M4 13C72 3 176 3 296 11' fill='none' stroke='%23b85f45' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
     }
 
     .subtitle {
-      max-width: 590px;
-      margin: 32px 0 0;
-      color: #bdcce2;
-      font-size: clamp(1.02rem, 1.7vw, 1.2rem);
-      line-height: 1.7;
+      max-width: 570px;
+      margin: 34px 0 0;
+      color: var(--muted);
+      font-size: clamp(1.02rem, 1.6vw, 1.16rem);
+      line-height: 1.75;
     }
 
     .actions {
       display: flex;
       flex-wrap: wrap;
-      gap: 13px;
-      margin-top: 34px;
+      gap: 12px;
+      margin-top: 32px;
     }
 
     .button {
@@ -334,69 +293,44 @@
       justify-content: center;
       gap: 10px;
       min-height: 54px;
-      padding: 0 22px;
+      padding: 0 21px;
       overflow: hidden;
-      border: 0;
       border-radius: 999px;
       cursor: pointer;
       text-decoration: none;
-      font-weight: 950;
-      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-    }
-
-    .button::after {
-      content: "";
-      position: absolute;
-      inset: -70% -20%;
-      background: linear-gradient(100deg, transparent 38%, rgba(255, 255, 255, 0.5), transparent 62%);
-      transform: translateX(-75%) rotate(8deg);
-      transition: transform 0.65s ease;
-    }
-
-    .button:hover::after {
-      transform: translateX(75%) rotate(8deg);
+      font-weight: 900;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
     }
 
     .button:hover {
-      transform: translateY(-3px) scale(1.015);
+      transform: translateY(-3px);
     }
 
     .button-primary {
-      color: var(--ink);
-      background: linear-gradient(135deg, #ffe66d, var(--yellow-deep));
-      box-shadow: 0 18px 38px rgba(245, 174, 36, 0.26);
+      border: 0;
+      color: #fffaf2;
+      background: var(--terracotta);
+      box-shadow: 0 14px 30px rgba(145, 70, 49, 0.2);
+    }
+
+    .button-primary:hover {
+      background: var(--terracotta-dark);
+      box-shadow: 0 17px 34px rgba(145, 70, 49, 0.26);
     }
 
     .button-secondary {
-      color: var(--paper);
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      background: rgba(255, 255, 255, 0.07);
-      backdrop-filter: blur(10px);
+      border: 1px solid var(--line);
+      color: var(--ink);
+      background: rgba(255, 253, 248, 0.64);
+    }
+
+    .button-secondary:hover {
+      background: var(--paper);
     }
 
     .button-icon {
-      position: relative;
-      z-index: 1;
-      display: grid;
-      place-items: center;
-      width: 25px;
-      height: 25px;
-      border: 3px solid currentColor;
-      border-radius: 50%;
-    }
-
-    .button-icon::after {
-      content: "";
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      background: currentColor;
-    }
-
-    .button-label,
-    .arrow {
-      position: relative;
-      z-index: 1;
+      font-size: 1rem;
+      line-height: 1;
     }
 
     .arrow {
@@ -407,441 +341,600 @@
       transform: translateX(4px);
     }
 
-    .stats {
+    .home-note {
       display: flex;
       align-items: center;
-      gap: 22px;
-      margin-top: 38px;
+      gap: 14px;
+      margin-top: 40px;
+      color: var(--muted);
+      font-size: 0.84rem;
+      line-height: 1.45;
     }
 
-    .stat strong {
-      display: block;
-      color: #fff;
-      font-size: 1.15rem;
-      font-weight: 950;
+    .family-dots {
+      display: flex;
+      padding-left: 7px;
     }
 
-    .stat span {
-      color: #8195b4;
-      font-size: 0.78rem;
-      font-weight: 700;
-    }
-
-    .stat-divider {
-      width: 1px;
-      height: 34px;
-      background: rgba(255, 255, 255, 0.12);
-    }
-
-    .scene {
-      position: absolute;
-      z-index: 2;
-      top: 0;
-      right: 0;
-      width: 49%;
-      height: 100%;
-      perspective: 1100px;
-    }
-
-    .scene-glow {
-      position: absolute;
-      top: 17%;
-      left: 8%;
-      width: 90%;
-      aspect-ratio: 1;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(87, 184, 255, 0.28), rgba(87, 184, 255, 0.05) 45%, transparent 70%);
-      animation: glow-breathe 4s ease-in-out infinite;
-    }
-
-    .orbit {
-      position: absolute;
-      top: 26%;
-      left: 25%;
-      width: 58%;
-      aspect-ratio: 1;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 50%;
-      animation: orbit-spin 18s linear infinite;
-    }
-
-    .orbit::before,
-    .orbit::after {
-      content: "";
-      position: absolute;
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
-      background: var(--yellow);
-      box-shadow: 0 0 22px var(--yellow);
-    }
-
-    .orbit::before {
-      top: 11%;
-      left: 17%;
-    }
-
-    .orbit::after {
-      right: 3%;
-      bottom: 30%;
-      background: var(--cyan);
-      box-shadow: 0 0 22px var(--cyan);
-    }
-
-    .dex-card {
-      position: absolute;
-      z-index: 3;
-      top: 18%;
-      left: 13%;
-      width: min(360px, 70%);
-      height: 470px;
-      padding: 18px;
-      border: 1px solid rgba(255, 255, 255, 0.22);
-      border-radius: 34px;
-      background: linear-gradient(145deg, rgba(255, 255, 255, 0.16), rgba(10, 30, 57, 0.68));
-      box-shadow: 0 35px 70px rgba(0, 0, 0, 0.36);
-      backdrop-filter: blur(22px);
-      transform: rotateY(-8deg) rotateX(4deg) rotateZ(3deg);
-      transform-style: preserve-3d;
-      transition: transform 0.2s ease-out;
-    }
-
-    .dex-card::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      z-index: 5;
-      border-radius: inherit;
-      pointer-events: none;
-      background: linear-gradient(115deg, transparent 20%, rgba(255, 255, 255, 0.16) 45%, transparent 68%);
-      transform: translateX(-100%);
-      animation: card-shine 6s ease-in-out infinite;
-    }
-
-    .dex-screen {
-      position: relative;
+    .family-dot {
       display: grid;
       place-items: center;
-      height: 310px;
-      overflow: hidden;
-      border: 5px solid rgba(255, 255, 255, 0.72);
-      border-radius: 24px 24px 52px 24px;
-      background:
-        radial-gradient(circle at 50% 60%, rgba(255, 255, 255, 0.82), transparent 7%),
-        radial-gradient(circle at 50% 61%, rgba(107, 242, 219, 0.32), transparent 40%),
-        linear-gradient(160deg, #9ef6e5, #4cbbde 58%, #3384c4);
-      box-shadow: inset 0 0 45px rgba(20, 93, 145, 0.35);
+      width: 34px;
+      height: 34px;
+      margin-left: -7px;
+      border: 3px solid var(--cream-light);
+      border-radius: 50%;
+      color: var(--paper);
+      background: var(--sage);
+      font-size: 0.7rem;
+      font-weight: 900;
     }
 
-    .dex-screen::before {
+    .family-dot:nth-child(2) {
+      background: var(--terracotta);
+    }
+
+    .family-dot:nth-child(3) {
+      background: var(--mustard);
+    }
+
+    .family-dot:nth-child(4) {
+      background: var(--wood);
+    }
+
+    .room-scene {
+      position: relative;
+      align-self: stretch;
+      min-height: 660px;
+      overflow: hidden;
+    }
+
+    .sun-glow {
+      position: absolute;
+      top: 70px;
+      left: 30px;
+      width: 320px;
+      height: 320px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 225, 159, 0.6), transparent 68%);
+      animation: glow-breathe 5s ease-in-out infinite;
+    }
+
+    .window {
+      position: absolute;
+      top: 92px;
+      right: 54px;
+      width: 230px;
+      height: 255px;
+      overflow: hidden;
+      border: 12px solid #fffaf2;
+      border-radius: 110px 110px 9px 9px;
+      background: linear-gradient(#b7d1ca 0 64%, #92a982 64%);
+      box-shadow: 0 18px 30px rgba(82, 62, 44, 0.13), inset 0 0 0 1px rgba(70, 50, 38, 0.08);
+    }
+
+    .window::before,
+    .window::after {
       content: "";
       position: absolute;
-      left: -15%;
-      right: -15%;
-      bottom: -31%;
-      height: 57%;
-      border-radius: 50% 50% 0 0;
-      background: linear-gradient(#5fcf9e, #23946f);
-      box-shadow: 0 -12px 36px rgba(18, 112, 84, 0.22);
-    }
-
-    .dex-grid {
-      position: absolute;
-      inset: 0;
-      opacity: 0.13;
-      background-image:
-        linear-gradient(#fff 1px, transparent 1px),
-        linear-gradient(90deg, #fff 1px, transparent 1px);
-      background-size: 24px 24px;
-      mask-image: linear-gradient(to bottom, #000, transparent);
-    }
-
-    .main-pokemon {
-      position: relative;
       z-index: 2;
-      width: 84%;
-      height: 84%;
-      object-fit: contain;
-      image-rendering: auto;
-      filter: drop-shadow(0 22px 14px rgba(15, 63, 75, 0.28));
-      animation: pokemon-idle 3.2s ease-in-out infinite;
+      background: #fffaf2;
+    }
+
+    .window::before {
+      top: 0;
+      left: 50%;
+      width: 8px;
+      height: 100%;
+      transform: translateX(-50%);
+    }
+
+    .window::after {
+      top: 51%;
+      left: 0;
+      width: 100%;
+      height: 8px;
+    }
+
+    .cloud {
+      position: absolute;
+      top: 58px;
+      left: 30px;
+      width: 60px;
+      height: 18px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.62);
+      animation: cloud-drift 10s ease-in-out infinite alternate;
+    }
+
+    .cloud::before,
+    .cloud::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      border-radius: 50%;
+      background: inherit;
+    }
+
+    .cloud::before {
+      left: 10px;
+      width: 28px;
+      height: 28px;
+    }
+
+    .cloud::after {
+      right: 8px;
+      width: 20px;
+      height: 20px;
+    }
+
+    .plant {
+      position: absolute;
+      z-index: 4;
+      right: 24px;
+      bottom: 103px;
+      width: 112px;
+      height: 205px;
+    }
+
+    .plant-pot {
+      position: absolute;
+      bottom: 0;
+      left: 23px;
+      width: 70px;
+      height: 74px;
+      border-radius: 9px 9px 30px 30px;
+      background: var(--terracotta);
+      box-shadow: inset -12px -10px 15px rgba(96, 42, 27, 0.13);
+    }
+
+    .leaf {
+      position: absolute;
+      bottom: 62px;
+      left: 52px;
+      width: 35px;
+      height: 82px;
+      border-radius: 90% 10% 80% 20%;
+      background: var(--sage);
+      transform-origin: bottom center;
+      box-shadow: inset -7px -8px 12px rgba(50, 71, 46, 0.12);
+    }
+
+    .leaf:nth-child(2) {
+      transform: rotate(-42deg);
+    }
+
+    .leaf:nth-child(3) {
+      height: 100px;
+      transform: rotate(-11deg);
+    }
+
+    .leaf:nth-child(4) {
+      height: 94px;
+      transform: rotate(28deg) scaleX(-1);
+    }
+
+    .leaf:nth-child(5) {
+      height: 72px;
+      transform: rotate(53deg) scaleX(-1);
+    }
+
+    .sofa {
+      position: absolute;
+      z-index: 3;
+      right: 72px;
+      bottom: 96px;
+      width: 390px;
+      height: 210px;
+      filter: drop-shadow(0 24px 20px rgba(80, 55, 38, 0.12));
+    }
+
+    .sofa-back {
+      position: absolute;
+      top: 7px;
+      left: 48px;
+      width: 295px;
+      height: 138px;
+      border-radius: 58px 58px 28px 28px;
+      background: #9aaa8e;
+      box-shadow: inset 0 -15px 22px rgba(55, 76, 50, 0.11);
+    }
+
+    .sofa-seat {
+      position: absolute;
+      bottom: 20px;
+      left: 31px;
+      width: 329px;
+      height: 83px;
+      border-radius: 28px;
+      background: #899a7d;
+      box-shadow: inset 0 10px 18px rgba(255, 255, 255, 0.08);
+    }
+
+    .sofa-arm {
+      position: absolute;
+      bottom: 24px;
+      width: 72px;
+      height: 117px;
+      border-radius: 29px;
+      background: #819174;
+    }
+
+    .sofa-arm.left {
+      left: 0;
+    }
+
+    .sofa-arm.right {
+      right: 0;
+    }
+
+    .sofa-leg {
+      position: absolute;
+      bottom: 0;
+      width: 14px;
+      height: 29px;
+      border-radius: 0 0 4px 4px;
+      background: var(--wood);
+    }
+
+    .sofa-leg.one {
+      left: 72px;
+    }
+
+    .sofa-leg.two {
+      right: 72px;
+    }
+
+    .cushion {
+      position: absolute;
+      z-index: 2;
+      top: 62px;
+      width: 82px;
+      height: 76px;
+      border-radius: 24px;
+      transform: rotate(-7deg);
+      box-shadow: inset -7px -8px 12px rgba(75, 42, 31, 0.1);
+    }
+
+    .cushion.one {
+      left: 67px;
+      background: var(--mustard);
+    }
+
+    .cushion.two {
+      right: 62px;
+      background: #c77b62;
+      transform: rotate(8deg);
+    }
+
+    .throw {
+      position: absolute;
+      z-index: 4;
+      right: 91px;
+      bottom: 27px;
+      width: 107px;
+      height: 76px;
+      border-radius: 18px 9px 20px 18px;
+      background:
+        repeating-linear-gradient(90deg, transparent 0 14px, rgba(255, 255, 255, 0.14) 14px 18px),
+        #d8b787;
+      transform: rotate(-4deg);
+    }
+
+    .lamp {
+      position: absolute;
+      z-index: 2;
+      bottom: 105px;
+      left: 9px;
+      width: 112px;
+      height: 310px;
+    }
+
+    .lamp-shade {
+      position: absolute;
+      top: 0;
+      width: 112px;
+      height: 82px;
+      border-radius: 55px 55px 12px 12px;
+      background: #d6a542;
+      clip-path: polygon(21% 0, 79% 0, 100% 100%, 0 100%);
+      box-shadow: inset -10px -9px 16px rgba(91, 59, 14, 0.08);
+    }
+
+    .lamp-stem {
+      position: absolute;
+      top: 77px;
+      left: 52px;
+      width: 8px;
+      height: 203px;
+      border-radius: 999px;
+      background: var(--wood);
+    }
+
+    .lamp-base {
+      position: absolute;
+      bottom: 0;
+      left: 23px;
+      width: 67px;
+      height: 19px;
+      border-radius: 50%;
+      background: var(--wood);
+    }
+
+    .floor {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      width: 100%;
+      height: 115px;
+      background:
+        repeating-linear-gradient(100deg, rgba(110, 72, 47, 0.06) 0 2px, transparent 2px 75px),
+        #d9b991;
+      clip-path: polygon(0 18%, 100% 0, 100% 100%, 0 100%);
+    }
+
+    .rug {
+      position: absolute;
+      z-index: 2;
+      right: 40px;
+      bottom: 27px;
+      width: 410px;
+      height: 72px;
+      border: 5px solid rgba(255, 250, 242, 0.55);
+      border-radius: 50%;
+      background:
+        repeating-radial-gradient(ellipse at center, #bc745c 0 11px, #d29b77 12px 22px);
+      transform: rotate(-2deg);
+      opacity: 0.82;
+    }
+
+    .moment-card {
+      position: absolute;
+      z-index: 7;
+      top: 365px;
+      left: 36px;
+      width: 210px;
+      padding: 17px 18px;
+      border: 1px solid rgba(70, 50, 38, 0.09);
+      border-radius: 18px;
+      background: rgba(255, 253, 248, 0.9);
+      box-shadow: 0 16px 40px rgba(77, 52, 37, 0.13);
+      backdrop-filter: blur(12px);
+      transform: rotate(-3deg);
       transition: opacity 0.18s ease, transform 0.18s ease;
     }
 
-    .main-pokemon.is-changing {
+    .moment-card.is-changing {
       opacity: 0;
-      transform: scale(0.7) rotate(-10deg);
+      transform: rotate(-3deg) translateY(8px) scale(0.96);
     }
 
-    .scan-line {
-      position: absolute;
-      z-index: 4;
-      top: -20%;
-      left: 0;
-      width: 100%;
-      height: 25%;
-      pointer-events: none;
-      background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.22), transparent);
-      animation: scan 4s linear infinite;
-    }
-
-    .dex-meta {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 10px;
-      padding: 18px 8px 4px;
-    }
-
-    .pokemon-number {
-      margin: 0 0 4px;
-      color: #8ca5c7;
-      font-size: 0.73rem;
-      font-weight: 900;
-      letter-spacing: 0.16em;
-    }
-
-    .pokemon-name {
-      margin: 0;
-      font-size: 1.65rem;
+    .moment-label {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--terracotta);
+      font-size: 0.66rem;
       font-weight: 950;
-      letter-spacing: -0.045em;
-    }
-
-    .type-pill {
-      align-self: center;
-      padding: 8px 11px;
-      border-radius: 999px;
-      color: #3e2d00;
-      background: var(--yellow);
-      font-size: 0.72rem;
-      font-weight: 950;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
     }
 
-    .power-row {
-      grid-column: 1 / -1;
-      display: grid;
-      grid-template-columns: auto 1fr;
-      align-items: center;
-      gap: 10px;
-      margin-top: 7px;
-      color: #9db0cb;
-      font-size: 0.72rem;
-      font-weight: 800;
+    .moment-title {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.2rem;
+      line-height: 1.15;
     }
 
-    .power-bar {
-      height: 7px;
-      overflow: hidden;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.1);
+    .moment-detail {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 0.77rem;
+      line-height: 1.45;
     }
 
-    .power-fill {
-      display: block;
-      width: 78%;
-      height: 100%;
-      border-radius: inherit;
-      background: linear-gradient(90deg, var(--cyan), var(--yellow));
-      box-shadow: 0 0 14px rgba(107, 242, 219, 0.35);
-      transition: width 0.45s ease;
-    }
-
-    .floating-pokemon {
-      position: absolute;
-      z-index: 6;
-      object-fit: contain;
-      filter: drop-shadow(0 16px 18px rgba(0, 0, 0, 0.3));
-      user-select: none;
-      pointer-events: none;
-    }
-
-    .floating-pokemon.eevee {
-      top: 8%;
-      right: 4%;
-      width: 128px;
-      animation: float-one 5s ease-in-out infinite;
-    }
-
-    .floating-pokemon.bulbasaur {
-      right: 2%;
-      bottom: 5%;
-      width: 132px;
-      animation: float-two 5.8s ease-in-out infinite -1.2s;
-    }
-
-    .floating-ball {
-      position: absolute;
-      z-index: 5;
-      left: 1%;
-      bottom: 9%;
-      width: 76px;
-      height: 76px;
-      cursor: pointer;
-      border: 0;
-      animation: ball-float 4s ease-in-out infinite;
-      transition: filter 0.2s ease;
-    }
-
-    .floating-ball:hover {
-      filter: brightness(1.12);
-      animation: ball-wiggle 0.55s ease-in-out infinite;
-    }
-
-    .spark {
-      position: absolute;
-      z-index: 1;
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      background: #fff;
-      box-shadow: 0 0 14px #fff;
-      animation: spark-float var(--duration) ease-in-out infinite var(--delay);
-    }
-
-    .spark:nth-child(1) { top: 12%; left: 15%; --duration: 4.7s; --delay: -1s; }
-    .spark:nth-child(2) { top: 29%; right: 8%; --duration: 5.2s; --delay: -2.5s; }
-    .spark:nth-child(3) { top: 62%; left: 7%; --duration: 4.2s; --delay: -0.4s; }
-    .spark:nth-child(4) { right: 17%; bottom: 13%; --duration: 5.5s; --delay: -3s; }
-    .spark:nth-child(5) { top: 8%; left: 50%; --duration: 3.8s; --delay: -1.7s; }
-
-    .encounter-toast {
-      position: absolute;
-      z-index: 20;
+    .moment-toast {
+      position: fixed;
+      z-index: 30;
       top: 24px;
       left: 50%;
       display: flex;
       align-items: center;
       gap: 10px;
+      max-width: calc(100% - 30px);
       padding: 12px 16px;
-      border: 1px solid rgba(255, 255, 255, 0.18);
+      border: 1px solid var(--line);
       border-radius: 999px;
-      color: var(--paper);
-      background: rgba(6, 17, 34, 0.88);
-      box-shadow: 0 16px 50px rgba(0, 0, 0, 0.34);
+      color: var(--ink);
+      background: rgba(255, 253, 248, 0.94);
+      box-shadow: 0 16px 45px rgba(77, 52, 37, 0.16);
       opacity: 0;
       pointer-events: none;
-      transform: translate(-50%, -20px);
+      transform: translate(-50%, -18px);
       transition: opacity 0.25s ease, transform 0.25s ease;
-      backdrop-filter: blur(16px);
-      font-size: 0.88rem;
+      backdrop-filter: blur(14px);
+      font-size: 0.86rem;
       font-weight: 850;
     }
 
-    .encounter-toast.is-visible {
+    .moment-toast.is-visible {
       opacity: 1;
       transform: translate(-50%, 0);
     }
 
-    .toast-dot {
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
-      background: var(--yellow);
-      box-shadow: 0 0 16px var(--yellow);
+    .toast-heart {
+      color: var(--terracotta);
     }
 
-    .adventure-strip {
+    .activity-section {
+      padding-top: 74px;
+    }
+
+    .section-heading {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 30px;
+      margin-bottom: 22px;
+      padding: 0 5px;
+    }
+
+    .section-kicker {
+      display: block;
+      margin-bottom: 9px;
+      color: var(--terracotta);
+      font-size: 0.7rem;
+      font-weight: 950;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .section-heading h2 {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(2rem, 4vw, 3.25rem);
+      letter-spacing: -0.04em;
+    }
+
+    .section-heading p {
+      max-width: 420px;
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .activity-grid {
       display: grid;
-      grid-template-columns: 1.05fr 1fr 1fr;
+      grid-template-columns: 1.2fr 1fr 1fr;
       gap: 16px;
-      margin-top: 18px;
     }
 
-    .adventure-card {
+    .activity-card {
       position: relative;
       display: block;
-      min-height: 178px;
+      min-height: 250px;
       overflow: hidden;
-      padding: 25px;
-      border: 1px solid var(--glass-border);
-      border-radius: 28px;
+      padding: 28px;
+      border: 1px solid var(--line);
+      border-radius: 25px;
       color: inherit;
       text-decoration: none;
-      background: linear-gradient(145deg, rgba(20, 43, 75, 0.72), rgba(8, 21, 42, 0.82));
-      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.2);
-      transition: transform 0.25s ease, border-color 0.25s ease;
+      background: rgba(255, 253, 248, 0.76);
+      box-shadow: 0 14px 38px rgba(77, 52, 37, 0.07);
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
     }
 
-    .adventure-card:hover {
-      border-color: rgba(255, 216, 77, 0.32);
+    .activity-card:hover {
       transform: translateY(-6px);
+      box-shadow: 0 22px 48px rgba(77, 52, 37, 0.12);
     }
 
-    .adventure-card.featured {
+    .activity-card.featured {
+      color: #fffaf2;
       background:
-        radial-gradient(circle at 90% 20%, rgba(255, 216, 77, 0.2), transparent 35%),
-        linear-gradient(145deg, rgba(37, 57, 83, 0.9), rgba(14, 28, 52, 0.88));
+        radial-gradient(circle at 88% 14%, rgba(255, 235, 185, 0.17), transparent 32%),
+        var(--terracotta);
     }
 
     .card-kicker {
       display: block;
-      margin-bottom: 14px;
-      color: var(--yellow);
-      font-size: 0.7rem;
+      margin-bottom: 13px;
+      color: var(--mustard);
+      font-size: 0.68rem;
       font-weight: 950;
-      letter-spacing: 0.15em;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
     }
 
-    .adventure-card h2 {
+    .featured .card-kicker {
+      color: #ffe2a1;
+    }
+
+    .activity-card h3 {
+      position: relative;
+      z-index: 2;
+      max-width: 290px;
       margin: 0;
-      max-width: 260px;
-      font-size: clamp(1.3rem, 2.3vw, 1.75rem);
-      line-height: 1.05;
-      letter-spacing: -0.04em;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(1.55rem, 2.7vw, 2rem);
+      line-height: 1.08;
+      letter-spacing: -0.035em;
     }
 
-    .adventure-card p {
+    .activity-card p {
+      position: relative;
+      z-index: 2;
       max-width: 300px;
-      margin: 12px 0 0;
-      color: #93a7c5;
-      font-size: 0.91rem;
-      line-height: 1.55;
+      margin: 13px 0 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.58;
     }
 
-    .mini-pokemon {
+    .featured p {
+      color: rgba(255, 250, 242, 0.78);
+    }
+
+    .card-link {
       position: absolute;
-      right: -4px;
-      bottom: -13px;
-      width: 120px;
-      filter: drop-shadow(0 14px 18px rgba(0, 0, 0, 0.28));
+      bottom: 27px;
+      left: 28px;
+      z-index: 2;
+      font-size: 0.82rem;
+      font-weight: 900;
+    }
+
+    .game-pieces {
+      position: absolute;
+      right: -11px;
+      bottom: -16px;
+      width: 155px;
+      height: 145px;
+      transform: rotate(-7deg);
       transition: transform 0.3s ease;
     }
 
-    .adventure-card:hover .mini-pokemon {
-      transform: translateY(-8px) rotate(4deg);
+    .activity-card:hover .game-pieces {
+      transform: rotate(-2deg) translateY(-6px);
     }
 
-    .icon-tile {
+    .game-piece {
+      position: absolute;
       display: grid;
       place-items: center;
-      width: 46px;
-      height: 46px;
-      margin-bottom: 28px;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 15px;
-      color: var(--cyan);
-      background: rgba(107, 242, 219, 0.08);
-      font-size: 1.4rem;
+      width: 70px;
+      height: 70px;
+      border-radius: 18px;
+      color: var(--terracotta-dark);
+      background: #f3cb72;
+      box-shadow: 0 12px 24px rgba(89, 39, 26, 0.18);
+      font-size: 1.55rem;
       font-weight: 950;
     }
 
-    .lightning {
-      width: 17px;
-      height: 26px;
-      background: currentColor;
-      clip-path: polygon(58% 0, 10% 52%, 45% 52%, 30% 100%, 90% 39%, 55% 39%);
+    .game-piece:nth-child(1) {
+      top: 5px;
+      left: 18px;
     }
 
-    .pixel-heart {
-      position: relative;
-      width: 24px;
-      height: 21px;
-      margin-top: 4px;
-      background: var(--red);
-      clip-path: polygon(0 16%, 16% 16%, 16% 0, 42% 0, 50% 12%, 58% 0, 84% 0, 84% 16%, 100% 16%, 100% 58%, 84% 58%, 84% 74%, 68% 74%, 68% 88%, 32% 88%, 32% 74%, 16% 74%, 16% 58%, 0 58%);
+    .game-piece:nth-child(2) {
+      right: 6px;
+      bottom: 9px;
+      color: var(--paper);
+      background: var(--sage);
+      transform: rotate(13deg);
+    }
+
+    .card-icon {
+      display: grid;
+      place-items: center;
+      width: 49px;
+      height: 49px;
+      margin-bottom: 35px;
+      border-radius: 16px;
+      color: var(--terracotta-dark);
+      background: rgba(184, 95, 69, 0.1);
+      font-size: 1.35rem;
     }
 
     .footer {
@@ -849,128 +942,77 @@
       align-items: center;
       justify-content: space-between;
       gap: 24px;
-      padding: 28px 6px 0;
-      color: #7185a3;
-      font-size: 0.82rem;
+      padding: 34px 6px 0;
+      color: var(--muted);
+      font-size: 0.8rem;
     }
 
-    .footer strong {
-      color: #aebdd2;
+    .footer strong,
+    .footer a {
+      color: var(--ink);
     }
 
     .footer a {
-      color: #aebdd2;
       text-underline-offset: 3px;
     }
 
-    .capture-burst {
+    .confetti {
       position: fixed;
-      z-index: 30;
+      z-index: 29;
       width: 8px;
       height: 8px;
-      border-radius: 50%;
+      border-radius: 2px;
       pointer-events: none;
-      background: var(--yellow);
-      box-shadow: 0 0 20px var(--yellow);
-      animation: burst 0.8s ease-out forwards;
+      background: var(--particle-color);
+      animation: scatter 0.75s ease-out forwards;
     }
 
-    @keyframes aurora-drift {
-      to { transform: translate3d(7rem, 3rem, 0) scale(1.15); }
+    @keyframes soft-pulse {
+      70% { box-shadow: 0 0 0 8px rgba(117, 134, 106, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(117, 134, 106, 0); }
     }
 
-    @keyframes online-pulse {
-      70% { box-shadow: 0 0 0 9px rgba(107, 242, 219, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(107, 242, 219, 0); }
-    }
-
-    @keyframes star-spin {
-      to { transform: rotate(360deg); }
-    }
-
-    @keyframes orbit-spin {
-      to { transform: rotate(360deg); }
+    @keyframes heart-beat {
+      0%, 88%, 100% { transform: scale(1); }
+      92% { transform: scale(1.24); }
+      96% { transform: scale(0.94); }
     }
 
     @keyframes glow-breathe {
-      50% { opacity: 0.65; transform: scale(1.12); }
+      50% { opacity: 0.64; transform: scale(1.08); }
     }
 
-    @keyframes card-shine {
-      0%, 55% { transform: translateX(-110%); }
-      80%, 100% { transform: translateX(110%); }
+    @keyframes cloud-drift {
+      to { transform: translateX(60px); }
     }
 
-    @keyframes pokemon-idle {
-      0%, 100% { transform: translateY(4px) rotate(-1deg); }
-      48% { transform: translateY(-9px) rotate(1deg); }
-      55% { transform: translateY(-9px) rotate(-2deg); }
-    }
-
-    @keyframes scan {
-      from { transform: translateY(-60%); }
-      to { transform: translateY(500%); }
-    }
-
-    @keyframes float-one {
-      0%, 100% { transform: translateY(0) rotate(5deg); }
-      50% { transform: translateY(-18px) rotate(-2deg); }
-    }
-
-    @keyframes float-two {
-      0%, 100% { transform: translateY(0) rotate(-4deg); }
-      50% { transform: translateY(-14px) rotate(3deg); }
-    }
-
-    @keyframes spark-float {
-      0%, 100% { opacity: 0.25; transform: translateY(8px) scale(0.7); }
-      50% { opacity: 1; transform: translateY(-12px) scale(1.3); }
-    }
-
-    @keyframes ball-float {
-      0%, 100% { transform: translateY(0) rotate(-8deg); }
-      50% { transform: translateY(-14px) rotate(8deg); }
-    }
-
-    @keyframes ball-wiggle {
-      0%, 85%, 100% { transform: rotate(0); }
-      89% { transform: rotate(-12deg); }
-      93% { transform: rotate(12deg); }
-      97% { transform: rotate(-6deg); }
-    }
-
-    @keyframes burst {
+    @keyframes scatter {
       to {
         opacity: 0;
-        transform: translate(var(--x), var(--y)) scale(0);
+        transform: translate(var(--x), var(--y)) rotate(180deg) scale(0.4);
       }
     }
 
-    @media (max-width: 1020px) {
+    @media (max-width: 1000px) {
       .hero {
-        min-height: 760px;
+        grid-template-columns: 1.08fr 0.92fr;
       }
 
-      .hero-copy {
-        width: 62%;
-        padding-left: 44px;
+      .room-scene {
+        transform: translateX(-24px);
+        transform-origin: center bottom;
       }
 
-      .scene {
-        width: 48%;
+      .sofa {
+        right: 28px;
       }
 
-      .dex-card {
-        left: 4%;
-        width: 72%;
+      .window {
+        right: 24px;
       }
 
-      .floating-pokemon.eevee {
-        right: -2%;
-      }
-
-      .floating-pokemon.bulbasaur {
-        right: -4%;
+      .plant {
+        right: -18px;
       }
     }
 
@@ -981,7 +1023,7 @@
       }
 
       .nav {
-        border-radius: 18px;
+        border-radius: 17px;
       }
 
       .nav-links a {
@@ -989,13 +1031,12 @@
       }
 
       .hero {
-        min-height: 1200px;
-        border-radius: 28px;
+        grid-template-columns: 1fr;
+        border-radius: 27px;
       }
 
       .hero-copy {
-        width: 100%;
-        padding: 58px 28px 0;
+        padding: 62px 30px 20px;
         text-align: center;
       }
 
@@ -1008,72 +1049,60 @@
       }
 
       .actions,
-      .stats {
+      .home-note {
         justify-content: center;
       }
 
-      .scene {
-        top: auto;
-        bottom: 0;
-        width: 100%;
-        height: 530px;
+      .room-scene {
+        min-height: 560px;
+        transform: none;
       }
 
-      .scene-glow {
-        top: 4%;
-        left: 9%;
-        width: 82%;
-      }
-
-      .orbit {
-        top: 13%;
-        left: 27%;
-        width: 46%;
-      }
-
-      .dex-card {
-        top: 5%;
+      .sun-glow {
         left: 50%;
-        width: min(330px, 68%);
-        height: 440px;
-        transform: translateX(-50%) rotateY(-6deg) rotateX(3deg) rotateZ(2deg);
+        transform: translateX(-50%);
       }
 
-      .dex-screen {
-        height: 280px;
+      .sofa {
+        right: 50%;
+        transform: translateX(50%);
       }
 
-      .floating-pokemon.eevee {
-        top: 4%;
-        right: 1%;
-        width: 110px;
+      .window {
+        right: 12%;
       }
 
-      .floating-pokemon.bulbasaur {
+      .lamp {
+        left: 6%;
+      }
+
+      .plant {
         right: 2%;
-        bottom: 2%;
-        width: 112px;
       }
 
-      .floating-ball {
-        left: 3%;
-        bottom: 8%;
-        width: 66px;
-        height: 66px;
+      .moment-card {
+        top: 292px;
+        left: 8%;
       }
 
-      .adventure-strip {
+      .section-heading {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 13px;
+      }
+
+      .activity-grid {
         grid-template-columns: 1fr;
       }
 
-      .adventure-card {
-        min-height: 185px;
+      .activity-card {
+        min-height: 230px;
       }
     }
 
     @media (max-width: 520px) {
       .brand small,
-      .online-pill {
+      .welcome-pill {
         display: none;
       }
 
@@ -1081,20 +1110,16 @@
         justify-content: center;
       }
 
-      .hero {
-        min-height: 1240px;
-      }
-
       .hero-copy {
-        padding-inline: 20px;
+        padding: 54px 21px 16px;
       }
 
       h1 {
-        font-size: clamp(3.25rem, 17vw, 5rem);
+        font-size: clamp(3.35rem, 17vw, 5rem);
       }
 
       .subtitle {
-        font-size: 0.98rem;
+        font-size: 0.97rem;
       }
 
       .actions {
@@ -1105,42 +1130,33 @@
         width: 100%;
       }
 
-      .stats {
-        gap: 14px;
+      .home-note {
+        align-items: flex-start;
+        flex-direction: column;
+        margin-top: 32px;
       }
 
-      .stat-divider {
-        height: 28px;
+      .room-scene {
+        min-height: 510px;
+        transform: scale(0.88);
+        transform-origin: center top;
+        margin-bottom: -62px;
       }
 
-      .stat strong {
-        font-size: 1rem;
+      .window {
+        right: -3%;
       }
 
-      .scene {
-        height: 500px;
+      .lamp {
+        left: -4%;
       }
 
-      .dex-card {
-        width: min(300px, 78%);
-        height: 414px;
+      .plant {
+        right: -10%;
       }
 
-      .dex-screen {
-        height: 258px;
-      }
-
-      .floating-pokemon.eevee {
-        width: 88px;
-      }
-
-      .floating-pokemon.bulbasaur {
-        width: 94px;
-      }
-
-      .floating-ball {
-        width: 56px;
-        height: 56px;
+      .moment-card {
+        left: 2%;
       }
 
       .footer {
@@ -1162,276 +1178,236 @@
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
       }
-
-      .cursor-glow {
-        display: none;
-      }
     }
   </style>
 </head>
 <body>
-  <div class="aurora aurora-one"></div>
-  <div class="aurora aurora-two"></div>
-  <div class="cursor-glow" aria-hidden="true"></div>
+  <div class="moment-toast" role="status" aria-live="polite">
+    <span class="toast-heart" aria-hidden="true">♥</span>
+    <span class="toast-text">Dagens hyggestund er klar</span>
+  </div>
 
   <div class="page">
     <nav class="nav" aria-label="Hovedmenu">
       <a class="brand" href="#">
-        <span class="brand-ball" aria-hidden="true"></span>
+        <span class="brand-mark" aria-hidden="true"></span>
         <span>
           Wutborg.dk
-          <small>Family trainers</small>
+          <small>Hjemme hos os</small>
         </span>
       </a>
 
       <div class="nav-links">
         <a href="minispil.html">Minispil</a>
-        <a href="#eventyr">Eventyr</a>
+        <a href="#hygge">Hygge</a>
         <a href="#projekter">Projekter</a>
         <a href="mailto:hej@wutborg.dk">Kontakt</a>
       </div>
 
-      <span class="online-pill">
-        <span class="online-dot"></span>
-        Klar til eventyr
+      <span class="welcome-pill">
+        <span class="welcome-dot"></span>
+        Døren er åben
       </span>
     </nav>
 
     <main>
       <section class="hero" aria-labelledby="hero-title">
-        <div class="encounter-toast" role="status" aria-live="polite">
-          <span class="toast-dot"></span>
-          <span class="toast-text">En vild Pokémon dukkede op!</span>
-        </div>
-
         <div class="hero-copy">
-          <p class="eyebrow"><span class="eyebrow-star">✦</span> Wutborg Pokémon Adventure</p>
+          <p class="eyebrow"><span class="eyebrow-heart" aria-hidden="true">♥</span> Familien Wutborgs hjørne</p>
           <h1 id="hero-title">
-            Fang dagen.
-            <span>Saml minder.</span>
+            Her bor de
+            <span>gode stunder.</span>
           </h1>
           <p class="subtitle">
-            Velkommen til familiens digitale trænerbase. Her samler vi små spil,
-            store idéer og de eventyr, der er bedst, når hele holdet er med.
+            Velkommen indenfor. Her samler vi familiens små spil, skæve idéer
+            og de minder, der gør en helt almindelig dag til noget særligt.
           </p>
 
           <div class="actions">
-            <button class="button button-primary encounter-button" type="button">
-              <span class="button-icon" aria-hidden="true"></span>
-              <span class="button-label">Find en Pokémon</span>
+            <button class="button button-primary moment-button" type="button">
+              <span class="button-icon" aria-hidden="true">♥</span>
+              <span>Find dagens hygge</span>
             </button>
-            <a class="button button-secondary" href="#eventyr">
-              <span class="button-label">Udforsk basen</span>
+            <a class="button button-secondary" href="#hygge">
+              <span>Se hvad vi laver</span>
               <span class="arrow" aria-hidden="true">→</span>
             </a>
           </div>
 
-          <div class="stats" aria-label="Wutborg trænerstatistik">
-            <div class="stat">
-              <strong>4</strong>
-              <span>Trænere</span>
-            </div>
-            <span class="stat-divider" aria-hidden="true"></span>
-            <div class="stat">
-              <strong class="seen-count">25</strong>
-              <span>Pokémon set</span>
-            </div>
-            <span class="stat-divider" aria-hidden="true"></span>
-            <div class="stat">
-              <strong>∞</strong>
-              <span>Eventyr tilbage</span>
-            </div>
+          <div class="home-note">
+            <span class="family-dots" aria-hidden="true">
+              <span class="family-dot">W</span>
+              <span class="family-dot">U</span>
+              <span class="family-dot">T</span>
+              <span class="family-dot">♥</span>
+            </span>
+            <span>Et lille digitalt hjem,<br />bygget sammen i Danmark.</span>
           </div>
         </div>
 
-        <div class="scene" aria-label="Interaktiv Pokédex med Pikachu">
-          <div class="scene-glow"></div>
-          <div class="orbit"></div>
-          <span class="spark"></span>
-          <span class="spark"></span>
-          <span class="spark"></span>
-          <span class="spark"></span>
-          <span class="spark"></span>
+        <div class="room-scene" aria-label="Illustration af en hyggelig stue">
+          <div class="sun-glow"></div>
+          <div class="window" aria-hidden="true">
+            <span class="cloud"></span>
+          </div>
 
-          <article class="dex-card">
-            <div class="dex-screen">
-              <div class="dex-grid"></div>
-              <span class="scan-line"></span>
-              <img
-                class="main-pokemon"
-                src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/25.png"
-                alt="Pikachu"
-              />
-            </div>
-            <div class="dex-meta">
-              <div>
-                <p class="pokemon-number">POKÉDEX #025</p>
-                <p class="pokemon-name">Pikachu</p>
-              </div>
-              <span class="type-pill">Elektrisk</span>
-              <div class="power-row">
-                <span>Venskab</span>
-                <span class="power-bar"><span class="power-fill"></span></span>
-              </div>
-            </div>
+          <div class="lamp" aria-hidden="true">
+            <span class="lamp-shade"></span>
+            <span class="lamp-stem"></span>
+            <span class="lamp-base"></span>
+          </div>
+
+          <div class="floor" aria-hidden="true"></div>
+          <div class="rug" aria-hidden="true"></div>
+
+          <div class="sofa" aria-hidden="true">
+            <span class="sofa-back"></span>
+            <span class="sofa-seat"></span>
+            <span class="sofa-arm left"></span>
+            <span class="sofa-arm right"></span>
+            <span class="sofa-leg one"></span>
+            <span class="sofa-leg two"></span>
+            <span class="cushion one"></span>
+            <span class="cushion two"></span>
+            <span class="throw"></span>
+          </div>
+
+          <div class="plant" aria-hidden="true">
+            <span class="plant-pot"></span>
+            <span class="leaf"></span>
+            <span class="leaf"></span>
+            <span class="leaf"></span>
+            <span class="leaf"></span>
+          </div>
+
+          <article class="moment-card">
+            <span class="moment-label">Dagens hyggestund</span>
+            <h2 class="moment-title">Spilaften i sofaen</h2>
+            <p class="moment-detail">Find favoritterne frem og husk snacks.</p>
           </article>
-
-          <img
-            class="floating-pokemon eevee"
-            src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/133.gif"
-            alt=""
-            aria-hidden="true"
-          />
-          <img
-            class="floating-pokemon bulbasaur"
-            src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/1.gif"
-            alt=""
-            aria-hidden="true"
-          />
-          <button class="pokeball floating-ball" type="button" aria-label="Find en ny Pokémon"></button>
         </div>
       </section>
 
-      <section class="adventure-strip" id="eventyr" aria-label="Wutborg eventyr">
-        <a class="adventure-card featured" href="minispil.html">
-          <span class="card-kicker">Næste mission</span>
-          <h2>Besøg familiens minispil-arkade</h2>
-          <p>Spil Fire på stribe, Snake og Neon Breaker direkte i browseren.</p>
-          <img
-            class="mini-pokemon"
-            src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/4.gif"
-            alt="Charmander"
-          />
-        </a>
+      <section class="activity-section" id="hygge" aria-labelledby="activity-title">
+        <div class="section-heading">
+          <div>
+            <span class="section-kicker">Plads til det hele</span>
+            <h2 id="activity-title">Hvad sker der hjemme hos os?</h2>
+          </div>
+          <p>Her får både konkurrencelyst, nysgerrighed og familiens næste gode idé lov til at flytte ind.</p>
+        </div>
 
-        <article class="adventure-card" id="projekter">
-          <span class="icon-tile" aria-hidden="true"><span class="lightning"></span></span>
-          <h2>Små idéer med stor energi</h2>
-          <p>Eksperimenter, billeder og projekter får deres helt egen plads her.</p>
-        </article>
+        <div class="activity-grid">
+          <a class="activity-card featured" href="minispil.html">
+            <span class="card-kicker">Klar, parat, spil</span>
+            <h3>Besøg familiens minispil</h3>
+            <p>Spil Fire på stribe, Snake og Neon Breaker direkte i browseren.</p>
+            <span class="card-link">Gå til spillene →</span>
+            <span class="game-pieces" aria-hidden="true">
+              <span class="game-piece">4</span>
+              <span class="game-piece">♪</span>
+            </span>
+          </a>
 
-        <article class="adventure-card">
-          <span class="icon-tile" aria-hidden="true"><span class="pixel-heart"></span></span>
-          <h2>Lavet af familien</h2>
-          <p>En levende base, der vokser sammen med os og vores næste eventyr.</p>
-        </article>
+          <article class="activity-card" id="projekter">
+            <span class="card-icon" aria-hidden="true">✦</span>
+            <span class="card-kicker">På tegnebrættet</span>
+            <h3>Små idéer med stor glæde</h3>
+            <p>Eksperimenter, billeder og nye projekter får deres helt egen plads her.</p>
+          </article>
+
+          <article class="activity-card">
+            <span class="card-icon" aria-hidden="true">♥</span>
+            <span class="card-kicker">Lavet sammen</span>
+            <h3>Et hjem der vokser med os</h3>
+            <p>Vi fylder løbende nye rum med ting, vi har lavet, spillet og oplevet.</p>
+          </article>
+        </div>
       </section>
     </main>
 
     <footer class="footer">
-      <span><strong>Wutborg.dk</strong> · Trænet med kærlighed i Danmark</span>
+      <span><strong>Wutborg.dk</strong> · Lavet med varme i Danmark</span>
       <a href="mailto:hej@wutborg.dk">hej@wutborg.dk</a>
     </footer>
   </div>
 
   <script>
-    const pokemon = [
-      { id: 25, name: "Pikachu", type: "Elektrisk", color: "#ffd84d", power: 78 },
-      { id: 1, name: "Bulbasaur", type: "Græs", color: "#77d99d", power: 84 },
-      { id: 4, name: "Charmander", type: "Ild", color: "#ff9b57", power: 72 },
-      { id: 7, name: "Squirtle", type: "Vand", color: "#66c6ee", power: 81 },
-      { id: 133, name: "Eevee", type: "Normal", color: "#d7a66d", power: 91 },
-      { id: 39, name: "Jigglypuff", type: "Fe", color: "#f6a9cf", power: 76 },
-      { id: 143, name: "Snorlax", type: "Normal", color: "#8ab6b4", power: 96 }
+    const moments = [
+      {
+        title: "Spilaften i sofaen",
+        detail: "Find favoritterne frem og husk snacks."
+      },
+      {
+        title: "Varm kakao og tæpper",
+        detail: "Den gode løsning, når regnen rammer ruden."
+      },
+      {
+        title: "En tur ud i det grønne",
+        detail: "Frisk luft, røde kinder og noget godt i tasken."
+      },
+      {
+        title: "Bag noget sammen",
+        detail: "Mel på bordet og duften af noget nybagt."
+      },
+      {
+        title: "Byg den næste idé",
+        detail: "Papir, farver og god tid til at være nysgerrig."
+      }
     ];
 
-    const card = document.querySelector(".dex-card");
-    const scene = document.querySelector(".scene");
-    const image = document.querySelector(".main-pokemon");
-    const number = document.querySelector(".pokemon-number");
-    const name = document.querySelector(".pokemon-name");
-    const type = document.querySelector(".type-pill");
-    const power = document.querySelector(".power-fill");
-    const toast = document.querySelector(".encounter-toast");
+    const momentButton = document.querySelector(".moment-button");
+    const momentCard = document.querySelector(".moment-card");
+    const momentTitle = document.querySelector(".moment-title");
+    const momentDetail = document.querySelector(".moment-detail");
+    const toast = document.querySelector(".moment-toast");
     const toastText = document.querySelector(".toast-text");
-    const encounterButtons = document.querySelectorAll(".encounter-button, .floating-ball");
-    const seenCount = document.querySelector(".seen-count");
-    const cursorGlow = document.querySelector(".cursor-glow");
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    let currentIndex = 0;
-    let encounters = 25;
+    let currentMoment = 0;
     let toastTimer;
 
-    function spriteUrl(id) {
-      return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${id}.png`;
-    }
-
-    function createBurst(origin) {
+    function createConfetti(origin) {
       if (reducedMotion) return;
+
+      const colors = ["#b85f45", "#75866a", "#d6a542", "#8b6045"];
       const rect = origin.getBoundingClientRect();
 
-      for (let i = 0; i < 12; i += 1) {
+      for (let i = 0; i < 14; i += 1) {
         const particle = document.createElement("span");
-        const angle = (Math.PI * 2 * i) / 12;
-        const distance = 42 + Math.random() * 42;
-        particle.className = "capture-burst";
+        const angle = (Math.PI * 2 * i) / 14;
+        const distance = 45 + Math.random() * 44;
+
+        particle.className = "confetti";
         particle.style.left = `${rect.left + rect.width / 2}px`;
         particle.style.top = `${rect.top + rect.height / 2}px`;
         particle.style.setProperty("--x", `${Math.cos(angle) * distance}px`);
         particle.style.setProperty("--y", `${Math.sin(angle) * distance}px`);
+        particle.style.setProperty("--particle-color", colors[i % colors.length]);
         document.body.appendChild(particle);
         particle.addEventListener("animationend", () => particle.remove());
       }
     }
 
-    function showEncounter(origin) {
-      let nextIndex = currentIndex;
-      while (nextIndex === currentIndex) {
-        nextIndex = Math.floor(Math.random() * pokemon.length);
-      }
+    function showNextMoment() {
+      currentMoment = (currentMoment + 1) % moments.length;
+      const nextMoment = moments[currentMoment];
 
-      currentIndex = nextIndex;
-      const next = pokemon[currentIndex];
-      image.classList.add("is-changing");
-      createBurst(origin);
+      momentCard.classList.add("is-changing");
+      createConfetti(momentButton);
 
       window.setTimeout(() => {
-        image.src = spriteUrl(next.id);
-        image.alt = next.name;
-        number.textContent = `POKÉDEX #${String(next.id).padStart(3, "0")}`;
-        name.textContent = next.name;
-        type.textContent = next.type;
-        type.style.background = next.color;
-        power.style.width = `${next.power}%`;
-        image.classList.remove("is-changing");
+        momentTitle.textContent = nextMoment.title;
+        momentDetail.textContent = nextMoment.detail;
+        momentCard.classList.remove("is-changing");
       }, 180);
 
-      encounters += 1;
-      seenCount.textContent = encounters;
-      toastText.textContent = `En vild ${next.name} dukkede op!`;
+      toastText.textContent = `${nextMoment.title} er valgt`;
       toast.classList.add("is-visible");
       window.clearTimeout(toastTimer);
       toastTimer = window.setTimeout(() => toast.classList.remove("is-visible"), 2200);
     }
 
-    encounterButtons.forEach((button) => {
-      button.addEventListener("click", () => showEncounter(button));
-    });
-
-    if (!reducedMotion) {
-      scene.addEventListener("pointermove", (event) => {
-        const rect = scene.getBoundingClientRect();
-        const x = (event.clientX - rect.left) / rect.width - 0.5;
-        const y = (event.clientY - rect.top) / rect.height - 0.5;
-        const translate = window.innerWidth <= 800 ? "translateX(-50%) " : "";
-        card.style.transform =
-          `${translate}rotateY(${x * 15 - 7}deg) rotateX(${y * -12 + 3}deg) rotateZ(${x * 2 + 2}deg)`;
-      });
-
-      scene.addEventListener("pointerleave", () => {
-        card.style.transform = "";
-      });
-
-      window.addEventListener("pointermove", (event) => {
-        cursorGlow.style.left = `${event.clientX}px`;
-        cursorGlow.style.top = `${event.clientY}px`;
-        cursorGlow.style.opacity = "1";
-      });
-
-      document.addEventListener("mouseleave", () => {
-        cursorGlow.style.opacity = "0";
-      });
-    }
+    momentButton.addEventListener("click", showNextMoment);
   </script>
 </body>
 </html>
