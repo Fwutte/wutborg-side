@@ -1,0 +1,1300 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#f8f5ef" />
+  <title>Dansk kalender 2026 · Wutborg.dk</title>
+  <meta
+    name="description"
+    content="Dansk kalender for 2026 med helligdage, mærkedage, officielle flagdage og familiens fødselsdage."
+  />
+  <style>
+    :root {
+      --page: #f6f3ed;
+      --paper: #fff;
+      --ink: #24272b;
+      --muted: #6d737b;
+      --line: #e2e4e6;
+      --red: #b72d35;
+      --red-soft: #fbeaec;
+      --blue: #315f7d;
+      --blue-soft: #eaf2f7;
+      --gold: #9a6c18;
+      --gold-soft: #fff5d9;
+      --green: #47705a;
+      --green-soft: #eaf4ed;
+      --weekend: #f7f8f9;
+      --shadow: 0 18px 50px rgba(36, 39, 43, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      color: var(--ink);
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 8% 3%, rgba(183, 45, 53, 0.06), transparent 25rem),
+        radial-gradient(circle at 94% 10%, rgba(49, 95, 125, 0.07), transparent 28rem),
+        var(--page);
+    }
+
+    a,
+    button {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .page {
+      width: min(1380px, calc(100% - 36px));
+      margin: 0 auto;
+      padding: 20px 0 52px;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 12px;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      min-height: 66px;
+      padding: 10px 12px 10px 16px;
+      border: 1px solid rgba(226, 228, 230, 0.9);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.88);
+      box-shadow: 0 10px 34px rgba(36, 39, 43, 0.07);
+      backdrop-filter: blur(18px);
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 11px;
+      color: var(--ink);
+      text-decoration: none;
+      font-weight: 850;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-mark {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: 41px;
+      height: 41px;
+      border-radius: 12px;
+      color: #fff;
+      background: var(--red);
+      box-shadow: inset 0 -4px 10px rgba(80, 10, 15, 0.18);
+    }
+
+    .brand-mark::before {
+      content: "26";
+      margin-top: 5px;
+      font-size: 0.86rem;
+      font-weight: 900;
+    }
+
+    .brand-mark::after {
+      content: "";
+      position: absolute;
+      top: 8px;
+      left: 9px;
+      width: 23px;
+      height: 3px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    .brand small {
+      display: block;
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 0.67rem;
+      font-weight: 750;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+
+    .top-links {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .top-links a {
+      padding: 9px 12px;
+      border-radius: 999px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 750;
+    }
+
+    .top-links a:hover {
+      color: var(--red);
+      background: var(--red-soft);
+    }
+
+    .year-pill {
+      padding: 9px 14px;
+      border-radius: 999px;
+      color: var(--red);
+      background: var(--red-soft);
+      font-size: 0.82rem;
+      font-weight: 850;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
+      gap: 40px;
+      align-items: end;
+      padding: 76px 22px 44px;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      margin: 0 0 15px;
+      color: var(--red);
+      font-size: 0.72rem;
+      font-weight: 900;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(3.5rem, 8vw, 7.6rem);
+      line-height: 0.84;
+      letter-spacing: -0.065em;
+    }
+
+    h1 span {
+      color: var(--red);
+    }
+
+    .hero-copy {
+      max-width: 690px;
+      margin: 26px 0 0;
+      color: var(--muted);
+      font-size: clamp(1rem, 1.5vw, 1.13rem);
+      line-height: 1.7;
+    }
+
+    .year-facts {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.72);
+      box-shadow: 0 12px 32px rgba(36, 39, 43, 0.04);
+    }
+
+    .fact {
+      padding: 20px 17px;
+      border-right: 1px solid var(--line);
+    }
+
+    .fact:last-child {
+      border-right: 0;
+    }
+
+    .fact strong {
+      display: block;
+      margin-bottom: 4px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.75rem;
+    }
+
+    .fact span {
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 750;
+    }
+
+    .controls {
+      position: sticky;
+      top: 90px;
+      z-index: 15;
+      padding: 15px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.91);
+      box-shadow: 0 12px 38px rgba(36, 39, 43, 0.07);
+      backdrop-filter: blur(18px);
+    }
+
+    .filter-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .filter-label {
+      margin-right: 4px;
+      color: var(--muted);
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+    }
+
+    .filter-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 35px;
+      padding: 0 11px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--ink);
+      background: #fff;
+      cursor: pointer;
+      font-size: 0.78rem;
+      font-weight: 750;
+      transition: opacity 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .filter-button:hover {
+      transform: translateY(-1px);
+      border-color: #bdc1c5;
+    }
+
+    .filter-button[aria-pressed="false"] {
+      opacity: 0.42;
+    }
+
+    .legend-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--red);
+    }
+
+    .filter-button[data-filter="observance"] .legend-dot {
+      background: var(--blue);
+    }
+
+    .filter-button[data-filter="flag"] .legend-dot {
+      border-radius: 2px;
+      background: linear-gradient(#c8102e 0);
+    }
+
+    .filter-button[data-filter="family"] .legend-dot {
+      background: var(--gold);
+    }
+
+    .month-nav {
+      display: flex;
+      gap: 5px;
+      margin-top: 12px;
+      padding-top: 12px;
+      overflow-x: auto;
+      border-top: 1px solid var(--line);
+      scrollbar-width: thin;
+    }
+
+    .month-nav a {
+      flex: 0 0 auto;
+      padding: 7px 9px;
+      border-radius: 8px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.74rem;
+      font-weight: 750;
+    }
+
+    .month-nav a:hover {
+      color: var(--red);
+      background: var(--red-soft);
+    }
+
+    .notice {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin: 20px 0 0;
+      padding: 14px 16px;
+      border: 1px solid #eadfc2;
+      border-radius: 14px;
+      color: #705d31;
+      background: #fff9e9;
+      font-size: 0.82rem;
+      line-height: 1.5;
+    }
+
+    .notice strong {
+      color: #51421f;
+    }
+
+    .notice-icon {
+      display: grid;
+      flex: 0 0 auto;
+      place-items: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      color: #fff;
+      background: var(--gold);
+      font-weight: 900;
+    }
+
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 22px;
+      margin-top: 28px;
+    }
+
+    .month {
+      scroll-margin-top: 185px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: var(--paper);
+      box-shadow: var(--shadow);
+    }
+
+    .month-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 21px 22px 17px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .month-header h2 {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(1.8rem, 3vw, 2.45rem);
+      letter-spacing: -0.035em;
+    }
+
+    .month-header span {
+      color: var(--muted);
+      font-size: 0.75rem;
+      font-weight: 750;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: 42px repeat(7, minmax(0, 1fr));
+    }
+
+    .weekday,
+    .week-heading {
+      display: grid;
+      place-items: center;
+      min-height: 35px;
+      border-right: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      background: #fbfbfa;
+      font-size: 0.65rem;
+      font-weight: 850;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .weekday.weekend {
+      color: var(--red);
+      background: #faf4f4;
+    }
+
+    .weekday:last-child {
+      border-right: 0;
+    }
+
+    .weekday-short {
+      display: none;
+    }
+
+    .week-number {
+      display: grid;
+      place-items: start center;
+      min-height: 104px;
+      padding-top: 13px;
+      border-right: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      color: #a0a5aa;
+      background: #fbfbfa;
+      font-size: 0.64rem;
+      font-weight: 850;
+    }
+
+    .day {
+      position: relative;
+      min-width: 0;
+      min-height: 104px;
+      padding: 9px 7px 7px;
+      overflow: hidden;
+      border-right: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .day.weekend {
+      background: var(--weekend);
+    }
+
+    .day.holiday {
+      background:
+        linear-gradient(rgba(251, 234, 236, 0.72), rgba(251, 234, 236, 0.72)),
+        #fff;
+    }
+
+    .day.today::after {
+      content: "";
+      position: absolute;
+      inset: 3px;
+      z-index: 0;
+      pointer-events: none;
+      border: 2px solid var(--red);
+      border-radius: 9px;
+    }
+
+    .day.empty {
+      background:
+        repeating-linear-gradient(135deg, transparent 0 9px, rgba(36, 39, 43, 0.025) 9px 10px),
+        #fafafa;
+    }
+
+    .day-number {
+      position: relative;
+      z-index: 1;
+      display: inline-grid;
+      place-items: center;
+      width: 25px;
+      height: 25px;
+      border-radius: 50%;
+      font-size: 0.78rem;
+      font-weight: 850;
+    }
+
+    .holiday .day-number {
+      color: #fff;
+      background: var(--red);
+    }
+
+    .today .day-number {
+      color: #fff;
+      background: var(--ink);
+    }
+
+    .event-list {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      gap: 3px;
+      margin-top: 3px;
+    }
+
+    .event-chip {
+      display: flex;
+      align-items: flex-start;
+      gap: 4px;
+      min-width: 0;
+      padding: 3px 4px;
+      border-radius: 5px;
+      color: #21455c;
+      background: var(--blue-soft);
+      font-size: 0.59rem;
+      font-weight: 750;
+      line-height: 1.18;
+    }
+
+    .event-chip.holiday {
+      color: #8f2028;
+      background: var(--red-soft);
+    }
+
+    .event-chip.family {
+      color: #75500d;
+      background: var(--gold-soft);
+    }
+
+    .event-chip.is-hidden {
+      display: none;
+    }
+
+    .event-text {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .event-symbols {
+      display: inline-flex;
+      flex: 0 0 auto;
+      align-items: center;
+      gap: 2px;
+      min-height: 7px;
+      margin-top: 1px;
+    }
+
+    .event-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .flag-icon {
+      position: relative;
+      display: inline-block;
+      width: 12px;
+      height: 9px;
+      overflow: hidden;
+      border-radius: 1px;
+      background:
+        linear-gradient(90deg, transparent 0 30%, #fff 30% 43%, transparent 43%),
+        linear-gradient(transparent 0 38%, #fff 38% 56%, transparent 56%),
+        #c8102e;
+      box-shadow: 0 0 0 1px rgba(100, 10, 20, 0.08);
+    }
+
+    .flag-icon.greenland {
+      border: 1px solid #d2d2d2;
+      background:
+        radial-gradient(circle at 42% 50%, #fff 0 21%, #d00c33 22% 43%, transparent 44%),
+        linear-gradient(#fff 0 50%, #d00c33 50%);
+    }
+
+    .flag-icon.faroe {
+      border: 1px solid #d2d2d2;
+      background:
+        linear-gradient(90deg, transparent 0 29%, #005eb8 29% 36%, transparent 36% 43%, #fff 43%),
+        linear-gradient(transparent 0 36%, #005eb8 36% 45%, #fff 45% 55%, #005eb8 55% 64%, transparent 64%),
+        #fff;
+    }
+
+    .mobile-agenda {
+      display: none;
+      padding: 14px 16px 17px;
+      border-top: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .mobile-agenda h3 {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .agenda-item {
+      display: grid;
+      grid-template-columns: 34px 1fr;
+      gap: 9px;
+      align-items: start;
+      padding: 8px 0;
+      border-top: 1px solid #eff0f1;
+      font-size: 0.79rem;
+    }
+
+    .agenda-item.is-hidden {
+      display: none;
+    }
+
+    .agenda-date {
+      color: var(--red);
+      font-weight: 900;
+    }
+
+    .agenda-name {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 750;
+    }
+
+    .agenda-note {
+      display: block;
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 0.7rem;
+      font-weight: 500;
+      line-height: 1.35;
+    }
+
+    .sources {
+      display: flex;
+      justify-content: space-between;
+      gap: 26px;
+      margin-top: 28px;
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.68);
+      font-size: 0.78rem;
+      line-height: 1.55;
+    }
+
+    .sources strong {
+      color: var(--ink);
+    }
+
+    .sources a {
+      color: var(--red);
+      text-underline-offset: 3px;
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 28px 5px 0;
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    .footer a,
+    .footer strong {
+      color: var(--ink);
+    }
+
+    @media (max-width: 1060px) {
+      .calendar {
+        grid-template-columns: 1fr;
+      }
+
+      .hero {
+        grid-template-columns: 1fr;
+      }
+
+      .year-facts {
+        max-width: 560px;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .page {
+        width: min(100% - 20px, 620px);
+        padding-top: 10px;
+      }
+
+      .topbar {
+        top: 7px;
+      }
+
+      .top-links {
+        display: none;
+      }
+
+      .hero {
+        gap: 28px;
+        padding: 56px 8px 32px;
+      }
+
+      h1 {
+        font-size: clamp(3.5rem, 22vw, 6rem);
+      }
+
+      .controls {
+        position: static;
+      }
+
+      .calendar {
+        gap: 16px;
+      }
+
+      .month {
+        scroll-margin-top: 90px;
+        border-radius: 17px;
+      }
+
+      .month-header {
+        padding: 17px 16px 13px;
+      }
+
+      .calendar-grid {
+        grid-template-columns: 28px repeat(7, minmax(0, 1fr));
+      }
+
+      .weekday,
+      .week-heading {
+        min-height: 30px;
+        font-size: 0.57rem;
+      }
+
+      .weekday-long {
+        display: none;
+      }
+
+      .weekday-short {
+        display: inline;
+      }
+
+      .week-number {
+        min-height: 61px;
+        padding-top: 9px;
+        font-size: 0.55rem;
+      }
+
+      .day {
+        min-height: 61px;
+        padding: 5px 3px;
+      }
+
+      .day-number {
+        width: 21px;
+        height: 21px;
+        font-size: 0.68rem;
+      }
+
+      .event-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 3px;
+        margin: 3px 1px 0;
+      }
+
+      .event-chip {
+        width: 8px;
+        height: 8px;
+        min-height: 0;
+        padding: 0;
+        border-radius: 50%;
+        background: var(--blue);
+      }
+
+      .event-chip.holiday {
+        background: var(--red);
+      }
+
+      .event-chip.family {
+        background: var(--gold);
+      }
+
+      .event-text,
+      .event-symbols {
+        display: none;
+      }
+
+      .mobile-agenda {
+        display: block;
+      }
+
+      .sources,
+      .footer {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+
+    @media (max-width: 430px) {
+      .brand small,
+      .year-pill {
+        display: none;
+      }
+
+      .topbar {
+        justify-content: center;
+      }
+
+      .year-facts {
+        grid-template-columns: 1fr;
+      }
+
+      .fact {
+        display: flex;
+        align-items: baseline;
+        gap: 9px;
+        padding: 12px 15px;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .fact:last-child {
+        border-bottom: 0;
+      }
+
+      .fact strong {
+        margin: 0;
+        font-size: 1.35rem;
+      }
+
+      .filter-label {
+        width: 100%;
+      }
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      .page {
+        width: 100%;
+        padding: 0;
+      }
+
+      .topbar,
+      .controls,
+      .notice,
+      .sources,
+      .footer {
+        display: none;
+      }
+
+      .hero {
+        display: block;
+        padding: 0 0 18px;
+      }
+
+      .hero-copy {
+        margin-top: 12px;
+      }
+
+      .year-facts {
+        display: none;
+      }
+
+      .calendar {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin: 0;
+      }
+
+      .month {
+        break-inside: avoid;
+        box-shadow: none;
+      }
+
+      .month-header {
+        padding: 10px 12px 8px;
+      }
+
+      .month-header h2 {
+        font-size: 1.4rem;
+      }
+
+      .day,
+      .week-number {
+        min-height: 76px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+
+      *,
+      *::before,
+      *::after {
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <a class="brand" href="index.html">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>
+          Wutborg.dk
+          <small>Familiekalender</small>
+        </span>
+      </a>
+
+      <nav class="top-links" aria-label="Hovedmenu">
+        <a href="index.html">Forside</a>
+        <a href="minispil.html">Minispil</a>
+        <a href="mailto:hej@wutborg.dk">Kontakt</a>
+      </nav>
+
+      <span class="year-pill">Hele 2026</span>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="page-title">
+        <div>
+          <span class="eyebrow">Dansk kalender</span>
+          <h1 id="page-title">Året <span>2026</span></h1>
+          <p class="hero-copy">
+            Alle årets måneder med danske ugenumre, helligdage, mærkedage,
+            officielle flagdage og familiens egne fødselsdage.
+          </p>
+        </div>
+
+        <div class="year-facts" aria-label="Kalenderoversigt">
+          <div class="fact">
+            <strong>12</strong>
+            <span>måneder</span>
+          </div>
+          <div class="fact">
+            <strong>10</strong>
+            <span>helligdage</span>
+          </div>
+          <div class="fact">
+            <strong>21</strong>
+            <span>officielle flagdage</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="controls" aria-label="Kalenderfiltre og månedsnavigation">
+        <div class="filter-row">
+          <span class="filter-label">Vis i kalenderen</span>
+          <button class="filter-button" type="button" data-filter="holiday" aria-pressed="true">
+            <span class="legend-dot"></span>
+            Helligdage
+          </button>
+          <button class="filter-button" type="button" data-filter="observance" aria-pressed="true">
+            <span class="legend-dot"></span>
+            Mærkedage
+          </button>
+          <button class="filter-button" type="button" data-filter="flag" aria-pressed="true">
+            <span class="legend-dot"></span>
+            Officielle flagdage
+          </button>
+          <button class="filter-button" type="button" data-filter="family" aria-pressed="true">
+            <span class="legend-dot"></span>
+            Familie
+          </button>
+        </div>
+        <nav class="month-nav" id="month-nav" aria-label="Gå til måned"></nav>
+      </section>
+
+      <aside class="notice">
+        <span class="notice-icon" aria-hidden="true">i</span>
+        <span>
+          <strong>Store bededag er ikke en helligdag.</strong>
+          Dagen blev afskaffet som dansk helligdag fra og med 2024 og er derfor ikke
+          fremhævet som helligdag i kalenderen.
+        </span>
+      </aside>
+
+      <div class="calendar" id="calendar"></div>
+
+      <aside class="sources">
+        <span>
+          <strong>Datagrundlag:</strong> Officielle flagdage er kontrolleret mod
+          Justitsministeriets liste for 2026. Bevægelige kirkelige dage er beregnet
+          ud fra påskedag den 5. april 2026.
+        </span>
+        <span>
+          <a href="https://www.justitsministeriet.dk/temaer/flagning/flagdage/">
+            Se officielle flagdage hos Justitsministeriet
+          </a>
+        </span>
+      </aside>
+    </main>
+
+    <footer class="footer">
+      <span><strong>Wutborg.dk</strong> · Dansk kalender 2026</span>
+      <a href="mailto:hej@wutborg.dk">hej@wutborg.dk</a>
+    </footer>
+  </div>
+
+  <script>
+    const YEAR = 2026;
+
+    const monthNames = [
+      "januar", "februar", "marts", "april", "maj", "juni",
+      "juli", "august", "september", "oktober", "november", "december"
+    ];
+
+    const weekdays = [
+      ["Mandag", "Man"], ["Tirsdag", "Tir"], ["Onsdag", "Ons"],
+      ["Torsdag", "Tor"], ["Fredag", "Fre"], ["Lørdag", "Lør"],
+      ["Søndag", "Søn"]
+    ];
+
+    /*
+     * Kalenderens begivenheder redigeres her.
+     * Typer: holiday, observance, flag og family.
+     */
+    const events = [
+      { date: "2026-01-01", name: "Nytårsdag", types: ["holiday", "flag"] },
+      { date: "2026-01-06", name: "Helligtrekonger", types: ["observance"] },
+
+      { date: "2026-02-02", name: "Kyndelmisse", types: ["observance"] },
+      { date: "2026-02-05", name: "Dronning Marys fødselsdag", types: ["flag"] },
+      { date: "2026-02-06", name: "Prinsesse Maries fødselsdag", types: ["flag"] },
+      { date: "2026-02-14", name: "Valentinsdag", types: ["observance"] },
+      { date: "2026-02-15", name: "Fastelavn", types: ["observance"] },
+
+      { date: "2026-03-08", name: "Kvindernes internationale kampdag", types: ["observance"] },
+      { date: "2026-03-29", name: "Palmesøndag", types: ["observance"] },
+
+      { date: "2026-04-01", name: "Aprilsnar", types: ["observance"] },
+      { date: "2026-04-02", name: "Skærtorsdag", types: ["holiday"] },
+      {
+        date: "2026-04-03",
+        name: "Langfredag",
+        types: ["holiday", "flag"],
+        note: "Der flages på halv stang hele dagen."
+      },
+      { date: "2026-04-05", name: "Påskedag", types: ["holiday", "flag"] },
+      { date: "2026-04-06", name: "2. påskedag", types: ["holiday"] },
+      {
+        date: "2026-04-09",
+        name: "Besættelsesdagen",
+        types: ["observance", "flag"],
+        note: "Halv stang til kl. 12, derefter hel stang."
+      },
+      { date: "2026-04-15", name: "Lottes fødselsdag", types: ["family"] },
+      { date: "2026-04-16", name: "Dronning Margrethes fødselsdag", types: ["flag"] },
+      { date: "2026-04-21", name: "Prinsesse Isabellas fødselsdag", types: ["flag"] },
+      { date: "2026-04-29", name: "Prinsesse Benediktes fødselsdag", types: ["flag"] },
+
+      { date: "2026-05-01", name: "Arbejdernes internationale kampdag", types: ["observance"] },
+      { date: "2026-05-04", name: "Befrielsesbudskabet · lys i vinduerne", types: ["observance"] },
+      { date: "2026-05-05", name: "Befrielsesdagen", types: ["observance", "flag"] },
+      { date: "2026-05-10", name: "Mors dag", types: ["observance"] },
+      { date: "2026-05-14", name: "Kristi himmelfartsdag", types: ["holiday", "flag"] },
+      { date: "2026-05-24", name: "Pinsedag", types: ["holiday", "flag"] },
+      { date: "2026-05-25", name: "2. pinsedag", types: ["holiday"] },
+      { date: "2026-05-26", name: "Kong Frederik X's fødselsdag", types: ["flag"] },
+
+      { date: "2026-06-05", name: "Grundlovsdag", types: ["observance", "flag"] },
+      { date: "2026-06-05", name: "Fars dag", types: ["observance"] },
+      { date: "2026-06-07", name: "Prins Joachims fødselsdag", types: ["flag"] },
+      { date: "2026-06-15", name: "Valdemarsdag og genforeningsdag", types: ["observance", "flag"] },
+      {
+        date: "2026-06-21",
+        name: "Grønlands nationaldag",
+        types: ["flag"],
+        flag: "greenland"
+      },
+      { date: "2026-06-23", name: "Sankt Hans aften", types: ["observance"] },
+
+      {
+        date: "2026-07-29",
+        name: "Færøernes nationale festdag · Ólavsøka",
+        types: ["flag"],
+        flag: "faroe"
+      },
+
+      { date: "2026-08-17", name: "Frederiks fødselsdag", types: ["family"] },
+
+      { date: "2026-09-05", name: "Danmarks udsendte", types: ["flag"] },
+
+      { date: "2026-10-09", name: "Alfreds fødselsdag", types: ["family"] },
+      { date: "2026-10-15", name: "Kronprins Christians fødselsdag", types: ["flag"] },
+      { date: "2026-10-31", name: "Halloween", types: ["observance"] },
+
+      { date: "2026-11-01", name: "Allehelgensdag", types: ["observance"] },
+      { date: "2026-11-10", name: "Mortensaften", types: ["observance"] },
+      { date: "2026-11-29", name: "1. søndag i advent", types: ["observance"] },
+
+      { date: "2026-12-06", name: "2. søndag i advent", types: ["observance"] },
+      { date: "2026-12-13", name: "3. søndag i advent", types: ["observance"] },
+      { date: "2026-12-13", name: "Luciadag", types: ["observance"] },
+      { date: "2026-12-20", name: "4. søndag i advent", types: ["observance"] },
+      { date: "2026-12-24", name: "Juleaften", types: ["observance"] },
+      { date: "2026-12-25", name: "Juledag", types: ["holiday", "flag"] },
+      { date: "2026-12-26", name: "2. juledag", types: ["holiday"] },
+      { date: "2026-12-31", name: "Nytårsaften", types: ["observance"] }
+    ];
+
+    const eventsByDate = events.reduce((dates, event) => {
+      (dates[event.date] ??= []).push(event);
+      return dates;
+    }, {});
+
+    const activeFilters = new Set(["holiday", "observance", "flag", "family"]);
+    const today = new Date();
+    const todayKey = [
+      today.getFullYear(),
+      String(today.getMonth() + 1).padStart(2, "0"),
+      String(today.getDate()).padStart(2, "0")
+    ].join("-");
+
+    function dateKey(monthIndex, day) {
+      return `${YEAR}-${String(monthIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    }
+
+    function getIsoWeek(date) {
+      const target = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+      const dayNumber = target.getUTCDay() || 7;
+      target.setUTCDate(target.getUTCDate() + 4 - dayNumber);
+      const yearStart = new Date(Date.UTC(target.getUTCFullYear(), 0, 1));
+      return Math.ceil((((target - yearStart) / 86400000) + 1) / 7);
+    }
+
+    function categoryName(type) {
+      return {
+        holiday: "helligdag",
+        observance: "mærkedag",
+        flag: "officiel flagdag",
+        family: "familiedag"
+      }[type];
+    }
+
+    function eventSymbols(event) {
+      const symbols = [];
+
+      if (event.types.includes("flag")) {
+        const flagClass = event.flag ? ` ${event.flag}` : "";
+        symbols.push(`<span class="flag-icon${flagClass}" aria-hidden="true"></span>`);
+      }
+
+      if (!event.types.includes("flag") || event.types.length > 1) {
+        symbols.push('<span class="event-dot" aria-hidden="true"></span>');
+      }
+
+      return symbols.join("");
+    }
+
+    function eventClass(event) {
+      if (event.types.includes("holiday")) return "holiday";
+      if (event.types.includes("family")) return "family";
+      return "observance";
+    }
+
+    function renderEvent(event) {
+      const categories = event.types.map(categoryName).join(", ");
+      const title = event.note ? `${event.name}. ${event.note}` : event.name;
+
+      return `
+        <span
+          class="event-chip ${eventClass(event)}"
+          data-types="${event.types.join(" ")}"
+          title="${title}"
+          aria-label="${event.name}, ${categories}"
+        >
+          <span class="event-symbols">${eventSymbols(event)}</span>
+          <span class="event-text">${event.name}</span>
+        </span>
+      `;
+    }
+
+    function renderAgendaItem(event) {
+      const day = Number(event.date.slice(-2));
+      const note = event.note ? `<span class="agenda-note">${event.note}</span>` : "";
+
+      return `
+        <div class="agenda-item" data-types="${event.types.join(" ")}">
+          <span class="agenda-date">${day}.</span>
+          <span>
+            <span class="agenda-name">
+              ${eventSymbols(event)}
+              ${event.name}
+            </span>
+            ${note}
+          </span>
+        </div>
+      `;
+    }
+
+    function renderMonth(monthIndex) {
+      const firstDate = new Date(Date.UTC(YEAR, monthIndex, 1));
+      const daysInMonth = new Date(Date.UTC(YEAR, monthIndex + 1, 0)).getUTCDate();
+      const startOffset = (firstDate.getUTCDay() + 6) % 7;
+      const rowCount = Math.ceil((startOffset + daysInMonth) / 7);
+      const monthEvents = events.filter((event) => Number(event.date.slice(5, 7)) === monthIndex + 1);
+
+      let grid = `
+        <div class="week-heading">Uge</div>
+        ${weekdays.map(([longName, shortName], index) => `
+          <div class="weekday${index > 4 ? " weekend" : ""}">
+            <span class="weekday-long">${longName}</span>
+            <span class="weekday-short">${shortName}</span>
+          </div>
+        `).join("")}
+      `;
+
+      for (let row = 0; row < rowCount; row += 1) {
+        const firstDayInRow = 1 - startOffset + row * 7;
+        const monday = new Date(Date.UTC(YEAR, monthIndex, firstDayInRow));
+        grid += `<div class="week-number" aria-label="Uge ${getIsoWeek(monday)}">${getIsoWeek(monday)}</div>`;
+
+        for (let weekday = 0; weekday < 7; weekday += 1) {
+          const day = firstDayInRow + weekday;
+
+          if (day < 1 || day > daysInMonth) {
+            grid += '<div class="day empty" aria-hidden="true"></div>';
+            continue;
+          }
+
+          const key = dateKey(monthIndex, day);
+          const dayEvents = eventsByDate[key] || [];
+          const classes = [
+            "day",
+            weekday > 4 ? "weekend" : "",
+            dayEvents.some((event) => event.types.includes("holiday")) ? "holiday" : "",
+            key === todayKey ? "today" : ""
+          ].filter(Boolean).join(" ");
+
+          const fullDate = `${day}. ${monthNames[monthIndex]} ${YEAR}`;
+          grid += `
+            <div class="${classes}" aria-label="${fullDate}">
+              <time class="day-number" datetime="${key}">${day}</time>
+              <div class="event-list">${dayEvents.map(renderEvent).join("")}</div>
+            </div>
+          `;
+        }
+      }
+
+      return `
+        <section class="month" id="${monthNames[monthIndex]}" aria-labelledby="month-${monthIndex}">
+          <header class="month-header">
+            <h2 id="month-${monthIndex}">${monthNames[monthIndex]}</h2>
+            <span>${monthEvents.length} begivenheder</span>
+          </header>
+          <div class="calendar-grid">${grid}</div>
+          <div class="mobile-agenda">
+            <h3>Månedens mærkedage</h3>
+            ${monthEvents.length ? monthEvents.map(renderAgendaItem).join("") : "<p>Ingen mærkedage denne måned.</p>"}
+          </div>
+        </section>
+      `;
+    }
+
+    function updateFilters() {
+      document.querySelectorAll("[data-types]").forEach((element) => {
+        const types = element.dataset.types.split(" ");
+        const isVisible = types.some((type) => activeFilters.has(type));
+        element.classList.toggle("is-hidden", !isVisible);
+      });
+    }
+
+    document.querySelector("#month-nav").innerHTML = monthNames
+      .map((month) => `<a href="#${month}">${month.slice(0, 3)}.</a>`)
+      .join("");
+
+    document.querySelector("#calendar").innerHTML = monthNames
+      .map((_, monthIndex) => renderMonth(monthIndex))
+      .join("");
+
+    document.querySelectorAll(".filter-button").forEach((button) => {
+      button.addEventListener("click", () => {
+        const filter = button.dataset.filter;
+
+        if (activeFilters.has(filter)) {
+          activeFilters.delete(filter);
+        } else {
+          activeFilters.add(filter);
+        }
+
+        button.setAttribute("aria-pressed", String(activeFilters.has(filter)));
+        updateFilters();
+      });
+    });
+  </script>
+</body>
+</html>
