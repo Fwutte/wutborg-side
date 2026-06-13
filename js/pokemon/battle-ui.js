@@ -112,8 +112,28 @@
     return pokemonData.find((pokemon) => pokemon.id === selection[side]) || pokemonData[0];
   }
 
-  function artworkPath(pokemon) {
-    return artwork[pokemon.id] || null;
+  function artworkFor(pokemon, side = "front") {
+    const entry = artwork[pokemon.id];
+    if (!entry) return null;
+    if (typeof entry === "string") {
+      return { src: entry, fallback: entry };
+    }
+    return {
+      src: entry[side] || entry.front,
+      fallback: entry.fallback || ""
+    };
+  }
+
+  function artworkImage(art, className, attributes = "") {
+    if (!art) return "";
+    return `
+      <img
+        class="pokemon-art ${className}"
+        src="${art.src}"
+        data-art-fallback="${art.fallback}"
+        alt=""
+        ${attributes}
+      />`;
   }
 
   function typeBadges(types) {
@@ -126,16 +146,15 @@
     const pokemon = selectedPokemon(side);
     const color = pokemon.sprite?.cssColorHint || TYPE_COLORS[pokemon.types[0]];
     const shape = pokemon.sprite?.shape ?? pokemon.id % 4;
-    const art = artworkPath(pokemon);
+    const art = artworkFor(pokemon);
     sideDom[side].selected.style.setProperty("--selected-color", color);
     sideDom[side].selected.innerHTML = `
       <div class="selected-visual" aria-hidden="true">
-        ${art
-          ? `<img class="pokemon-art selected-art" src="${art}" alt="" />`
-          : `<span
-              class="mini-monster"
-              style="--selected-color:${color};--mini-shape:${miniShapes[shape]}"
-            ></span>`}
+        <span
+          class="mini-monster"
+          style="--selected-color:${color};--mini-shape:${miniShapes[shape]}"
+        ></span>
+        ${artworkImage(art, "selected-art")}
       </div>
       <div class="selected-details">
         <span class="selected-number">KANTO #${String(pokemon.id).padStart(3, "0")}</span>
@@ -166,7 +185,7 @@
     sideDom[side].roster.innerHTML = matches.length
       ? matches.map((pokemon) => {
         const color = pokemon.sprite?.cssColorHint || TYPE_COLORS[pokemon.types[0]];
-        const art = artworkPath(pokemon);
+        const art = artworkFor(pokemon);
         return `
           <button
             class="roster-button"
@@ -177,9 +196,8 @@
             style="--entry-color:${color}"
           >
             <span class="roster-visual" aria-hidden="true">
-              ${art
-                ? `<img class="pokemon-art roster-art" src="${art}" alt="" loading="lazy" />`
-                : `<span class="roster-dot"></span>`}
+              <span class="roster-dot"></span>
+              ${artworkImage(art, "roster-art", 'loading="lazy"')}
             </span>
             <span class="roster-number">#${String(pokemon.id).padStart(3, "0")}</span>
             <span class="roster-name">${escapeHtml(pokemon.displayName)}</span>
@@ -282,7 +300,7 @@
     const stage = sideDom[side].stage;
     const color = pokemon.sprite?.cssColorHint || TYPE_COLORS[pokemon.types[0]];
     const shape = pokemon.sprite?.shape ?? pokemon.id % 4;
-    const art = artworkPath(pokemon);
+    const art = artworkFor(pokemon, side === "player" ? "back" : "front");
     stage.className = [
       "monster-stage",
       `${side}-stage`,
@@ -303,7 +321,10 @@
         image.decoding = "async";
         stage.append(image);
       }
-      image.src = art;
+      image.hidden = false;
+      image.dataset.artFallback = art.fallback;
+      image.dataset.fallbackApplied = "";
+      image.src = art.src;
     } else {
       image?.remove();
     }
@@ -604,6 +625,23 @@
   }
 
   function bindEvents() {
+    document.addEventListener("error", (event) => {
+      const image = event.target;
+      if (!(image instanceof HTMLImageElement) || !image.classList.contains("pokemon-art")) {
+        return;
+      }
+
+      const fallback = image.dataset.artFallback;
+      if (fallback && !image.dataset.fallbackApplied) {
+        image.dataset.fallbackApplied = "true";
+        image.src = fallback;
+        return;
+      }
+
+      image.hidden = true;
+      image.closest(".monster-stage")?.classList.remove("has-art");
+    }, true);
+
     for (const side of ["player", "opponent"]) {
       sideDom[side].roster.addEventListener("click", (event) => {
         const button = event.target.closest("[data-pokemon-id]");

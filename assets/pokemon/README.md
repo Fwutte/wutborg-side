@@ -1,7 +1,18 @@
 # Pokemon #001-#010 artwork
 
 These SVG files are original fan-art illustrations made for Monster Battle Arena.
-They do not contain ripped sprites or downloaded official artwork.
+They are retained as offline fallbacks for Pokemon #001-#010.
+
+The game primarily displays FireRed/LeafGreen front and back sprites hosted by
+the PokeAPI sprites repository:
+
+https://github.com/PokeAPI/sprites
+
+Runtime URL pattern:
+
+`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-iii/firered-leafgreen/{id}.png`
+
+Player back sprites use the corresponding `/back/{id}.png` path.
 
 The designs use the distinguishing biology and anatomy described by the Pokemon
 Pokedex and Bulbapedia:
