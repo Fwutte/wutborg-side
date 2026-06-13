@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#162733" />
+  <meta
+    name="description"
+    content="Vælg to Pokémon og kæmp i en original, retro-inspireret 1-mod-1 monster battle."
+  />
+  <title>Monster Battle Arena | Wutborg.dk</title>
+  <link rel="stylesheet" href="css/pokemon-battle.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <nav class="topbar" aria-label="Monster Battle navigation">
+      <a class="brand" href="minispil.html">
+        <span class="brand-mark" aria-hidden="true">MB</span>
+        <span>
+          Monster Battle Arena
+          <small>Wutborg.dk</small>
+        </span>
+      </a>
+      <div class="topbar-links">
+        <a href="minispil.html">← Minispil</a>
+        <button class="sound-toggle" id="sound-toggle" type="button" aria-pressed="true">
+          Lyd: til
+        </button>
+      </div>
+    </nav>
+
+    <main>
+      <section class="loading-screen" id="loading-screen" aria-live="polite">
+        <span class="loading-orb" aria-hidden="true"></span>
+        <p>Indlæser arenaens monstre...</p>
+      </section>
+
+      <section class="setup-screen" id="setup-screen" hidden>
+        <header class="setup-hero">
+          <div>
+            <p class="eyebrow">Original retro battle demo</p>
+            <h1>Monster<br /><span>Battle Arena</span></h1>
+          </div>
+          <div class="hero-copy">
+            <p>
+              Vælg din fighter, find en modstander, og afgør kampen med fire moves
+              i en klassisk turbaseret duel.
+            </p>
+            <label class="difficulty-control">
+              <span>Modstanderens niveau</span>
+              <select id="difficulty">
+                <option value="easy">Easy · Tilfældig</option>
+                <option value="normal">Normal · Typebevidst</option>
+                <option value="smart">Smart · Taktisk</option>
+              </select>
+            </label>
+          </div>
+        </header>
+
+        <div class="selector-grid">
+          <section class="selector-panel player-panel" data-side="player">
+            <div class="panel-heading">
+              <div>
+                <span class="step-label">Fighter 01</span>
+                <h2>Vælg din Pokémon</h2>
+              </div>
+              <button class="random-button" type="button" data-random="player">
+                Tilfældig
+              </button>
+            </div>
+
+            <div class="selected-card" id="player-selected"></div>
+
+            <div class="level-control">
+              <label for="player-level">Level</label>
+              <input id="player-level" type="range" min="5" max="100" value="50" />
+              <output id="player-level-output" for="player-level">50</output>
+            </div>
+
+            <div class="filters">
+              <label class="search-field">
+                <span class="sr-only">Søg efter din Pokémon</span>
+                <input
+                  id="player-search"
+                  type="search"
+                  placeholder="Søg efter navn..."
+                  autocomplete="off"
+                />
+              </label>
+              <label>
+                <span class="sr-only">Filtrér din Pokémon efter type</span>
+                <select id="player-type" data-filter="type">
+                  <option value="">Alle typer</option>
+                </select>
+              </label>
+              <label>
+                <span class="sr-only">Filtrér din Pokémon efter metode</span>
+                <select id="player-method" data-filter="method">
+                  <option value="">Alle metoder</option>
+                </select>
+              </label>
+            </div>
+            <div
+              class="roster"
+              id="player-roster"
+              role="listbox"
+              aria-label="Vælg din Pokémon"
+            ></div>
+          </section>
+
+          <section class="selector-panel opponent-panel" data-side="opponent">
+            <div class="panel-heading">
+              <div>
+                <span class="step-label">Fighter 02</span>
+                <h2>Vælg modstander</h2>
+              </div>
+              <button class="random-button" type="button" data-random="opponent">
+                Tilfældig
+              </button>
+            </div>
+
+            <div class="selected-card" id="opponent-selected"></div>
+
+            <div class="level-control">
+              <label for="opponent-level">Level</label>
+              <input id="opponent-level" type="range" min="5" max="100" value="50" />
+              <output id="opponent-level-output" for="opponent-level">50</output>
+            </div>
+
+            <div class="filters">
+              <label class="search-field">
+                <span class="sr-only">Søg efter modstander</span>
+                <input
+                  id="opponent-search"
+                  type="search"
+                  placeholder="Søg efter navn..."
+                  autocomplete="off"
+                />
+              </label>
+              <label>
+                <span class="sr-only">Filtrér modstander efter type</span>
+                <select id="opponent-type" data-filter="type">
+                  <option value="">Alle typer</option>
+                </select>
+              </label>
+              <label>
+                <span class="sr-only">Filtrér modstander efter metode</span>
+                <select id="opponent-method" data-filter="method">
+                  <option value="">Alle metoder</option>
+                </select>
+              </label>
+            </div>
+            <div
+              class="roster"
+              id="opponent-roster"
+              role="listbox"
+              aria-label="Vælg modstander"
+            ></div>
+          </section>
+        </div>
+
+        <div class="start-dock">
+          <div class="matchup-summary" id="matchup-summary"></div>
+          <button class="start-button" id="start-battle" type="button">
+            <span>Start battle</span>
+            <span aria-hidden="true">→</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="battle-screen" id="battle-screen" hidden>
+        <header class="battle-topline">
+          <div>
+            <span class="battle-round" id="battle-round">Tur 1</span>
+            <h1>Monster Battle Arena</h1>
+          </div>
+          <button class="quiet-button" type="button" data-action="new">Ny battle</button>
+        </header>
+
+        <div class="battle-arena" id="battle-arena">
+          <div class="sky-decor sky-decor-one" aria-hidden="true"></div>
+          <div class="sky-decor sky-decor-two" aria-hidden="true"></div>
+          <div class="arena-platform opponent-platform" aria-hidden="true"></div>
+          <div class="arena-platform player-platform" aria-hidden="true"></div>
+
+          <article class="combatant-card opponent-card" id="opponent-card">
+            <div class="combatant-title">
+              <strong id="opponent-name">Opponent</strong>
+              <span id="opponent-level-label">Lv. 50</span>
+            </div>
+            <div class="hp-line">
+              <span>HP</span>
+              <div class="hp-track">
+                <span class="hp-fill" id="opponent-hp-fill"></span>
+              </div>
+            </div>
+            <div class="combatant-meta">
+              <span class="status-badge" id="opponent-status" hidden></span>
+              <span id="opponent-hp-text">100 / 100</span>
+            </div>
+          </article>
+
+          <div class="monster-stage opponent-stage" id="opponent-stage" aria-hidden="true">
+            <div class="monster-aura"></div>
+            <div class="monster-body">
+              <i class="monster-eye eye-left"></i>
+              <i class="monster-eye eye-right"></i>
+              <i class="monster-mouth"></i>
+              <i class="monster-mark mark-one"></i>
+              <i class="monster-mark mark-two"></i>
+            </div>
+          </div>
+
+          <article class="combatant-card player-card" id="player-card">
+            <div class="combatant-title">
+              <strong id="player-name">Player</strong>
+              <span id="player-level-label">Lv. 50</span>
+            </div>
+            <div class="hp-line">
+              <span>HP</span>
+              <div class="hp-track">
+                <span class="hp-fill" id="player-hp-fill"></span>
+              </div>
+            </div>
+            <div class="combatant-meta">
+              <span class="status-badge" id="player-status" hidden></span>
+              <span id="player-hp-text">100 / 100</span>
+            </div>
+          </article>
+
+          <div class="monster-stage player-stage is-back" id="player-stage" aria-hidden="true">
+            <div class="monster-aura"></div>
+            <div class="monster-body">
+              <i class="monster-eye eye-left"></i>
+              <i class="monster-eye eye-right"></i>
+              <i class="monster-mouth"></i>
+              <i class="monster-mark mark-one"></i>
+              <i class="monster-mark mark-two"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="battle-console">
+          <section class="battle-log-wrap">
+            <div class="console-label">Battle log</div>
+            <div class="battle-log" id="battle-log" aria-live="polite" aria-atomic="false"></div>
+          </section>
+
+          <section class="command-panel" aria-label="Battle menu">
+            <div class="command-prompt" id="command-prompt">
+              Hvad skal <strong id="prompt-name">din Pokémon</strong> gøre?
+            </div>
+            <div class="main-commands" id="main-commands">
+              <button class="command-button fight-button" type="button" data-action="fight">
+                <span>Fight</span>
+                <small>Vælg et move</small>
+              </button>
+              <button class="command-button" type="button" data-action="info">
+                <span>Info</span>
+                <small>Stats og typer</small>
+              </button>
+              <button class="command-button" type="button" data-action="restart">
+                <span>Restart</span>
+                <small>Samme matchup</small>
+              </button>
+              <button class="command-button" type="button" data-action="new">
+                <span>New Battle</span>
+                <small>Nye fighters</small>
+              </button>
+            </div>
+            <div class="move-menu" id="move-menu" hidden></div>
+          </section>
+        </div>
+      </section>
+
+      <section class="error-panel" id="error-panel" hidden role="alert">
+        <h1>Arenaen kunne ikke åbne</h1>
+        <p id="error-message"></p>
+        <a href="minispil.html">Gå tilbage til minispil</a>
+      </section>
+    </main>
+
+    <footer class="disclaimer">
+      <span>Fan-made battle demo. This project is not affiliated with Nintendo, Game Freak or The Pokémon Company.</span>
+      <a href="pokemon-test.html">Battle engine tests</a>
+    </footer>
+  </div>
+
+  <dialog class="info-dialog" id="info-dialog">
+    <div class="dialog-heading">
+      <div>
+        <span class="step-label">Kampdata</span>
+        <h2>Fighter info</h2>
+      </div>
+      <button class="dialog-close" type="button" aria-label="Luk info">×</button>
+    </div>
+    <div class="info-grid" id="info-grid"></div>
+  </dialog>
+
+  <div class="result-overlay" id="result-overlay" hidden>
+    <div class="result-card">
+      <span class="result-kicker" id="result-kicker">Battle afsluttet</span>
+      <h2 id="result-title">Sejr!</h2>
+      <p id="result-copy"></p>
+      <div class="result-actions">
+        <button type="button" data-action="restart">Spil igen</button>
+        <button type="button" data-action="new">Nyt matchup</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="data/pokemon-firered.js"></script>
+  <script src="js/pokemon/type-chart.js"></script>
+  <script src="js/pokemon/battle-engine.js"></script>
+  <script src="js/pokemon/data-loader.js"></script>
+  <script src="js/pokemon/battle-ui.js"></script>
+</body>
+</html>

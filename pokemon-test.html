@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Monster Battle Arena - tests</title>
+  <style>
+    body {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 40px 20px;
+      color: #273138;
+      font: 16px/1.5 system-ui, sans-serif;
+      background: #f4efe5;
+    }
+    h1 { margin-bottom: 8px; }
+    .summary { margin-bottom: 24px; font-weight: 800; }
+    .test {
+      margin: 8px 0;
+      padding: 12px 15px;
+      border-radius: 10px;
+      background: #fff;
+      box-shadow: 0 4px 18px rgba(39, 49, 56, 0.08);
+    }
+    .pass { border-left: 6px solid #3d9b67; }
+    .fail { border-left: 6px solid #c64d45; }
+    code { color: #9d302b; }
+  </style>
+</head>
+<body>
+  <h1>Battle engine tests</h1>
+  <p class="summary" id="summary">Kører tests...</p>
+  <main id="results"></main>
+  <script src="js/pokemon/type-chart.js"></script>
+  <script src="js/pokemon/battle-engine.js"></script>
+  <script src="js/pokemon/battle-engine.test.js"></script>
+  <script>
+    const results = runBattleEngineTests();
+    const passed = results.filter((result) => result.passed).length;
+    document.querySelector("#summary").textContent =
+      `${passed} af ${results.length} tests bestået`;
+    document.querySelector("#results").innerHTML = results.map((result) => `
+      <div class="test ${result.passed ? "pass" : "fail"}">
+        <strong>${result.passed ? "PASS" : "FAIL"}:</strong>
+        ${result.name}
+        ${result.error ? `<br><code>${result.error}</code>` : ""}
+      </div>
+    `).join("");
+  </script>
+</body>
+</html>
