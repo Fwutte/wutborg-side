@@ -330,7 +330,7 @@ a:focus-visible {
   height: 32px;
   background-image: url("../assets/mario/mario-luigi-transparent.png");
   background-repeat: no-repeat;
-  background-position: -2px -31px;
+  background-position: -2px -32px;
   image-rendering: pixelated;
   filter: drop-shadow(2px 3px 0 rgba(13, 42, 64, 0.28));
   transform: scale(5);

@@ -9,8 +9,8 @@
   const TOTAL_LEVELS = 3;
 
   const SPRITE_RECTS = {
-    marioSmall: { x: 2, y: 8, w: 16, h: 24 },
-    marioBig: { x: 2, y: 31, w: 16, h: 32 },
+    marioSmall: { x: 2, y: 8, w: 16, h: 16 },
+    marioBig: { x: 2, y: 32, w: 16, h: 32 },
     goomba: { x: 0, y: 15, w: 16, h: 16 },
     goombaSquished: { x: 36, y: 15, w: 16, h: 16 },
     mushroom: { x: 0, y: 8, w: 16, h: 16 },
@@ -1056,7 +1056,7 @@
       const baseRect = this.powered ? SPRITE_RECTS.marioBig : SPRITE_RECTS.marioSmall;
       const rect = { ...baseRect, x: baseRect.x + frame * 18 };
       const drawWidth = this.powered ? 40 : 36;
-      const drawHeight = this.powered ? 80 : 54;
+      const drawHeight = this.powered ? 80 : 36;
       const drawX = x + this.w / 2 - drawWidth / 2;
       const drawY = y + this.h - drawHeight;
       const drawn = sprites.draw(
