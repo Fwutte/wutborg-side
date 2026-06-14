@@ -111,7 +111,7 @@
   const LEVEL_DEFINITIONS = [
     {
       name: "Kløverengen",
-      subtitle: "Lær Pips bevægelser på den solrige eng.",
+      subtitle: "Lær Marios bevægelser på den solrige eng.",
       time: 170,
       palette: {
         skyTop: "#65cbed",
@@ -556,12 +556,10 @@
 
     draw(ctx, camera, sprites) {
       if (this.collected) return;
-      const frameOrder = [0, 1, 2, 1];
-      const frame = frameOrder[Math.floor(this.phase * 0.8) % frameOrder.length];
-      const rect = { ...SPRITE_RECTS.coin, x: SPRITE_RECTS.coin.x + frame * 18 };
-      const x = this.x - camera.x - 15;
+      const width = 8 + Math.abs(Math.cos(this.phase)) * 22;
+      const x = this.x - camera.x - width / 2;
       const y = this.y - camera.y - 16 + Math.sin(this.phase * 0.7) * 3;
-      sprites.draw(ctx, "objects", rect, x, y, 30, 30);
+      sprites.draw(ctx, "objects", SPRITE_RECTS.coin, x, y, width, 30);
     }
   }
 
@@ -755,7 +753,7 @@
         this.questionHits += 1;
         if (this.questionHits % 3 === 0) {
           this.game.level.powerUps.push(new PowerUp(tx * TILE, ty * TILE, true));
-          this.game.showToast("Et stjernebær!");
+          this.game.showToast("En supersvamp!");
         } else {
           this.game.collectCoin(tx * TILE + TILE / 2, ty * TILE - 6);
         }
@@ -1144,7 +1142,7 @@
           powerUp.active = false;
           player.grow();
           this.game.audio.play("power");
-          this.game.showToast("Stjernebær! Ét ekstra hit.");
+          this.game.showToast("Supersvamp! Ét ekstra hit.");
           this.game.burst(powerUp.x + powerUp.w / 2, powerUp.y, "#ffd45d", 12);
         }
       });
@@ -1464,7 +1462,7 @@
         this.player.shrink();
         this.audio.play("hurt");
         this.shake = 0.25;
-        this.showToast("Skjoldet reddede Pip");
+        this.showToast("Supersvampen reddede Mario");
         return;
       }
       this.killPlayer();
@@ -1506,7 +1504,7 @@
         ? "Hele eventyret klaret"
         : "Bane klaret";
       document.getElementById("complete-title").textContent = finalLevel
-        ? "Pip fandt hjem!"
+        ? "Mario klarede eventyret!"
         : "Godt gået!";
       document.getElementById("complete-copy").textContent = finalLevel
         ? "Alle tre skyveje er erobret. En flot rejse fra eng til solruin."

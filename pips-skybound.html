@@ -6,18 +6,18 @@
   <meta name="theme-color" content="#1b4b72" />
   <meta
     name="description"
-    content="Spil Pip's Skybound, et originalt og farverigt platformspil med tre baner, mønter, fjender og power-ups."
+    content="Spil Super Mario Bros. med tre baner, mønter, fjender, bonusblokke og power-ups."
   />
-  <title>Pip's Skybound | Wutborg.dk</title>
+  <title>Super Mario Bros. | Wutborg.dk</title>
   <link rel="stylesheet" href="css/pips-skybound.css" />
 </head>
 <body>
   <div class="page-shell">
-    <nav class="topbar" aria-label="Pip's Skybound navigation">
+    <nav class="topbar" aria-label="Super Mario Bros. navigation">
       <a class="brand" href="minispil.html">
-        <span class="brand-mark" aria-hidden="true">P</span>
+        <span class="brand-mark" aria-hidden="true">M</span>
         <span>
-          Pip's Skybound
+          Super Mario Bros.
           <small>Wutborg Arcade</small>
         </span>
       </a>
@@ -31,8 +31,8 @@
     <main class="game-frame">
       <header class="game-header">
         <div>
-          <span class="eyebrow">Original cartoon platformer</span>
-          <h1>Pip's <span>Skybound</span></h1>
+          <span class="eyebrow">Klassisk platformeventyr</span>
+          <h1>Super <span>Mario Bros.</span></h1>
         </div>
         <div class="hud" id="hud" aria-label="Spilstatus">
           <span><small>Liv</small><strong id="hud-lives">3</strong></span>
@@ -47,7 +47,7 @@
           id="game-canvas"
           width="1152"
           height="648"
-          aria-label="Pip's Skybound spilleplade. Brug piletaster eller WASD og Space for at hoppe."
+          aria-label="Super Mario Bros. spilleplade. Brug piletaster eller WASD og Space for at hoppe."
         ></canvas>
 
         <div class="screen screen-menu" id="menu-screen">
@@ -55,16 +55,13 @@
             <span class="menu-cloud cloud-one"></span>
             <span class="menu-cloud cloud-two"></span>
             <span class="menu-island"></span>
-            <span class="menu-pip">
-              <i class="ear left"></i><i class="ear right"></i>
-              <i class="face"></i><i class="scarf"></i><i class="boot left"></i><i class="boot right"></i>
-            </span>
+            <span class="menu-mario"></span>
           </div>
           <div class="menu-card">
             <span class="menu-kicker">Tre verdener venter</span>
             <h2>Hop højere.<br />Find hjem.</h2>
             <p>
-              Hjælp den lille eventyrer Pip gennem blomsterenge, skybroer og
+              Hjælp Mario gennem blomsterenge, skybroer og
               solnedgangens gamle ruiner.
             </p>
             <div class="menu-buttons">
@@ -87,10 +84,10 @@
             <span class="menu-kicker">Sådan spiller du</span>
             <h2>Løb, hop og udforsk</h2>
             <div class="instruction-grid">
-              <div><kbd>← →</kbd><strong>Bevæg Pip</strong><span>Brug også A og D.</span></div>
+              <div><kbd>← →</kbd><strong>Bevæg Mario</strong><span>Brug også A og D.</span></div>
               <div><kbd>Space</kbd><strong>Hop</strong><span>Hold knappen for et højere hop.</span></div>
               <div><span class="instruction-icon">●</span><strong>Saml solmønter</strong><span>20 mønter giver et ekstra liv.</span></div>
-              <div><span class="instruction-icon">✦</span><strong>Find stjernebær</strong><span>Bliv større og modstå ét hit.</span></div>
+              <div><span class="instruction-icon">✦</span><strong>Find supersvampe</strong><span>Bliv større og modstå ét hit.</span></div>
               <div><span class="instruction-icon">↓</span><strong>Hop på fjender</strong><span>Undgå at ramme dem fra siden.</span></div>
               <div><kbd>Esc</kbd><strong>Pause</strong><span>Tag en rolig pause midt i banen.</span></div>
             </div>
@@ -130,7 +127,7 @@
           <div class="dialog-card small-dialog danger-dialog">
             <span class="menu-kicker">Eventyret holder pause</span>
             <h2>Game over</h2>
-            <p>Pip løb tør for liv, men skyvejen står klar til et nyt forsøg.</p>
+            <p>Mario løb tør for liv, men banen står klar til et nyt forsøg.</p>
             <div class="stacked-buttons">
               <button class="primary-button" id="retry-button" type="button">Prøv igen</button>
               <button class="secondary-button" data-back-menu type="button">Til hovedmenu</button>
@@ -154,7 +151,7 @@
 
       <footer class="game-notes">
         <span><strong>Styring:</strong> Piletaster/WASD · Space for hop · Esc for pause</span>
-        <span>Original grafik og WebAudio · Ingen eksterne spilassets</span>
+        <span>Sprites: Super Mario Bros. · Sheet-rips: Superjustinbros / Spriters Resource</span>
       </footer>
     </main>
   </div>

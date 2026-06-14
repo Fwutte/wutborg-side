@@ -7,7 +7,7 @@
   <title>Familiens minispil | Wutborg.dk</title>
   <meta
     name="description"
-    content="Spil Fire på stribe, Snake, Neon Breaker, Tetris, Monster Battle Arena og Pip's Skybound i familien Wutborgs spillehjørne."
+    content="Spil Fire på stribe, Snake, Neon Breaker, Tetris, Monster Battle Arena og Super Mario Bros. i familien Wutborgs spillehjørne."
   />
   <style>
     :root {
@@ -854,6 +854,22 @@
       transform: scaleX(-1) rotate(-15deg);
     }
 
+    .sky-mario {
+      position: absolute;
+      left: 105px;
+      bottom: 55px;
+      z-index: 5;
+      width: 16px;
+      height: 24px;
+      background-image: url("assets/mario/mario-luigi-transparent.png");
+      background-repeat: no-repeat;
+      background-position: -2px -8px;
+      image-rendering: pixelated;
+      filter: drop-shadow(1px 2px 0 rgba(23,63,93,0.28));
+      transform: scale(3.1);
+      transform-origin: bottom center;
+    }
+
     .family-note {
       display: flex;
       align-items: center;
@@ -1227,8 +1243,8 @@
         <a class="game-card skybound" href="pips-skybound.html">
           <span class="card-content">
             <span class="game-number">Spil 06 · En spiller</span>
-            <h2>Pip's <span>Skybound</span></h2>
-            <p>Hop gennem tre håndbyggede baner med mønter, fjender, checkpoints og stjernebær.</p>
+            <h2>Super <span>Mario Bros.</span></h2>
+            <p>Hop gennem tre håndbyggede baner med mønter, Goombas, checkpoints og supersvampe.</p>
           </span>
           <span class="play">Start eventyret</span>
           <span class="preview skybound-preview" aria-hidden="true">
@@ -1237,7 +1253,7 @@
             <i class="sky-block">?</i>
             <i class="sky-coin"></i>
             <i class="sky-enemy"></i>
-            <span class="sky-pip"><i></i><i></i></span>
+            <span class="sky-mario"></span>
           </span>
         </a>
       </section>
@@ -1254,7 +1270,7 @@
           <span class="note-symbol">●</span>
           <span class="note-symbol">T</span>
           <span class="note-symbol">M</span>
-          <span class="note-symbol">P</span>
+          <span class="note-symbol">M</span>
         </span>
       </aside>
     </main>

@@ -322,6 +322,22 @@ a:focus-visible {
   animation: menu-bob 2.2s ease-in-out infinite;
 }
 
+.menu-mario {
+  position: absolute;
+  left: 42%;
+  bottom: 23%;
+  width: 16px;
+  height: 32px;
+  background-image: url("../assets/mario/mario-luigi-transparent.png");
+  background-repeat: no-repeat;
+  background-position: -2px -31px;
+  image-rendering: pixelated;
+  filter: drop-shadow(2px 3px 0 rgba(13, 42, 64, 0.28));
+  transform: scale(5);
+  transform-origin: bottom center;
+  animation: menu-bob-small 2.2s ease-in-out infinite;
+}
+
 .menu-pip .face {
   position: absolute;
   inset: 22px 13px 42px;
@@ -660,6 +676,12 @@ a:focus-visible {
 @keyframes menu-bob {
   50% {
     transform: translateY(-10px) rotate(2deg);
+  }
+}
+
+@keyframes menu-bob-small {
+  50% {
+    transform: translateY(-2px) scale(5);
   }
 }
 
