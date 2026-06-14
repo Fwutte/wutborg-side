@@ -928,20 +928,14 @@
     }
 
     grow() {
-      if (!this.powered) {
-        this.powered = true;
-        this.y -= 14;
-        this.h = 58;
-      }
+      // Keep the movement collider unchanged so every passage remains traversable.
+      // The powered form is larger visually and still functions as a one-hit shield.
+      this.powered = true;
       this.invincible = 1;
     }
 
     shrink() {
-      if (this.powered) {
-        this.powered = false;
-        this.y += 14;
-        this.h = 44;
-      }
+      this.powered = false;
       this.invincible = 2;
     }
 
@@ -953,6 +947,9 @@
       const step = moving ? Math.sin(this.runTime * 1.1) * 4 : 0;
       const bob = moving ? Math.abs(Math.sin(this.runTime * 1.1)) * 2 : 0;
       const scale = this.powered ? 1.12 : 1;
+      const furColor = this.powered ? "#ffd45d" : "#f58a4f";
+      const scarfColor = this.powered ? "#f26850" : "#2dc2b0";
+      const bootColor = this.powered ? "#2dc2b0" : "#ffd45d";
 
       ctx.save();
       ctx.translate(x + this.w / 2, y + this.h - 22 - bob);
@@ -967,7 +964,7 @@
       ctx.lineTo(15, -13);
       ctx.closePath();
       ctx.fill();
-      ctx.fillStyle = "#f58a4f";
+      ctx.fillStyle = furColor;
       ctx.beginPath();
       ctx.moveTo(-10, -14);
       ctx.lineTo(-14, -31);
@@ -980,7 +977,7 @@
       ctx.fillStyle = "#173f5d";
       roundedRect(ctx, -17, -23, 34, 31, 13);
       ctx.fill();
-      ctx.fillStyle = "#f58a4f";
+      ctx.fillStyle = furColor;
       roundedRect(ctx, -13, -20, 26, 25, 11);
       ctx.fill();
 
@@ -997,11 +994,11 @@
       ctx.fillStyle = "#173f5d";
       roundedRect(ctx, -15, 5, 30, 25, 8);
       ctx.fill();
-      ctx.fillStyle = "#f58a4f";
+      ctx.fillStyle = furColor;
       roundedRect(ctx, -11, 8, 22, 19, 5);
       ctx.fill();
 
-      ctx.fillStyle = "#2dc2b0";
+      ctx.fillStyle = scarfColor;
       roundedRect(ctx, -15, 2, 31, 9, 4);
       ctx.fill();
       ctx.beginPath();
@@ -1020,7 +1017,7 @@
       ctx.moveTo(8, 27);
       ctx.lineTo(9 - step, 37);
       ctx.stroke();
-      ctx.strokeStyle = "#ffd45d";
+      ctx.strokeStyle = bootColor;
       ctx.lineWidth = 6;
       ctx.beginPath();
       ctx.moveTo(-13 + step, 38);
@@ -1030,6 +1027,16 @@
       ctx.stroke();
 
       if (this.powered) {
+        ctx.fillStyle = "#fff9df";
+        ctx.beginPath();
+        for (let point = 0; point < 10; point += 1) {
+          const radius = point % 2 === 0 ? 7 : 3.2;
+          const angle = -Math.PI / 2 + (point * Math.PI) / 5;
+          ctx.lineTo(Math.cos(angle) * radius, 18 + Math.sin(angle) * radius);
+        }
+        ctx.closePath();
+        ctx.fill();
+
         ctx.strokeStyle = "rgba(255, 244, 166, 0.9)";
         ctx.lineWidth = 2;
         ctx.beginPath();
