@@ -625,35 +625,71 @@
       const x = this.x - camera.x;
       const y = this.y - camera.y;
       const squish = this.squished > 0 ? 0.45 : 1;
-      const bob = this.squished > 0 ? 0 : Math.sin(this.phase) * 2;
+      const step = this.squished > 0 ? 0 : Math.sin(this.phase) * 2;
       ctx.save();
-      ctx.translate(x + this.w / 2, y + this.h - (this.h * squish) / 2 + bob);
+      ctx.translate(x + this.w / 2, y + this.h);
       ctx.scale(this.vx < 0 ? -1 : 1, squish);
+
+      // A low, readable silhouette keeps the enemy visually planted on the tile.
       ctx.fillStyle = "#173f5d";
-      roundedRect(ctx, -21, -17, 42, 34, 15);
+      ctx.beginPath();
+      ctx.moveTo(-20, -5);
+      ctx.quadraticCurveTo(-22, -28, -10, -34);
+      ctx.quadraticCurveTo(0, -42, 11, -34);
+      ctx.quadraticCurveTo(22, -27, 20, -5);
+      ctx.closePath();
       ctx.fill();
-      ctx.fillStyle = "#7451a5";
-      roundedRect(ctx, -17, -14, 34, 27, 13);
+
+      ctx.fillStyle = "#a9553f";
+      ctx.beginPath();
+      ctx.moveTo(-16, -6);
+      ctx.quadraticCurveTo(-18, -25, -8, -30);
+      ctx.quadraticCurveTo(0, -36, 9, -30);
+      ctx.quadraticCurveTo(18, -24, 16, -6);
+      ctx.closePath();
       ctx.fill();
+
+      ctx.fillStyle = "#6a8f54";
+      ctx.beginPath();
+      ctx.moveTo(-6, -31);
+      ctx.quadraticCurveTo(0, -43, 5, -32);
+      ctx.quadraticCurveTo(12, -38, 10, -27);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = "#f5dfb5";
+      ctx.beginPath();
+      ctx.ellipse(2, -17, 13, 10, 0, 0, Math.PI * 2);
+      ctx.fill();
+
       ctx.fillStyle = "#fff";
       ctx.beginPath();
-      ctx.ellipse(-6, -4, 5, 7, 0, 0, Math.PI * 2);
-      ctx.ellipse(7, -4, 5, 7, 0, 0, Math.PI * 2);
+      ctx.ellipse(-4, -21, 4.5, 6, 0, 0, Math.PI * 2);
+      ctx.ellipse(8, -21, 4.5, 6, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.fillStyle = "#173f5d";
       ctx.beginPath();
-      ctx.arc(-4, -3, 2.4, 0, Math.PI * 2);
-      ctx.arc(9, -3, 2.4, 0, Math.PI * 2);
+      ctx.arc(-2, -20, 2.2, 0, Math.PI * 2);
+      ctx.arc(10, -20, 2.2, 0, Math.PI * 2);
       ctx.fill();
-      ctx.strokeStyle = "#173f5d";
-      ctx.lineWidth = 5;
-      ctx.lineCap = "round";
+
+      ctx.strokeStyle = "#6f352e";
+      ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.moveTo(-12, 15);
-      ctx.lineTo(-15, 19);
-      ctx.moveTo(11, 15);
-      ctx.lineTo(16, 19);
+      ctx.moveTo(-9, -27);
+      ctx.lineTo(-1, -24);
+      ctx.moveTo(5, -24);
+      ctx.lineTo(13, -27);
       ctx.stroke();
+
+      ctx.fillStyle = "#173f5d";
+      roundedRect(ctx, -18 + step, -7, 16, 8, 4);
+      ctx.fill();
+      roundedRect(ctx, 2 - step, -7, 16, 8, 4);
+      ctx.fill();
+      ctx.fillStyle = "#ffd45d";
+      ctx.fillRect(-14 + step, -5, 9, 3);
+      ctx.fillRect(6 - step, -5, 9, 3);
       ctx.restore();
     }
   }
@@ -793,9 +829,64 @@
           if (!this.isSolidTile(symbol)) continue;
           const x = tx * TILE - camera.x;
           const y = ty * TILE - camera.y + this.getBumpOffset(tx, ty);
+          if (symbol === "R") {
+            const startsPipe =
+              this.getTile(tx - 1, ty) !== "R" && this.getTile(tx, ty - 1) !== "R";
+            if (startsPipe) this.drawPipe(ctx, x, y, tx, ty);
+            continue;
+          }
           this.drawTile(ctx, x, y, tx, ty, symbol, palette);
         }
       }
+    }
+
+    drawPipe(ctx, x, y, tx, ty) {
+      let tileWidth = 1;
+      let tileHeight = 1;
+      while (this.getTile(tx + tileWidth, ty) === "R") tileWidth += 1;
+      while (this.getTile(tx, ty + tileHeight) === "R") tileHeight += 1;
+
+      const width = tileWidth * TILE;
+      const height = tileHeight * TILE;
+      const bodyX = x + 9;
+      const bodyY = y + 18;
+      const bodyWidth = width - 18;
+
+      ctx.fillStyle = "rgba(13, 42, 64, 0.2)";
+      roundedRect(ctx, bodyX + 7, bodyY + 8, bodyWidth, height - 13, 8);
+      ctx.fill();
+
+      ctx.fillStyle = "#173f5d";
+      roundedRect(ctx, bodyX - 4, bodyY - 1, bodyWidth + 8, height - 17, 8);
+      ctx.fill();
+      ctx.fillStyle = "#289f79";
+      roundedRect(ctx, bodyX, bodyY + 3, bodyWidth, height - 25, 5);
+      ctx.fill();
+
+      const bodyGradient = ctx.createLinearGradient(bodyX, 0, bodyX + bodyWidth, 0);
+      bodyGradient.addColorStop(0, "#54dfaa");
+      bodyGradient.addColorStop(0.22, "#2fc794");
+      bodyGradient.addColorStop(0.74, "#15926e");
+      bodyGradient.addColorStop(1, "#0b7259");
+      ctx.fillStyle = bodyGradient;
+      ctx.fillRect(bodyX + 8, bodyY + 6, bodyWidth - 16, height - 31);
+
+      ctx.fillStyle = "#173f5d";
+      roundedRect(ctx, x - 2, y + 1, width + 4, 30, 8);
+      ctx.fill();
+      const rimGradient = ctx.createLinearGradient(x, 0, x + width, 0);
+      rimGradient.addColorStop(0, "#67e6b5");
+      rimGradient.addColorStop(0.22, "#38cc9b");
+      rimGradient.addColorStop(0.76, "#188d6d");
+      rimGradient.addColorStop(1, "#0e7159");
+      ctx.fillStyle = rimGradient;
+      roundedRect(ctx, x + 4, y + 5, width - 8, 21, 4);
+      ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,0.42)";
+      roundedRect(ctx, x + 11, y + 8, 8, 15, 3);
+      ctx.fill();
+      ctx.fillStyle = "rgba(13,42,64,0.25)";
+      ctx.fillRect(x + width - 17, y + 7, 7, 17);
     }
 
     drawTile(ctx, x, y, tx, ty, symbol, palette) {
@@ -803,49 +894,59 @@
       if (symbol === "X") {
         ctx.fillStyle = palette.dirt;
         ctx.fillRect(x, y, TILE, TILE);
-        ctx.fillStyle = "rgba(49, 34, 31, 0.16)";
-        ctx.fillRect(x + 8, y + 18, 8, 8);
-        ctx.fillRect(x + 31, y + 31, 10, 7);
+        ctx.fillStyle = "rgba(55, 31, 24, 0.18)";
+        ctx.beginPath();
+        ctx.arc(x + 10 + ((tx * 7 + ty * 3) % 13), y + 25, 4, 0, Math.PI * 2);
+        ctx.arc(x + 33, y + 38 - ((tx * 5) % 7), 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "rgba(255, 221, 160, 0.13)";
+        ctx.beginPath();
+        ctx.arc(x + 27, y + 22 + ((tx + ty) % 8), 3, 0, Math.PI * 2);
+        ctx.fill();
         if (!this.isSolidTile(this.getTile(tx, ty - 1))) {
+          ctx.fillStyle = "rgba(13, 42, 64, 0.18)";
+          ctx.fillRect(x, y + 12, TILE, 5);
           ctx.fillStyle = palette.grass;
-          ctx.fillRect(x, y, TILE, 13);
-          ctx.fillStyle = "rgba(255,255,255,0.22)";
-          ctx.fillRect(x, y, TILE, 4);
+          ctx.fillRect(x, y, TILE, 14);
+          ctx.fillStyle = "rgba(255,255,255,0.34)";
+          ctx.fillRect(x, y, TILE, 5);
           ctx.fillStyle = palette.dirt;
           for (let blade = 0; blade < 4; blade += 1) {
             ctx.beginPath();
-            ctx.moveTo(x + 5 + blade * 12, y + 12);
-            ctx.lineTo(x + 11 + blade * 12, y + 20);
-            ctx.lineTo(x + 17 + blade * 12, y + 12);
+            ctx.moveTo(x + blade * 12, y + 13);
+            ctx.lineTo(x + 6 + blade * 12, y + 20);
+            ctx.lineTo(x + 12 + blade * 12, y + 13);
             ctx.fill();
           }
         }
-        ctx.strokeStyle = "rgba(23,63,93,0.18)";
+        ctx.strokeStyle = "rgba(73, 39, 28, 0.22)";
         ctx.strokeRect(x + 0.5, y + 0.5, TILE - 1, TILE - 1);
-        return;
-      }
-
-      if (symbol === "R") {
-        ctx.fillStyle = "#173f5d";
-        roundedRect(ctx, x + 2, y + 1, TILE - 4, TILE - 1, 8);
-        ctx.fill();
-        ctx.fillStyle = "#2dc2b0";
-        roundedRect(ctx, x + 6, y + 5, TILE - 12, TILE - 7, 6);
-        ctx.fill();
-        ctx.fillStyle = "rgba(255,255,255,0.25)";
-        ctx.fillRect(x + 10, y + 8, 6, TILE - 16);
         return;
       }
 
       const used = symbol === "?" && this.usedBlocks.has(key);
       ctx.fillStyle = "#173f5d";
-      roundedRect(ctx, x + 1, y + 1, TILE - 2, TILE - 2, 8);
+      roundedRect(ctx, x + 1, y + 1, TILE - 2, TILE - 2, 6);
       ctx.fill();
-      ctx.fillStyle = used ? "#98a7a1" : symbol === "?" ? "#ffd45d" : "#e66f4e";
-      roundedRect(ctx, x + 5, y + 5, TILE - 10, TILE - 10, 5);
-      ctx.fill();
-      ctx.fillStyle = "rgba(255,255,255,0.35)";
-      ctx.fillRect(x + 9, y + 8, TILE - 18, 5);
+      if (symbol === "?") {
+        const blockGradient = ctx.createLinearGradient(0, y + 4, 0, y + TILE - 5);
+        blockGradient.addColorStop(0, used ? "#b7c3ba" : "#ffe878");
+        blockGradient.addColorStop(1, used ? "#758981" : "#efa91f");
+        ctx.fillStyle = blockGradient;
+        roundedRect(ctx, x + 5, y + 5, TILE - 10, TILE - 10, 3);
+        ctx.fill();
+        ctx.fillStyle = used ? "#667a73" : "#9b6118";
+        [[10, 10], [38, 10], [10, 38], [38, 38]].forEach(([px, py]) => {
+          ctx.beginPath();
+          ctx.arc(x + px, y + py, 2.5, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      } else {
+        ctx.fillStyle = "#dd694c";
+        ctx.fillRect(x + 5, y + 5, TILE - 10, TILE - 10);
+        ctx.fillStyle = "#f19064";
+        ctx.fillRect(x + 6, y + 6, TILE - 12, 5);
+      }
 
       if (symbol === "?" && !used) {
         ctx.fillStyle = "#173f5d";
@@ -854,7 +955,7 @@
         ctx.textBaseline = "middle";
         ctx.fillText("?", x + TILE / 2, y + TILE / 2 + 1);
       } else if (symbol === "B") {
-        ctx.strokeStyle = "#8d3e36";
+        ctx.strokeStyle = "#833c32";
         ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.moveTo(x + 5, y + TILE / 2);
@@ -944,89 +1045,130 @@
       const x = this.x - camera.x;
       const y = this.y - camera.y;
       const moving = Math.abs(this.vx) > 20 && this.grounded;
-      const step = moving ? Math.sin(this.runTime * 1.1) * 4 : 0;
-      const bob = moving ? Math.abs(Math.sin(this.runTime * 1.1)) * 2 : 0;
-      const scale = this.powered ? 1.12 : 1;
+      const stride = moving ? Math.sin(this.runTime * 1.25) : 0;
+      const leftLift = moving ? Math.max(0, stride) * 4 : 0;
+      const rightLift = moving ? Math.max(0, -stride) * 4 : 0;
+      const bodyBob = moving ? -Math.abs(stride) * 1.4 : 0;
+      const scale = this.powered ? 1.04 : 0.9;
       const furColor = this.powered ? "#ffd45d" : "#f58a4f";
       const scarfColor = this.powered ? "#f26850" : "#2dc2b0";
       const bootColor = this.powered ? "#2dc2b0" : "#ffd45d";
-      const footBottom = 41;
 
       ctx.save();
-      // Anchor the drawn boots to the collider's bottom, which is the terrain surface.
-      ctx.translate(x + this.w / 2, y + this.h - footBottom * scale - bob);
+      // Local y=0 is the only foot baseline and matches the collider bottom exactly.
+      ctx.translate(x + this.w / 2, y + this.h);
       ctx.scale(this.facing * scale, scale);
 
+      // Tail behind the body gives Pip a distinct, original silhouette.
       ctx.fillStyle = "#173f5d";
       ctx.beginPath();
-      ctx.moveTo(-13, -13);
-      ctx.lineTo(-18, -36);
-      ctx.lineTo(-3, -26);
-      ctx.lineTo(11, -38);
-      ctx.lineTo(15, -13);
+      ctx.moveTo(-12, -28 + bodyBob);
+      ctx.quadraticCurveTo(-34, -33 + bodyBob, -30, -17 + bodyBob);
+      ctx.quadraticCurveTo(-27, -7 + bodyBob, -14, -13 + bodyBob);
       ctx.closePath();
       ctx.fill();
       ctx.fillStyle = furColor;
       ctx.beginPath();
-      ctx.moveTo(-10, -14);
-      ctx.lineTo(-14, -31);
-      ctx.lineTo(-2, -23);
-      ctx.lineTo(9, -32);
-      ctx.lineTo(12, -13);
+      ctx.moveTo(-13, -26 + bodyBob);
+      ctx.quadraticCurveTo(-29, -30 + bodyBob, -26, -18 + bodyBob);
+      ctx.quadraticCurveTo(-23, -11 + bodyBob, -13, -16 + bodyBob);
+      ctx.closePath();
+      ctx.fill();
+
+      // Legs and boots can lift during a step, but never extend below y=0.
+      ctx.fillStyle = "#173f5d";
+      ctx.beginPath();
+      ctx.moveTo(-10, -22 + bodyBob);
+      ctx.lineTo(-13 + stride * 3, -6 - leftLift);
+      ctx.lineTo(-3 + stride * 3, -6 - leftLift);
+      ctx.lineTo(-1, -21 + bodyBob);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(1, -21 + bodyBob);
+      ctx.lineTo(3 - stride * 3, -6 - rightLift);
+      ctx.lineTo(13 - stride * 3, -6 - rightLift);
+      ctx.lineTo(10, -22 + bodyBob);
       ctx.closePath();
       ctx.fill();
 
       ctx.fillStyle = "#173f5d";
-      roundedRect(ctx, -17, -23, 34, 31, 13);
+      roundedRect(ctx, -17 + stride * 3, -8 - leftLift, 18, 9, 4);
       ctx.fill();
-      ctx.fillStyle = furColor;
-      roundedRect(ctx, -13, -20, 26, 25, 11);
+      roundedRect(ctx, -1 - stride * 3, -8 - rightLift, 18, 9, 4);
       ctx.fill();
-
-      ctx.fillStyle = "#fff0d7";
-      ctx.beginPath();
-      ctx.ellipse(4, -6, 10, 8, -0.2, 0, Math.PI * 2);
+      ctx.fillStyle = bootColor;
+      roundedRect(ctx, -14 + stride * 3, -6 - leftLift, 13, 5, 2);
       ctx.fill();
-      ctx.fillStyle = "#173f5d";
-      ctx.beginPath();
-      ctx.arc(5, -15, 2.6, 0, Math.PI * 2);
-      ctx.arc(12, -6, 2.4, 0, Math.PI * 2);
+      roundedRect(ctx, 2 - stride * 3, -6 - rightLift, 13, 5, 2);
       ctx.fill();
 
+      ctx.save();
+      ctx.translate(0, bodyBob);
+
+      // Compact torso, scarf and swinging arms.
       ctx.fillStyle = "#173f5d";
-      roundedRect(ctx, -15, 5, 30, 25, 8);
+      roundedRect(ctx, -17, -42, 34, 25, 9);
       ctx.fill();
       ctx.fillStyle = furColor;
-      roundedRect(ctx, -11, 8, 22, 19, 5);
+      roundedRect(ctx, -13, -39, 26, 19, 6);
       ctx.fill();
 
       ctx.fillStyle = scarfColor;
-      roundedRect(ctx, -15, 2, 31, 9, 4);
+      roundedRect(ctx, -16, -43, 33, 9, 4);
       ctx.fill();
       ctx.beginPath();
-      ctx.moveTo(-14, 8);
-      ctx.lineTo(-27, 17 + Math.sin(this.runTime) * 3);
-      ctx.lineTo(-12, 16);
+      ctx.moveTo(-14, -38);
+      ctx.lineTo(-27, -32 + Math.sin(this.runTime) * 2);
+      ctx.lineTo(-13, -27);
       ctx.closePath();
       ctx.fill();
 
       ctx.strokeStyle = "#173f5d";
-      ctx.lineWidth = 8;
+      ctx.lineWidth = 6;
       ctx.lineCap = "round";
       ctx.beginPath();
-      ctx.moveTo(-8, 27);
-      ctx.lineTo(-9 + step, 37);
-      ctx.moveTo(8, 27);
-      ctx.lineTo(9 - step, 37);
+      ctx.moveTo(-12, -34);
+      ctx.lineTo(-18 - stride * 3, -23);
+      ctx.moveTo(12, -34);
+      ctx.lineTo(18 + stride * 3, -26);
       ctx.stroke();
-      ctx.strokeStyle = bootColor;
-      ctx.lineWidth = 6;
+
+      // Pointed hood and fox face.
+      ctx.fillStyle = "#173f5d";
       ctx.beginPath();
-      ctx.moveTo(-13 + step, 38);
-      ctx.lineTo(-3 + step, 38);
-      ctx.moveTo(5 - step, 38);
-      ctx.lineTo(15 - step, 38);
-      ctx.stroke();
+      ctx.moveTo(-15, -57);
+      ctx.lineTo(-18, -73);
+      ctx.lineTo(-5, -64);
+      ctx.lineTo(10, -74);
+      ctx.lineTo(16, -56);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = furColor;
+      ctx.beginPath();
+      ctx.moveTo(-11, -57);
+      ctx.lineTo(-14, -68);
+      ctx.lineTo(-4, -61);
+      ctx.lineTo(8, -69);
+      ctx.lineTo(12, -56);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = "#173f5d";
+      roundedRect(ctx, -17, -63, 34, 29, 13);
+      ctx.fill();
+      ctx.fillStyle = furColor;
+      roundedRect(ctx, -13, -60, 26, 23, 10);
+      ctx.fill();
+      ctx.fillStyle = "#fff0d7";
+      ctx.beginPath();
+      ctx.ellipse(5, -45, 10, 8, -0.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#173f5d";
+      ctx.beginPath();
+      ctx.arc(5, -54, 2.5, 0, Math.PI * 2);
+      ctx.arc(13, -45, 2.5, 0, Math.PI * 2);
+      ctx.fill();
 
       if (this.powered) {
         ctx.fillStyle = "#fff9df";
@@ -1034,15 +1176,18 @@
         for (let point = 0; point < 10; point += 1) {
           const radius = point % 2 === 0 ? 7 : 3.2;
           const angle = -Math.PI / 2 + (point * Math.PI) / 5;
-          ctx.lineTo(Math.cos(angle) * radius, 18 + Math.sin(angle) * radius);
+          ctx.lineTo(Math.cos(angle) * radius, -28 + Math.sin(angle) * radius);
         }
         ctx.closePath();
         ctx.fill();
+      }
+      ctx.restore();
 
+      if (this.powered) {
         ctx.strokeStyle = "rgba(255, 244, 166, 0.9)";
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(0, 0, 29 + Math.sin(this.runTime) * 2, 0, Math.PI * 2);
+        ctx.ellipse(0, -37, 28 + Math.sin(this.runTime) * 2, 37, 0, 0, Math.PI * 2);
         ctx.stroke();
       }
       ctx.restore();
@@ -1561,6 +1706,7 @@
       this.drawClouds(this.camera.x * 0.12);
       this.drawHills(palette.hillFar, 390, 92, this.camera.x * 0.18);
       this.drawHills(palette.hillNear, 475, 128, this.camera.x * 0.32);
+      this.drawBushes(palette.grass, 535, this.camera.x * 0.48);
     }
 
     drawClouds(offset) {
@@ -1590,6 +1736,32 @@
       ctx.lineTo(VIEW_WIDTH, VIEW_HEIGHT);
       ctx.closePath();
       ctx.fill();
+    }
+
+    drawBushes(color, baseline, offset) {
+      const ctx = this.ctx;
+      ctx.save();
+      ctx.globalAlpha = 0.86;
+      for (let index = -2; index < 12; index += 1) {
+        const x = index * 185 - (offset % 185);
+        const size = 34 + ((index * 17 + 80) % 24);
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(x, baseline, size, Math.PI, 0);
+        ctx.arc(x + size * 0.9, baseline, size * 0.72, Math.PI, 0);
+        ctx.arc(x + size * 1.55, baseline, size * 0.92, Math.PI, 0);
+        ctx.lineTo(x + size * 2.5, VIEW_HEIGHT);
+        ctx.lineTo(x - size, VIEW_HEIGHT);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = "rgba(255,255,255,0.14)";
+        ctx.beginPath();
+        ctx.arc(x - size * 0.2, baseline - size * 0.55, 5, 0, Math.PI * 2);
+        ctx.arc(x + size * 1.25, baseline - size * 0.45, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
     }
 
     render() {
