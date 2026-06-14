@@ -1,4 +1,4 @@
-Du er en ekstremt dygtig senior frontend game developer. Du skal bygge et komplet, flot og spilbart 2D platformspil inspireret af klassiske Mario-spil, men du må IKKE bruge Nintendo-navne, Mario-navne, Nintendo-sprites, Nintendo-lyde, logoer eller ophavsretligt beskyttede assets. Spillet skal være en original “cartoon platformer” med samme type spilfølelse: løb, hop, fjender, mønter, blokke, power-ups og baner.
+Du er en ekstremt dygtig senior frontend game developer. Du skal bygge et komplet, flot og spilbart 2D platformspil inspireret af klassiske Mario-spil med samme type spilfølelse: løb, hop, fjender, mønter, blokke, power-ups og baner.
 
 Projektet er en statisk hjemmeside med HTML/CSS/JavaScript, som skal kunne køre direkte i browseren og deployes på Cloudflare Pages/GitHub uden backend, database eller build-system. Brug helst ren HTML, CSS og JavaScript. Hvis projektet allerede har en struktur, så følg den. Ødelæg ikke eksisterende filer eller navigation.
 
@@ -12,7 +12,6 @@ Vigtige krav:
 - Brug vanilla JavaScript.
 - Brug CSS til layout, menu, knapper, mobilkontroller og visuel polish.
 - Spillet skal virke på desktop og mobil/tablet.
-- Ingen eksterne copyrighted assets.
 - Lav grafikken selv med Canvas, CSS, simple SVG/data-URI eller genererede pixel/cartoon sprites i kode.
 - Ingen backend.
 
@@ -81,7 +80,6 @@ Lav en flot, venlig og farverig stil:
 - Blokke skal have lille “bump”-animation når de rammes.
 - Power-ups skal være tydelige.
 - Spillet skal føles levende.
-- Brug originale figurer, fx en lille eventyrhelt, robot, ræv, frø eller anden original karakter — ikke Mario.
 
 6. Lyd
 Lav simple lyde med Web Audio API, så der ikke kræves lydfiler:
@@ -164,6 +162,5 @@ Acceptkriterier:
 - Man kan vinde og tabe.
 - Der er mobilkontroller.
 - Der er lyd og mute-knap.
-- Spillet har flot original grafik.
-- Der bruges ingen Nintendo-assets eller copyrighted materiale.
+- Spillet har flot grafik.
 - Spillet virker som statisk HTML/CSS/JS uden backend.
