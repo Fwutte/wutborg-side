@@ -8,6 +8,20 @@
   const MAX_FALL_SPEED = 920;
   const TOTAL_LEVELS = 3;
 
+  const SPRITE_RECTS = {
+    marioSmall: { x: 2, y: 8, w: 16, h: 24 },
+    marioBig: { x: 2, y: 31, w: 16, h: 32 },
+    goomba: { x: 0, y: 15, w: 16, h: 16 },
+    goombaSquished: { x: 36, y: 15, w: 16, h: 16 },
+    mushroom: { x: 0, y: 8, w: 16, h: 16 },
+    coin: { x: 180, y: 34, w: 16, h: 16 },
+    brick: { x: 180, y: 8, w: 16, h: 16 },
+    usedBlock: { x: 216, y: 8, w: 16, h: 16 },
+    questionBlock: { x: 586, y: 79, w: 16, h: 16 },
+    ground: { x: 34, y: 16, w: 16, h: 16 },
+    pipe: { x: 112, y: 624, w: 32, h: 64 },
+  };
+
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
   const lerp = (from, to, amount) => from + (to - from) * amount;
   const rectsOverlap = (a, b) =>
@@ -25,6 +39,44 @@
     ctx.arcTo(x, y + height, x, y, r);
     ctx.arcTo(x, y, x + width, y, r);
     ctx.closePath();
+  }
+
+  class SpriteAtlas {
+    constructor() {
+      this.images = {
+        players: this.load("assets/mario/mario-luigi-transparent.png"),
+        enemies: this.load("assets/mario/enemies-bosses-transparent.png"),
+        objects: this.load("assets/mario/items-objects-npcs-transparent.png"),
+        tiles: this.load("assets/mario/tileset-transparent.png"),
+      };
+    }
+
+    load(src) {
+      const image = new Image();
+      image.src = src;
+      return image;
+    }
+
+    isReady(name) {
+      const image = this.images[name];
+      return Boolean(image?.complete && image.naturalWidth);
+    }
+
+    draw(ctx, name, rect, dx, dy, dw, dh, flipX = false) {
+      if (!this.isReady(name)) return false;
+      const image = this.images[name];
+      ctx.save();
+      ctx.imageSmoothingEnabled = false;
+      if (flipX) {
+        ctx.translate(dx + dw, dy);
+        ctx.scale(-1, 1);
+        ctx.drawImage(image, rect.x, rect.y, rect.w, rect.h, 0, 0, dw, dh);
+      } else {
+        ctx.drawImage(image, rect.x, rect.y, rect.w, rect.h, dx, dy, dw, dh);
+      }
+      ctx.restore();
+      return true;
+    }
   }
 
   function createMap(width, height, build) {
@@ -502,26 +554,14 @@
       this.phase += dt * 5.5;
     }
 
-    draw(ctx, camera) {
+    draw(ctx, camera, sprites) {
       if (this.collected) return;
-      const width = 8 + Math.abs(Math.cos(this.phase)) * 17;
-      const x = this.x - camera.x;
-      const y = this.y - camera.y + Math.sin(this.phase * 0.7) * 3;
-      ctx.save();
-      ctx.fillStyle = "#f2a900";
-      ctx.strokeStyle = "#8e5719";
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.ellipse(x, y, width / 2, 16, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-      ctx.strokeStyle = "#fff2a4";
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(x - width * 0.13, y - 9);
-      ctx.lineTo(x - width * 0.13, y + 4);
-      ctx.stroke();
-      ctx.restore();
+      const frameOrder = [0, 1, 2, 1];
+      const frame = frameOrder[Math.floor(this.phase * 0.8) % frameOrder.length];
+      const rect = { ...SPRITE_RECTS.coin, x: SPRITE_RECTS.coin.x + frame * 18 };
+      const x = this.x - camera.x - 15;
+      const y = this.y - camera.y - 16 + Math.sin(this.phase * 0.7) * 3;
+      sprites.draw(ctx, "objects", rect, x, y, 30, 30);
     }
   }
 
@@ -554,31 +594,11 @@
       tileMap.resolveVertical(this);
     }
 
-    draw(ctx, camera) {
+    draw(ctx, camera, sprites) {
       if (!this.active) return;
-      const x = this.x - camera.x + this.w / 2;
-      const y = this.y - camera.y + this.h / 2 + Math.sin(this.phase) * 2;
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.rotate(Math.sin(this.phase * 0.7) * 0.08);
-      ctx.fillStyle = "#173f5d";
-      ctx.beginPath();
-      ctx.arc(0, 0, 19, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = "#ff6759";
-      ctx.beginPath();
-      for (let point = 0; point < 10; point += 1) {
-        const radius = point % 2 === 0 ? 15 : 7;
-        const angle = -Math.PI / 2 + (point * Math.PI) / 5;
-        ctx.lineTo(Math.cos(angle) * radius, Math.sin(angle) * radius);
-      }
-      ctx.closePath();
-      ctx.fill();
-      ctx.fillStyle = "#fff6bf";
-      ctx.beginPath();
-      ctx.arc(-4, -4, 3.5, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
+      const x = this.x - camera.x - 2;
+      const y = this.y - camera.y - 3 + Math.sin(this.phase) * 2;
+      sprites.draw(ctx, "objects", SPRITE_RECTS.mushroom, x, y, 38, 38);
     }
   }
 
@@ -620,77 +640,25 @@
       this.vx = 0;
     }
 
-    draw(ctx, camera) {
+    draw(ctx, camera, sprites) {
       if (!this.active) return;
       const x = this.x - camera.x;
       const y = this.y - camera.y;
-      const squish = this.squished > 0 ? 0.45 : 1;
-      const step = this.squished > 0 ? 0 : Math.sin(this.phase) * 2;
-      ctx.save();
-      ctx.translate(x + this.w / 2, y + this.h);
-      ctx.scale(this.vx < 0 ? -1 : 1, squish);
-
-      // A low, readable silhouette keeps the enemy visually planted on the tile.
-      ctx.fillStyle = "#173f5d";
-      ctx.beginPath();
-      ctx.moveTo(-20, -5);
-      ctx.quadraticCurveTo(-22, -28, -10, -34);
-      ctx.quadraticCurveTo(0, -42, 11, -34);
-      ctx.quadraticCurveTo(22, -27, 20, -5);
-      ctx.closePath();
-      ctx.fill();
-
-      ctx.fillStyle = "#a9553f";
-      ctx.beginPath();
-      ctx.moveTo(-16, -6);
-      ctx.quadraticCurveTo(-18, -25, -8, -30);
-      ctx.quadraticCurveTo(0, -36, 9, -30);
-      ctx.quadraticCurveTo(18, -24, 16, -6);
-      ctx.closePath();
-      ctx.fill();
-
-      ctx.fillStyle = "#6a8f54";
-      ctx.beginPath();
-      ctx.moveTo(-6, -31);
-      ctx.quadraticCurveTo(0, -43, 5, -32);
-      ctx.quadraticCurveTo(12, -38, 10, -27);
-      ctx.closePath();
-      ctx.fill();
-
-      ctx.fillStyle = "#f5dfb5";
-      ctx.beginPath();
-      ctx.ellipse(2, -17, 13, 10, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = "#fff";
-      ctx.beginPath();
-      ctx.ellipse(-4, -21, 4.5, 6, 0, 0, Math.PI * 2);
-      ctx.ellipse(8, -21, 4.5, 6, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = "#173f5d";
-      ctx.beginPath();
-      ctx.arc(-2, -20, 2.2, 0, Math.PI * 2);
-      ctx.arc(10, -20, 2.2, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.strokeStyle = "#6f352e";
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(-9, -27);
-      ctx.lineTo(-1, -24);
-      ctx.moveTo(5, -24);
-      ctx.lineTo(13, -27);
-      ctx.stroke();
-
-      ctx.fillStyle = "#173f5d";
-      roundedRect(ctx, -18 + step, -7, 16, 8, 4);
-      ctx.fill();
-      roundedRect(ctx, 2 - step, -7, 16, 8, 4);
-      ctx.fill();
-      ctx.fillStyle = "#ffd45d";
-      ctx.fillRect(-14 + step, -5, 9, 3);
-      ctx.fillRect(6 - step, -5, 9, 3);
-      ctx.restore();
+      if (this.squished > 0) {
+        sprites.draw(
+          ctx,
+          "enemies",
+          SPRITE_RECTS.goombaSquished,
+          x - 3,
+          y + this.h - 18,
+          44,
+          18
+        );
+        return;
+      }
+      const frame = Math.floor(this.phase * 0.65) % 2;
+      const rect = { ...SPRITE_RECTS.goomba, x: SPRITE_RECTS.goomba.x + frame * 18 };
+      sprites.draw(ctx, "enemies", rect, x - 3, y + this.h - 44, 44, 44);
     }
   }
 
@@ -848,6 +816,19 @@
 
       const width = tileWidth * TILE;
       const height = tileHeight * TILE;
+      if (
+        this.game.sprites.draw(
+          ctx,
+          "tiles",
+          SPRITE_RECTS.pipe,
+          x,
+          y,
+          width,
+          height
+        )
+      ) {
+        return;
+      }
       const bodyX = x + 9;
       const bodyY = y + 18;
       const bodyWidth = width - 18;
@@ -892,6 +873,19 @@
     drawTile(ctx, x, y, tx, ty, symbol, palette) {
       const key = this.key(tx, ty);
       if (symbol === "X") {
+        if (
+          this.game.sprites.draw(
+            ctx,
+            "tiles",
+            SPRITE_RECTS.ground,
+            x,
+            y,
+            TILE,
+            TILE
+          )
+        ) {
+          return;
+        }
         ctx.fillStyle = palette.dirt;
         ctx.fillRect(x, y, TILE, TILE);
         ctx.fillStyle = "rgba(55, 31, 24, 0.18)";
@@ -925,6 +919,16 @@
       }
 
       const used = symbol === "?" && this.usedBlocks.has(key);
+      const spriteRect =
+        symbol === "B"
+          ? SPRITE_RECTS.brick
+          : used
+            ? SPRITE_RECTS.usedBlock
+            : SPRITE_RECTS.questionBlock;
+      const spriteSheet = symbol === "?" && !used ? "tiles" : "objects";
+      if (this.game.sprites.draw(ctx, spriteSheet, spriteRect, x, y, TILE, TILE)) {
+        return;
+      }
       ctx.fillStyle = "#173f5d";
       roundedRect(ctx, x + 1, y + 1, TILE - 2, TILE - 2, 6);
       ctx.fill();
@@ -1040,157 +1044,38 @@
       this.invincible = 2;
     }
 
-    draw(ctx, camera) {
+    draw(ctx, camera, sprites) {
       if (this.invincible > 0 && Math.floor(this.invincible * 12) % 2 === 0) return;
       const x = this.x - camera.x;
       const y = this.y - camera.y;
-      const moving = Math.abs(this.vx) > 20 && this.grounded;
-      const stride = moving ? Math.sin(this.runTime * 1.25) : 0;
-      const leftLift = moving ? Math.max(0, stride) * 4 : 0;
-      const rightLift = moving ? Math.max(0, -stride) * 4 : 0;
-      const bodyBob = moving ? -Math.abs(stride) * 1.4 : 0;
-      const scale = this.powered ? 1.04 : 0.9;
-      const furColor = this.powered ? "#ffd45d" : "#f58a4f";
-      const scarfColor = this.powered ? "#f26850" : "#2dc2b0";
-      const bootColor = this.powered ? "#2dc2b0" : "#ffd45d";
-
-      ctx.save();
-      // Local y=0 is the only foot baseline and matches the collider bottom exactly.
-      ctx.translate(x + this.w / 2, y + this.h);
-      ctx.scale(this.facing * scale, scale);
-
-      // Tail behind the body gives Pip a distinct, original silhouette.
-      ctx.fillStyle = "#173f5d";
-      ctx.beginPath();
-      ctx.moveTo(-12, -28 + bodyBob);
-      ctx.quadraticCurveTo(-34, -33 + bodyBob, -30, -17 + bodyBob);
-      ctx.quadraticCurveTo(-27, -7 + bodyBob, -14, -13 + bodyBob);
-      ctx.closePath();
-      ctx.fill();
-      ctx.fillStyle = furColor;
-      ctx.beginPath();
-      ctx.moveTo(-13, -26 + bodyBob);
-      ctx.quadraticCurveTo(-29, -30 + bodyBob, -26, -18 + bodyBob);
-      ctx.quadraticCurveTo(-23, -11 + bodyBob, -13, -16 + bodyBob);
-      ctx.closePath();
-      ctx.fill();
-
-      // Legs and boots can lift during a step, but never extend below y=0.
-      ctx.fillStyle = "#173f5d";
-      ctx.beginPath();
-      ctx.moveTo(-10, -22 + bodyBob);
-      ctx.lineTo(-13 + stride * 3, -6 - leftLift);
-      ctx.lineTo(-3 + stride * 3, -6 - leftLift);
-      ctx.lineTo(-1, -21 + bodyBob);
-      ctx.closePath();
-      ctx.fill();
-      ctx.beginPath();
-      ctx.moveTo(1, -21 + bodyBob);
-      ctx.lineTo(3 - stride * 3, -6 - rightLift);
-      ctx.lineTo(13 - stride * 3, -6 - rightLift);
-      ctx.lineTo(10, -22 + bodyBob);
-      ctx.closePath();
-      ctx.fill();
-
-      ctx.fillStyle = "#173f5d";
-      roundedRect(ctx, -17 + stride * 3, -8 - leftLift, 18, 9, 4);
-      ctx.fill();
-      roundedRect(ctx, -1 - stride * 3, -8 - rightLift, 18, 9, 4);
-      ctx.fill();
-      ctx.fillStyle = bootColor;
-      roundedRect(ctx, -14 + stride * 3, -6 - leftLift, 13, 5, 2);
-      ctx.fill();
-      roundedRect(ctx, 2 - stride * 3, -6 - rightLift, 13, 5, 2);
-      ctx.fill();
-
-      ctx.save();
-      ctx.translate(0, bodyBob);
-
-      // Compact torso, scarf and swinging arms.
-      ctx.fillStyle = "#173f5d";
-      roundedRect(ctx, -17, -42, 34, 25, 9);
-      ctx.fill();
-      ctx.fillStyle = furColor;
-      roundedRect(ctx, -13, -39, 26, 19, 6);
-      ctx.fill();
-
-      ctx.fillStyle = scarfColor;
-      roundedRect(ctx, -16, -43, 33, 9, 4);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.moveTo(-14, -38);
-      ctx.lineTo(-27, -32 + Math.sin(this.runTime) * 2);
-      ctx.lineTo(-13, -27);
-      ctx.closePath();
-      ctx.fill();
-
-      ctx.strokeStyle = "#173f5d";
-      ctx.lineWidth = 6;
-      ctx.lineCap = "round";
-      ctx.beginPath();
-      ctx.moveTo(-12, -34);
-      ctx.lineTo(-18 - stride * 3, -23);
-      ctx.moveTo(12, -34);
-      ctx.lineTo(18 + stride * 3, -26);
-      ctx.stroke();
-
-      // Pointed hood and fox face.
-      ctx.fillStyle = "#173f5d";
-      ctx.beginPath();
-      ctx.moveTo(-15, -57);
-      ctx.lineTo(-18, -73);
-      ctx.lineTo(-5, -64);
-      ctx.lineTo(10, -74);
-      ctx.lineTo(16, -56);
-      ctx.closePath();
-      ctx.fill();
-      ctx.fillStyle = furColor;
-      ctx.beginPath();
-      ctx.moveTo(-11, -57);
-      ctx.lineTo(-14, -68);
-      ctx.lineTo(-4, -61);
-      ctx.lineTo(8, -69);
-      ctx.lineTo(12, -56);
-      ctx.closePath();
-      ctx.fill();
-
-      ctx.fillStyle = "#173f5d";
-      roundedRect(ctx, -17, -63, 34, 29, 13);
-      ctx.fill();
-      ctx.fillStyle = furColor;
-      roundedRect(ctx, -13, -60, 26, 23, 10);
-      ctx.fill();
-      ctx.fillStyle = "#fff0d7";
-      ctx.beginPath();
-      ctx.ellipse(5, -45, 10, 8, -0.2, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = "#173f5d";
-      ctx.beginPath();
-      ctx.arc(5, -54, 2.5, 0, Math.PI * 2);
-      ctx.arc(13, -45, 2.5, 0, Math.PI * 2);
-      ctx.fill();
-
-      if (this.powered) {
-        ctx.fillStyle = "#fff9df";
-        ctx.beginPath();
-        for (let point = 0; point < 10; point += 1) {
-          const radius = point % 2 === 0 ? 7 : 3.2;
-          const angle = -Math.PI / 2 + (point * Math.PI) / 5;
-          ctx.lineTo(Math.cos(angle) * radius, -28 + Math.sin(angle) * radius);
-        }
-        ctx.closePath();
-        ctx.fill();
+      let frame = 0;
+      if (!this.grounded) {
+        frame = 3;
+      } else if (Math.abs(this.vx) > 24) {
+        frame = 1 + (Math.floor(this.runTime * 0.7) % 3);
       }
-      ctx.restore();
 
-      if (this.powered) {
-        ctx.strokeStyle = "rgba(255, 244, 166, 0.9)";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.ellipse(0, -37, 28 + Math.sin(this.runTime) * 2, 37, 0, 0, Math.PI * 2);
-        ctx.stroke();
+      const baseRect = this.powered ? SPRITE_RECTS.marioBig : SPRITE_RECTS.marioSmall;
+      const rect = { ...baseRect, x: baseRect.x + frame * 18 };
+      const drawWidth = this.powered ? 40 : 36;
+      const drawHeight = this.powered ? 80 : 54;
+      const drawX = x + this.w / 2 - drawWidth / 2;
+      const drawY = y + this.h - drawHeight;
+      const drawn = sprites.draw(
+        ctx,
+        "players",
+        rect,
+        drawX,
+        drawY,
+        drawWidth,
+        drawHeight,
+        this.facing < 0
+      );
+
+      if (!drawn) {
+        ctx.fillStyle = "#e23b2e";
+        ctx.fillRect(x + 4, y, this.w - 8, this.h);
       }
-      ctx.restore();
     }
   }
 
@@ -1289,9 +1174,9 @@
       this.checkpoints.forEach((checkpoint) => this.drawCheckpoint(ctx, camera, checkpoint));
       if (this.finish) this.drawFinish(ctx, camera, this.finish);
       if (this.game.levelIndex === 0) this.drawTutorial(ctx, camera);
-      this.coins.forEach((coin) => coin.draw(ctx, camera));
-      this.powerUps.forEach((powerUp) => powerUp.draw(ctx, camera));
-      this.enemies.forEach((enemy) => enemy.draw(ctx, camera));
+      this.coins.forEach((coin) => coin.draw(ctx, camera, this.game.sprites));
+      this.powerUps.forEach((powerUp) => powerUp.draw(ctx, camera, this.game.sprites));
+      this.enemies.forEach((enemy) => enemy.draw(ctx, camera, this.game.sprites));
     }
 
     drawTutorial(ctx, camera) {
@@ -1432,6 +1317,7 @@
     constructor() {
       this.canvas = document.getElementById("game-canvas");
       this.ctx = this.canvas.getContext("2d");
+      this.sprites = new SpriteAtlas();
       this.input = new InputManager();
       this.audio = new AudioManager();
       this.camera = new Camera();
@@ -1772,7 +1658,7 @@
       }
       this.drawBackground();
       this.level.draw(ctx, this.camera);
-      this.player.draw(ctx, this.camera);
+      this.player.draw(ctx, this.camera, this.sprites);
       this.particles.forEach((particle) => particle.draw(ctx, this.camera));
 
       if (this.transition > 0 && this.transitionKind === "death") {
