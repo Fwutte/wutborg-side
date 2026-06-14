@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#1b4b72" />
+  <meta
+    name="description"
+    content="Spil Pip's Skybound, et originalt og farverigt platformspil med tre baner, mønter, fjender og power-ups."
+  />
+  <title>Pip's Skybound | Wutborg.dk</title>
+  <link rel="stylesheet" href="css/pips-skybound.css" />
+</head>
+<body>
+  <div class="page-shell">
+    <nav class="topbar" aria-label="Pip's Skybound navigation">
+      <a class="brand" href="minispil.html">
+        <span class="brand-mark" aria-hidden="true">P</span>
+        <span>
+          Pip's Skybound
+          <small>Wutborg Arcade</small>
+        </span>
+      </a>
+      <div class="topbar-actions">
+        <a href="minispil.html">← Minispil</a>
+        <button id="pause-button" type="button">Pause</button>
+        <button id="mute-button" type="button" aria-pressed="false">Lyd: til</button>
+      </div>
+    </nav>
+
+    <main class="game-frame">
+      <header class="game-header">
+        <div>
+          <span class="eyebrow">Original cartoon platformer</span>
+          <h1>Pip's <span>Skybound</span></h1>
+        </div>
+        <div class="hud" id="hud" aria-label="Spilstatus">
+          <span><small>Liv</small><strong id="hud-lives">3</strong></span>
+          <span><small>Mønter</small><strong id="hud-coins">0</strong></span>
+          <span><small>Bane</small><strong id="hud-level">1 / 3</strong></span>
+          <span><small>Tid</small><strong id="hud-time">180</strong></span>
+        </div>
+      </header>
+
+      <section class="canvas-wrap" id="canvas-wrap">
+        <canvas
+          id="game-canvas"
+          width="1152"
+          height="648"
+          aria-label="Pip's Skybound spilleplade. Brug piletaster eller WASD og Space for at hoppe."
+        ></canvas>
+
+        <div class="screen screen-menu" id="menu-screen">
+          <div class="menu-art" aria-hidden="true">
+            <span class="menu-cloud cloud-one"></span>
+            <span class="menu-cloud cloud-two"></span>
+            <span class="menu-island"></span>
+            <span class="menu-pip">
+              <i class="ear left"></i><i class="ear right"></i>
+              <i class="face"></i><i class="scarf"></i><i class="boot left"></i><i class="boot right"></i>
+            </span>
+          </div>
+          <div class="menu-card">
+            <span class="menu-kicker">Tre verdener venter</span>
+            <h2>Hop højere.<br />Find hjem.</h2>
+            <p>
+              Hjælp den lille eventyrer Pip gennem blomsterenge, skybroer og
+              solnedgangens gamle ruiner.
+            </p>
+            <div class="menu-buttons">
+              <button class="primary-button" id="start-button" type="button">Start spil</button>
+              <button class="secondary-button" id="instructions-button" type="button">Sådan spiller du</button>
+            </div>
+            <div class="level-picker" aria-label="Vælg startbane">
+              <span>Vælg bane</span>
+              <div>
+                <button class="level-choice active" type="button" data-level="0">1</button>
+                <button class="level-choice" type="button" data-level="1">2</button>
+                <button class="level-choice" type="button" data-level="2">3</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen compact-screen" id="instructions-screen" hidden>
+          <div class="dialog-card">
+            <span class="menu-kicker">Sådan spiller du</span>
+            <h2>Løb, hop og udforsk</h2>
+            <div class="instruction-grid">
+              <div><kbd>← →</kbd><strong>Bevæg Pip</strong><span>Brug også A og D.</span></div>
+              <div><kbd>Space</kbd><strong>Hop</strong><span>Hold knappen for et højere hop.</span></div>
+              <div><span class="instruction-icon">●</span><strong>Saml solmønter</strong><span>20 mønter giver et ekstra liv.</span></div>
+              <div><span class="instruction-icon">✦</span><strong>Find stjernebær</strong><span>Bliv større og modstå ét hit.</span></div>
+              <div><span class="instruction-icon">↓</span><strong>Hop på fjender</strong><span>Undgå at ramme dem fra siden.</span></div>
+              <div><kbd>Esc</kbd><strong>Pause</strong><span>Tag en rolig pause midt i banen.</span></div>
+            </div>
+            <button class="primary-button" data-close-instructions type="button">Jeg er klar</button>
+          </div>
+        </div>
+
+        <div class="screen compact-screen" id="pause-screen" hidden>
+          <div class="dialog-card small-dialog">
+            <span class="menu-kicker">Spillet er sat på pause</span>
+            <h2>Pause</h2>
+            <div class="stacked-buttons">
+              <button class="primary-button" id="resume-button" type="button">Fortsæt</button>
+              <button class="secondary-button" id="restart-level-button" type="button">Genstart banen</button>
+              <button class="text-button" data-back-menu type="button">Til hovedmenu</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen compact-screen" id="complete-screen" hidden>
+          <div class="dialog-card small-dialog celebration">
+            <span class="menu-kicker" id="complete-kicker">Bane klaret</span>
+            <h2 id="complete-title">Godt gået!</h2>
+            <p id="complete-copy"></p>
+            <div class="result-stats">
+              <span><small>Mønter</small><strong id="result-coins">0</strong></span>
+              <span><small>Tid</small><strong id="result-time">0</strong></span>
+            </div>
+            <div class="stacked-buttons">
+              <button class="primary-button" id="next-level-button" type="button">Næste bane</button>
+              <button class="secondary-button" data-back-menu type="button">Til hovedmenu</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen compact-screen" id="game-over-screen" hidden>
+          <div class="dialog-card small-dialog danger-dialog">
+            <span class="menu-kicker">Eventyret holder pause</span>
+            <h2>Game over</h2>
+            <p>Pip løb tør for liv, men skyvejen står klar til et nyt forsøg.</p>
+            <div class="stacked-buttons">
+              <button class="primary-button" id="retry-button" type="button">Prøv igen</button>
+              <button class="secondary-button" data-back-menu type="button">Til hovedmenu</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="toast" id="toast" role="status" aria-live="polite"></div>
+      </section>
+
+      <section class="touch-controls" aria-label="Touchkontroller">
+        <div class="touch-move">
+          <button type="button" data-control="left" aria-label="Gå til venstre">←</button>
+          <button type="button" data-control="right" aria-label="Gå til højre">→</button>
+        </div>
+        <button class="jump-control" type="button" data-control="jump" aria-label="Hop">
+          <span>↑</span>
+          Hop
+        </button>
+      </section>
+
+      <footer class="game-notes">
+        <span><strong>Styring:</strong> Piletaster/WASD · Space for hop · Esc for pause</span>
+        <span>Original grafik og WebAudio · Ingen eksterne spilassets</span>
+      </footer>
+    </main>
+  </div>
+
+  <script src="js/pips-skybound.js"></script>
+</body>
+</html>

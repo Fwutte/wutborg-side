@@ -7,7 +7,7 @@
   <title>Familiens minispil | Wutborg.dk</title>
   <meta
     name="description"
-    content="Spil Fire på stribe, Snake, Neon Breaker, Tetris og Monster Battle Arena i familien Wutborgs spillehjørne."
+    content="Spil Fire på stribe, Snake, Neon Breaker, Tetris, Monster Battle Arena og Pip's Skybound i familien Wutborgs spillehjørne."
   />
   <style>
     :root {
@@ -299,6 +299,20 @@
       background-size: 22px 22px, 22px 22px, auto;
     }
 
+    .game-card.skybound {
+      grid-column: 1 / -1;
+      min-height: 425px;
+      --card-bg:
+        radial-gradient(circle at 84% 12%, rgba(255, 212, 93, 0.34), transparent 31%),
+        linear-gradient(145deg, #f7ffed, #d9f4ff);
+      --card-ink: #173f5d;
+      --card-muted: #527184;
+      --card-accent: #f26850;
+      --card-button-ink: #fff;
+      --card-outline: rgba(23, 63, 93, 0.22);
+      --card-glow: rgba(45, 194, 176, 0.17);
+    }
+
     .card-content {
       position: relative;
       z-index: 3;
@@ -324,7 +338,8 @@
 
     .game-card.breaker h2,
     .game-card.tetris h2,
-    .game-card.pokemon h2 {
+    .game-card.pokemon h2,
+    .game-card.skybound h2 {
       font-family: Inter, ui-rounded, "Arial Rounded MT Bold", system-ui, sans-serif;
       font-weight: 950;
       letter-spacing: -0.065em;
@@ -361,6 +376,28 @@
     }
 
     .game-card.pokemon p {
+      max-width: 430px;
+    }
+
+    .game-card.skybound h2 {
+      max-width: 430px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(3rem, 5.5vw, 5.5rem);
+      line-height: 0.82;
+      font-style: italic;
+    }
+
+    .game-card.skybound h2 span {
+      display: block;
+      color: #2a9b83;
+      font-size: 0.72em;
+    }
+
+    .game-card.skybound .card-content {
+      max-width: 46%;
+    }
+
+    .game-card.skybound p {
       max-width: 430px;
     }
 
@@ -645,6 +682,178 @@
       height: 72%;
     }
 
+    .skybound-preview {
+      right: 4%;
+      bottom: 45px;
+      width: min(51%, 575px);
+      height: 300px;
+      overflow: hidden;
+      border: 5px solid #173f5d;
+      border-radius: 23px;
+      background: linear-gradient(#65cbed 0 66%, #dcf7dc 66%);
+      box-shadow: 0 18px 42px rgba(23,63,93,0.22);
+      transform: rotate(1.5deg);
+    }
+
+    .skybound-preview::before {
+      content: "";
+      position: absolute;
+      left: -8%;
+      right: -8%;
+      bottom: 48px;
+      height: 115px;
+      border-radius: 50% 50% 0 0;
+      background:
+        radial-gradient(ellipse at 18% 100%, #82cda0 0 42%, transparent 43%),
+        radial-gradient(ellipse at 60% 100%, #4fad73 0 45%, transparent 46%),
+        radial-gradient(ellipse at 92% 100%, #82cda0 0 38%, transparent 39%);
+    }
+
+    .skybound-preview::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 61px;
+      border-top: 12px solid #65c767;
+      background:
+        linear-gradient(90deg, rgba(23,63,93,0.13) 2px, transparent 2px),
+        #a9623d;
+      background-size: 46px 100%;
+    }
+
+    .sky-cloud {
+      position: absolute;
+      top: 38px;
+      left: 52px;
+      width: 95px;
+      height: 24px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.82);
+      box-shadow:
+        25px -17px 0 8px rgba(255,255,255,0.82),
+        56px -5px 0 3px rgba(255,255,255,0.82);
+    }
+
+    .sky-platform {
+      position: absolute;
+      right: 31px;
+      bottom: 117px;
+      z-index: 2;
+      width: 150px;
+      height: 28px;
+      border: 4px solid #173f5d;
+      border-radius: 7px;
+      background: #a9623d;
+      box-shadow: inset 0 9px 0 #65c767;
+    }
+
+    .sky-block {
+      position: absolute;
+      right: 89px;
+      bottom: 148px;
+      z-index: 3;
+      display: grid;
+      place-items: center;
+      width: 43px;
+      height: 43px;
+      border: 4px solid #173f5d;
+      border-radius: 8px;
+      color: #173f5d;
+      background: #ffd45d;
+      font: 950 1.45rem/1 system-ui, sans-serif;
+      box-shadow: inset 0 5px 0 rgba(255,255,255,0.4);
+    }
+
+    .sky-coin {
+      position: absolute;
+      right: 98px;
+      bottom: 207px;
+      z-index: 3;
+      width: 22px;
+      height: 31px;
+      border: 4px solid #8e5719;
+      border-radius: 50%;
+      background: #ffd45d;
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+
+    .sky-enemy {
+      position: absolute;
+      right: 202px;
+      bottom: 56px;
+      z-index: 4;
+      width: 47px;
+      height: 35px;
+      border: 5px solid #173f5d;
+      border-radius: 50% 50% 32% 32%;
+      background:
+        radial-gradient(circle at 35% 42%, #fff 0 4px, #173f5d 5px 7px, transparent 8px),
+        radial-gradient(circle at 68% 42%, #fff 0 4px, #173f5d 5px 7px, transparent 8px),
+        #7451a5;
+    }
+
+    .sky-pip {
+      position: absolute;
+      left: 92px;
+      bottom: 53px;
+      z-index: 5;
+      width: 52px;
+      height: 75px;
+      filter: drop-shadow(4px 5px 0 rgba(23,63,93,0.22));
+    }
+
+    .sky-pip::before {
+      content: "";
+      position: absolute;
+      left: 6px;
+      top: 2px;
+      width: 39px;
+      height: 39px;
+      border: 5px solid #173f5d;
+      border-radius: 48% 48% 43% 43%;
+      background:
+        radial-gradient(circle at 67% 44%, #173f5d 0 2px, transparent 3px),
+        radial-gradient(ellipse at 65% 68%, #fff0d7 0 25%, transparent 26%),
+        #f58a4f;
+    }
+
+    .sky-pip::after {
+      content: "";
+      position: absolute;
+      left: 9px;
+      bottom: 0;
+      width: 35px;
+      height: 34px;
+      border: 5px solid #173f5d;
+      border-radius: 9px 9px 13px 13px;
+      background:
+        linear-gradient(#2dc2b0 0 9px, transparent 9px),
+        #f58a4f;
+    }
+
+    .sky-pip i {
+      position: absolute;
+      top: -6px;
+      z-index: -1;
+      width: 21px;
+      height: 26px;
+      border: 5px solid #173f5d;
+      background: #f58a4f;
+      clip-path: polygon(50% 0, 100% 100%, 0 83%);
+    }
+
+    .sky-pip i:first-child {
+      left: 4px;
+      transform: rotate(-15deg);
+    }
+
+    .sky-pip i:last-child {
+      right: 4px;
+      transform: scaleX(-1) rotate(-15deg);
+    }
+
     .family-note {
       display: flex;
       align-items: center;
@@ -699,6 +908,11 @@
       background: #efbd4d;
     }
 
+    .note-symbol:nth-child(6) {
+      color: #fff;
+      background: #f26850;
+    }
+
     .footer {
       display: flex;
       justify-content: space-between;
@@ -750,7 +964,8 @@
         min-height: 560px;
       }
 
-      .game-card.pokemon .card-content {
+      .game-card.pokemon .card-content,
+      .game-card.skybound .card-content {
         max-width: 100%;
       }
 
@@ -758,6 +973,17 @@
         right: 3%;
         bottom: 58px;
         width: 70%;
+        height: 285px;
+      }
+
+      .game-card.skybound {
+        min-height: 570px;
+      }
+
+      .skybound-preview {
+        right: 3%;
+        bottom: 58px;
+        width: 72%;
         height: 285px;
       }
     }
@@ -820,12 +1046,28 @@
         font-size: clamp(2.75rem, 14vw, 4.1rem);
       }
 
+      .game-card.skybound {
+        min-height: 600px;
+      }
+
+      .game-card.skybound h2 {
+        font-size: clamp(2.8rem, 14vw, 4.3rem);
+      }
+
       .pokemon-preview {
         right: -9%;
         bottom: 64px;
         width: 96%;
         height: 300px;
         transform: scale(0.88) rotate(-1.5deg);
+      }
+
+      .skybound-preview {
+        right: -10%;
+        bottom: 66px;
+        width: 102%;
+        height: 295px;
+        transform: scale(0.87) rotate(1deg);
       }
 
       .family-note,
@@ -981,6 +1223,23 @@
             />
           </span>
         </a>
+
+        <a class="game-card skybound" href="pips-skybound.html">
+          <span class="card-content">
+            <span class="game-number">Spil 06 · En spiller</span>
+            <h2>Pip's <span>Skybound</span></h2>
+            <p>Hop gennem tre håndbyggede baner med mønter, fjender, checkpoints og stjernebær.</p>
+          </span>
+          <span class="play">Start eventyret</span>
+          <span class="preview skybound-preview" aria-hidden="true">
+            <i class="sky-cloud"></i>
+            <i class="sky-platform"></i>
+            <i class="sky-block">?</i>
+            <i class="sky-coin"></i>
+            <i class="sky-enemy"></i>
+            <span class="sky-pip"><i></i><i></i></span>
+          </span>
+        </a>
       </section>
 
       <aside class="family-note">
@@ -995,6 +1254,7 @@
           <span class="note-symbol">●</span>
           <span class="note-symbol">T</span>
           <span class="note-symbol">M</span>
+          <span class="note-symbol">P</span>
         </span>
       </aside>
     </main>
