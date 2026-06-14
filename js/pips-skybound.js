@@ -950,9 +950,11 @@
       const furColor = this.powered ? "#ffd45d" : "#f58a4f";
       const scarfColor = this.powered ? "#f26850" : "#2dc2b0";
       const bootColor = this.powered ? "#2dc2b0" : "#ffd45d";
+      const footBottom = 41;
 
       ctx.save();
-      ctx.translate(x + this.w / 2, y + this.h - 22 - bob);
+      // Anchor the drawn boots to the collider's bottom, which is the terrain surface.
+      ctx.translate(x + this.w / 2, y + this.h - footBottom * scale - bob);
       ctx.scale(this.facing * scale, scale);
 
       ctx.fillStyle = "#173f5d";
