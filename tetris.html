@@ -2,7 +2,7 @@
 <html lang="da">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#24145f" />
   <title>Tetris | Wutborg Spillehjørne</title>
   <meta
@@ -40,7 +40,9 @@
       margin: 0;
       min-width: 320px;
       min-height: 100vh;
+      min-height: 100dvh;
       overflow-x: hidden;
+      overscroll-behavior-y: contain;
       color: var(--ink);
       font-family: Inter, ui-rounded, "Arial Rounded MT Bold", system-ui, sans-serif;
       background:
@@ -282,6 +284,10 @@
 
     .board-shell.is-game-over {
       animation: board-game-over 0.45s ease;
+    }
+
+    .play-zone {
+      width: min(100%, 430px);
     }
 
     .canvas-wrap {
@@ -643,6 +649,14 @@
       font-size: 0.7rem;
     }
 
+    .touch-button.restart {
+      display: none;
+    }
+
+    .mobile-hud {
+      display: none;
+    }
+
     .toast {
       position: fixed;
       z-index: 50;
@@ -749,12 +763,23 @@
     }
 
     @media (max-width: 520px) {
+      html,
+      body {
+        height: 100%;
+      }
+
       .page {
-        width: min(100% - 14px, 440px);
-        padding-top: 7px;
+        width: min(100% - 10px, 440px);
+        padding:
+          max(5px, env(safe-area-inset-top))
+          0
+          max(8px, env(safe-area-inset-bottom));
       }
 
       .nav {
+        min-height: 48px;
+        margin-bottom: 7px;
+        padding: 5px 7px 5px 9px;
         border-radius: 15px;
       }
 
@@ -762,8 +787,17 @@
         font-size: 0.85rem;
       }
 
+      .brand-mark {
+        width: 34px;
+        height: 34px;
+        grid-template-columns: repeat(2, 9px);
+        grid-template-rows: repeat(2, 9px);
+        border-radius: 10px;
+      }
+
       .nav-button {
-        width: 40px;
+        width: 36px;
+        min-height: 36px;
         padding: 0;
       }
 
@@ -772,44 +806,220 @@
       }
 
       .nav-link {
+        min-height: 36px;
         padding-inline: 10px;
         font-size: 0.7rem;
       }
 
+      .game-layout {
+        display: block;
+      }
+
       .title-row {
-        margin-inline: 2px;
+        align-items: center;
+        margin: 0 2px 6px;
+      }
+
+      .title-copy small {
+        margin-bottom: 2px;
+        font-size: 0.54rem;
+      }
+
+      h1 {
+        font-size: clamp(2rem, 10vw, 2.55rem);
+        line-height: 0.9;
       }
 
       .status-pill {
+        min-height: 30px;
         padding-inline: 9px;
         font-size: 0.61rem;
       }
 
+      .mobile-hud {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 58px;
+        gap: 6px;
+        width: 100%;
+        margin-bottom: 6px;
+      }
+
+      .mobile-stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 5px;
+      }
+
+      .mobile-stat {
+        min-width: 0;
+        padding: 7px 3px 6px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--panel);
+        text-align: center;
+      }
+
+      .mobile-stat span {
+        display: block;
+        color: var(--muted);
+        font-size: 0.48rem;
+        font-weight: 900;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      .mobile-stat strong {
+        display: block;
+        margin-top: 3px;
+        overflow: hidden;
+        font-size: 1rem;
+        line-height: 1;
+        text-overflow: ellipsis;
+      }
+
+      #next-mobile {
+        display: block;
+        width: 58px;
+        height: 58px;
+        border: 1px solid rgba(255,255,255,0.14);
+        border-radius: 12px;
+        background: rgba(5, 4, 24, 0.72);
+      }
+
+      .play-zone {
+        display: grid;
+        grid-template-columns: minmax(0, 270px) minmax(98px, 108px);
+        gap: 7px;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        margin: 0 auto;
+        touch-action: none;
+      }
+
       .board-shell {
-        padding: 9px;
-        border-radius: 21px;
+        max-width: 270px;
+        padding: 6px;
+        border-radius: 18px;
       }
 
       .canvas-wrap {
-        border-radius: 14px;
-      }
-
-      .touch-controls {
-        gap: 6px;
-        margin-top: 10px;
-      }
-
-      .touch-button {
-        min-height: 56px;
+        border-width: 2px;
         border-radius: 12px;
       }
 
-      .stats {
-        gap: 6px;
+      .board-overlay {
+        padding: 10px;
       }
 
-      .stat {
-        padding-inline: 5px;
+      .overlay-card {
+        padding: 18px 13px;
+        border-radius: 18px;
+      }
+
+      .overlay-blocks {
+        grid-template-columns: repeat(3, 17px);
+        grid-template-rows: repeat(2, 17px);
+        margin-bottom: 11px;
+      }
+
+      .overlay-title {
+        font-size: 2.05rem;
+      }
+
+      .overlay-copy {
+        margin: 9px auto 13px;
+        font-size: 0.75rem;
+      }
+
+      .primary-button {
+        min-height: 48px;
+        border-radius: 14px;
+        font-size: 0.88rem;
+      }
+
+      .touch-controls {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-areas:
+          "rotate rotate"
+          "left right"
+          "down drop"
+          "pause restart";
+        gap: 6px;
+        width: 100%;
+        margin: 0;
+        align-content: center;
+      }
+
+      .touch-button {
+        min-height: 57px;
+        padding: 4px 2px;
+        border-radius: 12px;
+        user-select: none;
+        -webkit-user-select: none;
+      }
+
+      .touch-button[data-action="left"] {
+        grid-area: left;
+      }
+
+      .touch-button[data-action="right"] {
+        grid-area: right;
+      }
+
+      .touch-button[data-action="rotate"] {
+        grid-area: rotate;
+      }
+
+      .touch-button[data-action="down"] {
+        grid-area: down;
+      }
+
+      .touch-button[data-action="drop"] {
+        grid-area: drop;
+      }
+
+      .touch-button.pause {
+        grid-area: pause;
+        grid-column: auto;
+        min-height: 48px;
+        grid-template-columns: 1fr;
+        gap: 0;
+      }
+
+      .touch-button.restart {
+        display: grid;
+        grid-area: restart;
+        min-height: 48px;
+        color: var(--pink);
+      }
+
+      .touch-button.pause .touch-label,
+      .touch-button.restart .touch-label {
+        display: none;
+      }
+
+      .touch-icon {
+        font-size: 1.4rem;
+      }
+
+      .touch-label {
+        margin-top: 3px;
+        font-size: 0.52rem;
+      }
+
+      .side-panel {
+        display: none;
+      }
+
+      .gesture-hint {
+        display: block;
+        margin: 6px 0 0;
+        color: rgba(255,255,255,0.58);
+        font-size: 0.56rem;
+        font-weight: 750;
+        letter-spacing: 0.02em;
+        text-align: center;
       }
 
       .keyboard-help {
@@ -833,6 +1043,40 @@
 
       .touch-label {
         font-size: 0.51rem;
+      }
+
+      .play-zone {
+        grid-template-columns: minmax(0, 1fr) 94px;
+        gap: 5px;
+      }
+    }
+
+    @media (min-width: 521px) {
+      .gesture-hint {
+        display: none;
+      }
+    }
+
+    @media (max-width: 520px) and (max-height: 720px) {
+      .nav {
+        margin-bottom: 4px;
+      }
+
+      .title-copy small,
+      .gesture-hint {
+        display: none;
+      }
+
+      .mobile-hud {
+        margin-bottom: 4px;
+      }
+
+      .play-zone {
+        grid-template-columns: minmax(0, 225px) 102px;
+      }
+
+      .touch-button {
+        min-height: 51px;
       }
     }
 
@@ -886,74 +1130,105 @@
           </span>
         </header>
 
-        <div class="board-shell">
-          <div class="canvas-wrap">
-            <canvas
-              id="game"
-              width="300"
-              height="600"
-              tabindex="0"
-              aria-label="Tetris spilleplade med 10 kolonner og 20 rækker"
-            ></canvas>
-
-            <div class="board-overlay start-overlay">
-              <div class="overlay-card">
-                <span class="overlay-blocks" aria-hidden="true">
-                  <i></i><i></i><i></i><i></i>
-                </span>
-                <span class="overlay-kicker">Klar til at bygge?</span>
-                <h2 class="overlay-title">Tetris</h2>
-                <p class="overlay-copy">Byg rækker og få dem til at forsvinde!</p>
-                <button class="primary-button start-button" type="button">▶ Start spil</button>
-              </div>
+        <div class="mobile-hud" aria-label="Spilstatus">
+          <div class="mobile-stats">
+            <div class="mobile-stat">
+              <span>Point</span>
+              <strong class="score-value">0</strong>
             </div>
-
-            <div class="board-overlay pause-overlay" hidden>
-              <div class="overlay-card">
-                <span class="overlay-kicker">Lille pause</span>
-                <h2 class="overlay-title">Pause</h2>
-                <p class="overlay-copy">Brikkerne venter på dig.</p>
-                <button class="primary-button resume-button" type="button">▶ Fortsæt</button>
-              </div>
+            <div class="mobile-stat">
+              <span>Linjer</span>
+              <strong class="lines-value">0</strong>
             </div>
+            <div class="mobile-stat">
+              <span>Level</span>
+              <strong class="level-value">1</strong>
+            </div>
+          </div>
+          <canvas
+            id="next-mobile"
+            class="next-preview"
+            width="120"
+            height="120"
+            aria-label="Næste brik"
+          ></canvas>
+        </div>
 
-            <div class="board-overlay game-over-overlay" hidden>
-              <div class="overlay-card">
-                <span class="overlay-kicker">Godt bygget!</span>
-                <h2 class="overlay-title">Game over</h2>
-                <p class="overlay-copy game-over-copy">Du fik 0 point.</p>
-                <button class="primary-button play-again-button" type="button">↻ Spil igen</button>
+        <div class="play-zone">
+          <div class="board-shell">
+            <div class="canvas-wrap">
+              <canvas
+                id="game"
+                width="300"
+                height="600"
+                tabindex="0"
+                aria-label="Tetris spilleplade med 10 kolonner og 20 rækker. Tryk for at rotere, eller swipe for at flytte."
+              ></canvas>
+
+              <div class="board-overlay start-overlay">
+                <div class="overlay-card">
+                  <span class="overlay-blocks" aria-hidden="true">
+                    <i></i><i></i><i></i><i></i>
+                  </span>
+                  <span class="overlay-kicker">Klar til at bygge?</span>
+                  <h2 class="overlay-title">Tetris</h2>
+                  <p class="overlay-copy">Byg rækker og få dem til at forsvinde!</p>
+                  <button class="primary-button start-button" type="button">▶ Start spil</button>
+                </div>
+              </div>
+
+              <div class="board-overlay pause-overlay" hidden>
+                <div class="overlay-card">
+                  <span class="overlay-kicker">Lille pause</span>
+                  <h2 class="overlay-title">Pause</h2>
+                  <p class="overlay-copy">Brikkerne venter på dig.</p>
+                  <button class="primary-button resume-button" type="button">▶ Fortsæt</button>
+                </div>
+              </div>
+
+              <div class="board-overlay game-over-overlay" hidden>
+                <div class="overlay-card">
+                  <span class="overlay-kicker">Godt bygget!</span>
+                  <h2 class="overlay-title">Game over</h2>
+                  <p class="overlay-copy game-over-copy">Du fik 0 point.</p>
+                  <button class="primary-button play-again-button" type="button">↻ Spil igen</button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <div class="touch-controls" aria-label="Touch-kontroller">
-          <button class="touch-button repeat-control" type="button" data-action="left" aria-label="Flyt til venstre">
-            <span class="touch-icon">←</span>
-            <span class="touch-label">Venstre</span>
-          </button>
-          <button class="touch-button" type="button" data-action="rotate" aria-label="Rotér brikken">
-            <span class="touch-icon">↻</span>
-            <span class="touch-label">Rotér</span>
-          </button>
-          <button class="touch-button repeat-control" type="button" data-action="down" aria-label="Flyt brikken ned">
-            <span class="touch-icon">↓</span>
-            <span class="touch-label">Ned</span>
-          </button>
-          <button class="touch-button repeat-control" type="button" data-action="right" aria-label="Flyt til højre">
-            <span class="touch-icon">→</span>
-            <span class="touch-label">Højre</span>
-          </button>
-          <button class="touch-button drop" type="button" data-action="drop" aria-label="Slip brikken helt ned">
-            <span class="touch-icon">⇩</span>
-            <span class="touch-label">Drop</span>
-          </button>
-          <button class="touch-button pause" type="button" data-action="pause" aria-label="Sæt spillet på pause">
-            <span class="touch-icon">⏸</span>
-            <span class="touch-label">Pause</span>
-          </button>
+          <div class="touch-controls" aria-label="Touch-kontroller">
+            <button class="touch-button repeat-control" type="button" data-action="left" aria-label="Flyt til venstre">
+              <span class="touch-icon">←</span>
+              <span class="touch-label">Venstre</span>
+            </button>
+            <button class="touch-button" type="button" data-action="rotate" aria-label="Rotér brikken">
+              <span class="touch-icon">↻</span>
+              <span class="touch-label">Rotér</span>
+            </button>
+            <button class="touch-button repeat-control" type="button" data-action="down" aria-label="Flyt brikken ned">
+              <span class="touch-icon">↓</span>
+              <span class="touch-label">Ned</span>
+            </button>
+            <button class="touch-button repeat-control" type="button" data-action="right" aria-label="Flyt til højre">
+              <span class="touch-icon">→</span>
+              <span class="touch-label">Højre</span>
+            </button>
+            <button class="touch-button drop" type="button" data-action="drop" aria-label="Slip brikken helt ned">
+              <span class="touch-icon">⇩</span>
+              <span class="touch-label">Drop</span>
+            </button>
+            <button class="touch-button pause" type="button" data-action="pause" aria-label="Sæt spillet på pause">
+              <span class="touch-icon">⏸</span>
+              <span class="touch-label">Pause</span>
+            </button>
+            <button class="touch-button restart" type="button" data-action="restart" aria-label="Start spillet forfra">
+              <span class="touch-icon">↺</span>
+              <span class="touch-label">Genstart</span>
+            </button>
+          </div>
         </div>
+        <span class="gesture-hint">Tryk på pladen for at rotere · swipe for at flytte</span>
       </section>
 
       <aside class="side-panel" aria-label="Spilinformation og kontroller">
@@ -978,7 +1253,13 @@
             <h2>Gør plads!</h2>
             <p>Den næste brik står klar.</p>
           </div>
-          <canvas id="next" width="120" height="120" aria-label="Forhåndsvisning af næste brik"></canvas>
+          <canvas
+            id="next"
+            class="next-preview"
+            width="120"
+            height="120"
+            aria-label="Forhåndsvisning af næste brik"
+          ></canvas>
         </section>
 
         <section class="control-card">
@@ -1006,6 +1287,7 @@
       const COLS = 10;
       const ROWS = 20;
       const CELL = 30;
+      const GESTURE_STEP = 24;
       const LINE_SCORES = [0, 100, 300, 500, 800];
 
       const COLORS = {
@@ -1030,8 +1312,8 @@
 
       const canvas = document.querySelector("#game");
       const context = canvas.getContext("2d");
-      const nextCanvas = document.querySelector("#next");
-      const nextContext = nextCanvas.getContext("2d");
+      const nextCanvases = [...document.querySelectorAll(".next-preview")];
+      const nextContexts = nextCanvases.map(preview => preview.getContext("2d"));
       const boardShell = document.querySelector(".board-shell");
       const startOverlay = document.querySelector(".start-overlay");
       const pauseOverlay = document.querySelector(".pause-overlay");
@@ -1045,9 +1327,9 @@
       const soundToggle = document.querySelector(".sound-toggle");
       const soundIcon = document.querySelector(".sound-icon");
       const touchButtons = [...document.querySelectorAll(".touch-button")];
-      const scoreValue = document.querySelector(".score-value");
-      const linesValue = document.querySelector(".lines-value");
-      const levelValue = document.querySelector(".level-value");
+      const scoreValues = [...document.querySelectorAll(".score-value")];
+      const linesValues = [...document.querySelectorAll(".lines-value")];
+      const levelValues = [...document.querySelectorAll(".level-value")];
       const statusText = document.querySelector(".status-text");
       const statusDot = document.querySelector(".status-dot");
       const toast = document.querySelector(".toast");
@@ -1073,6 +1355,7 @@
       let toastTimer;
       let repeatDelay;
       let repeatInterval;
+      let boardGesture = null;
 
       // Opretter en tom 10 x 20 spilleplade.
       function createEmptyBoard() {
@@ -1371,9 +1654,15 @@
       }
 
       function updateInterface() {
-        scoreValue.textContent = score.toLocaleString("da-DK");
-        linesValue.textContent = lines;
-        levelValue.textContent = level;
+        scoreValues.forEach(value => {
+          value.textContent = score.toLocaleString("da-DK");
+        });
+        linesValues.forEach(value => {
+          value.textContent = lines;
+        });
+        levelValues.forEach(value => {
+          value.textContent = level;
+        });
       }
 
       function setStatus(text, color) {
@@ -1385,7 +1674,13 @@
       function setControlsEnabled(enabled, allowPause = false) {
         touchButtons.forEach(button => {
           const action = button.dataset.action;
-          button.disabled = action === "pause" ? !(enabled || allowPause) : !enabled;
+          if (action === "pause") {
+            button.disabled = !(enabled || allowPause);
+          } else if (action === "restart") {
+            button.disabled = phase === "ready";
+          } else {
+            button.disabled = !enabled;
+          }
         });
 
         pauseButton.disabled = !(enabled || allowPause);
@@ -1555,30 +1850,33 @@
       }
 
       function drawNextPiece() {
-        nextContext.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
-        nextContext.fillStyle = "rgba(5,4,24,0.86)";
-        nextContext.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
+        nextContexts.forEach((nextContext, index) => {
+          const nextCanvas = nextCanvases[index];
+          nextContext.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
+          nextContext.fillStyle = "rgba(5,4,24,0.86)";
+          nextContext.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
 
-        if (!nextType) return;
+          if (!nextType) return;
 
-        const matrix = SHAPES[nextType];
-        const previewCell = 24;
-        const width = matrix[0].length * previewCell;
-        const height = matrix.length * previewCell;
-        const offsetX = (nextCanvas.width - width) / 2;
-        const offsetY = (nextCanvas.height - height) / 2;
+          const matrix = SHAPES[nextType];
+          const previewCell = 24;
+          const width = matrix[0].length * previewCell;
+          const height = matrix.length * previewCell;
+          const offsetX = (nextCanvas.width - width) / 2;
+          const offsetY = (nextCanvas.height - height) / 2;
 
-        matrix.forEach((row, rowIndex) => {
-          row.forEach((filled, colIndex) => {
-            if (filled) {
-              drawBlock(
-                nextContext,
-                offsetX + colIndex * previewCell,
-                offsetY + rowIndex * previewCell,
-                previewCell,
-                COLORS[nextType]
-              );
-            }
+          matrix.forEach((row, rowIndex) => {
+            row.forEach((filled, colIndex) => {
+              if (filled) {
+                drawBlock(
+                  nextContext,
+                  offsetX + colIndex * previewCell,
+                  offsetY + rowIndex * previewCell,
+                  previewCell,
+                  COLORS[nextType]
+                );
+              }
+            });
           });
         });
       }
@@ -1614,6 +1912,7 @@
         if (action === "down") softDrop();
         if (action === "drop") hardDrop();
         if (action === "pause") togglePause();
+        if (action === "restart") restartGame();
       }
 
       function handleKeydown(event) {
@@ -1663,6 +1962,85 @@
             button.addEventListener("click", () => handleAction(action));
           }
         });
+      }
+
+      function setupBoardGestures() {
+        canvas.addEventListener("pointerdown", event => {
+          if (phase !== "playing" || event.pointerType === "mouse") return;
+
+          event.preventDefault();
+          ensureAudio();
+          canvas.setPointerCapture?.(event.pointerId);
+          boardGesture = {
+            pointerId: event.pointerId,
+            startX: event.clientX,
+            startY: event.clientY,
+            lastX: event.clientX,
+            lastY: event.clientY,
+            startedAt: performance.now(),
+            moved: false
+          };
+        });
+
+        canvas.addEventListener("pointermove", event => {
+          if (!boardGesture || boardGesture.pointerId !== event.pointerId || phase !== "playing") return;
+
+          event.preventDefault();
+          const deltaX = event.clientX - boardGesture.lastX;
+          const deltaY = event.clientY - boardGesture.lastY;
+
+          if (Math.abs(deltaX) >= GESTURE_STEP && Math.abs(deltaX) > Math.abs(deltaY) * 0.75) {
+            const direction = Math.sign(deltaX);
+            const steps = Math.floor(Math.abs(deltaX) / GESTURE_STEP);
+
+            for (let index = 0; index < steps; index += 1) movePiece(direction);
+            boardGesture.lastX += direction * steps * GESTURE_STEP;
+            boardGesture.moved = true;
+          }
+
+          if (deltaY >= GESTURE_STEP && deltaY > Math.abs(deltaX) * 0.75) {
+            const steps = Math.floor(deltaY / GESTURE_STEP);
+
+            for (let index = 0; index < steps; index += 1) softDrop();
+            boardGesture.lastY += steps * GESTURE_STEP;
+            boardGesture.moved = true;
+          }
+        });
+
+        const finishGesture = event => {
+          if (!boardGesture || boardGesture.pointerId !== event.pointerId) return;
+
+          const totalX = event.clientX - boardGesture.startX;
+          const totalY = event.clientY - boardGesture.startY;
+          const duration = performance.now() - boardGesture.startedAt;
+          const wasTap =
+            !boardGesture.moved &&
+            Math.abs(totalX) < 12 &&
+            Math.abs(totalY) < 12;
+
+          if (wasTap && phase === "playing") {
+            rotatePiece();
+          } else if (
+            phase === "playing" &&
+            totalY > 82 &&
+            totalY > Math.abs(totalX) * 1.25 &&
+            duration < 650
+          ) {
+            hardDrop();
+          }
+
+          canvas.releasePointerCapture?.(event.pointerId);
+          boardGesture = null;
+        };
+
+        canvas.addEventListener("pointerup", finishGesture);
+        canvas.addEventListener("pointercancel", () => {
+          boardGesture = null;
+        });
+      }
+
+      function pauseWhenHidden() {
+        if (document.hidden && phase === "playing") togglePause();
       }
 
       function ensureAudio() {
@@ -1789,7 +2167,9 @@
       restartButton.addEventListener("click", restartGame);
       soundToggle.addEventListener("click", toggleSound);
       document.addEventListener("keydown", handleKeydown);
+      document.addEventListener("visibilitychange", pauseWhenHidden);
       setupTouchControls();
+      setupBoardGestures();
 
       updateInterface();
       setControlsEnabled(false);
