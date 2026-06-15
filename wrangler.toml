@@ -6,4 +6,4 @@ pages_build_output_dir = "."
 binding = "DB"
 database_name = "madplan"
 # Erstat med id'et fra: npx wrangler d1 create madplan
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "24fdff5f-cf6a-4cfb-a5c3-534cbde42592"
