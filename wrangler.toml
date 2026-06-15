@@ -1,0 +1,9 @@
+name = "wutborg-side"
+compatibility_date = "2026-06-01"
+pages_build_output_dir = "."
+
+[[d1_databases]]
+binding = "DB"
+database_name = "madplan"
+# Erstat med id'et fra: npx wrangler d1 create madplan
+database_id = "00000000-0000-0000-0000-000000000000"

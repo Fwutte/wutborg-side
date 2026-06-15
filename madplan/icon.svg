@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#1F3D2C"/>
+  <!-- Maskable safe area: keep marks within the center 80% -->
+  <circle cx="256" cy="262" r="118" fill="none" stroke="#F1F3EC" stroke-width="16"/>
+  <circle cx="256" cy="262" r="78" fill="none" stroke="#F1F3EC" stroke-width="10" opacity="0.55"/>
+  <!-- fork -->
+  <g stroke="#DD5A3A" stroke-width="14" stroke-linecap="round" fill="none">
+    <line x1="232" y1="222" x2="232" y2="302"/>
+    <line x1="256" y1="222" x2="256" y2="302"/>
+    <line x1="280" y1="222" x2="280" y2="302"/>
+  </g>
+  <line x1="256" y1="302" x2="256" y2="338" stroke="#DD5A3A" stroke-width="20" stroke-linecap="round"/>
+</svg>

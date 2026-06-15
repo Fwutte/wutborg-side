@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1F3D2C">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.svg">
+<title>Madplan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F1F3EC;
+    --surface:#FFFFFF;
+    --surface-2:#FBFCF9;
+    --ink:#1F3D2C;
+    --ink-soft:#3A5446;
+    --muted:#6E7C70;
+    --line:#E1E6DB;
+    --accent:#DD5A3A;
+    --accent-soft:#FBEAE3;
+    --radius:16px;
+    --shadow:0 1px 2px rgba(31,61,44,.05), 0 8px 24px rgba(31,61,44,.06);
+    --app-w:540px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:"Inter",system-ui,sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+    line-height:1.5;
+  }
+  .app{
+    max-width:var(--app-w);
+    margin:0 auto;
+    min-height:100dvh;
+    padding:0 18px calc(96px + env(safe-area-inset-bottom));
+    position:relative;
+  }
+
+  /* ---------- header ---------- */
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:22px 2px 14px;
+  }
+  .wordmark{
+    font-family:"Fraunces",serif;
+    font-size:25px;font-weight:600;letter-spacing:.01em;
+    display:flex;align-items:center;gap:9px;
+  }
+  .wordmark .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);display:inline-block}
+  .weeknav{
+    display:flex;align-items:center;gap:4px;
+    background:var(--surface);border:1px solid var(--line);
+    border-radius:999px;padding:3px;box-shadow:var(--shadow);
+  }
+  .weeknav button{
+    width:34px;height:34px;border:0;border-radius:999px;background:transparent;
+    color:var(--ink);font-size:18px;cursor:pointer;display:grid;place-items:center;
+  }
+  .weeknav button:active{background:var(--paper)}
+  .weeknav .label{font-size:13px;font-weight:600;padding:0 6px;min-width:54px;text-align:center}
+
+  /* ---------- eyebrow ---------- */
+  .eyebrow{
+    font-size:11.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;
+    color:var(--muted);margin:22px 4px 10px;
+  }
+  .eyebrow.row{display:flex;justify-content:space-between;align-items:center}
+  .eyebrow .link{color:var(--accent);cursor:pointer;letter-spacing:.04em}
+
+  /* ---------- today hero ---------- */
+  .hero{
+    background:var(--surface);border-radius:var(--radius);
+    box-shadow:var(--shadow);overflow:hidden;
+    border:1px solid var(--line);
+  }
+  .hero-inner{padding:20px 20px 18px;cursor:pointer}
+  .hero-top{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+  .hero-top .tag{
+    font-size:11px;font-weight:600;letter-spacing:.04em;
+    color:var(--accent);background:var(--accent-soft);
+    padding:3px 9px;border-radius:999px;text-transform:uppercase;
+  }
+  .hero-top .date{font-size:13px;color:var(--muted)}
+  .hero-dish{
+    font-family:"Fraunces",serif;font-weight:600;font-size:30px;
+    line-height:1.12;color:var(--ink);margin:4px 0 12px;
+  }
+  .hero-dish.empty{color:var(--muted);font-style:italic;font-size:22px;font-weight:400}
+  .hero-meta{display:flex;gap:16px;align-items:center;font-size:14px;color:var(--ink-soft)}
+  .hero-meta span{display:flex;align-items:center;gap:6px}
+  .hero-meta .ic{opacity:.6}
+  .done-pill{
+    margin-left:auto;font-size:12px;font-weight:600;border-radius:999px;
+    padding:5px 11px;border:1px solid var(--line);color:var(--muted);background:var(--surface-2);
+  }
+  .done-pill.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+  /* ---------- week list ---------- */
+  .week{display:flex;flex-direction:column;gap:8px}
+  .day{
+    display:flex;align-items:center;gap:14px;
+    background:var(--surface);border:1px solid var(--line);
+    border-radius:14px;padding:13px 14px;cursor:pointer;
+    transition:transform .08s ease, box-shadow .15s ease;
+  }
+  .day:hover{box-shadow:var(--shadow)}
+  .day:active{transform:scale(.992)}
+  .day.is-today{border-color:var(--accent);background:linear-gradient(0deg,var(--accent-soft),var(--surface) 70%)}
+  .day .wd{
+    width:38px;flex:none;text-align:center;
+  }
+  .day .wd b{display:block;font-size:13px;font-weight:600;text-transform:capitalize}
+  .day .wd small{display:block;font-size:11px;color:var(--muted)}
+  .day .body{flex:1;min-width:0}
+  .day .dish{font-size:15.5px;font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .day .dish.empty{color:var(--muted);font-weight:400;font-style:italic}
+  .day .sub{font-size:12.5px;color:var(--muted);margin-top:1px}
+  .day .check{color:var(--accent);font-size:15px;flex:none}
+  .day .chev{color:var(--muted);font-size:18px;flex:none;opacity:.5}
+
+  /* ---------- dishes / shopping shared list ---------- */
+  .list{display:flex;flex-direction:column;gap:8px}
+  .card-row{
+    display:flex;align-items:center;gap:12px;
+    background:var(--surface);border:1px solid var(--line);
+    border-radius:14px;padding:13px 14px;
+  }
+  .card-row.tap{cursor:pointer}
+  .card-row.tap:active{transform:scale(.992)}
+  .card-row .name{flex:1;font-size:15.5px;font-weight:500;min-width:0}
+  .card-row .name .cat{display:block;font-size:12px;color:var(--muted);font-weight:400;margin-top:1px}
+  .star{font-size:18px;border:0;background:none;cursor:pointer;color:var(--line);padding:4px}
+  .star.on{color:#E0A23B}
+  .check-row .box{
+    width:24px;height:24px;border:2px solid var(--line);border-radius:7px;flex:none;
+    display:grid;place-items:center;cursor:pointer;color:#fff;font-size:14px;transition:.12s;
+  }
+  .check-row.done .box{background:var(--ink);border-color:var(--ink)}
+  .check-row.done .name{color:var(--muted);text-decoration:line-through}
+  .qty{font-size:13px;color:var(--muted);flex:none}
+
+  /* ---------- add bar ---------- */
+  .addbar{display:flex;gap:8px;margin-bottom:14px}
+  .addbar input{
+    flex:1;border:1px solid var(--line);background:var(--surface);
+    border-radius:12px;padding:13px 14px;font:inherit;font-size:15px;color:var(--ink);
+  }
+  .addbar input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
+  .btn{
+    border:0;border-radius:12px;padding:0 18px;font:inherit;font-weight:600;font-size:15px;
+    cursor:pointer;background:var(--accent);color:#fff;display:grid;place-items:center;
+  }
+  .btn:active{filter:brightness(.95)}
+  .btn.ghost{background:var(--surface);border:1px solid var(--line);color:var(--ink)}
+  .btn.block{width:100%;padding:14px}
+
+  .empty-note{
+    text-align:center;color:var(--muted);font-size:14px;
+    padding:34px 20px;border:1px dashed var(--line);border-radius:14px;background:var(--surface-2);
+  }
+
+  /* ---------- bottom tabbar ---------- */
+  .tabbar{
+    position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+    width:100%;max-width:var(--app-w);
+    display:flex;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);
+    border-top:1px solid var(--line);
+    padding:8px 12px calc(8px + env(safe-area-inset-bottom));
+    z-index:30;
+  }
+  .tab{
+    flex:1;background:none;border:0;cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;gap:3px;
+    color:var(--muted);font-size:11px;font-weight:600;padding:6px 0;
+  }
+  .tab svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:1.7}
+  .tab.active{color:var(--accent)}
+
+  /* ---------- bottom sheet ---------- */
+  .overlay{
+    position:fixed;inset:0;background:rgba(20,33,26,.42);
+    opacity:0;pointer-events:none;transition:opacity .2s;z-index:40;
+  }
+  .overlay.open{opacity:1;pointer-events:auto}
+  .sheet{
+    position:fixed;left:50%;bottom:0;transform:translate(-50%,100%);
+    width:100%;max-width:var(--app-w);
+    background:var(--paper);border-radius:22px 22px 0 0;
+    padding:8px 18px calc(22px + env(safe-area-inset-bottom));
+    z-index:50;transition:transform .26s cubic-bezier(.2,.8,.2,1);
+    max-height:90dvh;overflow-y:auto;
+  }
+  .sheet.open{transform:translate(-50%,0)}
+  .grabber{width:38px;height:4px;border-radius:99px;background:var(--line);margin:8px auto 14px}
+  .sheet h2{font-family:"Fraunces",serif;font-weight:600;font-size:22px;margin-bottom:2px}
+  .sheet .sub{color:var(--muted);font-size:13px;margin-bottom:18px}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+  .field input{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:13px 14px;font:inherit;font-size:15px;color:var(--ink)}
+  .field input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{
+    border:1px solid var(--line);background:var(--surface);border-radius:999px;
+    padding:9px 14px;font-size:14px;cursor:pointer;color:var(--ink);
+  }
+  .chip.sel{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .sheet-actions{display:flex;gap:8px;margin-top:6px}
+  .toggle-done{
+    display:flex;align-items:center;justify-content:space-between;
+    background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:13px 14px;cursor:pointer;
+  }
+  .toggle-done .sw{width:44px;height:26px;border-radius:99px;background:var(--line);position:relative;transition:.18s;flex:none}
+  .toggle-done .sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.18s}
+  .toggle-done.on .sw{background:var(--ink)}
+  .toggle-done.on .sw::after{transform:translateX(18px)}
+  .link-danger{display:block;text-align:center;color:var(--accent);font-size:14px;font-weight:500;cursor:pointer;padding:14px;margin-top:4px}
+
+  /* ---------- toast ---------- */
+  .toast{
+    position:fixed;bottom:calc(96px + env(safe-area-inset-bottom));left:50%;transform:translate(-50%,16px);
+    background:var(--ink);color:#fff;font-size:14px;font-weight:500;
+    padding:11px 18px;border-radius:999px;opacity:0;pointer-events:none;
+    transition:.22s;z-index:60;box-shadow:0 8px 24px rgba(0,0,0,.2);
+  }
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="wordmark"><span class="dot"></span>Madplan</div>
+    <nav class="weeknav">
+      <button id="prevWeek" aria-label="Forrige uge">‹</button>
+      <span class="label" id="weekLabel">Uge –</span>
+      <button id="nextWeek" aria-label="Næste uge">›</button>
+    </nav>
+  </header>
+
+  <main id="view"></main>
+</div>
+
+<!-- bottom navigation -->
+<nav class="tabbar">
+  <button class="tab active" data-view="plan">
+    <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+    Madplan
+  </button>
+  <button class="tab" data-view="dishes">
+    <svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><path d="M8 4v16M4 9h4"/></svg>
+    Retter
+  </button>
+  <button class="tab" data-view="shopping">
+    <svg viewBox="0 0 24 24"><path d="M6 7h13l-1.2 8.5a2 2 0 0 1-2 1.7H9.2a2 2 0 0 1-2-1.7L6 4H3"/><circle cx="9" cy="20" r="1"/><circle cx="17" cy="20" r="1"/></svg>
+    Indkøb
+  </button>
+</nav>
+
+<!-- bottom sheet -->
+<div class="overlay" id="overlay"></div>
+<div class="sheet" id="sheet"></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   DATALAG  (Cloudflare Pages Functions + D1)
+   --------------------------------------------------------
+   Render-funktionerne læser synkront fra cachen. Hver mutation
+   gemmes i API'et og henter derefter den berørte del igen, så
+   alle familiens enheder ser de samme data.
+   ============================================================ */
+const API = "/api";
+const cache = {plan:{}, dishes:[], shopping:[]};
+
+async function apiResult(response){
+  if(response.ok) return response.json();
+  const payload = await response.json().catch(()=>({}));
+  throw new Error(payload.error || "API-kaldet fejlede");
+}
+
+const jget = (path) =>
+  fetch(API+path, {headers:{"accept":"application/json"}}).then(apiResult);
+
+const jsend = (method, path, body) => {
+  const options = {method, headers:{"accept":"application/json"}};
+  if(body !== undefined){
+    options.headers["content-type"] = "application/json";
+    options.body = JSON.stringify(body);
+  }
+  return fetch(API+path, options).then(apiResult);
+};
+
+async function loadWeek(){
+  const from=iso(weekStart), to=iso(addDays(weekStart,6));
+  const rows=await jget(`/plan?from=${from}&to=${to}`);
+  const plan={};
+  rows.filter(r=>r.meal_type==="aftensmad").forEach(r=>{
+    plan[r.plan_date]={
+      dishId:r.dish_id,
+      name:r.dish_name,
+      cook:r.cook || "",
+      notes:r.notes || "",
+      done:Number(r.is_done),
+    };
+  });
+  cache.plan=plan;
+}
+
+async function loadDishes(){
+  const rows=await jget("/dishes");
+  cache.dishes=rows.map(d=>({
+    id:Number(d.id),
+    name:d.name,
+    cat:d.category || "",
+    fav:Number(d.is_favorite),
+  }));
+}
+
+async function loadShopping(){
+  const rows=await jget("/shopping");
+  cache.shopping=rows.map(s=>({
+    id:Number(s.id),
+    name:s.name,
+    qty:s.quantity || "",
+    done:Number(s.is_checked),
+  }));
+}
+
+const store = {
+  init(){ return Promise.all([loadWeek(),loadDishes(),loadShopping()]); },
+  loadWeek,
+  async loadView(view){
+    if(view==="plan") return loadWeek();
+    if(view==="dishes") return loadDishes();
+    return loadShopping();
+  },
+  getPlan(dateISO){ return cache.plan[dateISO] ? {...cache.plan[dateISO]} : null; },
+  async setPlan(dateISO,data){
+    await jsend("PUT","/plan/"+encodeURIComponent(dateISO),{
+      meal_type:"aftensmad",
+      dish_id:data.dishId ?? null,
+      dish_name:data.name,
+      cook:data.cook || "",
+      notes:data.notes || "",
+      is_done:data.done ? 1 : 0,
+    });
+    await loadWeek();
+  },
+  async clearPlan(dateISO){
+    await jsend("DELETE","/plan/"+encodeURIComponent(dateISO)+"?meal_type=aftensmad");
+    await loadWeek();
+  },
+  getDishes(){ return cache.dishes.map(d=>({...d})); },
+  async addDish(name,cat){
+    await jsend("POST","/dishes",{name,category:cat || ""});
+    await loadDishes();
+  },
+  async toggleFav(id){
+    const dish=cache.dishes.find(d=>d.id===id);
+    if(!dish) return;
+    await jsend("PATCH","/dishes/"+id,{is_favorite:dish.fav?0:1});
+    await loadDishes();
+  },
+  getShopping(){ return cache.shopping.map(s=>({...s})); },
+  async addShop(name,quantity){
+    await jsend("POST","/shopping",{name,quantity:quantity || ""});
+    await loadShopping();
+  },
+  async toggleShop(id){
+    const item=cache.shopping.find(s=>s.id===id);
+    if(!item) return;
+    await jsend("PATCH","/shopping/"+id,{is_checked:item.done?0:1});
+    await loadShopping();
+  },
+  async clearChecked(){
+    await jsend("DELETE","/shopping");
+    await loadShopping();
+  },
+};
+
+/* ---------------- dato-hjælpere ---------------- */
+const WD_SHORT=["Man","Tir","Ons","Tor","Fre","Lør","Søn"];
+const WD_LONG =["mandag","tirsdag","onsdag","torsdag","fredag","lørdag","søndag"];
+const MONTHS  =["januar","februar","marts","april","maj","juni","juli","august","september","oktober","november","december"];
+
+function mondayOf(date){ const d=new Date(date); const day=(d.getDay()+6)%7; d.setHours(0,0,0,0); d.setDate(d.getDate()-day); return d; }
+function addDays(date,n){ const d=new Date(date); d.setDate(d.getDate()+n); return d; }
+function iso(date){ const d=new Date(date); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function isoWeek(date){
+  const d=new Date(Date.UTC(date.getFullYear(),date.getMonth(),date.getDate()));
+  const day=(d.getUTCDay()+6)%7; d.setUTCDate(d.getUTCDate()-day+3);
+  const firstThu=new Date(Date.UTC(d.getUTCFullYear(),0,4));
+  const firstDay=(firstThu.getUTCDay()+6)%7; firstThu.setUTCDate(firstThu.getUTCDate()-firstDay+3);
+  return 1+Math.round((d-firstThu)/(7*864e5));
+}
+
+/* ---------------- app-tilstand ---------------- */
+let weekStart = mondayOf(new Date());
+let currentView = "plan";
+const todayISO = iso(new Date());
+
+const $ = (s,root=document)=>root.querySelector(s);
+const el = (html)=>{ const t=document.createElement("template"); t.innerHTML=html.trim(); return t.content.firstElementChild; };
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"),1900); }
+function reportError(error,msg="Kunne ikke gemme"){ console.error(error); toast(msg); }
+
+/* ---------------- render ---------------- */
+function render(){
+  $("#weekLabel").textContent = "Uge "+isoWeek(weekStart);
+  document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active", b.dataset.view===currentView));
+  const view = $("#view");
+  if(currentView==="plan")     view.innerHTML="", view.append(...renderPlan());
+  if(currentView==="dishes")   view.innerHTML="", view.append(...renderDishes());
+  if(currentView==="shopping") view.innerHTML="", view.append(...renderShopping());
+}
+
+function renderPlan(){
+  const out=[];
+  const today = new Date();
+  const inThisWeek = iso(mondayOf(today))===iso(weekStart);
+  const heroDate = inThisWeek ? today : weekStart;
+  const heroISO = iso(heroDate);
+  const heroPlan = store.getPlan(heroISO);
+
+  out.push(el(`<p class="eyebrow">${inThisWeek?"I dag":"Mandag"} · ${WD_LONG[(heroDate.getDay()+6)%7]} ${heroDate.getDate()}. ${MONTHS[heroDate.getMonth()]}</p>`));
+
+  const hero = el(`
+    <section class="hero"><div class="hero-inner">
+      <div class="hero-top">
+        <span class="tag">Aftensmad</span>
+        <span class="date">${inThisWeek?"i dag":"ugens start"}</span>
+        <span class="done-pill ${heroPlan&&heroPlan.done?"on":""}">${heroPlan&&heroPlan.done?"Klaret ✓":"Ikke lavet"}</span>
+      </div>
+      <div class="hero-dish ${heroPlan?"":"empty"}">${heroPlan?escape(heroPlan.name):"Ingen ret planlagt — tryk for at vælge"}</div>
+      <div class="hero-meta">
+        ${heroPlan&&heroPlan.cook?`<span><span class="ic">👩‍🍳</span>${escape(heroPlan.cook)}</span>`:`<span class="ic" style="color:var(--muted)">Tilføj hvem der laver mad</span>`}
+        ${heroPlan&&heroPlan.notes?`<span><span class="ic">📝</span>${escape(heroPlan.notes)}</span>`:""}
+      </div>
+    </div></section>`);
+  hero.querySelector(".hero-inner").addEventListener("click",()=>openSheet(heroISO));
+  out.push(hero);
+
+  out.push(el(`<p class="eyebrow">Hele ugen</p>`));
+  const week = el(`<div class="week"></div>`);
+  for(let i=0;i<7;i++){
+    const d=addDays(weekStart,i), di=iso(d), p=store.getPlan(di);
+    const isToday = di===todayISO;
+    const row = el(`
+      <div class="day ${isToday?"is-today":""}">
+        <div class="wd"><b>${WD_SHORT[i]}</b><small>${d.getDate()}/${d.getMonth()+1}</small></div>
+        <div class="body">
+          <div class="dish ${p?"":"empty"}">${p?escape(p.name):"Planlæg ret"}</div>
+          ${p&&p.cook?`<div class="sub">${escape(p.cook)}</div>`:""}
+        </div>
+        ${p&&p.done?`<span class="check">✓</span>`:""}
+        <span class="chev">›</span>
+      </div>`);
+    row.addEventListener("click",()=>openSheet(di));
+    week.append(row);
+  }
+  out.push(week);
+  return out;
+}
+
+function renderDishes(){
+  const out=[];
+  out.push(el(`<p class="eyebrow row"><span>Mine retter</span></p>`));
+  const bar = el(`<div class="addbar"><input id="newDish" placeholder="Ny ret, fx Tomatsuppe" maxlength="80"><button class="btn" id="addDish">Tilføj</button></div>`);
+  bar.querySelector("#addDish").addEventListener("click",async()=>{
+    const inp=bar.querySelector("#newDish"); const v=inp.value.trim();
+    if(!v) return;
+    const button=bar.querySelector("#addDish"); button.disabled=true;
+    try{
+      await store.addDish(v); inp.value=""; render(); toast("Ret tilføjet");
+    }catch(error){
+      button.disabled=false; reportError(error);
+    }
+  });
+  bar.querySelector("#newDish").addEventListener("keydown",e=>{ if(e.key==="Enter") bar.querySelector("#addDish").click(); });
+  out.push(bar);
+
+  const list = el(`<div class="list"></div>`);
+  store.getDishes().forEach(d=>{
+    const row = el(`
+      <div class="card-row tap">
+        <button class="star ${d.fav?"on":""}" aria-label="Favorit">★</button>
+        <div class="name">${escape(d.name)}${d.cat?`<span class="cat">${escape(d.cat)}</span>`:""}</div>
+        <span class="chev" style="color:var(--muted);opacity:.5">›</span>
+      </div>`);
+    row.querySelector(".star").addEventListener("click",async e=>{
+      e.stopPropagation();
+      try{ await store.toggleFav(d.id); render(); }
+      catch(error){ reportError(error); }
+    });
+    row.querySelector(".name").addEventListener("click",()=>openDayPicker(d));
+    row.querySelector(".chev").addEventListener("click",()=>openDayPicker(d));
+    list.append(row);
+  });
+  out.push(list);
+  return out;
+}
+
+function renderShopping(){
+  const out=[];
+  out.push(el(`<p class="eyebrow row"><span>Indkøbsliste</span><span class="link" id="clearChecked">Ryd afkrydsede</span></p>`));
+  const bar = el(`<div class="addbar"><input id="newItem" placeholder="Tilføj vare" maxlength="80"><button class="btn" id="addItem">Tilføj</button></div>`);
+  bar.querySelector("#addItem").addEventListener("click",async()=>{
+    const inp=bar.querySelector("#newItem"); const v=inp.value.trim();
+    if(!v) return;
+    const button=bar.querySelector("#addItem"); button.disabled=true;
+    try{
+      await store.addShop(v); inp.value=""; render();
+    }catch(error){
+      button.disabled=false; reportError(error);
+    }
+  });
+  bar.querySelector("#newItem").addEventListener("keydown",e=>{ if(e.key==="Enter") bar.querySelector("#addItem").click(); });
+  out.push(bar);
+
+  const items = store.getShopping();
+  if(items.length===0){
+    out.push(el(`<div class="empty-note">Listen er tom. Tilføj de varer, I mangler.</div>`));
+    setTimeout(()=>{ const c=$("#clearChecked"); if(c) c.style.display="none"; });
+    return out;
+  }
+  const list = el(`<div class="list"></div>`);
+  items.sort((a,b)=>a.done-b.done).forEach(s=>{
+    const row = el(`
+      <div class="card-row check-row ${s.done?"done":""}">
+        <div class="box">${s.done?"✓":""}</div>
+        <div class="name">${escape(s.name)}</div>
+        ${s.qty?`<span class="qty">${escape(s.qty)}</span>`:""}
+      </div>`);
+    row.querySelector(".box").addEventListener("click",async()=>{
+      try{ await store.toggleShop(s.id); render(); }
+      catch(error){ reportError(error); }
+    });
+    list.append(row);
+  });
+  out.push(list);
+  setTimeout(()=>{
+    const c=$("#clearChecked");
+    if(c) c.addEventListener("click",async()=>{
+      try{ await store.clearChecked(); render(); }
+      catch(error){ reportError(error); }
+    });
+  });
+  return out;
+}
+
+/* ---------------- bottom sheet: rediger en dag ---------------- */
+let sheetDate=null, sheetDraft=null;
+function openSheet(dateISO){
+  sheetDate=dateISO;
+  const d=new Date(dateISO+"T00:00:00");
+  const existing=store.getPlan(dateISO);
+  sheetDraft = existing ? {...existing} : {dishId:null,name:"",cook:"",notes:"",done:0};
+
+  const sheet=$("#sheet");
+  sheet.innerHTML=`
+    <div class="grabber"></div>
+    <h2>${WD_LONG[(d.getDay()+6)%7].replace(/^./,c=>c.toUpperCase())} ${d.getDate()}. ${MONTHS[d.getMonth()]}</h2>
+    <p class="sub">Aftensmad</p>
+    <div class="field">
+      <label>Ret</label>
+      <input id="fDish" maxlength="120" placeholder="Skriv en ret, eller vælg nedenfor" value="${escapeAttr(sheetDraft.name)}">
+    </div>
+    <div class="field">
+      <label>Vælg fra biblioteket</label>
+      <div class="chips" id="fChips"></div>
+    </div>
+    <div class="field">
+      <label>Hvem laver mad</label>
+      <input id="fCook" maxlength="60" placeholder="fx Mor, Far …" value="${escapeAttr(sheetDraft.cook)}">
+    </div>
+    <div class="field">
+      <label>Note</label>
+      <input id="fNote" maxlength="200" placeholder="fx rester fra i går" value="${escapeAttr(sheetDraft.notes)}">
+    </div>
+    <div class="field">
+      <div class="toggle-done ${sheetDraft.done?"on":""}" id="fDone">
+        <span>Maden er lavet</span><span class="sw"></span>
+      </div>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn block" id="fSave">Gem</button>
+    </div>
+    ${existing?`<span class="link-danger" id="fClear">Ryd dagen</span>`:""}
+  `;
+  const chips=sheet.querySelector("#fChips");
+  store.getDishes().slice(0,8).forEach(dish=>{
+    const c=el(`<div class="chip ${sheetDraft.name===dish.name?"sel":""}">${escape(dish.name)}</div>`);
+    c.addEventListener("click",()=>{
+      sheet.querySelector("#fDish").value=dish.name; sheetDraft.dishId=dish.id;
+      chips.querySelectorAll(".chip").forEach(x=>x.classList.remove("sel")); c.classList.add("sel");
+    });
+    chips.append(c);
+  });
+  sheet.querySelector("#fDish").addEventListener("input",e=>{
+    const selected=store.getDishes().find(d=>d.id===sheetDraft.dishId);
+    if(!selected || selected.name!==e.currentTarget.value){
+      sheetDraft.dishId=null;
+      chips.querySelectorAll(".chip").forEach(x=>x.classList.remove("sel"));
+    }
+  });
+  sheet.querySelector("#fDone").addEventListener("click",e=>{ sheetDraft.done=sheetDraft.done?0:1; e.currentTarget.classList.toggle("on"); });
+  sheet.querySelector("#fSave").addEventListener("click",async e=>{
+    const name=sheet.querySelector("#fDish").value.trim();
+    e.currentTarget.disabled=true;
+    try{
+      if(!name){ await store.clearPlan(sheetDate); }
+      else await store.setPlan(sheetDate,{name, dishId:sheetDraft.dishId, cook:sheet.querySelector("#fCook").value.trim(), notes:sheet.querySelector("#fNote").value.trim(), done:sheetDraft.done});
+      closeSheet(); render(); toast("Gemt");
+    }catch(error){
+      e.currentTarget.disabled=false; reportError(error);
+    }
+  });
+  const clr=sheet.querySelector("#fClear");
+  if(clr) clr.addEventListener("click",async()=>{
+    try{
+      await store.clearPlan(sheetDate); closeSheet(); render(); toast("Dagen ryddet");
+    }catch(error){
+      reportError(error);
+    }
+  });
+  showSheet();
+}
+
+/* vælg dag når man trykker på en ret i biblioteket */
+function openDayPicker(dish){
+  const sheet=$("#sheet");
+  sheet.innerHTML=`<div class="grabber"></div>
+    <h2>${escape(dish.name)}</h2><p class="sub">På hvilken dag?</p>
+    <div class="chips" id="dayChips" style="margin-bottom:8px"></div>`;
+  const chips=sheet.querySelector("#dayChips");
+  for(let i=0;i<7;i++){
+    const d=addDays(weekStart,i), di=iso(d);
+    const c=el(`<div class="chip">${WD_SHORT[i]} ${d.getDate()}/${d.getMonth()+1}</div>`);
+    c.addEventListener("click",async()=>{
+      c.style.pointerEvents="none";
+      try{
+        await store.setPlan(di,{name:dish.name, dishId:dish.id, cook:"", notes:"", done:0});
+        closeSheet(); currentView="plan"; render(); toast(dish.name+" sat på "+WD_LONG[i]);
+      }catch(error){
+        c.style.pointerEvents=""; reportError(error);
+      }
+    });
+    chips.append(c);
+  }
+  showSheet();
+}
+
+function showSheet(){ $("#overlay").classList.add("open"); requestAnimationFrame(()=>$("#sheet").classList.add("open")); }
+function closeSheet(){ $("#sheet").classList.remove("open"); $("#overlay").classList.remove("open"); }
+
+/* ---------------- små utils ---------------- */
+function escape(s){ return String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+function escapeAttr(s){ return String(s).replace(/"/g,"&quot;").replace(/</g,"&lt;"); }
+
+/* ---------------- events ---------------- */
+$("#overlay").addEventListener("click",closeSheet);
+async function changeWeek(days){
+  const previous=weekStart;
+  weekStart=addDays(weekStart,days);
+  try{
+    await store.loadWeek(); render();
+  }catch(error){
+    weekStart=previous; render(); reportError(error,"Kunne ikke hente ugen");
+  }
+}
+$("#prevWeek").addEventListener("click",()=>changeWeek(-7));
+$("#nextWeek").addEventListener("click",()=>changeWeek(7));
+document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",async()=>{
+  currentView=b.dataset.view;
+  render();
+  try{
+    await store.loadView(currentView); render();
+  }catch(error){
+    reportError(error,"Kunne ikke hente data");
+  }
+}));
+
+/* ---------------- start ---------------- */
+render();
+store.init().then(render).catch(error=>reportError(error,"Kunne ikke hente data"));
+
+/* registrér service worker (kun når siden serveres over http/https) */
+if("serviceWorker" in navigator && location.protocol.startsWith("http")){
+  window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+}
+</script>
+</body>
+</html>

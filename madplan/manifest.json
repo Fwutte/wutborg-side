@@ -1,0 +1,20 @@
+{
+  "name": "Madplan",
+  "short_name": "Madplan",
+  "description": "Familiens madplan – uge for uge.",
+  "lang": "da",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F1F3EC",
+  "theme_color": "#1F3D2C",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
