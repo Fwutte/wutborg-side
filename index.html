@@ -162,6 +162,52 @@
       transform: translateY(-2px);
     }
 
+    .menu-toggle {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 43px;
+      padding: 9px 13px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--ink);
+      background: var(--cream-light);
+      font-size: 0.84rem;
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    .menu-toggle-lines,
+    .menu-toggle-lines::before,
+    .menu-toggle-lines::after {
+      display: block;
+      width: 17px;
+      height: 2px;
+      border-radius: 999px;
+      background: currentColor;
+      transition: transform 0.2s ease, opacity 0.2s ease;
+    }
+
+    .menu-toggle-lines {
+      position: relative;
+    }
+
+    .menu-toggle-lines::before,
+    .menu-toggle-lines::after {
+      content: "";
+      position: absolute;
+      left: 0;
+    }
+
+    .menu-toggle-lines::before {
+      top: -5px;
+    }
+
+    .menu-toggle-lines::after {
+      top: 5px;
+    }
+
     .welcome-pill {
       display: inline-flex;
       align-items: center;
@@ -1023,11 +1069,49 @@
       }
 
       .nav {
+        position: relative;
+        flex-wrap: wrap;
         border-radius: 17px;
       }
 
-      .nav-links a {
+      .menu-toggle {
+        display: inline-flex;
+      }
+
+      .nav-links {
         display: none;
+        flex: 0 0 100%;
+        order: 3;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px;
+        padding: 8px 2px 2px;
+        border-top: 1px solid var(--line);
+      }
+
+      .nav.is-open .nav-links {
+        display: grid;
+      }
+
+      .nav-links a {
+        display: block;
+        padding: 12px;
+        border-radius: 13px;
+        text-align: center;
+        background: rgba(184, 95, 69, 0.06);
+      }
+
+      .nav.is-open .menu-toggle-lines {
+        background: transparent;
+      }
+
+      .nav.is-open .menu-toggle-lines::before {
+        top: 0;
+        transform: rotate(45deg);
+      }
+
+      .nav.is-open .menu-toggle-lines::after {
+        top: 0;
+        transform: rotate(-45deg);
       }
 
       .hero {
@@ -1107,7 +1191,11 @@
       }
 
       .nav {
-        justify-content: center;
+        justify-content: space-between;
+      }
+
+      .nav-links {
+        grid-template-columns: 1fr;
       }
 
       .hero-copy {
@@ -1197,7 +1285,12 @@
         </span>
       </a>
 
-      <div class="nav-links">
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-navigation">
+        <span class="menu-toggle-lines" aria-hidden="true"></span>
+        Menu
+      </button>
+
+      <div class="nav-links" id="mobile-navigation">
         <a href="minispil.html">Minispil</a>
         <a href="kalender.html">Kalender</a>
         <a href="madplan/">Madplan</a>
@@ -1364,6 +1457,9 @@
     const momentDetail = document.querySelector(".moment-detail");
     const toast = document.querySelector(".moment-toast");
     const toastText = document.querySelector(".toast-text");
+    const navigation = document.querySelector(".nav");
+    const navLinks = document.querySelector(".nav-links");
+    const menuToggle = document.querySelector(".menu-toggle");
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     let currentMoment = 0;
     let toastTimer;
@@ -1408,6 +1504,24 @@
       window.clearTimeout(toastTimer);
       toastTimer = window.setTimeout(() => toast.classList.remove("is-visible"), 2200);
     }
+
+    menuToggle.addEventListener("click", () => {
+      const isOpen = navigation.classList.toggle("is-open");
+      menuToggle.setAttribute("aria-expanded", String(isOpen));
+    });
+
+    navLinks.addEventListener("click", (event) => {
+      if (!event.target.closest("a")) return;
+      navigation.classList.remove("is-open");
+      menuToggle.setAttribute("aria-expanded", "false");
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") return;
+      navigation.classList.remove("is-open");
+      menuToggle.setAttribute("aria-expanded", "false");
+      menuToggle.focus();
+    });
 
     momentButton.addEventListener("click", showNextMoment);
   </script>
