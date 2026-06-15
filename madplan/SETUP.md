@@ -50,86 +50,86 @@ npx wrangler d1 execute madplan --local --command "SELECT id, plan_date, meal_ty
 
 ## Adgangsbeskyttelse
 
-Cloudflare Access anbefales, så kun familien kan læse og ændre data. Brug to
-separate `Allow`-politikker. Cloudflare behandler dem samlet som:
+Madplanen bruger sin egen enhedsgodkendelse og kræver hverken Cloudflare Zero
+Trust, betalingskort eller en App Store-app. Adgang gives, når mindst én af
+disse betingelser er opfyldt:
 
 ```text
-godkendt IP ELLER (godkendt bruger OG Zero Trust-registreret mobilenhed)
+godkendt hjemme-IP ELLER gyldig signatur fra en registreret enhed
 ```
 
-Brug ikke en `Bypass`-politik til hjemme-IP'en. En almindelig `Allow`-politik
-bevarer Access-kontrol og logning.
+Telefonens private nøgle oprettes som en ikke-eksportérbar P-256-nøgle og
+gemmes i browserens lokale nøglelager. D1 gemmer kun public key, kortlivede
+engangskoder og tilbagekaldelige sessions.
 
-### 1. Beskyt madplanen og API'et
+### 1. Kør auth-migrationen
 
-1. Gå til **Zero Trust → Access controls → Applications**.
-2. Opret en self-hosted applikation for familiens domæne.
-3. Beskyt både `/madplan*` og `/api/*`. Hvis dashboardet ikke tillader begge
-   stier i samme applikation, opret to applikationer med de samme politikker.
+Kør alle nye migrationer mod produktion:
 
-### 2. Tillad den faste IP
-
-Opret politikken `Godkendt hjemme-IP`:
-
-```text
-Action:  Allow
-Include: IP ranges
-Value:   <jeres-offentlige-ip>/32
+```sh
+npx wrangler d1 migrations apply madplan --remote
 ```
 
-Tilføj også hjemmets offentlige IPv6-adresse eller stabile IPv6-prefix, hvis
-forbindelsen bruger IPv6. En dynamisk offentlig IP skal opdateres i Access,
-når internetudbyderen ændrer den.
+Migration `0002_device_auth.sql` opretter tabellerne til enheder, engangskoder
+og sessions.
 
-### 3. Registrer den godkendte mobil
+### 2. Find hjemmets offentlige IP
 
-1. Gå til **Zero Trust → Settings → WARP Client → Device enrollment
-   permissions** og tillad kun familiens konkrete e-mailadresser. I nyere
-   dashboardversioner kan punktet ligge under **Team and resources → Devices**.
-2. Gå til **Zero Trust → Reusable components → Posture checks**.
-3. Tilføj Cloudflare One Client-kontrollen **Require Gateway**, fx med navnet
-   `Familie-mobil tilsluttet`.
-4. Installer **Cloudflare One Agent** fra App Store på iPhone.
-5. Åbn appen, indtast jeres Zero Trust-teamnavn, log ind med den godkendte
-   e-mail, installer VPN-profilen, og sæt appen til `Connected`.
+1. Forbind en computer til hjemmets Wi-Fi.
+2. Åbn `https://www.cloudflare.com/cdn-cgi/trace`.
+3. Kopiér værdien efter `ip=`.
 
-`Require Gateway` er valgt frem for den almindelige `Require WARP`-kontrol,
-fordi Gateway-kontrollen kræver forbindelse til netop jeres Zero Trust-
-organisation.
+Brug den adresse Cloudflare viser. En adresse som `192.168.x.x` eller
+`10.x.x.x` er lokal og kan ikke bruges.
 
-### 4. Tillad den registrerede mobil fra alle IP'er
+### 3. Indstil den godkendte IP
 
-Opret politikken `Godkendt familie-mobil`:
+1. Gå til **Workers & Pages → wutborg-side → Settings → Variables and
+   Secrets**.
+2. Tilføj en almindelig produktionsvariabel:
 
-```text
-Action:  Allow
-Include: Emails
-Value:   <godkendt-familie-email>
-Require: Device posture
-Value:   Familie-mobil tilsluttet
-```
+   ```text
+   Name:  MADPLAN_TRUSTED_IPS
+   Value: <hjemmets-offentlige-ip>
+   ```
 
-Kopiér begge politikker til både `/madplan*` og `/api/*`, hvis de er oprettet
-som separate Access-applikationer.
+3. Hvis flere IP-adresser skal godkendes, adskil dem med komma:
 
-### 5. Test
+   ```text
+   203.0.113.10,2001:db8::1234
+   ```
 
-1. Slå Wi-Fi fra på mobilen og behold Cloudflare One Agent som `Connected`.
-   Madplanen skal virke over mobilnettet.
-2. Slå Cloudflare One Agent fra. Adgang over mobilnettet skal afvises.
-3. Åbn siden fra hjemme-IP'en uden Agent. Adgang skal tillades.
-4. Kontrollér **Zero Trust → Logs → Access** for de tre forsøg.
+4. Deploy Pages-projektet igen.
 
-### Streng lås til præcis én telefon
+Hvis internetudbyderen ændrer den offentlige IP, skal variablen opdateres.
+Adgang fra allerede registrerede telefoner fortsætter uafhængigt af IP'en.
 
-Ovenstående løsning godkender en Zero Trust-registreret enhed plus en konkret
-bruger. Den er passende til en lille familie, men brugeren kan i princippet
-registrere en ekstra enhed.
+### 4. Registrer en iPhone
 
-Cloudflares `Device UUID`-kontrol kan låse adgangen til en specifik telefon,
-men UUID'et kan ikke tildeles manuelt. Det kræver en MDM-konfiguration med
-`unique_client_id`. Brug derfor kun denne variant, hvis familien allerede har
-en MDM-løsning. Uden MDM bør uønskede enhedsregistreringer fjernes under
-**Team and resources → Devices**.
+1. Forbind iPhonen til hjemmets Wi-Fi.
+2. Åbn `https://wutborg.dk/madplan/` i Safari.
+3. Vælg **Del → Føj til hjemmeskærm**.
+4. Luk Safari, og åbn den installerede **Madplan** fra hjemmeskærmen.
+5. Tryk på nøgleknappen øverst.
+6. Giv telefonen et navn, fx `Lottes iPhone`, og vælg
+   **Godkend denne enhed**.
+7. Slå Wi-Fi fra, luk appen helt, og åbn den igen på mobilnettet.
 
-Uden Access er både madplanen og API'et offentligt tilgængelige.
+Gentag processen for hver telefon. Registrer nøglen inde i den installerede
+app, ikke kun i Safari, så nøglen oprettes i det lager appen faktisk bruger.
+
+### 5. Fjern en telefon
+
+1. Åbn madplanen fra hjemmets godkendte IP.
+2. Tryk på nøgleknappen.
+3. Tryk **Fjern** ud for telefonen.
+
+Alle telefonens aktive sessions slettes med det samme. Hvis browserdata eller
+den installerede PWA slettes, forsvinder privatnøglen også, og telefonen skal
+registreres igen fra hjemmets IP.
+
+### Lokal udvikling
+
+`localhost` godkendes automatisk, når requesten ikke har Cloudflares
+`CF-Connecting-IP`-header. `MADPLAN_TRUSTED_IPS` er derfor ikke nødvendig ved
+`npx wrangler pages dev .`.

@@ -34,6 +34,9 @@
     -webkit-font-smoothing:antialiased;
     line-height:1.5;
   }
+  [hidden]{display:none !important}
+  body.auth-pending .app,
+  body.auth-pending .tabbar{visibility:hidden}
   .app{
     max-width:var(--app-w);
     margin:0 auto;
@@ -47,6 +50,13 @@
     display:flex;align-items:center;justify-content:space-between;
     padding:22px 2px 14px;
   }
+  .top-actions{display:flex;align-items:center;gap:7px}
+  .device-btn{
+    width:40px;height:40px;border:1px solid var(--line);border-radius:999px;
+    background:var(--surface);color:var(--ink);display:grid;place-items:center;
+    box-shadow:var(--shadow);cursor:pointer;
+  }
+  .device-btn svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8}
   .wordmark{
     font-family:"Fraunces",serif;
     font-size:25px;font-weight:600;letter-spacing:.01em;
@@ -230,20 +240,75 @@
   }
   .toast.show{opacity:1;transform:translate(-50%,0)}
 
+  /* ---------- adgang ---------- */
+  .auth-gate{
+    position:fixed;inset:0;z-index:100;background:var(--paper);
+    display:grid;place-items:center;padding:24px;
+  }
+  .auth-card{
+    width:min(100%,420px);background:var(--surface);border:1px solid var(--line);
+    border-radius:22px;padding:28px;box-shadow:var(--shadow);text-align:center;
+  }
+  .auth-mark{
+    width:52px;height:52px;border-radius:16px;background:var(--accent-soft);
+    color:var(--accent);display:grid;place-items:center;margin:0 auto 16px;
+  }
+  .auth-mark svg{width:27px;height:27px;fill:none;stroke:currentColor;stroke-width:1.8}
+  .auth-card h1{font-family:"Fraunces",serif;font-size:28px;margin-bottom:8px}
+  .auth-card p{color:var(--muted);font-size:14px;margin-bottom:14px}
+  .auth-ip{display:block;min-height:20px;color:var(--ink-soft);font-size:12px;margin-bottom:18px}
+  .device-list{display:flex;flex-direction:column;gap:8px;margin:14px 0}
+  .device-entry{
+    display:flex;align-items:center;gap:10px;background:var(--surface);
+    border:1px solid var(--line);border-radius:12px;padding:11px 12px;
+  }
+  .device-entry .device-info{flex:1;min-width:0}
+  .device-entry b{display:block;font-size:14px}
+  .device-entry small{display:block;color:var(--muted);font-size:11px}
+  .mini-danger{
+    border:0;background:var(--accent-soft);color:var(--accent);border-radius:9px;
+    padding:8px 10px;font:inherit;font-size:12px;font-weight:600;cursor:pointer;
+  }
+
   @media (prefers-reduced-motion: reduce){
     *{transition:none !important}
   }
+  @media (max-width:430px){
+    .topbar{gap:10px}
+    .wordmark{font-size:22px}
+    .top-actions{gap:5px;flex:none}
+    .device-btn{width:36px;height:36px}
+    .weeknav button{width:30px;height:30px}
+    .weeknav .label{min-width:46px;padding:0 2px;font-size:12px}
+  }
 </style>
 </head>
-<body>
-<div class="app">
+<body class="auth-pending">
+<section class="auth-gate" id="authGate">
+  <div class="auth-card">
+    <div class="auth-mark">
+      <svg viewBox="0 0 24 24"><path d="M7 11V8a5 5 0 0 1 10 0v3"/><rect x="5" y="11" width="14" height="10" rx="3"/><path d="M12 15v2"/></svg>
+    </div>
+    <h1>Madplanen er låst</h1>
+    <p id="authMessage">Kontrollerer denne enhed …</p>
+    <span class="auth-ip" id="authIp"></span>
+    <button class="btn block" id="authRetry">Prøv igen</button>
+  </div>
+</section>
+
+<div class="app" id="appShell">
   <header class="topbar">
     <div class="wordmark"><span class="dot"></span>Madplan</div>
-    <nav class="weeknav">
-      <button id="prevWeek" aria-label="Forrige uge">‹</button>
-      <span class="label" id="weekLabel">Uge –</span>
-      <button id="nextWeek" aria-label="Næste uge">›</button>
-    </nav>
+    <div class="top-actions">
+      <button class="device-btn" id="deviceButton" aria-label="Administrer godkendte enheder">
+        <svg viewBox="0 0 24 24"><path d="M7 11V8a5 5 0 0 1 10 0v3"/><rect x="5" y="11" width="14" height="10" rx="3"/><path d="M12 15v2"/></svg>
+      </button>
+      <nav class="weeknav">
+        <button id="prevWeek" aria-label="Forrige uge">‹</button>
+        <span class="label" id="weekLabel">Uge –</span>
+        <button id="nextWeek" aria-label="Næste uge">›</button>
+      </nav>
+    </div>
   </header>
 
   <main id="view"></main>
@@ -271,6 +336,7 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="auth.js"></script>
 <script>
 /* ============================================================
    DATALAG  (Cloudflare Pages Functions + D1)
@@ -660,6 +726,91 @@ function openDayPicker(dish){
   showSheet();
 }
 
+/* ---------------- godkendte enheder ---------------- */
+async function openDeviceManager(){
+  const sheet=$("#sheet");
+  sheet.innerHTML=`<div class="grabber"></div>
+    <h2>Godkendte enheder</h2>
+    <p class="sub">Hver telefon har sin egen private nøgle.</p>
+    <div class="empty-note">Henter enheder …</div>`;
+  showSheet();
+
+  try{
+    const status=await window.madplanAuth.refreshStatus();
+    const localDevice=await window.madplanAuth.getLocalDevice();
+    const devices=status.can_register ? await window.madplanAuth.listDevices() : [];
+
+    sheet.innerHTML=`<div class="grabber"></div>
+      <h2>Godkendte enheder</h2>
+      <p class="sub">${status.can_register
+        ?"Du er på den godkendte IP og kan registrere eller tilbagekalde enheder."
+        :"Denne enhed er godkendt. Administration kræver hjemmets godkendte IP."}</p>
+      ${status.can_register?`
+        <div class="field">
+          <label>Navn på denne enhed</label>
+          <input id="deviceName" maxlength="60" value="${escapeAttr(localDevice?.name || (navigator.userAgent.includes("iPhone")?"Min iPhone":"Min enhed"))}">
+        </div>
+        <button class="btn block" id="registerDevice">${localDevice?"Erstat enhedsnøglen":"Godkend denne enhed"}</button>
+        <p class="eyebrow">Aktive enheder</p>
+        <div class="device-list" id="deviceList"></div>
+      `:`
+        <div class="device-entry">
+          <div class="device-info">
+            <b>${escape(status.device_name || localDevice?.name || "Godkendt enhed")}</b>
+            <small>Privatnøglen forlader ikke denne browser</small>
+          </div>
+        </div>
+      `}`;
+
+    if(status.can_register){
+      const list=sheet.querySelector("#deviceList");
+      if(!devices.length){
+        list.innerHTML=`<div class="empty-note">Ingen registrerede enheder endnu.</div>`;
+      }
+      devices.forEach(device=>{
+        const current=device.id===localDevice?.id;
+        const row=el(`<div class="device-entry">
+          <div class="device-info">
+            <b>${escape(device.name)}${current?" · denne enhed":""}</b>
+            <small>${device.last_used_at?"Senest brugt "+escape(device.last_used_at):"Ikke brugt uden for hjemmet endnu"}</small>
+          </div>
+          <button class="mini-danger">Fjern</button>
+        </div>`);
+        row.querySelector("button").addEventListener("click",async e=>{
+          e.currentTarget.disabled=true;
+          try{
+            await window.madplanAuth.revokeDevice(device.id);
+            toast("Enheden er fjernet");
+            openDeviceManager();
+          }catch(error){
+            e.currentTarget.disabled=false;
+            reportError(error,"Kunne ikke fjerne enheden");
+          }
+        });
+        list.append(row);
+      });
+
+      sheet.querySelector("#registerDevice").addEventListener("click",async e=>{
+        const name=sheet.querySelector("#deviceName").value.trim();
+        if(!name) return;
+        e.currentTarget.disabled=true;
+        try{
+          await window.madplanAuth.registerDevice(name);
+          toast("Enheden er godkendt");
+          openDeviceManager();
+        }catch(error){
+          e.currentTarget.disabled=false;
+          reportError(error,"Kunne ikke godkende enheden");
+        }
+      });
+    }
+  }catch(error){
+    sheet.innerHTML=`<div class="grabber"></div>
+      <h2>Godkendte enheder</h2>
+      <div class="empty-note">${escape(error.message || "Enhederne kunne ikke hentes")}</div>`;
+  }
+}
+
 function showSheet(){ $("#overlay").classList.add("open"); requestAnimationFrame(()=>$("#sheet").classList.add("open")); }
 function closeSheet(){ $("#sheet").classList.remove("open"); $("#overlay").classList.remove("open"); }
 
@@ -669,6 +820,7 @@ function escapeAttr(s){ return String(s).replace(/"/g,"&quot;").replace(/</g,"&l
 
 /* ---------------- events ---------------- */
 $("#overlay").addEventListener("click",closeSheet);
+$("#deviceButton").addEventListener("click",openDeviceManager);
 async function changeWeek(days){
   const previous=weekStart;
   weekStart=addDays(weekStart,days);
@@ -692,7 +844,10 @@ document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",async()=
 
 /* ---------------- start ---------------- */
 render();
-store.init().then(render).catch(error=>reportError(error,"Kunne ikke hente data"));
+window.madplanAuth.ensureAccess().then(allowed=>{
+  if(!allowed) return;
+  store.init().then(render).catch(error=>reportError(error,"Kunne ikke hente data"));
+});
 
 /* registrér service worker (kun når siden serveres over http/https) */
 if("serviceWorker" in navigator && location.protocol.startsWith("http")){
