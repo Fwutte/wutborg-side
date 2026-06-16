@@ -1,6 +1,6 @@
 import {
   createSession,
-  networkState,
+  registrationAccess,
   responseWithSession,
 } from "../_auth.js";
 import {
@@ -25,12 +25,16 @@ const validPublicKey = (key) =>
   typeof key.y === "string";
 
 export const onRequestPost = withErrors(async ({ request, env }) => {
-  if (!networkState(request, env).trusted) {
-    return bad("Nye enheder kan kun registreres fra den godkendte IP", 403);
-  }
-
   const body = await bodyJson(request);
   if (!body) return bad("Body skal være gyldig JSON");
+
+  const access = await registrationAccess(request, env, body.setup_key);
+  if (!access.allowed) {
+    return bad(
+      "Nye enheder kræver enten godkendt IP eller korrekt opsætningskode",
+      403
+    );
+  }
 
   const deviceId = body.device_id;
   const name = cleanText(body.name, 60);

@@ -257,6 +257,19 @@
   .auth-card h1{font-family:"Fraunces",serif;font-size:28px;margin-bottom:8px}
   .auth-card p{color:var(--muted);font-size:14px;margin-bottom:14px}
   .auth-ip{display:block;min-height:20px;color:var(--ink-soft);font-size:12px;margin-bottom:18px}
+  .auth-register{
+    margin:16px 0 0;padding-top:16px;border-top:1px solid var(--line);
+    display:flex;flex-direction:column;gap:10px;text-align:left;
+  }
+  .auth-register label{
+    display:block;font-size:11px;font-weight:600;letter-spacing:.04em;
+    text-transform:uppercase;color:var(--muted);margin-bottom:5px;
+  }
+  .auth-register input{
+    width:100%;border:1px solid var(--line);background:var(--surface-2);
+    border-radius:12px;padding:12px 13px;font:inherit;font-size:15px;color:var(--ink);
+  }
+  .auth-register input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
   .device-list{display:flex;flex-direction:column;gap:8px;margin:14px 0}
   .device-entry{
     display:flex;align-items:center;gap:10px;background:var(--surface);
@@ -293,6 +306,17 @@
     <p id="authMessage">Kontrollerer denne enhed …</p>
     <span class="auth-ip" id="authIp"></span>
     <button class="btn block" id="authRetry">Prøv igen</button>
+    <div class="auth-register" id="authRegisterPanel" hidden>
+      <div>
+        <label for="authDeviceName">Navn på telefonen</label>
+        <input id="authDeviceName" maxlength="60" autocomplete="off" value="Min Android">
+      </div>
+      <div>
+        <label for="authSetupKey">Opsætningskode</label>
+        <input id="authSetupKey" type="password" autocomplete="current-password">
+      </div>
+      <button class="btn block" id="authRegisterDevice">Godkend denne telefon</button>
+    </div>
   </div>
 </section>
 
@@ -738,21 +762,31 @@ async function openDeviceManager(){
   try{
     const status=await window.madplanAuth.refreshStatus();
     const localDevice=await window.madplanAuth.getLocalDevice();
-    const devices=status.can_register ? await window.madplanAuth.listDevices() : [];
+    const canUseSetupKey=Boolean(status.setup_key_configured);
+    const canRegister=status.can_register || canUseSetupKey;
 
     sheet.innerHTML=`<div class="grabber"></div>
       <h2>Godkendte enheder</h2>
       <p class="sub">${status.can_register
-        ?"Du er på den godkendte IP og kan registrere eller tilbagekalde enheder."
-        :"Denne enhed er godkendt. Administration kræver hjemmets godkendte IP."}</p>
-      ${status.can_register?`
+        ?"Du er på en godkendt IP og kan registrere eller tilbagekalde enheder."
+        :canUseSetupKey
+          ?"Brug opsætningskoden til at registrere eller tilbagekalde enheder."
+          :"Denne enhed er godkendt. Administration kræver godkendt IP eller opsætningskode."}</p>
+      ${canRegister?`
         <div class="field">
           <label>Navn på denne enhed</label>
-          <input id="deviceName" maxlength="60" value="${escapeAttr(localDevice?.name || (navigator.userAgent.includes("iPhone")?"Min iPhone":"Min enhed"))}">
+          <input id="deviceName" maxlength="60" value="${escapeAttr(localDevice?.name || (navigator.userAgent.includes("Android")?"Min Android":navigator.userAgent.includes("iPhone")?"Min iPhone":"Min enhed"))}">
         </div>
+        ${canUseSetupKey && !status.can_register?`
+          <div class="field">
+            <label>Opsætningskode</label>
+            <input id="deviceSetupKey" type="password" autocomplete="current-password">
+          </div>
+        `:""}
         <button class="btn block" id="registerDevice">${localDevice?"Erstat enhedsnøglen":"Godkend denne enhed"}</button>
         <p class="eyebrow">Aktive enheder</p>
         <div class="device-list" id="deviceList"></div>
+        ${canUseSetupKey && !status.can_register?`<button class="btn ghost block" id="loadDevices" style="margin-top:8px">Vis aktive enheder</button>`:""}
       `:`
         <div class="device-entry">
           <div class="device-info">
@@ -762,8 +796,10 @@ async function openDeviceManager(){
         </div>
       `}`;
 
-    if(status.can_register){
+    const setupKey=()=>sheet.querySelector("#deviceSetupKey")?.value || "";
+    const renderDeviceList=async(devices)=>{
       const list=sheet.querySelector("#deviceList");
+      list.innerHTML="";
       if(!devices.length){
         list.innerHTML=`<div class="empty-note">Ingen registrerede enheder endnu.</div>`;
       }
@@ -779,7 +815,7 @@ async function openDeviceManager(){
         row.querySelector("button").addEventListener("click",async e=>{
           e.currentTarget.disabled=true;
           try{
-            await window.madplanAuth.revokeDevice(device.id);
+            await window.madplanAuth.revokeDevice(device.id,setupKey());
             toast("Enheden er fjernet");
             openDeviceManager();
           }catch(error){
@@ -789,13 +825,31 @@ async function openDeviceManager(){
         });
         list.append(row);
       });
+    };
+
+    if(canRegister){
+      if(status.can_register){
+        await renderDeviceList(await window.madplanAuth.listDevices());
+      }else{
+        sheet.querySelector("#deviceList").innerHTML=
+          `<div class="empty-note">Indtast opsætningskoden og tryk "Vis aktive enheder" for at administrere listen.</div>`;
+        sheet.querySelector("#loadDevices")?.addEventListener("click",async e=>{
+          e.currentTarget.disabled=true;
+          try{
+            await renderDeviceList(await window.madplanAuth.listDevices(setupKey()));
+          }catch(error){
+            e.currentTarget.disabled=false;
+            reportError(error,"Kunne ikke hente enhederne");
+          }
+        });
+      }
 
       sheet.querySelector("#registerDevice").addEventListener("click",async e=>{
         const name=sheet.querySelector("#deviceName").value.trim();
         if(!name) return;
         e.currentTarget.disabled=true;
         try{
-          await window.madplanAuth.registerDevice(name);
+          await window.madplanAuth.registerDevice(name,setupKey());
           toast("Enheden er godkendt");
           openDeviceManager();
         }catch(error){

@@ -134,12 +134,16 @@
     const gate = document.getElementById("authGate");
     const text = document.getElementById("authMessage");
     const ip = document.getElementById("authIp");
+    const registerPanel = document.getElementById("authRegisterPanel");
 
     if (message) {
       text.textContent = message;
     } else if (!status.configured) {
       text.textContent =
-        "Adgangen er ikke færdigkonfigureret. Tilføj hjemmets offentlige IP i MADPLAN_TRUSTED_IPS.";
+        "Adgangen er ikke færdigkonfigureret. Tilføj MADPLAN_SETUP_KEY i Cloudflare.";
+    } else if (status.setup_key_configured) {
+      text.textContent =
+        "Indtast opsætningskoden for at godkende denne telefon. Det skal kun gøres én gang.";
     } else {
       text.textContent =
         "Denne enhed er ikke godkendt. Forbind den til hjemmets Wi-Fi, genindlæs siden, og registrer den via nøgleknappen.";
@@ -148,6 +152,7 @@
     ip.textContent = status.current_ip
       ? `Cloudflare ser denne IP: ${status.current_ip}`
       : "";
+    registerPanel.hidden = !status.setup_key_configured;
     gate.hidden = false;
     document.body.classList.remove("auth-pending");
   };
@@ -191,19 +196,21 @@
     }
   };
 
-  const registerDevice = async (name) => {
-    if (!currentStatus?.can_register) {
+  const registerDevice = async (name, setupKey = "") => {
+    const trimmedSetupKey = setupKey.trim();
+    if (!currentStatus?.can_register && !currentStatus?.setup_key_configured) {
       throw new AuthError(
-        "Enheden kan kun registreres fra hjemmets godkendte IP",
+        "Der mangler en godkendt IP eller en opsætningskode",
         403
       );
+    }
+    if (!currentStatus?.can_register && !trimmedSetupKey) {
+      throw new AuthError("Indtast opsætningskoden", 403);
     }
 
     const oldDevice = await getLocalDevice();
     if (oldDevice?.id) {
-      await request(`/devices/${encodeURIComponent(oldDevice.id)}`, {
-        method: "DELETE",
-      }).catch((error) => {
+      await revokeDevice(oldDevice.id, trimmedSetupKey).catch((error) => {
         if (error.status !== 404) throw error;
       });
       await forgetLocalDevice();
@@ -229,6 +236,7 @@
           device_id: device.id,
           name,
           public_key: publicKey,
+          setup_key: trimmedSetupKey,
         },
       });
     } catch (error) {
@@ -240,10 +248,17 @@
     return device;
   };
 
-  const listDevices = () => request("/devices");
+  const setupKeyHeaders = (setupKey) =>
+    setupKey.trim() ? { "x-madplan-setup-key": setupKey.trim() } : {};
 
-  const revokeDevice = async (id) => {
-    await request(`/devices/${encodeURIComponent(id)}`, { method: "DELETE" });
+  const listDevices = (setupKey = "") =>
+    request("/devices", { headers: setupKeyHeaders(setupKey) });
+
+  const revokeDevice = async (id, setupKey = "") => {
+    await request(`/devices/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      headers: setupKeyHeaders(setupKey),
+    });
     const localDevice = await getLocalDevice();
     if (localDevice?.id === id) await forgetLocalDevice();
     await loadStatus();
@@ -255,6 +270,27 @@
     event.currentTarget.disabled = false;
     if (allowed) location.reload();
   });
+
+  document
+    .getElementById("authRegisterDevice")
+    .addEventListener("click", async (event) => {
+      const button = event.currentTarget;
+      const name = document.getElementById("authDeviceName").value.trim();
+      const setupKey = document.getElementById("authSetupKey").value;
+      if (!name) return;
+
+      button.disabled = true;
+      try {
+        await registerDevice(name, setupKey);
+        location.reload();
+      } catch (error) {
+        button.disabled = false;
+        showGate(
+          currentStatus || { configured: true, setup_key_configured: true },
+          error.message || "Telefonen kunne ikke godkendes"
+        );
+      }
+    });
 
   window.madplanAuth = {
     ensureAccess,

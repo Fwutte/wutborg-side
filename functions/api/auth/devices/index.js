@@ -1,9 +1,12 @@
-import { networkState } from "../../_auth.js";
+import { registrationAccess } from "../../_auth.js";
 import { bad, json, withErrors } from "../../_helpers.js";
 
 export const onRequestGet = withErrors(async ({ request, env }) => {
-  if (!networkState(request, env).trusted) {
-    return bad("Enheder kan kun administreres fra den godkendte IP", 403);
+  if (!(await registrationAccess(request, env)).allowed) {
+    return bad(
+      "Enheder kan kun administreres med godkendt IP eller opsætningskode",
+      403
+    );
   }
 
   const { results } = await env.DB.prepare(

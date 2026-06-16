@@ -52,6 +52,38 @@ const configuredIps = (env) =>
     .map((ip) => ip.trim())
     .filter(Boolean);
 
+export const setupKeyConfigured = (env) =>
+  String(env.MADPLAN_SETUP_KEY || "").trim().length >= 16;
+
+const digestText = async (value) =>
+  new Uint8Array(
+    await crypto.subtle.digest("SHA-256", encoder.encode(`madplan:${value}`))
+  );
+
+const timingSafeEqual = (left, right) => {
+  if (left.byteLength !== right.byteLength) return false;
+
+  let difference = 0;
+  for (let index = 0; index < left.byteLength; index += 1) {
+    difference |= left[index] ^ right[index];
+  }
+
+  return difference === 0;
+};
+
+export const setupKeyValid = async (env, value) => {
+  const configuredKey = String(env.MADPLAN_SETUP_KEY || "").trim();
+  const suppliedKey = String(value || "").trim();
+  if (configuredKey.length < 16 || !suppliedKey) return false;
+
+  const [configuredDigest, suppliedDigest] = await Promise.all([
+    digestText(configuredKey),
+    digestText(suppliedKey),
+  ]);
+
+  return timingSafeEqual(configuredDigest, suppliedDigest);
+};
+
 export const networkState = (request, env) => {
   const url = new URL(request.url);
   const cloudflareIp = request.headers.get("CF-Connecting-IP");
@@ -66,9 +98,21 @@ export const networkState = (request, env) => {
   return {
     ip,
     local,
-    configured: allowedIps.length > 0,
+    configured: allowedIps.length > 0 || setupKeyConfigured(env),
     trusted: local || (Boolean(ip) && allowedIps.includes(ip)),
   };
+};
+
+export const setupKeyFromRequest = (request) =>
+  request.headers.get("x-madplan-setup-key") || "";
+
+export const registrationAccess = async (request, env, setupKey = "") => {
+  const network = networkState(request, env);
+  if (network.trusted) return { allowed: true, via: "trusted_ip", network };
+  if (await setupKeyValid(env, setupKey || setupKeyFromRequest(request))) {
+    return { allowed: true, via: "setup_key", network };
+  }
+  return { allowed: false, via: null, network };
 };
 
 export const sessionForRequest = async (request, env) => {

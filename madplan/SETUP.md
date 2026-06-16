@@ -73,63 +73,86 @@ npx wrangler d1 migrations apply madplan --remote
 Migration `0002_device_auth.sql` opretter tabellerne til enheder, engangskoder
 og sessions.
 
-### 2. Find hjemmets offentlige IP
+### 2. Opret en opsætningskode
 
-1. Forbind en computer til hjemmets Wi-Fi.
-2. Åbn `https://www.cloudflare.com/cdn-cgi/trace`.
-3. Kopiér værdien efter `ip=`.
+Hvis hjemmets internet har skiftende IP, fx ved 5G, skal telefoner registreres
+med en hemmelig opsætningskode i stedet for IP-godkendelse.
 
-Brug den adresse Cloudflare viser. En adresse som `192.168.x.x` eller
-`10.x.x.x` er lokal og kan ikke bruges.
+Lav en lang tilfældig kode:
 
-### 3. Indstil den godkendte IP
+```sh
+node -e "console.log(crypto.randomUUID() + '-' + crypto.randomUUID())"
+```
+
+Kopier hele værdien. Den skal ikke ind i Git eller i kildekoden.
+
+### 3. Gem opsætningskoden i Cloudflare
 
 1. Gå til **Workers & Pages → wutborg-side → Settings → Variables and
    Secrets**.
-2. Tilføj en almindelig produktionsvariabel:
+2. Tilføj en produktionsvariabel. Vælg **Secret**, hvis dashboardet giver den
+   mulighed:
 
    ```text
-   Name:  MADPLAN_TRUSTED_IPS
-   Value: <hjemmets-offentlige-ip>
+   Name:  MADPLAN_SETUP_KEY
+   Value: <den-lange-tilfældige-kode>
    ```
 
-3. Hvis flere IP-adresser skal godkendes, adskil dem med komma:
+3. Deploy Pages-projektet igen.
 
-   ```text
-   203.0.113.10,2001:db8::1234
-   ```
+`MADPLAN_SETUP_KEY` bruges kun til at registrere, liste og fjerne godkendte
+enheder. Når en telefon er registreret, bruger den sin egen private nøgle og
+behøver ikke opsætningskoden ved almindelig brug.
 
-4. Deploy Pages-projektet igen.
+### Valgfrit: godkend en fast IP
 
-Hvis internetudbyderen ændrer den offentlige IP, skal variablen opdateres.
-Adgang fra allerede registrerede telefoner fortsætter uafhængigt af IP'en.
+Hvis I senere får en stabil offentlig IP, kan den tilføjes som en genvej:
 
-### 4. Registrer en iPhone
+```text
+Name:  MADPLAN_TRUSTED_IPS
+Value: <hjemmets-offentlige-ip>
+```
 
-1. Forbind iPhonen til hjemmets Wi-Fi.
-2. Åbn `https://wutborg.dk/madplan/` i Safari.
-3. Vælg **Del → Føj til hjemmeskærm**.
-4. Luk Safari, og åbn den installerede **Madplan** fra hjemmeskærmen.
-5. Tryk på nøgleknappen øverst.
-6. Giv telefonen et navn, fx `Lottes iPhone`, og vælg
-   **Godkend denne enhed**.
-7. Slå Wi-Fi fra, luk appen helt, og åbn den igen på mobilnettet.
+Flere IP-adresser adskilles med komma:
 
-Gentag processen for hver telefon. Registrer nøglen inde i den installerede
-app, ikke kun i Safari, så nøglen oprettes i det lager appen faktisk bruger.
+```text
+203.0.113.10,2001:db8::1234
+```
+
+Ved 5G-internet bør `MADPLAN_TRUSTED_IPS` normalt udelades, fordi IP'en kan
+skifte ofte.
+
+### 4. Registrer en Android-telefon
+
+1. Åbn `https://wutborg.dk/madplan/` i Chrome på Android.
+2. Vælg **⋮ → Føj til startskærm** eller **Installer app**.
+3. Åbn den installerede **Madplan** fra startskærmen.
+4. Hvis siden viser låseskærmen, indtast:
+   - navn, fx `Min Android`
+   - opsætningskoden fra `MADPLAN_SETUP_KEY`
+5. Tryk **Godkend denne telefon**.
+6. Luk appen, åbn den igen, og test på mobilnettet.
+
+Hvis telefonen allerede har adgang, kan enhedsnøglen udskiftes via
+nøgleknappen øverst i madplanen.
+
+Registrer nøglen inde i den installerede app, ikke kun i Chrome, så nøglen
+oprettes i det lager appen faktisk bruger fremover.
 
 ### 5. Fjern en telefon
 
-1. Åbn madplanen fra hjemmets godkendte IP.
+1. Åbn madplanen fra en allerede godkendt enhed.
 2. Tryk på nøgleknappen.
-3. Tryk **Fjern** ud for telefonen.
+3. Indtast opsætningskoden, hvis siden beder om den.
+4. Tryk **Vis aktive enheder**.
+5. Tryk **Fjern** ud for telefonen.
 
 Alle telefonens aktive sessions slettes med det samme. Hvis browserdata eller
 den installerede PWA slettes, forsvinder privatnøglen også, og telefonen skal
-registreres igen fra hjemmets IP.
+registreres igen med opsætningskoden.
 
 ### Lokal udvikling
 
 `localhost` godkendes automatisk, når requesten ikke har Cloudflares
-`CF-Connecting-IP`-header. `MADPLAN_TRUSTED_IPS` er derfor ikke nødvendig ved
-`npx wrangler pages dev .`.
+`CF-Connecting-IP`-header. Hverken `MADPLAN_TRUSTED_IPS` eller
+`MADPLAN_SETUP_KEY` er derfor nødvendig ved `npx wrangler pages dev .`.

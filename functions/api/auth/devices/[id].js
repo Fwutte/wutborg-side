@@ -1,10 +1,13 @@
-import { networkState } from "../../_auth.js";
+import { registrationAccess } from "../../_auth.js";
 import { bad, changes, json, withErrors } from "../../_helpers.js";
 
 export const onRequestDelete = withErrors(
   async ({ params, request, env }) => {
-    if (!networkState(request, env).trusted) {
-      return bad("Enheder kan kun administreres fra den godkendte IP", 403);
+    if (!(await registrationAccess(request, env)).allowed) {
+      return bad(
+        "Enheder kan kun administreres med godkendt IP eller opsætningskode",
+        403
+      );
     }
 
     const id = typeof params.id === "string" ? params.id : "";
