@@ -264,6 +264,12 @@
     await loadStatus();
   };
 
+  const logout = async ({ forget = false } = {}) => {
+    await request("/logout", { method: "POST" });
+    if (forget) await forgetLocalDevice();
+    currentStatus = null;
+  };
+
   document.getElementById("authRetry").addEventListener("click", async (event) => {
     event.currentTarget.disabled = true;
     const allowed = await ensureAccess();
@@ -300,5 +306,6 @@
     registerDevice,
     listDevices,
     revokeDevice,
+    logout,
   };
 })();

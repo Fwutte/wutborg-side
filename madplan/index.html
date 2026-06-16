@@ -52,11 +52,12 @@
   }
   .top-actions{display:flex;align-items:center;gap:7px}
   .device-btn{
-    width:40px;height:40px;border:1px solid var(--line);border-radius:999px;
-    background:var(--surface);color:var(--ink);display:grid;place-items:center;
+    height:40px;border:1px solid var(--line);border-radius:999px;padding:0 12px;
+    background:var(--surface);color:var(--ink);display:flex;align-items:center;gap:6px;
     box-shadow:var(--shadow);cursor:pointer;
   }
   .device-btn svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8}
+  .device-btn span{font-size:12px;font-weight:700}
   .wordmark{
     font-family:"Fraunces",serif;
     font-size:25px;font-weight:600;letter-spacing:.01em;
@@ -223,6 +224,7 @@
   .field label{display:block;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
   .field input{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:13px 14px;font:inherit;font-size:15px;color:var(--ink)}
   .field input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
+  .field-grid{display:grid;grid-template-columns:1fr 1.4fr;gap:10px}
   .chips{display:flex;flex-wrap:wrap;gap:8px}
   .chip{
     border:1px solid var(--line);background:var(--surface);border-radius:999px;
@@ -242,56 +244,70 @@
 
   /* ---------- freezer ---------- */
   .freezer-summary{
-    display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 14px;
-  }
-  .freezer-stat{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
     background:var(--surface);border:1px solid var(--line);border-radius:14px;
-    padding:11px 10px;box-shadow:var(--shadow);
+    padding:10px 12px;margin:0 0 10px;box-shadow:var(--shadow);
   }
-  .freezer-stat b{display:block;font-size:18px;line-height:1;color:var(--ink)}
-  .freezer-stat span{display:block;margin-top:5px;font-size:11px;color:var(--muted)}
-  .freezer-search{margin-bottom:8px}
+  .freezer-summary b{font-size:14px}
+  .freezer-summary span{font-size:12px;color:var(--muted);white-space:nowrap}
+  .freezer-search{margin-bottom:6px}
   .freezer-search input{
     width:100%;border:1px solid var(--line);background:var(--surface);
-    border-radius:14px;padding:13px 14px;font:inherit;font-size:15px;color:var(--ink);
+    border-radius:12px;padding:10px 12px;font:inherit;font-size:14px;color:var(--ink);
   }
   .freezer-search input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
-  .freezer-drawers{display:flex;flex-direction:column;gap:12px}
+  .freezer-drawers{display:flex;flex-direction:column;gap:8px}
   .freezer-drawer{
-    background:var(--surface-2);border:1px solid var(--line);border-radius:18px;
-    padding:13px;box-shadow:var(--shadow);
+    background:var(--surface-2);border:1px solid var(--line);border-radius:15px;
+    padding:9px;box-shadow:var(--shadow);
   }
   .freezer-drawer-head{
-    display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px;
+    display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:7px;
   }
   .freezer-drawer-head h3{
-    font-family:"Fraunces",serif;font-size:22px;font-weight:600;line-height:1.1;
+    font-family:"Fraunces",serif;font-size:19px;font-weight:600;line-height:1.1;
   }
   .freezer-drawer-head small{
     display:block;font-family:"Inter",system-ui,sans-serif;color:var(--muted);
-    font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-top:3px;
+    font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-top:1px;
   }
   .freezer-count{
     border:1px solid var(--line);border-radius:999px;background:var(--surface);
-    padding:5px 10px;color:var(--muted);font-size:12px;font-weight:600;white-space:nowrap;
+    padding:4px 9px;color:var(--muted);font-size:11px;font-weight:600;white-space:nowrap;
   }
-  .freezer-items{display:flex;flex-direction:column;gap:7px}
+  .freezer-items{display:flex;flex-direction:column;gap:5px}
   .freezer-item{
-    display:flex;align-items:center;gap:10px;background:var(--surface);
-    border:1px solid var(--line);border-radius:13px;padding:10px 10px;cursor:pointer;
+    display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:8px;
+    background:var(--surface);border:1px solid var(--line);border-radius:12px;
+    padding:6px 7px;cursor:pointer;min-height:40px;
   }
   .freezer-item:active{transform:scale(.992)}
-  .freezer-qty{
-    min-width:58px;max-width:92px;flex:none;border-radius:10px;background:var(--paper);
-    color:var(--ink);font-size:12px;font-weight:700;padding:7px 8px;text-align:center;
+  .freezer-stepper{
+    display:grid;grid-template-columns:28px minmax(46px,auto) 28px;align-items:center;
+    border:1px solid var(--line);border-radius:10px;background:var(--paper);overflow:hidden;
   }
-  .freezer-qty.empty{color:var(--muted);font-weight:500}
+  .freezer-stepper button{
+    width:28px;height:30px;border:0;background:transparent;color:var(--ink);
+    font:inherit;font-size:17px;font-weight:700;cursor:pointer;
+  }
+  .freezer-stepper button:disabled{opacity:.35;cursor:default}
+  .freezer-amount{
+    min-width:46px;text-align:center;font-size:13px;font-weight:800;line-height:1.05;
+    padding:0 4px;color:var(--ink);
+  }
+  .freezer-amount small{
+    display:block;font-size:9px;font-weight:600;color:var(--muted);margin-top:1px;
+  }
   .freezer-name{flex:1;min-width:0}
-  .freezer-name b{display:block;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .freezer-name small{display:block;color:var(--muted);font-size:12px;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .freezer-name b{display:block;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .freezer-name small{display:block;color:var(--muted);font-size:11px;margin-top:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .freezer-delete{
+    width:30px;height:30px;border:0;border-radius:9px;background:var(--accent-soft);
+    color:var(--accent);font-size:18px;font-weight:700;cursor:pointer;
+  }
   .freezer-empty{
-    border:1px dashed var(--line);border-radius:13px;padding:13px;color:var(--muted);
-    font-size:13px;text-align:center;background:var(--surface);
+    border:1px dashed var(--line);border-radius:11px;padding:9px;color:var(--muted);
+    font-size:12px;text-align:center;background:var(--surface);
   }
 
   /* ---------- toast ---------- */
@@ -334,6 +350,13 @@
   }
   .auth-register input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
   .device-list{display:flex;flex-direction:column;gap:8px;margin:14px 0}
+  .admin-status{
+    background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    padding:12px 13px;margin-bottom:12px;
+  }
+  .admin-status b{display:block;font-size:14px;margin-bottom:3px}
+  .admin-status small{display:block;color:var(--muted);font-size:12px}
+  .admin-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 4px}
   .device-entry{
     display:flex;align-items:center;gap:10px;background:var(--surface);
     border:1px solid var(--line);border-radius:12px;padding:11px 12px;
@@ -345,6 +368,10 @@
     border:0;background:var(--accent-soft);color:var(--accent);border-radius:9px;
     padding:8px 10px;font:inherit;font-size:12px;font-weight:600;cursor:pointer;
   }
+  .mini-quiet{
+    border:1px solid var(--line);background:var(--surface);color:var(--ink);
+    border-radius:10px;padding:10px 11px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;
+  }
 
   @media (prefers-reduced-motion: reduce){
     *{transition:none !important}
@@ -353,7 +380,8 @@
     .topbar{gap:10px}
     .wordmark{font-size:22px}
     .top-actions{gap:5px;flex:none}
-    .device-btn{width:36px;height:36px}
+    .device-btn{height:36px;padding:0 9px}
+    .device-btn span{font-size:11px}
     .weeknav button{width:30px;height:30px}
     .weeknav .label{min-width:46px;padding:0 2px;font-size:12px}
     .tab{font-size:10px}
@@ -362,11 +390,12 @@
     .addbar select{min-width:92px;padding:0 8px;font-size:12px}
     .addbar input{min-width:0}
     .btn{padding:0 13px}
-    .freezer-summary{grid-template-columns:1fr 1fr 1fr;gap:6px}
-    .freezer-stat{padding:10px 8px}
-    .freezer-stat b{font-size:16px}
-    .freezer-stat span{font-size:10px}
-    .freezer-qty{min-width:48px;max-width:74px;padding:7px 6px}
+    .freezer-summary{padding:9px 10px}
+    .freezer-summary span{font-size:11px}
+    .freezer-item{grid-template-columns:auto minmax(0,1fr) 28px;gap:6px}
+    .freezer-stepper{grid-template-columns:26px minmax(42px,auto) 26px}
+    .freezer-stepper button{width:26px;height:28px}
+    .freezer-amount{min-width:42px;font-size:12px}
   }
 </style>
 </head>
@@ -400,6 +429,7 @@
     <div class="top-actions">
       <button class="device-btn" id="deviceButton" aria-label="Administrer godkendte enheder">
         <svg viewBox="0 0 24 24"><path d="M7 11V8a5 5 0 0 1 10 0v3"/><rect x="5" y="11" width="14" height="10" rx="3"/><path d="M12 15v2"/></svg>
+        <span>Enheder</span>
       </button>
       <nav class="weeknav">
         <button id="prevWeek" aria-label="Forrige uge">‹</button>
@@ -519,6 +549,8 @@ async function loadFreezer(){
     drawer:f.drawer,
     name:f.name,
     qty:f.quantity || "",
+    amount:f.amount == null ? null : Number(f.amount),
+    unit:f.unit || "",
     notes:f.notes || "",
   }));
 }
@@ -766,7 +798,7 @@ function renderShopping(){
 
 function splitFreezerInput(raw){
   const value=raw.trim().replace(/\s+/g," ");
-  if(!value) return {name:"", quantity:""};
+  if(!value) return {name:"", quantity:"", amount:null, unit:""};
 
   const patterns=[
     /^(\d+\s*x\s+\d+\s*(?:g|kg|stk\.?|ps|pose|poser|pakke|pakker))\s+(.+)$/i,
@@ -779,9 +811,57 @@ function splitFreezerInput(raw){
 
   for(const pattern of patterns){
     const match=value.match(pattern);
-    if(match) return {quantity:match[1].trim(), name:match[2].trim()};
+    if(match){
+      const parsed=parseAmountUnit(match[1].trim());
+      return {
+        quantity:match[1].trim(),
+        amount:parsed.amount,
+        unit:parsed.unit,
+        name:match[2].trim(),
+      };
+    }
   }
-  return {name:value, quantity:""};
+  return {name:value, quantity:"", amount:1, unit:""};
+}
+
+function parseAmountUnit(value){
+  const text=String(value || "").trim().replace(/\s+/g," ");
+  const fraction=text.match(/^(\d+)\/(\d+)(?:\s+(.+))?$/);
+  if(fraction){
+    const top=Number(fraction[1]), bottom=Number(fraction[2]);
+    return {amount:bottom?top/bottom:null, unit:(fraction[3] || "").trim()};
+  }
+  const xPack=text.match(/^(\d+(?:[,.]\d+)?)\s*x\s+(.+)$/i);
+  if(xPack) return {amount:Number(xPack[1].replace(",",".")), unit:xPack[2].trim()};
+  const xOnly=text.match(/^(\d+(?:[,.]\d+)?)\s*x$/i);
+  if(xOnly) return {amount:Number(xOnly[1].replace(",",".")), unit:""};
+  const numberUnit=text.match(/^(\d+(?:[,.]\d+)?)(?:\s+(.+))?$/);
+  if(numberUnit) return {amount:Number(numberUnit[1].replace(",",".")), unit:(numberUnit[2] || "").trim()};
+  return {amount:null, unit:text};
+}
+
+function formatFreezerAmount(amount){
+  if(amount == null || Number.isNaN(Number(amount))) return "?";
+  const rounded=Math.round(Number(amount)*100)/100;
+  const fractions=new Map([[0.25,"1/4"],[0.5,"1/2"],[0.75,"3/4"]]);
+  if(fractions.has(rounded)) return fractions.get(rounded);
+  return String(rounded).replace(".",",");
+}
+
+function freezerQuantityLabel(item){
+  const amount=formatFreezerAmount(item.amount);
+  return item.unit ? `${amount} ${item.unit}` : amount;
+}
+
+function freezerStep(item){
+  const amount=Number(item.amount);
+  return amount > 0 && amount < 1 ? 0.25 : 1;
+}
+
+async function bumpFreezerAmount(item,direction){
+  const current=item.amount == null || Number.isNaN(Number(item.amount)) ? 0 : Number(item.amount);
+  const next=Math.max(0,Math.round((current + direction*freezerStep(item))*100)/100);
+  await store.updateFreezer(item.id,{amount:next});
 }
 
 function drawerMeta(drawer){
@@ -790,7 +870,7 @@ function drawerMeta(drawer){
 
 function freezerMatches(item, query){
   if(!query) return true;
-  const haystack=`${item.drawer} ${item.name} ${item.qty} ${item.notes}`.toLowerCase();
+  const haystack=`${item.drawer} ${item.name} ${item.qty} ${freezerQuantityLabel(item)} ${item.notes}`.toLowerCase();
   return haystack.includes(query.toLowerCase());
 }
 
@@ -803,12 +883,11 @@ function renderFreezer(){
   }));
   const fullest=drawerCounts.reduce((best,drawer)=>drawer.count>best.count?drawer:best,drawerCounts[0]);
 
-  out.push(el(`<p class="eyebrow row"><span>Fryseroverblik</span><span>${items.length} ting</span></p>`));
+  out.push(el(`<p class="eyebrow row"><span>Fryseroverblik</span><span>${items.length} linjer</span></p>`));
   out.push(el(`
     <section class="freezer-summary">
-      <div class="freezer-stat"><b>${items.length}</b><span>Ting i alt</span></div>
-      <div class="freezer-stat"><b>${drawerCounts.filter(d=>d.count).length}/6</b><span>Skuffer i brug</span></div>
-      <div class="freezer-stat"><b>${escape(fullest.name)}</b><span>Mest fyldt</span></div>
+      <b>${items.length} fryserlinjer</b>
+      <span>${drawerCounts.filter(d=>d.count).length}/6 skuffer · mest i ${escape(fullest.name)}</span>
     </section>`));
 
   const search=el(`<div class="freezer-search"><input id="freezerSearch" placeholder="Søg i fryseren" value="${escapeAttr(freezerQuery)}"></div>`);
@@ -842,7 +921,7 @@ function renderFreezer(){
     const button=add.querySelector("#addFreezerItem");
     button.disabled=true;
     try{
-      await store.addFreezer({drawer:freezerDrawer,name:parsed.name,quantity:parsed.quantity,notes:""});
+      await store.addFreezer({drawer:freezerDrawer,name:parsed.name,quantity:parsed.quantity,amount:parsed.amount,unit:parsed.unit,notes:""});
       input.value="";
       render();
       toast("Lagt i fryseren");
@@ -875,17 +954,44 @@ function renderFreezer(){
       list.append(el(`<div class="freezer-empty">${freezerQuery?"Ingen match i denne skuffe":"Tom skuffe"}</div>`));
     }else{
       drawerItems.forEach(item=>{
+        const amountLabel=formatFreezerAmount(item.amount);
         const row=el(`
           <div class="freezer-item">
-            <div class="freezer-qty ${item.qty?"":"empty"}">${item.qty?escape(item.qty):"?"}</div>
+            <div class="freezer-stepper" aria-label="Antal ${escapeAttr(item.name)}">
+              <button class="freezer-dec" aria-label="Træk fra">−</button>
+              <div class="freezer-amount">${escape(amountLabel)}${item.unit?`<small>${escape(item.unit)}</small>`:""}</div>
+              <button class="freezer-inc" aria-label="Læg til">+</button>
+            </div>
             <div class="freezer-name">
               <b>${escape(item.name)}</b>
               ${item.notes?`<small>${escape(item.notes)}</small>`:""}
             </div>
-            <button class="mini-danger" aria-label="Slet ${escapeAttr(item.name)}">Slet</button>
+            <button class="freezer-delete" aria-label="Slet ${escapeAttr(item.name)}">×</button>
           </div>`);
         row.addEventListener("click",()=>openFreezerSheet(item));
-        row.querySelector("button").addEventListener("click",async e=>{
+        row.querySelector(".freezer-dec").addEventListener("click",async e=>{
+          e.stopPropagation();
+          e.currentTarget.disabled=true;
+          try{
+            await bumpFreezerAmount(item,-1);
+            render();
+          }catch(error){
+            e.currentTarget.disabled=false;
+            reportError(error,"Kunne ikke ændre antal");
+          }
+        });
+        row.querySelector(".freezer-inc").addEventListener("click",async e=>{
+          e.stopPropagation();
+          e.currentTarget.disabled=true;
+          try{
+            await bumpFreezerAmount(item,1);
+            render();
+          }catch(error){
+            e.currentTarget.disabled=false;
+            reportError(error,"Kunne ikke ændre antal");
+          }
+        });
+        row.querySelector(".freezer-delete").addEventListener("click",async e=>{
           e.stopPropagation();
           e.currentTarget.disabled=true;
           try{
@@ -917,9 +1023,15 @@ function openFreezerSheet(item){
       <label>Navn</label>
       <input id="freezerName" maxlength="100" value="${escapeAttr(item.name)}">
     </div>
-    <div class="field">
-      <label>Mængde</label>
-      <input id="freezerQty" maxlength="40" placeholder="fx 2 x 500g" value="${escapeAttr(item.qty)}">
+    <div class="field-grid">
+      <div class="field">
+        <label>Antal</label>
+        <input id="freezerAmount" type="number" inputmode="decimal" min="0" max="999" step="0.25" value="${item.amount == null ? "" : escapeAttr(item.amount)}">
+      </div>
+      <div class="field">
+        <label>Enhed/pakning</label>
+        <input id="freezerUnit" maxlength="30" placeholder="fx 500g, stk., ps" value="${escapeAttr(item.unit)}">
+      </div>
     </div>
     <div class="field">
       <label>Skuffe</label>
@@ -955,7 +1067,8 @@ function openFreezerSheet(item){
       await store.updateFreezer(item.id,{
         drawer:selectedDrawer,
         name,
-        quantity:sheet.querySelector("#freezerQty").value.trim(),
+        amount:sheet.querySelector("#freezerAmount").value.trim(),
+        unit:sheet.querySelector("#freezerUnit").value.trim(),
         notes:sheet.querySelector("#freezerNote").value.trim(),
       });
       closeSheet();
@@ -1087,8 +1200,8 @@ function openDayPicker(dish){
 async function openDeviceManager(){
   const sheet=$("#sheet");
   sheet.innerHTML=`<div class="grabber"></div>
-    <h2>Godkendte enheder</h2>
-    <p class="sub">Hver telefon har sin egen private nøgle.</p>
+    <h2>Enhedsadministration</h2>
+    <p class="sub">Hver telefon eller browser har sin egen private nøgle.</p>
     <div class="empty-note">Henter enheder …</div>`;
   showSheet();
 
@@ -1097,18 +1210,31 @@ async function openDeviceManager(){
     const localDevice=await window.madplanAuth.getLocalDevice();
     const canUseSetupKey=Boolean(status.setup_key_configured);
     const canRegister=status.can_register || canUseSetupKey;
+    const viaLabel=status.via==="trusted_ip" ? "godkendt IP" : status.via==="device" ? "godkendt enhed" : "ukendt";
+    const localName=localDevice?.name || status.device_name || (navigator.userAgent.includes("Android")?"Min Android":navigator.userAgent.includes("iPhone")?"Min iPhone":"Min enhed");
+    const localId=localDevice?.id ? localDevice.id.slice(0,8) : "ingen lokal nøgle";
 
     sheet.innerHTML=`<div class="grabber"></div>
-      <h2>Godkendte enheder</h2>
-      <p class="sub">${status.can_register
-        ?"Du er på en godkendt IP og kan registrere eller tilbagekalde enheder."
-        :canUseSetupKey
-          ?"Brug opsætningskoden til at registrere eller tilbagekalde enheder."
-          :"Denne enhed er godkendt. Administration kræver godkendt IP eller opsætningskode."}</p>
+      <h2>Enhedsadministration</h2>
+      <p class="sub">Styr hvilke telefoner og browsere der må bruge madplanen uden fast IP.</p>
+      <div class="admin-status">
+        <b>Adgang lige nu: ${escape(viaLabel)}</b>
+        <small>${status.current_ip?`Cloudflare ser IP: ${escape(status.current_ip)}`:"Ingen IP vist"} · lokal nøgle: ${escape(localId)}</small>
+      </div>
+      <div class="device-entry">
+        <div class="device-info">
+          <b>${escape(localName)}</b>
+          <small>${localDevice?.id?"Denne browser har en gemt privatnøgle.":"Denne browser har ingen lokal enhedsnøgle."}</small>
+        </div>
+      </div>
+      <div class="admin-actions">
+        <button class="mini-quiet" id="logoutHere">Log ud her</button>
+        <button class="mini-danger" id="forgetHere">Glem denne browser</button>
+      </div>
       ${canRegister?`
         <div class="field">
-          <label>Navn på denne enhed</label>
-          <input id="deviceName" maxlength="60" value="${escapeAttr(localDevice?.name || (navigator.userAgent.includes("Android")?"Min Android":navigator.userAgent.includes("iPhone")?"Min iPhone":"Min enhed"))}">
+          <label>Navn på denne browser</label>
+          <input id="deviceName" maxlength="60" value="${escapeAttr(localName)}">
         </div>
         ${canUseSetupKey && !status.can_register?`
           <div class="field">
@@ -1116,17 +1242,12 @@ async function openDeviceManager(){
             <input id="deviceSetupKey" type="password" autocomplete="current-password">
           </div>
         `:""}
-        <button class="btn block" id="registerDevice">${localDevice?"Erstat enhedsnøglen":"Godkend denne enhed"}</button>
+        <button class="btn block" id="registerDevice">${localDevice?"Erstat lokal nøgle":"Godkend denne browser"}</button>
         <p class="eyebrow">Aktive enheder</p>
         <div class="device-list" id="deviceList"></div>
         ${canUseSetupKey && !status.can_register?`<button class="btn ghost block" id="loadDevices" style="margin-top:8px">Vis aktive enheder</button>`:""}
       `:`
-        <div class="device-entry">
-          <div class="device-info">
-            <b>${escape(status.device_name || localDevice?.name || "Godkendt enhed")}</b>
-            <small>Privatnøglen forlader ikke denne browser</small>
-          </div>
-        </div>
+        <div class="empty-note">Aktiv enhedsliste kræver godkendt IP eller opsætningskode.</div>
       `}`;
 
     const setupKey=()=>sheet.querySelector("#deviceSetupKey")?.value || "";
@@ -1144,8 +1265,8 @@ async function openDeviceManager(){
         const current=device.id===localDevice?.id;
         const row=el(`<div class="device-entry">
           <div class="device-info">
-            <b>${escape(device.name)}${current?" · denne enhed":""}</b>
-            <small>${device.last_used_at?"Senest brugt "+escape(device.last_used_at):"Ikke brugt uden for hjemmet endnu"}</small>
+            <b>${escape(device.name)}${current?" · denne browser":""}</b>
+            <small>${device.last_used_at?"Senest brugt "+escape(device.last_used_at):"Ikke brugt uden for hjemmet endnu"} · oprettet ${escape(device.created_at || "")}</small>
           </div>
           <button class="mini-danger">Fjern</button>
         </div>`);
@@ -1154,7 +1275,8 @@ async function openDeviceManager(){
           try{
             await window.madplanAuth.revokeDevice(device.id,setupKey());
             toast("Enheden er fjernet");
-            openDeviceManager();
+            if(current) location.reload();
+            else openDeviceManager();
           }catch(error){
             e.currentTarget.disabled=false;
             reportError(error,"Kunne ikke fjerne enheden");
@@ -1211,9 +1333,32 @@ async function openDeviceManager(){
         }
       });
     }
+
+    sheet.querySelector("#logoutHere")?.addEventListener("click",async e=>{
+      e.currentTarget.disabled=true;
+      try{
+        await window.madplanAuth.logout();
+        location.reload();
+      }catch(error){
+        e.currentTarget.disabled=false;
+        reportError(error,"Kunne ikke logge ud");
+      }
+    });
+
+    sheet.querySelector("#forgetHere")?.addEventListener("click",async e=>{
+      if(!confirm("Vil du fjerne den lokale enhedsnøgle fra denne browser? Du skal godkende browseren igen bagefter.")) return;
+      e.currentTarget.disabled=true;
+      try{
+        await window.madplanAuth.logout({forget:true});
+        location.reload();
+      }catch(error){
+        e.currentTarget.disabled=false;
+        reportError(error,"Kunne ikke glemme browseren");
+      }
+    });
   }catch(error){
     sheet.innerHTML=`<div class="grabber"></div>
-      <h2>Godkendte enheder</h2>
+      <h2>Enhedsadministration</h2>
       <div class="empty-note">${escape(error.message || "Enhederne kunne ikke hentes")}</div>`;
   }
 }
