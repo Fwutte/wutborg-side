@@ -180,6 +180,9 @@
     text-align:center;color:var(--muted);font-size:14px;
     padding:34px 20px;border:1px dashed var(--line);border-radius:14px;background:var(--surface-2);
   }
+  .empty-note.warn{
+    color:var(--accent);border-color:rgba(221,90,58,.35);background:var(--accent-soft);
+  }
 
   /* ---------- bottom tabbar ---------- */
   .tabbar{
@@ -1127,6 +1130,10 @@ async function openDeviceManager(){
       `}`;
 
     const setupKey=()=>sheet.querySelector("#deviceSetupKey")?.value || "";
+    const showDeviceMessage=(message,warning=false)=>{
+      const list=sheet.querySelector("#deviceList");
+      if(list) list.innerHTML=`<div class="empty-note ${warning?"warn":""}">${escape(message)}</div>`;
+    };
     const renderDeviceList=async(devices)=>{
       const list=sheet.querySelector("#deviceList");
       list.innerHTML="";
@@ -1161,15 +1168,31 @@ async function openDeviceManager(){
       if(status.can_register){
         await renderDeviceList(await window.madplanAuth.listDevices());
       }else{
-        sheet.querySelector("#deviceList").innerHTML=
-          `<div class="empty-note">Indtast opsætningskoden og tryk "Vis aktive enheder" for at administrere listen.</div>`;
+        showDeviceMessage(`Indtast opsætningskoden og tryk "Vis aktive enheder" for at administrere listen.`);
+        sheet.querySelector("#deviceSetupKey")?.addEventListener("keydown",e=>{
+          if(e.key==="Enter") sheet.querySelector("#loadDevices")?.click();
+        });
         sheet.querySelector("#loadDevices")?.addEventListener("click",async e=>{
-          e.currentTarget.disabled=true;
+          const key=setupKey().trim();
+          if(!key){
+            showDeviceMessage("Indtast opsætningskoden først.",true);
+            sheet.querySelector("#deviceSetupKey")?.focus();
+            return;
+          }
+
+          const button=e.currentTarget;
+          button.disabled=true;
+          button.textContent="Henter …";
+          showDeviceMessage("Henter aktive enheder …");
           try{
-            await renderDeviceList(await window.madplanAuth.listDevices(setupKey()));
+            await renderDeviceList(await window.madplanAuth.listDevices(key));
+            button.textContent="Opdater aktive enheder";
           }catch(error){
-            e.currentTarget.disabled=false;
+            showDeviceMessage(error.message || "Opsætningskoden blev afvist.",true);
             reportError(error,"Kunne ikke hente enhederne");
+          }finally{
+            button.disabled=false;
+            if(button.textContent==="Henter …") button.textContent="Vis aktive enheder";
           }
         });
       }
