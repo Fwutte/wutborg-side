@@ -1,0 +1,8 @@
+/madplan/
+  Cache-Control: no-cache, must-revalidate
+
+/madplan/index.html
+  Cache-Control: no-cache, must-revalidate
+
+/madplan/sw.js
+  Cache-Control: no-cache, no-store, must-revalidate
