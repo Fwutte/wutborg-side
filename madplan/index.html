@@ -232,6 +232,33 @@
   }
   .chip.sel{background:var(--ink);color:#fff;border-color:var(--ink)}
   .sheet-actions{display:flex;gap:8px;margin-top:6px}
+  .sheet-actions.stack{flex-direction:column}
+  .day .dish:not(.empty),
+  .hero-dish:not(.empty){cursor:pointer}
+  .day-picker{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
+  .day-choice{
+    width:100%;border:1px solid var(--line);background:var(--surface);
+    border-radius:12px;padding:11px 12px;font:inherit;color:var(--ink);
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    text-align:left;cursor:pointer;
+  }
+  .day-choice:active{transform:scale(.992)}
+  .day-choice b{display:block;font-size:14px;line-height:1.2}
+  .day-choice small{
+    display:block;color:var(--muted);font-size:12px;margin-top:2px;
+    max-width:300px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .day-choice .state{
+    flex:none;border-radius:999px;padding:4px 8px;background:var(--ink);
+    color:#fff;font-size:11px;font-weight:700;
+  }
+  .day-choice.occupied,
+  .day-choice.current{background:var(--surface-2)}
+  .day-choice.occupied .state{background:var(--accent-soft);color:var(--accent)}
+  .day-choice.current{border-color:var(--accent)}
+  .day-choice.current .state{background:var(--accent-soft);color:var(--accent)}
+  .day-choice:disabled{cursor:default;opacity:.92}
+  .day-choice:disabled:active{transform:none}
   .toggle-done{
     display:flex;align-items:center;justify-content:space-between;
     background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:13px 14px;cursor:pointer;
@@ -256,6 +283,18 @@
     border-radius:12px;padding:10px 12px;font:inherit;font-size:14px;color:var(--ink);
   }
   .freezer-search input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
+  .freezer-add{
+    display:grid;grid-template-columns:minmax(92px,.85fr) minmax(104px,1fr) minmax(0,1.6fr) auto;
+    gap:8px;margin-bottom:14px;
+  }
+  .freezer-add input,
+  .freezer-add select{
+    min-width:0;border:1px solid var(--line);background:var(--surface);color:var(--ink);
+    border-radius:12px;padding:0 12px;font:inherit;font-size:14px;height:46px;
+  }
+  .freezer-add input:focus,
+  .freezer-add select:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
+  .freezer-add .btn{height:46px}
   .freezer-drawers{display:flex;flex-direction:column;gap:8px}
   .freezer-drawer{
     background:var(--surface-2);border:1px solid var(--line);border-radius:15px;
@@ -396,6 +435,11 @@
     .freezer-stepper{grid-template-columns:26px minmax(42px,auto) 26px}
     .freezer-stepper button{width:26px;height:28px}
     .freezer-amount{min-width:42px;font-size:12px}
+    .day-choice small{max-width:210px}
+    .freezer-add{grid-template-columns:1fr 1fr;gap:6px}
+    .freezer-add select{font-size:12px}
+    .freezer-add #newFreezerItem,
+    .freezer-add .btn{grid-column:1 / -1}
   }
 </style>
 </head>
@@ -580,6 +624,20 @@ const store = {
     await jsend("DELETE","/plan/"+encodeURIComponent(dateISO)+"?meal_type=aftensmad");
     await loadWeek();
   },
+  async movePlan(fromISO,toISO){
+    const plan=this.getPlan(fromISO);
+    if(!plan || fromISO===toISO) return;
+    await jsend("PUT","/plan/"+encodeURIComponent(toISO),{
+      meal_type:"aftensmad",
+      dish_id:plan.dishId ?? null,
+      dish_name:plan.name,
+      cook:plan.cook || "",
+      notes:plan.notes || "",
+      is_done:plan.done ? 1 : 0,
+    });
+    await jsend("DELETE","/plan/"+encodeURIComponent(fromISO)+"?meal_type=aftensmad");
+    await loadWeek();
+  },
   getDishes(){ return cache.dishes.map(d=>({...d})); },
   async addDish(name,cat){
     await jsend("POST","/dishes",{name,category:cat || ""});
@@ -686,6 +744,12 @@ function renderPlan(){
       </div>
     </div></section>`);
   hero.querySelector(".hero-inner").addEventListener("click",()=>openSheet(heroISO));
+  if(heroPlan){
+    hero.querySelector(".hero-dish").addEventListener("click",e=>{
+      e.stopPropagation();
+      openMoveSheet(heroISO);
+    });
+  }
   out.push(hero);
 
   out.push(el(`<p class="eyebrow">Hele ugen</p>`));
@@ -704,6 +768,12 @@ function renderPlan(){
         <span class="chev">›</span>
       </div>`);
     row.addEventListener("click",()=>openSheet(di));
+    if(p){
+      row.querySelector(".dish").addEventListener("click",e=>{
+        e.stopPropagation();
+        openMoveSheet(di);
+      });
+    }
     week.append(row);
   }
   out.push(week);
@@ -831,10 +901,12 @@ function parseAmountUnit(value){
     const top=Number(fraction[1]), bottom=Number(fraction[2]);
     return {amount:bottom?top/bottom:null, unit:(fraction[3] || "").trim()};
   }
-  const xPack=text.match(/^(\d+(?:[,.]\d+)?)\s*x\s+(.+)$/i);
+  const xPack=text.match(/^(\d+(?:[,.]\d+)?)\s*x\s*(.+)$/i);
   if(xPack) return {amount:Number(xPack[1].replace(",",".")), unit:xPack[2].trim()};
   const xOnly=text.match(/^(\d+(?:[,.]\d+)?)\s*x$/i);
   if(xOnly) return {amount:Number(xOnly[1].replace(",",".")), unit:""};
+  const compactUnit=text.match(/^(\d+(?:[,.]\d+)?)(g|kg|stk\.?|ps|pose|poser|pakke|pakker|glas|boks)$/i);
+  if(compactUnit) return {amount:Number(compactUnit[1].replace(",",".")), unit:compactUnit[2].trim()};
   const numberUnit=text.match(/^(\d+(?:[,.]\d+)?)(?:\s+(.+))?$/);
   if(numberUnit) return {amount:Number(numberUnit[1].replace(",",".")), unit:(numberUnit[2] || "").trim()};
   return {amount:null, unit:text};
@@ -906,23 +978,28 @@ function renderFreezer(){
   out.push(search);
 
   const add=el(`
-    <div class="addbar">
+    <div class="freezer-add">
       <select id="freezerDrawer" aria-label="Vælg skuffe">
         ${FREEZER_DRAWERS.map(d=>`<option value="${escapeAttr(d.name)}" ${d.name===freezerDrawer?"selected":""}>${escape(d.name)}</option>`).join("")}
       </select>
-      <input id="newFreezerItem" placeholder="fx 2 x lasagne" maxlength="120">
+      <input id="newFreezerAmountUnit" placeholder="Antal/enhed" maxlength="40" aria-label="Antal og enhed">
+      <input id="newFreezerItem" placeholder="fx lasagne" maxlength="120" aria-label="Tekst">
       <button class="btn" id="addFreezerItem">Tilføj</button>
     </div>`);
   add.querySelector("#freezerDrawer").addEventListener("change",e=>{ freezerDrawer=e.currentTarget.value; });
   add.querySelector("#addFreezerItem").addEventListener("click",async()=>{
-    const input=add.querySelector("#newFreezerItem");
-    const parsed=splitFreezerInput(input.value);
-    if(!parsed.name) return;
+    const amountInput=add.querySelector("#newFreezerAmountUnit");
+    const nameInput=add.querySelector("#newFreezerItem");
+    const name=nameInput.value.trim();
+    if(!name) return;
+    const quantity=amountInput.value.trim();
+    const parsed=quantity ? parseAmountUnit(quantity) : {amount:1,unit:""};
     const button=add.querySelector("#addFreezerItem");
     button.disabled=true;
     try{
-      await store.addFreezer({drawer:freezerDrawer,name:parsed.name,quantity:parsed.quantity,amount:parsed.amount,unit:parsed.unit,notes:""});
-      input.value="";
+      await store.addFreezer({drawer:freezerDrawer,name,quantity,amount:parsed.amount,unit:parsed.unit,notes:""});
+      amountInput.value="";
+      nameInput.value="";
       render();
       toast("Lagt i fryseren");
     }catch(error){
@@ -930,9 +1007,9 @@ function renderFreezer(){
       reportError(error,"Kunne ikke tilføje");
     }
   });
-  add.querySelector("#newFreezerItem").addEventListener("keydown",e=>{
+  add.querySelectorAll("input").forEach(input=>input.addEventListener("keydown",e=>{
     if(e.key==="Enter") add.querySelector("#addFreezerItem").click();
-  });
+  }));
   out.push(add);
 
   const drawerWrap=el(`<div class="freezer-drawers"></div>`);
@@ -1128,7 +1205,8 @@ function openSheet(dateISO){
         <span>Maden er lavet</span><span class="sw"></span>
       </div>
     </div>
-    <div class="sheet-actions">
+    <div class="sheet-actions ${existing?"stack":""}">
+      ${existing?`<button class="btn ghost block" id="fMove">Flyt ret</button>`:""}
       <button class="btn block" id="fSave">Gem</button>
     </div>
     ${existing?`<span class="link-danger" id="fClear">Ryd dagen</span>`:""}
@@ -1150,6 +1228,8 @@ function openSheet(dateISO){
     }
   });
   sheet.querySelector("#fDone").addEventListener("click",e=>{ sheetDraft.done=sheetDraft.done?0:1; e.currentTarget.classList.toggle("on"); });
+  const move=sheet.querySelector("#fMove");
+  if(move) move.addEventListener("click",()=>openMoveSheet(dateISO));
   sheet.querySelector("#fSave").addEventListener("click",async e=>{
     const name=sheet.querySelector("#fDish").value.trim();
     e.currentTarget.disabled=true;
@@ -1172,26 +1252,82 @@ function openSheet(dateISO){
   showSheet();
 }
 
+function dayChoiceLabel(date,index){
+  return `${WD_SHORT[index]} ${date.getDate()}/${date.getMonth()+1}`;
+}
+
+function openMoveSheet(fromISO){
+  const plan=store.getPlan(fromISO);
+  if(!plan) return openSheet(fromISO);
+
+  const sourceDate=new Date(fromISO+"T00:00:00");
+  const sourceIndex=(sourceDate.getDay()+6)%7;
+  const sheet=$("#sheet");
+  sheet.innerHTML=`<div class="grabber"></div>
+    <h2>Flyt ${escape(plan.name)}</h2>
+    <p class="sub">Fra ${WD_LONG[sourceIndex]} ${sourceDate.getDate()}. ${MONTHS[sourceDate.getMonth()]}</p>
+    <div class="day-picker" id="moveDayChoices"></div>`;
+
+  const choices=sheet.querySelector("#moveDayChoices");
+  for(let i=0;i<7;i++){
+    const d=addDays(weekStart,i), di=iso(d);
+    const existing=store.getPlan(di);
+    const isCurrent=di===fromISO;
+    const isOccupied=Boolean(existing) && !isCurrent;
+    const state=isCurrent ? "Nuværende" : isOccupied ? "Optaget" : "Ledig";
+    const detail=existing ? existing.name : "Ingen ret planlagt";
+    const button=el(`
+      <button class="day-choice ${isCurrent?"current":isOccupied?"occupied":"open"}" type="button" ${isCurrent||isOccupied?"disabled":""}>
+        <span><b>${dayChoiceLabel(d,i)}</b><small>${escape(detail)}</small></span>
+        <span class="state">${state}</span>
+      </button>`);
+    if(!isCurrent && !isOccupied){
+      button.addEventListener("click",async e=>{
+        e.currentTarget.disabled=true;
+        try{
+          await store.movePlan(fromISO,di);
+          closeSheet();
+          currentView="plan";
+          render();
+          toast(plan.name+" flyttet til "+WD_LONG[i]);
+        }catch(error){
+          e.currentTarget.disabled=false;
+          reportError(error,"Kunne ikke flytte retten");
+        }
+      });
+    }
+    choices.append(button);
+  }
+  showSheet();
+}
+
 /* vælg dag når man trykker på en ret i biblioteket */
 function openDayPicker(dish){
   const sheet=$("#sheet");
   sheet.innerHTML=`<div class="grabber"></div>
     <h2>${escape(dish.name)}</h2><p class="sub">På hvilken dag?</p>
-    <div class="chips" id="dayChips" style="margin-bottom:8px"></div>`;
-  const chips=sheet.querySelector("#dayChips");
+    <div class="day-picker" id="dayChoices"></div>`;
+  const choices=sheet.querySelector("#dayChoices");
   for(let i=0;i<7;i++){
     const d=addDays(weekStart,i), di=iso(d);
-    const c=el(`<div class="chip">${WD_SHORT[i]} ${d.getDate()}/${d.getMonth()+1}</div>`);
-    c.addEventListener("click",async()=>{
-      c.style.pointerEvents="none";
-      try{
-        await store.setPlan(di,{name:dish.name, dishId:dish.id, cook:"", notes:"", done:0});
-        closeSheet(); currentView="plan"; render(); toast(dish.name+" sat på "+WD_LONG[i]);
-      }catch(error){
-        c.style.pointerEvents=""; reportError(error);
-      }
-    });
-    chips.append(c);
+    const existing=store.getPlan(di);
+    const button=el(`
+      <button class="day-choice ${existing?"occupied":"open"}" type="button" ${existing?"disabled":""}>
+        <span><b>${dayChoiceLabel(d,i)}</b><small>${existing?escape(existing.name):"Ingen ret planlagt"}</small></span>
+        <span class="state">${existing?"Optaget":"Ledig"}</span>
+      </button>`);
+    if(!existing){
+      button.addEventListener("click",async e=>{
+        e.currentTarget.disabled=true;
+        try{
+          await store.setPlan(di,{name:dish.name, dishId:dish.id, cook:"", notes:"", done:0});
+          closeSheet(); currentView="plan"; render(); toast(dish.name+" sat på "+WD_LONG[i]);
+        }catch(error){
+          e.currentTarget.disabled=false; reportError(error);
+        }
+      });
+    }
+    choices.append(button);
   }
   showSheet();
 }
