@@ -236,6 +236,17 @@
   .day .dish:not(.empty),
   .hero-dish:not(.empty){cursor:pointer}
   .day-picker{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
+  .move-week-nav{
+    display:flex;align-items:center;justify-content:space-between;gap:8px;
+    background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    padding:6px;margin-bottom:10px;
+  }
+  .move-week-nav button{
+    width:38px;height:34px;border:0;border-radius:10px;background:var(--paper);
+    color:var(--ink);font:inherit;font-size:18px;cursor:pointer;display:grid;place-items:center;
+  }
+  .move-week-nav button:disabled{opacity:.45;cursor:default}
+  .move-week-nav span{font-size:13px;font-weight:700;color:var(--ink);text-align:center}
   .day-choice{
     width:100%;border:1px solid var(--line);background:var(--surface);
     border-radius:12px;padding:11px 12px;font:inherit;color:var(--ink);
@@ -550,9 +561,7 @@ const jsend = (method, path, body) => {
   return fetch(API+path, options).then(apiResult);
 };
 
-async function loadWeek(){
-  const from=iso(weekStart), to=iso(addDays(weekStart,6));
-  const rows=await jget(`/plan?from=${from}&to=${to}`);
+function planRowsToMap(rows){
   const plan={};
   rows.filter(r=>r.meal_type==="aftensmad").forEach(r=>{
     plan[r.plan_date]={
@@ -563,7 +572,16 @@ async function loadWeek(){
       done:Number(r.is_done),
     };
   });
-  cache.plan=plan;
+  return plan;
+}
+
+async function fetchWeekPlan(startDate){
+  const from=iso(startDate), to=iso(addDays(startDate,6));
+  return planRowsToMap(await jget(`/plan?from=${from}&to=${to}`));
+}
+
+async function loadWeek(){
+  cache.plan=await fetchWeekPlan(weekStart);
 }
 
 async function loadDishes(){
@@ -624,8 +642,9 @@ const store = {
     await jsend("DELETE","/plan/"+encodeURIComponent(dateISO)+"?meal_type=aftensmad");
     await loadWeek();
   },
-  async movePlan(fromISO,toISO){
-    const plan=this.getPlan(fromISO);
+  getWeekPlan(startDate){ return fetchWeekPlan(startDate); },
+  async movePlan(fromISO,toISO,planOverride=null){
+    const plan=planOverride || this.getPlan(fromISO);
     if(!plan || fromISO===toISO) return;
     await jsend("PUT","/plan/"+encodeURIComponent(toISO),{
       meal_type:"aftensmad",
@@ -1263,41 +1282,86 @@ function openMoveSheet(fromISO){
   const sourceDate=new Date(fromISO+"T00:00:00");
   const sourceIndex=(sourceDate.getDay()+6)%7;
   const sheet=$("#sheet");
+  let moveWeekStart=mondayOf(sourceDate);
+  let moveRequest=0;
   sheet.innerHTML=`<div class="grabber"></div>
     <h2>Flyt ${escape(plan.name)}</h2>
     <p class="sub">Fra ${WD_LONG[sourceIndex]} ${sourceDate.getDate()}. ${MONTHS[sourceDate.getMonth()]}</p>
+    <div class="move-week-nav">
+      <button id="movePrevWeek" type="button" aria-label="Forrige uge">‹</button>
+      <span id="moveWeekLabel"></span>
+      <button id="moveNextWeek" type="button" aria-label="Næste uge">›</button>
+    </div>
     <div class="day-picker" id="moveDayChoices"></div>`;
 
   const choices=sheet.querySelector("#moveDayChoices");
-  for(let i=0;i<7;i++){
-    const d=addDays(weekStart,i), di=iso(d);
-    const existing=store.getPlan(di);
-    const isCurrent=di===fromISO;
-    const isOccupied=Boolean(existing) && !isCurrent;
-    const state=isCurrent ? "Nuværende" : isOccupied ? "Optaget" : "Ledig";
-    const detail=existing ? existing.name : "Ingen ret planlagt";
-    const button=el(`
-      <button class="day-choice ${isCurrent?"current":isOccupied?"occupied":"open"}" type="button" ${isCurrent||isOccupied?"disabled":""}>
-        <span><b>${dayChoiceLabel(d,i)}</b><small>${escape(detail)}</small></span>
-        <span class="state">${state}</span>
-      </button>`);
-    if(!isCurrent && !isOccupied){
-      button.addEventListener("click",async e=>{
-        e.currentTarget.disabled=true;
-        try{
-          await store.movePlan(fromISO,di);
-          closeSheet();
-          currentView="plan";
-          render();
-          toast(plan.name+" flyttet til "+WD_LONG[i]);
-        }catch(error){
-          e.currentTarget.disabled=false;
-          reportError(error,"Kunne ikke flytte retten");
+  const label=sheet.querySelector("#moveWeekLabel");
+  const prev=sheet.querySelector("#movePrevWeek");
+  const next=sheet.querySelector("#moveNextWeek");
+
+  async function renderMoveWeek(){
+    const request=++moveRequest;
+    label.textContent="Uge "+isoWeek(moveWeekStart);
+    choices.innerHTML=`<div class="empty-note">Henter uge …</div>`;
+    prev.disabled=true;
+    next.disabled=true;
+
+    try{
+      const weekPlan=await store.getWeekPlan(moveWeekStart);
+      if(request!==moveRequest) return;
+      choices.innerHTML="";
+      for(let i=0;i<7;i++){
+        const d=addDays(moveWeekStart,i), di=iso(d);
+        const existing=weekPlan[di] || null;
+        const isCurrent=di===fromISO;
+        const isOccupied=Boolean(existing) && !isCurrent;
+        const state=isCurrent ? "Nuværende" : isOccupied ? "Optaget" : "Ledig";
+        const detail=existing ? existing.name : "Ingen ret planlagt";
+        const button=el(`
+          <button class="day-choice ${isCurrent?"current":isOccupied?"occupied":"open"}" type="button" ${isCurrent||isOccupied?"disabled":""}>
+            <span><b>${dayChoiceLabel(d,i)}</b><small>${escape(detail)}</small></span>
+            <span class="state">${state}</span>
+          </button>`);
+        if(!isCurrent && !isOccupied){
+          button.addEventListener("click",async e=>{
+            e.currentTarget.disabled=true;
+            try{
+              await store.movePlan(fromISO,di,plan);
+              weekStart=mondayOf(d);
+              await store.loadWeek();
+              closeSheet();
+              currentView="plan";
+              render();
+              toast(plan.name+" flyttet til "+WD_LONG[i]);
+            }catch(error){
+              e.currentTarget.disabled=false;
+              reportError(error,"Kunne ikke flytte retten");
+            }
+          });
         }
-      });
+        choices.append(button);
+      }
+    }catch(error){
+      if(request!==moveRequest) return;
+      choices.innerHTML=`<div class="empty-note warn">Ugen kunne ikke hentes.</div>`;
+      reportError(error,"Kunne ikke hente ugen");
+    }finally{
+      if(request===moveRequest){
+        prev.disabled=false;
+        next.disabled=false;
+      }
     }
-    choices.append(button);
   }
+
+  prev.addEventListener("click",()=>{
+    moveWeekStart=addDays(moveWeekStart,-7);
+    renderMoveWeek();
+  });
+  next.addEventListener("click",()=>{
+    moveWeekStart=addDays(moveWeekStart,7);
+    renderMoveWeek();
+  });
+  renderMoveWeek();
   showSheet();
 }
 
