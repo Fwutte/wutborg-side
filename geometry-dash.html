@@ -191,7 +191,7 @@
 
     .hud {
       display: grid;
-      grid-template-columns: repeat(4, minmax(78px, 1fr));
+      grid-template-columns: repeat(5, minmax(64px, 1fr));
       gap: 8px;
     }
 
@@ -396,7 +396,7 @@
       }
 
       .hud {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
+        grid-template-columns: repeat(5, minmax(0, 1fr));
       }
     }
 
@@ -492,6 +492,7 @@
           <div class="hud-item"><span>Bedst</span><strong id="best">0</strong></div>
           <div class="hud-item"><span>Niveau</span><strong id="level">1 / 3</strong></div>
           <div class="hud-item"><span>Rytme</span><strong id="tempo">100%</strong></div>
+          <div class="hud-item"><span>Forsøg</span><strong id="attempts">0</strong></div>
         </div>
       </header>
 
@@ -537,6 +538,7 @@
     const bestElement = document.getElementById("best");
     const levelElement = document.getElementById("level");
     const tempoElement = document.getElementById("tempo");
+    const attemptsElement = document.getElementById("attempts");
     const statusElement = document.getElementById("status");
     const overlay = document.getElementById("overlay");
     const overlayKicker = document.getElementById("overlay-kicker");
@@ -554,6 +556,31 @@
     const PLAYER_X = 160;
     const PLAYER_SIZE = 42;
     const BEST_KEY = "wutborg_geometry_dash_best";
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const BPM = 128;
+    const BEAT_INTERVAL = 60 / BPM;
+    let beatTimer = null;
+
+    function startBeat() {
+      if (state.beatActive || !audioContext) return;
+      state.beatActive = true;
+      let next = audioContext.currentTime + 0.05;
+      const tick = () => {
+        if (!state.beatActive) return;
+        state.beat = (state.beat + 1) % 4;
+        tone(state.beat === 0 ? 90 : 60, 0.06, "square", 0.05);
+        next += BEAT_INTERVAL;
+        const delay = Math.max(0, (next - audioContext.currentTime) * 1000);
+        beatTimer = setTimeout(tick, delay);
+      };
+      tick();
+    }
+
+    function stopBeat() {
+      state.beatActive = false;
+      if (beatTimer) { clearTimeout(beatTimer); beatTimer = null; }
+      state.beat = 0;
+    }
 
     const LEVELS = [
       {
@@ -596,7 +623,8 @@
           block(1720, 70, 90), block(1985, 70, 55), spike(2220), spike(2285),
           shard(2475, 270), block(2750, 130, 50), spike(3095), block(3360, 64, 96),
           spike(3675), spike(3730), block(4020, 70, 58), shard(4210, 292),
-          spike(4570), block(4870, 120, 50), spike(5205)
+          spike(4570), block(4870, 120, 50), spike(5205),
+          flip(4900), block(5100, 120, 50), speedGate(5350, 1.5), spike(5500)
         ]
       },
       {
@@ -619,7 +647,8 @@
           block(2515, 96, 54), shard(2685, 286), spike(2935), spike(2995),
           block(3270, 70, 84), block(3545, 70, 54), spike(3830), shard(4045, 278),
           spike(4300), spike(4360), block(4680, 140, 54), spike(5055),
-          block(5320, 70, 96), shard(5525, 252), spike(5825), spike(5885), block(6155, 92, 52)
+          speedGate(5150, 0.6), flip(5250), block(5320, 70, 96), shard(5525, 252),
+          flip(5700), spike(5825), spike(5885), block(6155, 92, 52)
         ]
       }
     ];
@@ -637,6 +666,12 @@
       flash: 0,
       jumpBuffer: 0,
       coyote: 0,
+      holding: false,
+      attempts: 0,
+      beat: 0,
+      beatActive: false,
+      flipped: false,
+      speedMultiplier: 1,
       collected: new Set(),
       particles: [],
       rings: [],
@@ -663,6 +698,14 @@
 
     function shard(x, y) {
       return { type: "shard", x, y, radius: 17 };
+    }
+
+    function flip(x) {
+      return { type: "flip", x };
+    }
+
+    function speedGate(x, multiplier) {
+      return { type: "speedGate", x, multiplier };
     }
 
     function currentLevel() {
@@ -731,10 +774,13 @@
       state.player.onGround = true;
       state.jumpBuffer = 0;
       state.coyote = 0;
+      state.flipped = false;
+      state.speedMultiplier = 1;
     }
 
     function startGame(practice = false) {
       ensureAudio();
+      startBeat();
       state.practice = practice;
       state.mode = "playing";
       state.levelIndex = practice ? 0 : state.levelIndex;
@@ -747,6 +793,10 @@
       state.shake = 0;
       state.flash = 0;
       state.messageTimer = 1.8;
+      state.attempts += 1;
+      state.holding = false;
+      state.flipped = false;
+      state.speedMultiplier = 1;
       resetPlayer();
       overlay.classList.remove("visible");
       pauseButton.textContent = "Pause";
@@ -765,6 +815,8 @@
       state.collected = new Set();
       state.particles = [];
       state.rings = [];
+      state.flipped = false;
+      state.speedMultiplier = 1;
       resetPlayer();
       state.messageTimer = 1.7;
       statusElement.textContent = `${currentLevel().name} startet.`;
@@ -772,6 +824,7 @@
     }
 
     function completeGame() {
+      stopBeat();
       state.mode = "win";
       state.best = Math.max(state.best, state.score);
       localStorage.setItem(BEST_KEY, String(state.best));
@@ -779,7 +832,7 @@
       showOverlay(
         "Banen klaret",
         "Clean<br />Run!",
-        `Score ${state.score.toLocaleString("da-DK")}. Klar til at jagte en bedre rytme?`,
+        `Score ${state.score.toLocaleString("da-DK")} på ${state.attempts} forsøg. Klar til at jagte en bedre rytme?`,
         "Spil igen",
         "Nyt practice run"
       );
@@ -789,11 +842,12 @@
 
     function crash() {
       if (state.mode !== "playing") return;
+      stopBeat();
       state.mode = "crashed";
-      state.shake = 15;
-      state.flash = 1;
+      state.shake = reducedMotion ? 4 : 15;
+      state.flash = reducedMotion ? 0.35 : 1;
       playCrash();
-      spawnParticles(state.player.x + PLAYER_SIZE / 2, state.player.y + PLAYER_SIZE / 2, "#ff4d9e", 36, 320);
+      spawnParticles(state.player.x + PLAYER_SIZE / 2, state.player.y + PLAYER_SIZE / 2, "#ff4d9e", reducedMotion ? 12 : 36, 320);
       statusElement.textContent = "Av. Prøv igen fra start.";
       setTimeout(() => {
         if (state.mode !== "crashed") return;
@@ -804,7 +858,7 @@
         showOverlay(
           "Crash",
           "Game<br />Over",
-          `Du landede på ${state.score.toLocaleString("da-DK")} point.`,
+          `Du landede på ${state.score.toLocaleString("da-DK")} point (forsøg ${state.attempts}).`,
           "Prøv igen",
           "Practice run"
         );
@@ -840,17 +894,19 @@
       state.coyote = 0;
       state.jumpBuffer = 0;
       state.player.rotation += Math.PI / 4;
-      spawnParticles(state.player.x + PLAYER_SIZE / 2, state.player.y + PLAYER_SIZE, level.colors.primary, 10, 130);
+      spawnParticles(state.player.x + PLAYER_SIZE / 2, state.player.y + PLAYER_SIZE, level.colors.primary, reducedMotion ? 3 : 10, 130);
       playJump();
     }
 
     function togglePause() {
       if (state.mode === "playing") {
+        stopBeat();
         state.mode = "paused";
         pauseButton.textContent = "Fortsaet";
         showOverlay("Pause", "Pause", "Kuben holder rytmen i ro.", "Fortsaet", "Practice run");
         statusElement.textContent = "Spillet er sat på pause.";
       } else if (state.mode === "paused") {
+        startBeat();
         state.mode = "playing";
         pauseButton.textContent = "Pause";
         overlay.classList.remove("visible");
@@ -867,15 +923,16 @@
       scoreElement.textContent = state.score.toLocaleString("da-DK");
       bestElement.textContent = state.best.toLocaleString("da-DK");
       levelElement.textContent = `${state.levelIndex + 1} / ${LEVELS.length}`;
-      const speed = currentLevel().speed;
+      const speed = currentLevel().speed * state.speedMultiplier;
       tempoElement.textContent = `${Math.round((speed / LEVELS[0].speed) * 100)}%`;
+      attemptsElement.textContent = String(state.attempts);
     }
 
     function update(delta) {
       const level = currentLevel();
       const player = state.player;
       state.elapsed += delta;
-      state.scroll += level.speed * delta;
+      state.scroll += level.speed * state.speedMultiplier * delta;
       state.score = Math.max(
         state.score,
         Math.floor(state.scroll / 7) + state.collected.size * 125 + state.levelIndex * 900
@@ -888,13 +945,20 @@
       state.flash = Math.max(0, state.flash - delta * 4.2);
 
       player.previousY = player.y;
-      player.vy += level.gravity * delta;
+      const gravityDir = state.flipped ? -1 : 1;
+      player.vy += level.gravity * gravityDir * delta;
       player.vy = clamp(player.vy, -980, 980);
       player.y += player.vy * delta;
       player.onGround = false;
 
-      if (player.y + PLAYER_SIZE >= GROUND_Y) {
+      if (!state.flipped && player.y + PLAYER_SIZE >= GROUND_Y) {
         player.y = GROUND_Y - PLAYER_SIZE;
+        player.vy = 0;
+        player.onGround = true;
+        state.coyote = 0.09;
+      }
+      if (state.flipped && player.y <= 0) {
+        player.y = 0;
         player.vy = 0;
         player.onGround = true;
         state.coyote = 0.09;
@@ -952,9 +1016,32 @@
             playCollect();
           }
         }
+
+        if (object.type === "flip" && !state.collected.has("flip" + object.x)) {
+          if (screenX < PLAYER_X + PLAYER_SIZE) {
+            state.flipped = !state.flipped;
+            state.collected.add("flip" + object.x);
+            state.rings.push({ x: screenX, y: GROUND_Y / 2, radius: 24, life: 0.6, color: level.colors.primary });
+            spawnParticles(screenX, GROUND_Y / 2, level.colors.primary, 16, 180);
+            player.vy = level.jump * (state.flipped ? 1 : -1);
+            playCollect();
+          }
+        }
+
+        if (object.type === "speedGate" && !state.collected.has("speed" + object.x)) {
+          if (screenX < PLAYER_X + PLAYER_SIZE) {
+            state.speedMultiplier = object.multiplier;
+            state.collected.add("speed" + object.x);
+            state.rings.push({ x: screenX, y: GROUND_Y / 2, radius: 26, life: 0.6, color: level.colors.secondary });
+            spawnParticles(screenX, GROUND_Y / 2, level.colors.secondary, 16, 200);
+            playCollect();
+          }
+        }
       }
 
       if (state.jumpBuffer > 0 && (player.onGround || state.coyote > 0)) {
+        performJump();
+      } else if (state.holding && player.onGround) {
         performJump();
       }
 
@@ -1042,6 +1129,11 @@
       ctx.fillStyle = sky;
       ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
+      if (state.beatActive && state.beat === 0) {
+        ctx.fillStyle = "rgba(255, 255, 255, 0.035)";
+        ctx.fillRect(0, 0, WIDTH, HEIGHT);
+      }
+
       ctx.save();
       ctx.globalAlpha = 0.42;
       drawParallaxGrid(0.16, 72, colors.primary);
@@ -1063,10 +1155,11 @@
 
       ctx.fillStyle = colors.floor;
       ctx.fillRect(-20, GROUND_Y, WIDTH + 40, HEIGHT - GROUND_Y + 20);
+      const beatPulse = state.beatActive && state.beat === 0 ? 0.5 : 0;
       ctx.fillStyle = colors.primary;
       ctx.shadowColor = colors.primary;
-      ctx.shadowBlur = 20;
-      ctx.fillRect(-20, GROUND_Y - 5, WIDTH + 40, 7);
+      ctx.shadowBlur = 20 + beatPulse * 30;
+      ctx.fillRect(-20, GROUND_Y - 5, WIDTH + 40, 7 + beatPulse * 3);
       ctx.shadowBlur = 0;
 
       ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
@@ -1112,7 +1205,56 @@
         if (object.type === "spike") drawSpike(screenX, GROUND_Y, object.width, object.height, colors);
         if (object.type === "block") drawBlock(screenX, GROUND_Y - object.height, object.width, object.height, colors);
         if (object.type === "shard" && !state.collected.has(object.x)) drawShard(screenX, object.y, object.radius, colors);
+        if (object.type === "flip" && !state.collected.has("flip" + object.x)) drawFlipPortal(screenX, GROUND_Y, colors);
+        if (object.type === "speedGate" && !state.collected.has("speed" + object.x)) drawSpeedGate(screenX, GROUND_Y, colors, object.multiplier);
       }
+    }
+
+    function drawFlipPortal(x, baseY, colors) {
+      ctx.save();
+      const t = performance.now() * 0.003;
+      const cx = x + 24;
+      const cy = baseY - 110;
+      ctx.globalAlpha = 0.85;
+      ctx.strokeStyle = colors.primary;
+      ctx.shadowColor = colors.primary;
+      ctx.shadowBlur = 22;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, 14, 110, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.globalAlpha = 0.4 + Math.sin(t * 3) * 0.2;
+      ctx.fillStyle = colors.primary;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, 8, 90, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawSpeedGate(x, baseY, colors, multiplier) {
+      ctx.save();
+      const t = performance.now() * 0.004;
+      const cx = x + 24;
+      const top = baseY - 200;
+      ctx.globalAlpha = 0.8;
+      ctx.strokeStyle = colors.secondary;
+      ctx.shadowColor = colors.secondary;
+      ctx.shadowBlur = 20;
+      ctx.lineWidth = 3;
+      for (let i = 0; i < 3; i++) {
+        const yo = top + i * 70 + Math.sin(t + i) * 6;
+        ctx.beginPath();
+        ctx.moveTo(cx - 22, yo);
+        ctx.lineTo(cx + 22, yo);
+        ctx.stroke();
+      }
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = "#fff";
+      ctx.font = "900 13px system-ui, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText((multiplier < 1 ? "SLOW" : "FAST") + " x" + multiplier, cx, top - 14);
+      ctx.restore();
     }
 
     function drawSpike(x, baseY, width, height, colors) {
@@ -1195,6 +1337,7 @@
       const player = state.player;
       ctx.save();
       ctx.translate(player.x + PLAYER_SIZE / 2, player.y + PLAYER_SIZE / 2);
+      if (state.flipped) ctx.scale(1, -1);
       ctx.rotate(player.rotation);
       ctx.shadowColor = colors.primary;
       ctx.shadowBlur = 24;
@@ -1254,6 +1397,12 @@
       ctx.beginPath();
       ctx.roundRect(24, 24, (WIDTH - 48) * progress, 10, 5);
       ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = "#fff";
+      ctx.font = "900 11px system-ui, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(`${Math.round(progress * 100)}%`, WIDTH / 2, 29);
       ctx.restore();
     }
 
@@ -1296,22 +1445,45 @@
     jumpButton.addEventListener("pointerdown", (event) => {
       event.preventDefault();
       requestJump();
+      state.holding = true;
     });
     pauseButton.addEventListener("click", togglePause);
     restartButton.addEventListener("click", restartGame);
     canvas.addEventListener("pointerdown", (event) => {
       event.preventDefault();
       requestJump();
+      state.holding = true;
     });
 
     document.addEventListener("keydown", (event) => {
       if (["Space", "ArrowUp"].includes(event.code)) event.preventDefault();
-      if (event.code === "Space" || event.code === "ArrowUp" || event.code === "KeyW") requestJump();
+      if (event.code === "Space" || event.code === "ArrowUp" || event.code === "KeyW") {
+        requestJump();
+        state.holding = true;
+      }
       if (event.code === "KeyP" || event.code === "Escape") togglePause();
       if (event.code === "Enter" && ["menu", "gameover", "win"].includes(state.mode)) startGame(false);
     });
 
+    function releaseHold() { state.holding = false; }
+    document.addEventListener("pointerup", releaseHold);
+    document.addEventListener("pointercancel", releaseHold);
+    window.addEventListener("blur", releaseHold);
+
+    document.addEventListener("keyup", (event) => {
+      if (["Space", "ArrowUp", "KeyW"].includes(event.code)) state.holding = false;
+    });
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden && state.mode === "playing") togglePause();
+    });
+
+    window.addEventListener("pagehide", () => {
+      try { localStorage.setItem(BEST_KEY, String(state.best)); } catch {}
+    });
+
     bestElement.textContent = state.best.toLocaleString("da-DK");
+    attemptsElement.textContent = String(state.attempts);
     updateHud();
     requestAnimationFrame(loop);
   </script>
