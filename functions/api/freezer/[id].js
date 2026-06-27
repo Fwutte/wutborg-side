@@ -1,40 +1,15 @@
 import {
+  amountValue,
   bad,
   bodyJson,
   changes,
   cleanText,
   json,
   positiveId,
+  quantityLabel,
+  validateDrawer,
   withErrors,
 } from "../_helpers.js";
-
-const DRAWERS = new Set(["Oksekød", "Andet", "Gris", "Kylling", "Brød", "Blandet"]);
-
-const validateDrawer = (value) => {
-  const drawer = cleanText(value, 40);
-  return DRAWERS.has(drawer) ? drawer : "";
-};
-
-const amountValue = (value) => {
-  if (value === null || value === undefined || value === "") return null;
-  const amount = Number(String(value).replace(",", "."));
-  return Number.isFinite(amount) && amount >= 0 && amount <= 999
-    ? Math.round(amount * 100) / 100
-    : NaN;
-};
-
-const formatAmount = (amount) => {
-  if (amount === null || amount === undefined || amount === "") return "";
-  return String(Number(amount)).replace(".", ",");
-};
-
-const quantityLabel = (amount, unit, fallback = "") => {
-  if (amount === null || amount === undefined || Number.isNaN(Number(amount))) {
-    return fallback;
-  }
-  const label = formatAmount(amount);
-  return unit ? `${label} ${unit}` : label;
-};
 
 export const onRequestPatch = withErrors(async ({ params, request, env }) => {
   const id = positiveId(params.id);
@@ -44,7 +19,7 @@ export const onRequestPatch = withErrors(async ({ params, request, env }) => {
   if (!body) return bad("Body skal være gyldig JSON");
 
   const existing = await env.DB.prepare(
-    `SELECT drawer, name, quantity, amount, unit, notes
+    `SELECT drawer, name, amount, unit, notes
        FROM freezer_items
       WHERE id = ?`
   )
@@ -74,23 +49,19 @@ export const onRequestPatch = withErrors(async ({ params, request, env }) => {
   const notes = Object.hasOwn(body, "notes")
     ? cleanText(body.notes, 160)
     : existing.notes || "";
-  const fallbackQuantity = Object.hasOwn(body, "quantity")
-    ? cleanText(body.quantity, 40)
-    : existing.quantity || "";
-  const quantity = quantityLabel(amount, unit, fallbackQuantity);
+  const quantity = quantityLabel(amount, unit);
 
   await env.DB.prepare(
     `UPDATE freezer_items
         SET drawer = ?,
             name = ?,
-            quantity = ?,
             amount = ?,
             unit = ?,
             notes = ?,
             updated_at = datetime('now')
       WHERE id = ?`
   )
-    .bind(drawer, name, quantity, amount, unit, notes, id)
+    .bind(drawer, name, amount, unit, notes, id)
     .run();
 
   return json({ ok: true });

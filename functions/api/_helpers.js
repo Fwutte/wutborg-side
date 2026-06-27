@@ -50,3 +50,41 @@ export const withErrors = (handler) => async (context) => {
     return bad("Der opstod en databasefejl", 500);
   }
 };
+
+/* ---------------- fryser-hjælpere ---------------- */
+/* Centraliseret, så freezer/index.js og freezer/[id].js deler én kilde. */
+export const FREEZER_DRAWERS = [
+  "Oksekød",
+  "Andet",
+  "Gris",
+  "Kylling",
+  "Brød",
+  "Blandet",
+];
+
+export const validateDrawer = (value) => {
+  const drawer = cleanText(value, 40);
+  return FREEZER_DRAWERS.includes(drawer) ? drawer : "";
+};
+
+export const amountValue = (value) => {
+  if (value === null || value === undefined || value === "") return null;
+  const amount = Number(String(value).replace(",", "."));
+  return Number.isFinite(amount) && amount >= 0 && amount <= 999
+    ? Math.round(amount * 100) / 100
+    : NaN;
+};
+
+export const formatAmount = (amount) => {
+  if (amount === null || amount === undefined || amount === "") return "";
+  return String(Number(amount)).replace(".", ",");
+};
+
+export const quantityLabel = (amount, unit, fallback = "") => {
+  if (amount === null || amount === undefined || Number.isNaN(Number(amount))) {
+    return fallback;
+  }
+  const label = formatAmount(amount);
+  return unit ? `${label} ${unit}` : label;
+};
+

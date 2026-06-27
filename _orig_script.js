@@ -1,542 +1,4 @@
-<!DOCTYPE html>
-<html lang="da">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#1F3D2C">
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon.svg">
-<title>Madplan</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --paper:#F1F3EC;
-    --surface:#FFFFFF;
-    --surface-2:#FBFCF9;
-    --ink:#1F3D2C;
-    --ink-soft:#3A5446;
-    --muted:#6E7C70;
-    --line:#E1E6DB;
-    --accent:#DD5A3A;
-    --accent-soft:#FBEAE3;
-    --radius:16px;
-    --shadow:0 1px 2px rgba(31,61,44,.05), 0 8px 24px rgba(31,61,44,.06);
-    --app-w:540px;
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  html,body{height:100%}
-  body{
-    font-family:"Inter",system-ui,sans-serif;
-    background:var(--paper);
-    color:var(--ink);
-    -webkit-font-smoothing:antialiased;
-    line-height:1.5;
-  }
-  [hidden]{display:none !important}
-  body.auth-pending .app,
-  body.auth-pending .tabbar{visibility:hidden}
-  .app{
-    width:100%;
-    max-width:var(--app-w);
-    margin:0 auto;
-    min-height:100dvh;
-    padding:0 18px calc(96px + env(safe-area-inset-bottom));
-    position:relative;
-  }
 
-  /* ---------- header ---------- */
-  .topbar{
-    display:flex;align-items:center;justify-content:space-between;
-    gap:10px;padding:22px 2px 14px;min-width:0;
-  }
-  .top-actions{display:flex;align-items:center;gap:7px;flex:none;min-width:0}
-  .device-btn{
-    height:40px;border:1px solid var(--line);border-radius:999px;padding:0 12px;
-    background:var(--surface);color:var(--ink);display:flex;align-items:center;gap:6px;
-    box-shadow:var(--shadow);cursor:pointer;
-  }
-  .device-btn svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8}
-  .device-btn span{font-size:12px;font-weight:700}
-  .wordmark{
-    font-family:"Fraunces",serif;
-    font-size:25px;font-weight:600;letter-spacing:.01em;
-    display:flex;align-items:center;gap:9px;min-width:0;flex:1 1 auto;
-  }
-  .wordmark .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);display:inline-block}
-  .weeknav{
-    display:flex;align-items:center;gap:4px;
-    background:var(--surface);border:1px solid var(--line);
-    border-radius:999px;padding:3px;box-shadow:var(--shadow);
-  }
-  .weeknav button{
-    width:34px;height:34px;border:0;border-radius:999px;background:transparent;
-    color:var(--ink);font-size:18px;cursor:pointer;display:grid;place-items:center;
-  }
-  .weeknav button:active{background:var(--paper)}
-  .weeknav .label{font-size:13px;font-weight:600;padding:0 6px;min-width:54px;text-align:center}
-
-  /* ---------- eyebrow ---------- */
-  .eyebrow{
-    font-size:11.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;
-    color:var(--muted);margin:22px 4px 10px;
-  }
-  .eyebrow.row{display:flex;justify-content:space-between;align-items:center}
-  .eyebrow .link{color:var(--accent);cursor:pointer;letter-spacing:.04em}
-
-  /* ---------- today hero ---------- */
-  .hero{
-    background:var(--surface);border-radius:var(--radius);
-    box-shadow:var(--shadow);overflow:hidden;
-    border:1px solid var(--line);
-  }
-  .hero-inner{padding:20px 20px 18px;cursor:pointer}
-  .hero-top{display:flex;align-items:center;gap:8px;margin-bottom:6px;min-width:0}
-  .hero-top .tag{
-    font-size:11px;font-weight:600;letter-spacing:.04em;
-    color:var(--accent);background:var(--accent-soft);
-    padding:3px 9px;border-radius:999px;text-transform:uppercase;
-  }
-  .hero-top .date{font-size:13px;color:var(--muted)}
-  .hero-dish{
-    font-family:"Fraunces",serif;font-weight:600;font-size:30px;
-    line-height:1.12;color:var(--ink);margin:4px 0 12px;overflow-wrap:anywhere;
-  }
-  .hero-dish.empty{color:var(--muted);font-style:italic;font-size:22px;font-weight:400}
-  .hero-meta{display:flex;gap:16px;align-items:center;font-size:14px;color:var(--ink-soft)}
-  .hero-meta span{display:flex;align-items:center;gap:6px}
-  .hero-meta .ic{opacity:.6}
-  .done-pill{
-    margin-left:auto;font-size:12px;font-weight:600;border-radius:999px;
-    padding:5px 11px;border:1px solid var(--line);color:var(--muted);background:var(--surface-2);
-  }
-  .done-pill.on{background:var(--ink);color:#fff;border-color:var(--ink)}
-
-  /* ---------- week list ---------- */
-  .week{display:flex;flex-direction:column;gap:8px}
-  .day{
-    display:flex;align-items:center;gap:14px;
-    background:var(--surface);border:1px solid var(--line);
-    border-radius:14px;padding:13px 14px;cursor:pointer;
-    transition:transform .08s ease, box-shadow .15s ease;
-  }
-  .day:hover{box-shadow:var(--shadow)}
-  .day:active{transform:scale(.992)}
-  .day.is-today{border-color:var(--accent);background:linear-gradient(0deg,var(--accent-soft),var(--surface) 70%)}
-  .day .wd{
-    width:38px;flex:none;text-align:center;
-  }
-  .day .wd b{display:block;font-size:13px;font-weight:600;text-transform:capitalize}
-  .day .wd small{display:block;font-size:11px;color:var(--muted)}
-  .day .body{flex:1;min-width:0}
-  .day .dish{font-size:15.5px;font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .day .dish.empty{color:var(--muted);font-weight:400;font-style:italic}
-  .day .sub{font-size:12.5px;color:var(--muted);margin-top:1px}
-  .day .check{color:var(--accent);font-size:15px;flex:none}
-  .day .chev{color:var(--muted);font-size:18px;flex:none;opacity:.5}
-
-  /* ---------- dishes / shopping shared list ---------- */
-  .list{display:flex;flex-direction:column;gap:8px}
-  .card-row{
-    display:flex;align-items:center;gap:12px;
-    background:var(--surface);border:1px solid var(--line);
-    border-radius:14px;padding:13px 14px;
-  }
-  .card-row.tap{cursor:pointer}
-  .card-row.tap:active{transform:scale(.992)}
-  .card-row .name{flex:1;font-size:15.5px;font-weight:500;min-width:0}
-  .card-row .name .cat{display:block;font-size:12px;color:var(--muted);font-weight:400;margin-top:1px}
-  .star{font-size:18px;border:0;background:none;cursor:pointer;color:var(--line);padding:4px}
-  .star.on{color:#E0A23B}
-  .check-row .box{
-    width:24px;height:24px;border:2px solid var(--line);border-radius:7px;flex:none;
-    display:grid;place-items:center;cursor:pointer;color:#fff;font-size:14px;transition:.12s;
-  }
-  .check-row.done .box{background:var(--ink);border-color:var(--ink)}
-  .check-row.done .name{color:var(--muted);text-decoration:line-through}
-  .qty{font-size:13px;color:var(--muted);flex:none}
-  .shop-actions{display:flex;align-items:center;gap:2px;flex:none}
-  .shop-edit,.shop-del{
-    width:30px;height:30px;border:0;border-radius:9px;background:transparent;
-    color:var(--muted);font-size:15px;cursor:pointer;display:grid;place-items:center;
-  }
-  .shop-edit:active,.shop-del:active{background:var(--paper)}
-  .shop-del{color:var(--accent)}
-
-  /* ---------- add bar ---------- */
-  .addbar{display:flex;gap:8px;margin-bottom:14px}
-  .addbar input{
-    flex:1;border:1px solid var(--line);background:var(--surface);
-    border-radius:12px;padding:13px 14px;font:inherit;font-size:15px;color:var(--ink);
-  }
-  .addbar select{
-    border:1px solid var(--line);background:var(--surface);color:var(--ink);
-    border-radius:12px;padding:0 12px;font:inherit;font-size:14px;font-weight:600;
-    min-width:112px;
-  }
-  .addbar input:focus,
-  .addbar select:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
-  .btn{
-    border:0;border-radius:12px;padding:0 18px;font:inherit;font-weight:600;font-size:15px;
-    cursor:pointer;background:var(--accent);color:#fff;display:grid;place-items:center;
-  }
-  .btn:active{filter:brightness(.95)}
-  .btn.ghost{background:var(--surface);border:1px solid var(--line);color:var(--ink)}
-  .btn.block{width:100%;padding:14px}
-
-  .empty-note{
-    text-align:center;color:var(--muted);font-size:14px;
-    padding:34px 20px;border:1px dashed var(--line);border-radius:14px;background:var(--surface-2);
-  }
-  .empty-note.warn{
-    color:var(--accent);border-color:rgba(221,90,58,.35);background:var(--accent-soft);
-  }
-
-  /* ---------- bottom tabbar ---------- */
-  .tabbar{
-    position:fixed;bottom:0;left:50%;transform:translateX(-50%);
-    width:100%;max-width:var(--app-w);
-    display:flex;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);
-    border-top:1px solid var(--line);
-    padding:8px 12px calc(8px + env(safe-area-inset-bottom));
-    z-index:30;
-  }
-  .tab{
-    flex:1;background:none;border:0;cursor:pointer;
-    display:flex;flex-direction:column;align-items:center;gap:3px;
-    color:var(--muted);font-size:11px;font-weight:600;padding:6px 0;
-  }
-  .tab svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:1.7}
-  .tab.active{color:var(--accent)}
-
-  /* ---------- bottom sheet ---------- */
-  .overlay{
-    position:fixed;inset:0;background:rgba(20,33,26,.42);
-    opacity:0;pointer-events:none;transition:opacity .2s;z-index:40;
-  }
-  .overlay.open{opacity:1;pointer-events:auto}
-  .sheet{
-    position:fixed;left:50%;bottom:0;transform:translate(-50%,100%);
-    width:100%;max-width:var(--app-w);
-    background:var(--paper);border-radius:22px 22px 0 0;
-    padding:8px 18px calc(22px + env(safe-area-inset-bottom));
-    z-index:50;transition:transform .26s cubic-bezier(.2,.8,.2,1);
-    max-height:90dvh;overflow-y:auto;
-  }
-  .sheet.open{transform:translate(-50%,0)}
-  .grabber{width:38px;height:4px;border-radius:99px;background:var(--line);margin:8px auto 14px}
-  .sheet h2{font-family:"Fraunces",serif;font-weight:600;font-size:22px;margin-bottom:2px}
-  .sheet .sub{color:var(--muted);font-size:13px;margin-bottom:18px}
-  .field{margin-bottom:14px}
-  .field label{display:block;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
-  .field input{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:13px 14px;font:inherit;font-size:15px;color:var(--ink)}
-  .field input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
-  .field-grid{display:grid;grid-template-columns:1fr 1.4fr;gap:10px}
-  .chips{display:flex;flex-wrap:wrap;gap:8px}
-  .chip{
-    border:1px solid var(--line);background:var(--surface);border-radius:999px;
-    padding:9px 14px;font-size:14px;cursor:pointer;color:var(--ink);
-  }
-  .chip.sel{background:var(--ink);color:#fff;border-color:var(--ink)}
-  .sheet-actions{display:flex;gap:8px;margin-top:6px}
-  .sheet-actions.stack{flex-direction:column}
-  .day .dish:not(.empty),
-  .hero-dish:not(.empty){cursor:pointer}
-  .day-picker{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
-  .move-week-nav{
-    display:flex;align-items:center;justify-content:space-between;gap:8px;
-    background:var(--surface);border:1px solid var(--line);border-radius:14px;
-    padding:6px;margin-bottom:10px;
-  }
-  .move-week-nav button{
-    width:38px;height:34px;border:0;border-radius:10px;background:var(--paper);
-    color:var(--ink);font:inherit;font-size:18px;cursor:pointer;display:grid;place-items:center;
-  }
-  .move-week-nav button:disabled{opacity:.45;cursor:default}
-  .move-week-nav span{font-size:13px;font-weight:700;color:var(--ink);text-align:center}
-  .day-choice{
-    width:100%;border:1px solid var(--line);background:var(--surface);
-    border-radius:12px;padding:11px 12px;font:inherit;color:var(--ink);
-    display:flex;align-items:center;justify-content:space-between;gap:10px;
-    text-align:left;cursor:pointer;
-  }
-  .day-choice:active{transform:scale(.992)}
-  .day-choice b{display:block;font-size:14px;line-height:1.2}
-  .day-choice small{
-    display:block;color:var(--muted);font-size:12px;margin-top:2px;
-    max-width:300px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  }
-  .day-choice .state{
-    flex:none;border-radius:999px;padding:4px 8px;background:var(--ink);
-    color:#fff;font-size:11px;font-weight:700;
-  }
-  .day-choice.occupied,
-  .day-choice.current{background:var(--surface-2)}
-  .day-choice.occupied .state{background:var(--accent-soft);color:var(--accent)}
-  .day-choice.current{border-color:var(--accent)}
-  .day-choice.current .state{background:var(--accent-soft);color:var(--accent)}
-  .day-choice:disabled{cursor:default;opacity:.92}
-  .day-choice:disabled:active{transform:none}
-  .toggle-done{
-    display:flex;align-items:center;justify-content:space-between;
-    background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:13px 14px;cursor:pointer;
-  }
-  .toggle-done .sw{width:44px;height:26px;border-radius:99px;background:var(--line);position:relative;transition:.18s;flex:none}
-  .toggle-done .sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.18s}
-  .toggle-done.on .sw{background:var(--ink)}
-  .toggle-done.on .sw::after{transform:translateX(18px)}
-  .link-danger{display:block;text-align:center;color:var(--accent);font-size:14px;font-weight:500;cursor:pointer;padding:14px;margin-top:4px}
-
-  /* ---------- freezer ---------- */
-  .freezer-summary{
-    display:flex;align-items:center;justify-content:space-between;gap:10px;
-    background:var(--surface);border:1px solid var(--line);border-radius:14px;
-    padding:10px 12px;margin:0 0 10px;box-shadow:var(--shadow);
-  }
-  .freezer-summary b{font-size:14px}
-  .freezer-summary span{font-size:12px;color:var(--muted);white-space:nowrap}
-  .freezer-search{margin-bottom:6px}
-  .freezer-search input{
-    width:100%;border:1px solid var(--line);background:var(--surface);
-    border-radius:12px;padding:10px 12px;font:inherit;font-size:14px;color:var(--ink);
-  }
-  .freezer-search input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
-  .freezer-add{
-    display:grid;grid-template-columns:minmax(92px,.85fr) minmax(104px,1fr) minmax(0,1.6fr) auto;
-    gap:8px;margin-bottom:14px;
-  }
-  .freezer-add input,
-  .freezer-add select{
-    min-width:0;border:1px solid var(--line);background:var(--surface);color:var(--ink);
-    border-radius:12px;padding:0 12px;font:inherit;font-size:14px;height:46px;
-  }
-  .freezer-add input:focus,
-  .freezer-add select:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
-  .freezer-add .btn{height:46px}
-  .freezer-drawers{display:flex;flex-direction:column;gap:8px}
-  .freezer-drawer{
-    background:var(--surface-2);border:1px solid var(--line);border-radius:15px;
-    padding:9px;box-shadow:var(--shadow);
-  }
-  .freezer-drawer-head{
-    display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:7px;
-  }
-  .freezer-drawer-head h3{
-    font-family:"Fraunces",serif;font-size:19px;font-weight:600;line-height:1.1;
-  }
-  .freezer-drawer-head small{
-    display:block;font-family:"Inter",system-ui,sans-serif;color:var(--muted);
-    font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-top:1px;
-  }
-  .freezer-count{
-    border:1px solid var(--line);border-radius:999px;background:var(--surface);
-    padding:4px 9px;color:var(--muted);font-size:11px;font-weight:600;white-space:nowrap;
-  }
-  .freezer-items{display:flex;flex-direction:column;gap:5px}
-  .freezer-item{
-    display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:8px;
-    background:var(--surface);border:1px solid var(--line);border-radius:12px;
-    padding:6px 7px;cursor:pointer;min-height:40px;
-  }
-  .freezer-item:active{transform:scale(.992)}
-  .freezer-item.is-empty{opacity:.5}
-  .freezer-item.is-empty .freezer-name b{text-decoration:line-through;color:var(--muted)}
-  .freezer-stepper{
-    display:grid;grid-template-columns:28px minmax(46px,auto) 28px;align-items:center;
-    border:1px solid var(--line);border-radius:10px;background:var(--paper);overflow:hidden;
-  }
-  .freezer-stepper button{
-    width:28px;height:30px;border:0;background:transparent;color:var(--ink);
-    font:inherit;font-size:17px;font-weight:700;cursor:pointer;
-  }
-  .freezer-stepper button:disabled{opacity:.35;cursor:default}
-  .freezer-amount{
-    min-width:46px;text-align:center;font-size:13px;font-weight:800;line-height:1.05;
-    padding:0 4px;color:var(--ink);
-  }
-  .freezer-amount small{
-    display:block;font-size:9px;font-weight:600;color:var(--muted);margin-top:1px;
-  }
-  .freezer-name{flex:1;min-width:0}
-  .freezer-name b{display:block;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .freezer-name small{display:block;color:var(--muted);font-size:11px;margin-top:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .freezer-delete{
-    width:30px;height:30px;border:0;border-radius:9px;background:var(--accent-soft);
-    color:var(--accent);font-size:18px;font-weight:700;cursor:pointer;
-  }
-  .freezer-empty{
-    border:1px dashed var(--line);border-radius:11px;padding:9px;color:var(--muted);
-    font-size:12px;text-align:center;background:var(--surface);
-  }
-
-  /* ---------- toast ---------- */
-  .toast{
-    position:fixed;bottom:calc(96px + env(safe-area-inset-bottom));left:50%;transform:translate(-50%,16px);
-    background:var(--ink);color:#fff;font-size:14px;font-weight:500;
-    padding:11px 18px;border-radius:999px;opacity:0;pointer-events:none;
-    transition:.22s;z-index:60;box-shadow:0 8px 24px rgba(0,0,0,.2);
-  }
-  .toast.show{opacity:1;transform:translate(-50%,0)}
-
-  /* ---------- adgang ---------- */
-  .auth-gate{
-    position:fixed;inset:0;z-index:100;background:var(--paper);
-    display:grid;place-items:center;padding:24px;
-  }
-  .auth-card{
-    width:min(100%,420px);background:var(--surface);border:1px solid var(--line);
-    border-radius:22px;padding:28px;box-shadow:var(--shadow);text-align:center;
-  }
-  .auth-mark{
-    width:52px;height:52px;border-radius:16px;background:var(--accent-soft);
-    color:var(--accent);display:grid;place-items:center;margin:0 auto 16px;
-  }
-  .auth-mark svg{width:27px;height:27px;fill:none;stroke:currentColor;stroke-width:1.8}
-  .auth-card h1{font-family:"Fraunces",serif;font-size:28px;margin-bottom:8px}
-  .auth-card p{color:var(--muted);font-size:14px;margin-bottom:14px}
-  .auth-ip{display:block;min-height:20px;color:var(--ink-soft);font-size:12px;margin-bottom:18px}
-  .auth-register{
-    margin:16px 0 0;padding-top:16px;border-top:1px solid var(--line);
-    display:flex;flex-direction:column;gap:10px;text-align:left;
-  }
-  .auth-register label{
-    display:block;font-size:11px;font-weight:600;letter-spacing:.04em;
-    text-transform:uppercase;color:var(--muted);margin-bottom:5px;
-  }
-  .auth-register input{
-    width:100%;border:1px solid var(--line);background:var(--surface-2);
-    border-radius:12px;padding:12px 13px;font:inherit;font-size:15px;color:var(--ink);
-  }
-  .auth-register input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
-  .device-list{display:flex;flex-direction:column;gap:8px;margin:14px 0}
-  .admin-status{
-    background:var(--surface);border:1px solid var(--line);border-radius:14px;
-    padding:12px 13px;margin-bottom:12px;
-  }
-  .admin-status b{display:block;font-size:14px;margin-bottom:3px}
-  .admin-status small{display:block;color:var(--muted);font-size:12px}
-  .admin-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 4px}
-  .device-entry{
-    display:flex;align-items:center;gap:10px;background:var(--surface);
-    border:1px solid var(--line);border-radius:12px;padding:11px 12px;
-  }
-  .device-entry .device-info{flex:1;min-width:0}
-  .device-entry b{display:block;font-size:14px}
-  .device-entry small{display:block;color:var(--muted);font-size:11px}
-  .mini-danger{
-    border:0;background:var(--accent-soft);color:var(--accent);border-radius:9px;
-    padding:8px 10px;font:inherit;font-size:12px;font-weight:600;cursor:pointer;
-  }
-  .mini-quiet{
-    border:1px solid var(--line);background:var(--surface);color:var(--ink);
-    border-radius:10px;padding:10px 11px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;
-  }
-
-  @media (prefers-reduced-motion: reduce){
-    *{transition:none !important}
-  }
-  @media (max-width:430px){
-    .app{padding-left:14px;padding-right:14px}
-    .topbar{gap:8px}
-    .wordmark{font-size:22px}
-    .top-actions{gap:5px}
-    .device-btn{width:36px;height:36px;padding:0;justify-content:center}
-    .device-btn span{display:none}
-    .device-btn svg{width:18px;height:18px}
-    .weeknav button{width:30px;height:30px}
-    .weeknav .label{min-width:46px;padding:0 2px;font-size:12px}
-    .tab{font-size:10px}
-    .tab svg{width:21px;height:21px}
-    .addbar{gap:6px}
-    .addbar select{min-width:92px;padding:0 8px;font-size:12px}
-    .addbar input{min-width:0}
-    .btn{padding:0 13px}
-    .freezer-summary{padding:9px 10px}
-    .freezer-summary span{font-size:11px}
-    .freezer-item{grid-template-columns:auto minmax(0,1fr) 28px;gap:6px}
-    .freezer-stepper{grid-template-columns:26px minmax(42px,auto) 26px}
-    .freezer-stepper button{width:26px;height:28px}
-    .freezer-amount{min-width:42px;font-size:12px}
-    .day-choice small{max-width:210px}
-    .freezer-add{grid-template-columns:1fr 1fr;gap:6px}
-    .freezer-add select{font-size:12px}
-    .freezer-add #newFreezerItem,
-    .freezer-add .btn{grid-column:1 / -1}
-  }
-</style>
-</head>
-<body class="auth-pending">
-<section class="auth-gate" id="authGate">
-  <div class="auth-card">
-    <div class="auth-mark">
-      <svg viewBox="0 0 24 24"><path d="M7 11V8a5 5 0 0 1 10 0v3"/><rect x="5" y="11" width="14" height="10" rx="3"/><path d="M12 15v2"/></svg>
-    </div>
-    <h1>Madplanen er låst</h1>
-    <p id="authMessage">Kontrollerer denne enhed …</p>
-    <span class="auth-ip" id="authIp"></span>
-    <button class="btn block" id="authRetry">Prøv igen</button>
-    <div class="auth-register" id="authRegisterPanel" hidden>
-      <div>
-        <label for="authDeviceName">Navn på telefonen</label>
-        <input id="authDeviceName" maxlength="60" autocomplete="off" value="Min Android">
-      </div>
-      <div>
-        <label for="authSetupKey">Opsætningskode</label>
-        <input id="authSetupKey" type="password" autocomplete="current-password">
-      </div>
-      <button class="btn block" id="authRegisterDevice">Godkend denne telefon</button>
-    </div>
-  </div>
-</section>
-
-<div class="app" id="appShell">
-  <header class="topbar">
-    <div class="wordmark"><span class="dot"></span><span id="wordmarkLabel">Madplan</span></div>
-    <div class="top-actions">
-      <button class="device-btn" id="deviceButton" aria-label="Administrer godkendte enheder">
-        <svg viewBox="0 0 24 24"><path d="M7 11V8a5 5 0 0 1 10 0v3"/><rect x="5" y="11" width="14" height="10" rx="3"/><path d="M12 15v2"/></svg>
-        <span>Enheder</span>
-      </button>
-      <nav class="weeknav">
-        <button id="prevWeek" aria-label="Forrige uge">‹</button>
-        <span class="label" id="weekLabel">Uge –</span>
-        <button id="nextWeek" aria-label="Næste uge">›</button>
-      </nav>
-    </div>
-  </header>
-
-  <main id="view"></main>
-</div>
-
-<!-- bottom navigation -->
-<nav class="tabbar">
-  <button class="tab active" data-view="plan">
-    <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
-    Madplan
-  </button>
-  <button class="tab" data-view="dishes">
-    <svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><path d="M8 4v16M4 9h4"/></svg>
-    Retter
-  </button>
-  <button class="tab" data-view="shopping">
-    <svg viewBox="0 0 24 24"><path d="M6 7h13l-1.2 8.5a2 2 0 0 1-2 1.7H9.2a2 2 0 0 1-2-1.7L6 4H3"/><circle cx="9" cy="20" r="1"/><circle cx="17" cy="20" r="1"/></svg>
-    Indkøb
-  </button>
-  <button class="tab" data-view="freezer">
-    <svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="3"/><path d="M5 9h14M8 6h2M8 13h8M8 17h8"/></svg>
-    Fryser
-  </button>
-</nav>
-
-<!-- bottom sheet -->
-<div class="overlay" id="overlay"></div>
-<div class="sheet" id="sheet"></div>
-
-<div class="toast" id="toast"></div>
-
-<script src="auth.js"></script>
-<script>
 /* ============================================================
    DATALAG  (Cloudflare Pages Functions + D1)
    --------------------------------------------------------
@@ -622,6 +84,7 @@ async function loadFreezer(){
     id:Number(f.id),
     drawer:f.drawer,
     name:f.name,
+    qty:f.quantity || "",
     amount:f.amount == null ? null : Number(f.amount),
     unit:f.unit || "",
     notes:f.notes || "",
@@ -638,53 +101,36 @@ const store = {
     return loadFreezer();
   },
   getPlan(dateISO){ return cache.plan[dateISO] ? {...cache.plan[dateISO]} : null; },
-
-  /* ---- plan: optimistic ---- */
   async setPlan(dateISO,data){
-    const prev=cache.plan[dateISO] ? {...cache.plan[dateISO]} : null;
-    cache.plan[dateISO]={dishId:data.dishId ?? null,name:data.name,cook:data.cook||"",notes:data.notes||"",done:data.done?1:0};
-    try{
-      await jsend("PUT","/plan/"+encodeURIComponent(dateISO),{
-        meal_type:"aftensmad",
-        dish_id:data.dishId ?? null,
-        dish_name:data.name,
-        cook:data.cook || "",
-        notes:data.notes || "",
-        is_done:data.done ? 1 : 0,
-      });
-      await loadWeek();
-    }catch(error){ if(prev===null) delete cache.plan[dateISO]; else cache.plan[dateISO]=prev; await loadWeek(); throw error; }
+    await jsend("PUT","/plan/"+encodeURIComponent(dateISO),{
+      meal_type:"aftensmad",
+      dish_id:data.dishId ?? null,
+      dish_name:data.name,
+      cook:data.cook || "",
+      notes:data.notes || "",
+      is_done:data.done ? 1 : 0,
+    });
+    await loadWeek();
   },
   async clearPlan(dateISO){
-    const prev=cache.plan[dateISO] ? {...cache.plan[dateISO]} : null;
-    delete cache.plan[dateISO];
-    try{
-      await jsend("DELETE","/plan/"+encodeURIComponent(dateISO)+"?meal_type=aftensmad");
-      await loadWeek();
-    }catch(error){ if(prev) cache.plan[dateISO]=prev; await loadWeek(); throw error; }
+    await jsend("DELETE","/plan/"+encodeURIComponent(dateISO)+"?meal_type=aftensmad");
+    await loadWeek();
   },
   getWeekPlan(startDate){ return fetchWeekPlan(startDate); },
   async movePlan(fromISO,toISO,planOverride=null){
     const plan=planOverride || this.getPlan(fromISO);
     if(!plan || fromISO===toISO) return;
-    const prevTo=cache.plan[toISO] ? {...cache.plan[toISO]} : null;
-    const prevFrom=cache.plan[fromISO] ? {...cache.plan[fromISO]} : null;
-    cache.plan[toISO]={...plan};
-    delete cache.plan[fromISO];
-    try{
-      await jsend("PUT","/plan/"+encodeURIComponent(toISO),{
-        meal_type:"aftensmad",
-        dish_id:plan.dishId ?? null,
-        dish_name:plan.name,
-        cook:plan.cook || "",
-        notes:plan.notes || "",
-        is_done:plan.done ? 1 : 0,
-      });
-      await jsend("DELETE","/plan/"+encodeURIComponent(fromISO)+"?meal_type=aftensmad");
-      await loadWeek();
-    }catch(error){ if(prevTo===null) delete cache.plan[toISO]; else cache.plan[toISO]=prevTo; if(prevFrom===null) delete cache.plan[fromISO]; else cache.plan[fromISO]=prevFrom; await loadWeek(); throw error; }
+    await jsend("PUT","/plan/"+encodeURIComponent(toISO),{
+      meal_type:"aftensmad",
+      dish_id:plan.dishId ?? null,
+      dish_name:plan.name,
+      cook:plan.cook || "",
+      notes:plan.notes || "",
+      is_done:plan.done ? 1 : 0,
+    });
+    await jsend("DELETE","/plan/"+encodeURIComponent(fromISO)+"?meal_type=aftensmad");
+    await loadWeek();
   },
-  /* ---- dishes: optimistic ---- */
   getDishes(){ return cache.dishes.map(d=>({...d})); },
   async addDish(name,cat){
     await jsend("POST","/dishes",{name,category:cat || ""});
@@ -693,14 +139,9 @@ const store = {
   async toggleFav(id){
     const dish=cache.dishes.find(d=>d.id===id);
     if(!dish) return;
-    const prev=dish.fav;
-    dish.fav=dish.fav?0:1;
-    try{
-      await jsend("PATCH","/dishes/"+id,{is_favorite:dish.fav});
-      await loadDishes();
-    }catch(error){ dish.fav=prev; await loadDishes(); throw error; }
+    await jsend("PATCH","/dishes/"+id,{is_favorite:dish.fav?0:1});
+    await loadDishes();
   },
-  /* ---- shopping: optimistic ---- */
   getShopping(){ return cache.shopping.map(s=>({...s})); },
   async addShop(name,quantity){
     await jsend("POST","/shopping",{name,quantity:quantity || ""});
@@ -709,80 +150,25 @@ const store = {
   async toggleShop(id){
     const item=cache.shopping.find(s=>s.id===id);
     if(!item) return;
-    const prev=item.done;
-    item.done=item.done?0:1;
-    try{
-      await jsend("PATCH","/shopping/"+id,{is_checked:item.done});
-      await loadShopping();
-    }catch(error){ item.done=prev; await loadShopping(); throw error; }
-  },
-  async updateShop(id,{name,quantity}){
-    const item=cache.shopping.find(s=>s.id===id);
-    if(!item) return;
-    const prev={name:item.name,qty:item.qty};
-    if(name!=null) item.name=name;
-    if(quantity!=null) item.qty=quantity;
-    try{
-      const patch={};
-      if(name!=null) patch.name=name;
-      if(quantity!=null) patch.quantity=quantity;
-      await jsend("PATCH","/shopping/"+id,patch);
-      await loadShopping();
-    }catch(error){ item.name=prev.name; item.qty=prev.qty; await loadShopping(); throw error; }
-  },
-  async deleteShop(id){
-    const idx=cache.shopping.findIndex(s=>s.id===id);
-    if(idx<0) return;
-    const prev=cache.shopping.splice(idx,1)[0];
-    try{
-      await jsend("DELETE","/shopping/"+id);
-      await loadShopping();
-    }catch(error){ cache.shopping.splice(idx,0,prev); await loadShopping(); throw error; }
+    await jsend("PATCH","/shopping/"+id,{is_checked:item.done?0:1});
+    await loadShopping();
   },
   async clearChecked(){
-    const prev=cache.shopping.slice();
-    cache.shopping=cache.shopping.filter(s=>!s.done);
-    try{
-      await jsend("DELETE","/shopping");
-      await loadShopping();
-    }catch(error){ cache.shopping=prev; await loadShopping(); throw error; }
+    await jsend("DELETE","/shopping");
+    await loadShopping();
   },
-  /* ---- freezer: optimistic ---- */
   getFreezer(){ return cache.freezer.map(f=>({...f})); },
   async addFreezer(item){
     await jsend("POST","/freezer",item);
     await loadFreezer();
   },
-  async updateFreezer(id,patch){
-    const item=cache.freezer.find(f=>f.id===id);
-    if(!item) return;
-    const prev={drawer:item.drawer,name:item.name,amount:item.amount,unit:item.unit,notes:item.notes};
-    if(patch.drawer!=null) item.drawer=patch.drawer;
-    if(patch.name!=null) item.name=patch.name;
-    if(patch.amount!=null) item.amount=Number(patch.amount);
-    if(patch.unit!=null) item.unit=patch.unit;
-    if(patch.notes!=null) item.notes=patch.notes;
-    try{
-      await jsend("PATCH","/freezer/"+id,patch);
-      await loadFreezer();
-    }catch(error){ Object.assign(item,prev); await loadFreezer(); throw error; }
+  async updateFreezer(id,item){
+    await jsend("PATCH","/freezer/"+id,item);
+    await loadFreezer();
   },
   async deleteFreezer(id){
-    const idx=cache.freezer.findIndex(f=>f.id===id);
-    if(idx<0) return;
-    const prev=cache.freezer.splice(idx,1)[0];
-    try{
-      await jsend("DELETE","/freezer/"+id);
-      await loadFreezer();
-    }catch(error){ cache.freezer.splice(idx,0,prev); await loadFreezer(); throw error; }
-  },
-  async clearEmptyFreezer(){
-    const prev=cache.freezer.slice();
-    cache.freezer=cache.freezer.filter(f=>Number(f.amount)!==0);
-    try{
-      await jsend("DELETE","/freezer?empty=1");
-      await loadFreezer();
-    }catch(error){ cache.freezer=prev; await loadFreezer(); throw error; }
+    await jsend("DELETE","/freezer/"+id);
+    await loadFreezer();
   },
 };
 
@@ -955,20 +341,10 @@ function renderShopping(){
         <div class="box">${s.done?"✓":""}</div>
         <div class="name">${escape(s.name)}</div>
         ${s.qty?`<span class="qty">${escape(s.qty)}</span>`:""}
-        <div class="shop-actions">
-          <button class="shop-edit" aria-label="Rediger ${escapeAttr(s.name)}">✎</button>
-          <button class="shop-del" aria-label="Slet ${escapeAttr(s.name)}">×</button>
-        </div>
       </div>`);
     row.querySelector(".box").addEventListener("click",async()=>{
       try{ await store.toggleShop(s.id); render(); }
       catch(error){ reportError(error); }
-    });
-    row.querySelector(".shop-edit").addEventListener("click",e=>{ e.stopPropagation(); openShoppingSheet(s); });
-    row.querySelector(".shop-del").addEventListener("click",async e=>{
-      e.stopPropagation();
-      try{ await store.deleteShop(s.id); render(); toast("Slettet"); }
-      catch(error){ reportError(error,"Kunne ikke slette"); }
     });
     list.append(row);
   });
@@ -1057,23 +433,10 @@ function drawerMeta(drawer){
   return FREEZER_DRAWERS.find(d=>d.name===drawer) || {name:drawer,label:"Skuffe"};
 }
 
-function applyFreezerFilter(query, root=document){
-  const q=String(query||"").toLowerCase().trim();
-  root.querySelectorAll(".freezer-drawer").forEach(section=>{
-    const rows=section.querySelectorAll(".freezer-item");
-    let visible=0;
-    rows.forEach(row=>{
-      const match=!q || (row.dataset.search||"").includes(q);
-      row.hidden=!match;
-      if(match) visible++;
-    });
-    const empty=section.querySelector(".freezer-empty");
-    if(empty){
-      if(visible>0){ empty.hidden=true; }
-      else{ empty.hidden=false; empty.textContent=q?"Ingen match i denne skuffe":"Tom skuffe"; }
-    }
-    section.hidden = q && visible===0;
-  });
+function freezerMatches(item, query){
+  if(!query) return true;
+  const haystack=`${item.drawer} ${item.name} ${item.qty} ${freezerQuantityLabel(item)} ${item.notes}`.toLowerCase();
+  return haystack.includes(query.toLowerCase());
 }
 
 function renderFreezer(){
@@ -1085,15 +448,7 @@ function renderFreezer(){
   }));
   const fullest=drawerCounts.reduce((best,drawer)=>drawer.count>best.count?drawer:best,drawerCounts[0]);
 
-  const emptyCount=items.filter(i=>Number(i.amount)===0).length;
-  const eyebrow=el(`<p class="eyebrow row"><span>Fryseroverblik</span><span>${items.length} linjer${emptyCount?` · <span class="link" id="clearEmptyFreezer">Ryd ${emptyCount} tomme</span>`:""}</span></p>`);
-  out.push(eyebrow);
-  if(emptyCount){
-    eyebrow.querySelector("#clearEmptyFreezer").addEventListener("click",async()=>{
-      try{ await store.clearEmptyFreezer(); render(); toast("Tomme linjer ryddet"); }
-      catch(error){ reportError(error,"Kunne ikke rydde"); }
-    });
-  }
+  out.push(el(`<p class="eyebrow row"><span>Fryseroverblik</span><span>${items.length} linjer</span></p>`));
   out.push(el(`
     <section class="freezer-summary">
       <b>${items.length} fryserlinjer</b>
@@ -1102,8 +457,16 @@ function renderFreezer(){
 
   const search=el(`<div class="freezer-search"><input id="freezerSearch" placeholder="Søg i fryseren" value="${escapeAttr(freezerQuery)}"></div>`);
   search.querySelector("#freezerSearch").addEventListener("input",e=>{
+    const position=e.currentTarget.selectionStart;
     freezerQuery=e.currentTarget.value;
-    applyFreezerFilter(freezerQuery);
+    render();
+    requestAnimationFrame(()=>{
+      const input=$("#freezerSearch");
+      if(input){
+        input.focus();
+        input.setSelectionRange(position,position);
+      }
+    });
   });
   out.push(search);
 
@@ -1127,7 +490,7 @@ function renderFreezer(){
     const button=add.querySelector("#addFreezerItem");
     button.disabled=true;
     try{
-      await store.addFreezer({drawer:freezerDrawer,name,amount:parsed.amount,unit:parsed.unit,notes:""});
+      await store.addFreezer({drawer:freezerDrawer,name,quantity,amount:parsed.amount,unit:parsed.unit,notes:""});
       amountInput.value="";
       nameInput.value="";
       render();
@@ -1144,8 +507,10 @@ function renderFreezer(){
 
   const drawerWrap=el(`<div class="freezer-drawers"></div>`);
   FREEZER_DRAWERS.forEach(drawer=>{
-    const drawerItems=items.filter(item=>item.drawer===drawer.name);
-    const totalInDrawer=drawerItems.length;
+    const drawerItems=items
+      .filter(item=>item.drawer===drawer.name)
+      .filter(item=>freezerMatches(item,freezerQuery));
+    const totalInDrawer=items.filter(item=>item.drawer===drawer.name).length;
     const section=el(`
       <section class="freezer-drawer">
         <div class="freezer-drawer-head">
@@ -1155,16 +520,16 @@ function renderFreezer(){
         <div class="freezer-items"></div>
       </section>`);
     const list=section.querySelector(".freezer-items");
-    list.append(el(`<div class="freezer-empty"${totalInDrawer?" hidden":""}>${totalInDrawer?"":"Tom skuffe"}</div>`));
-    drawerItems.forEach(item=>{
-      const isEmpty=Number(item.amount)===0;
-      const amountLabel=isEmpty?"Tom":formatFreezerAmount(item.amount);
-      const haystack=`${item.drawer} ${item.name} ${freezerQuantityLabel(item)} ${item.notes}`.toLowerCase();
-      const row=el(`
-          <div class="freezer-item${isEmpty?" is-empty":""}" data-search="${escapeAttr(haystack)}">
+    if(!drawerItems.length){
+      list.append(el(`<div class="freezer-empty">${freezerQuery?"Ingen match i denne skuffe":"Tom skuffe"}</div>`));
+    }else{
+      drawerItems.forEach(item=>{
+        const amountLabel=formatFreezerAmount(item.amount);
+        const row=el(`
+          <div class="freezer-item">
             <div class="freezer-stepper" aria-label="Antal ${escapeAttr(item.name)}">
               <button class="freezer-dec" aria-label="Træk fra">−</button>
-              <div class="freezer-amount">${escape(amountLabel)}${item.unit&&!isEmpty?`<small>${escape(item.unit)}</small>`:""}</div>
+              <div class="freezer-amount">${escape(amountLabel)}${item.unit?`<small>${escape(item.unit)}</small>`:""}</div>
               <button class="freezer-inc" aria-label="Læg til">+</button>
             </div>
             <div class="freezer-name">
@@ -1173,101 +538,50 @@ function renderFreezer(){
             </div>
             <button class="freezer-delete" aria-label="Slet ${escapeAttr(item.name)}">×</button>
           </div>`);
-      row.addEventListener("click",()=>openFreezerSheet(item));
-      row.querySelector(".freezer-dec").addEventListener("click",async e=>{
-        e.stopPropagation();
-        e.currentTarget.disabled=true;
-        try{
-          await bumpFreezerAmount(item,-1);
-          render();
-        }catch(error){
-          e.currentTarget.disabled=false;
-          reportError(error,"Kunne ikke ændre antal");
-        }
+        row.addEventListener("click",()=>openFreezerSheet(item));
+        row.querySelector(".freezer-dec").addEventListener("click",async e=>{
+          e.stopPropagation();
+          e.currentTarget.disabled=true;
+          try{
+            await bumpFreezerAmount(item,-1);
+            render();
+          }catch(error){
+            e.currentTarget.disabled=false;
+            reportError(error,"Kunne ikke ændre antal");
+          }
+        });
+        row.querySelector(".freezer-inc").addEventListener("click",async e=>{
+          e.stopPropagation();
+          e.currentTarget.disabled=true;
+          try{
+            await bumpFreezerAmount(item,1);
+            render();
+          }catch(error){
+            e.currentTarget.disabled=false;
+            reportError(error,"Kunne ikke ændre antal");
+          }
+        });
+        row.querySelector(".freezer-delete").addEventListener("click",async e=>{
+          e.stopPropagation();
+          e.currentTarget.disabled=true;
+          try{
+            await store.deleteFreezer(item.id);
+            render();
+            toast("Slettet fra fryseren");
+          }catch(error){
+            e.currentTarget.disabled=false;
+            reportError(error,"Kunne ikke slette");
+          }
+        });
+        list.append(row);
       });
-      row.querySelector(".freezer-inc").addEventListener("click",async e=>{
-        e.stopPropagation();
-        e.currentTarget.disabled=true;
-        try{
-          await bumpFreezerAmount(item,1);
-          render();
-        }catch(error){
-          e.currentTarget.disabled=false;
-          reportError(error,"Kunne ikke ændre antal");
-        }
-      });
-      row.querySelector(".freezer-delete").addEventListener("click",async e=>{
-        e.stopPropagation();
-        e.currentTarget.disabled=true;
-        try{
-          await store.deleteFreezer(item.id);
-          render();
-          toast("Slettet fra fryseren");
-        }catch(error){
-          e.currentTarget.disabled=false;
-          reportError(error,"Kunne ikke slette");
-        }
-      });
-      list.append(row);
-    });
+    }
     drawerWrap.append(section);
   });
   out.push(drawerWrap);
-  applyFreezerFilter(freezerQuery, drawerWrap);
   return out;
 }
 
-/* ---------------- bottom sheet: rediger indkøbsvare ---------------- */
-function openShoppingSheet(item){
-  const sheet=$("#sheet");
-  sheet.innerHTML=`
-    <div class="grabber"></div>
-    <h2>Rediger vare</h2>
-    <p class="sub">Ret navn eller mængde, eller slet varen.</p>
-    <div class="field">
-      <label>Navn</label>
-      <input id="shopName" maxlength="80" value="${escapeAttr(item.name)}">
-    </div>
-    <div class="field">
-      <label>Mængde</label>
-      <input id="shopQty" maxlength="60" placeholder="fx 2 poser, 500g" value="${escapeAttr(item.qty)}">
-    </div>
-    <div class="sheet-actions">
-      <button class="btn block" id="shopSave">Gem</button>
-    </div>
-    <span class="link-danger" id="shopDelete">Slet vare</span>
-  `;
-
-  sheet.querySelector("#shopSave").addEventListener("click",async e=>{
-    const name=sheet.querySelector("#shopName").value.trim();
-    if(!name) return;
-    e.currentTarget.disabled=true;
-    try{
-      await store.updateShop(item.id,{name,quantity:sheet.querySelector("#shopQty").value.trim()});
-      closeSheet();
-      render();
-      toast("Vare opdateret");
-    }catch(error){
-      e.currentTarget.disabled=false;
-      reportError(error,"Kunne ikke gemme");
-    }
-  });
-
-  sheet.querySelector("#shopDelete").addEventListener("click",async()=>{
-    try{
-      await store.deleteShop(item.id);
-      closeSheet();
-      render();
-      toast("Vare slettet");
-    }catch(error){
-      reportError(error,"Kunne ikke slette");
-    }
-  });
-
-  showSheet();
-}
-
-/* ---------------- bottom sheet: rediger fryserlinje ---------------- */
 function openFreezerSheet(item){
   const sheet=$("#sheet");
   const meta=drawerMeta(item.drawer);
@@ -1765,6 +1079,3 @@ window.madplanAuth.ensureAccess().then(allowed=>{
 if("serviceWorker" in navigator && location.protocol.startsWith("http")){
   window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
 }
-</script>
-</body>
-</html>

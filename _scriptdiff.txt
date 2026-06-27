@@ -1,0 +1,417 @@
+diff --git "a/c:\\wutborg-side\\wutborg-side\\_orig_script.js" "b/c:\\wutborg-side\\wutborg-side\\_my_script.js"
+index a67b20f..4ef76cf 100644
+--- "a/c:\\wutborg-side\\wutborg-side\\_orig_script.js"
++++ "b/c:\\wutborg-side\\wutborg-side\\_my_script.js"
+@@ -86,3 +86,2 @@ async function loadFreezer(){
+     name:f.name,
+-    qty:f.quantity || "",
+     amount:f.amount == null ? null : Number(f.amount),
+@@ -103,16 +102,26 @@ const store = {
+   getPlan(dateISO){ return cache.plan[dateISO] ? {...cache.plan[dateISO]} : null; },
++
++  /* ---- plan: optimistic ---- */
+   async setPlan(dateISO,data){
+-    await jsend("PUT","/plan/"+encodeURIComponent(dateISO),{
+-      meal_type:"aftensmad",
+-      dish_id:data.dishId ?? null,
+-      dish_name:data.name,
+-      cook:data.cook || "",
+-      notes:data.notes || "",
+-      is_done:data.done ? 1 : 0,
+-    });
+-    await loadWeek();
++    const prev=cache.plan[dateISO] ? {...cache.plan[dateISO]} : null;
++    cache.plan[dateISO]={dishId:data.dishId ?? null,name:data.name,cook:data.cook||"",notes:data.notes||"",done:data.done?1:0};
++    try{
++      await jsend("PUT","/plan/"+encodeURIComponent(dateISO),{
++        meal_type:"aftensmad",
++        dish_id:data.dishId ?? null,
++        dish_name:data.name,
++        cook:data.cook || "",
++        notes:data.notes || "",
++        is_done:data.done ? 1 : 0,
++      });
++      await loadWeek();
++    }catch(error){ if(prev===null) delete cache.plan[dateISO]; else cache.plan[dateISO]=prev; await loadWeek(); throw error; }
+   },
+   async clearPlan(dateISO){
+-    await jsend("DELETE","/plan/"+encodeURIComponent(dateISO)+"?meal_type=aftensmad");
+-    await loadWeek();
++    const prev=cache.plan[dateISO] ? {...cache.plan[dateISO]} : null;
++    delete cache.plan[dateISO];
++    try{
++      await jsend("DELETE","/plan/"+encodeURIComponent(dateISO)+"?meal_type=aftensmad");
++      await loadWeek();
++    }catch(error){ if(prev) cache.plan[dateISO]=prev; await loadWeek(); throw error; }
+   },
+@@ -122,13 +131,20 @@ const store = {
+     if(!plan || fromISO===toISO) return;
+-    await jsend("PUT","/plan/"+encodeURIComponent(toISO),{
+-      meal_type:"aftensmad",
+-      dish_id:plan.dishId ?? null,
+-      dish_name:plan.name,
+-      cook:plan.cook || "",
+-      notes:plan.notes || "",
+-      is_done:plan.done ? 1 : 0,
+-    });
+-    await jsend("DELETE","/plan/"+encodeURIComponent(fromISO)+"?meal_type=aftensmad");
+-    await loadWeek();
++    const prevTo=cache.plan[toISO] ? {...cache.plan[toISO]} : null;
++    const prevFrom=cache.plan[fromISO] ? {...cache.plan[fromISO]} : null;
++    cache.plan[toISO]={...plan};
++    delete cache.plan[fromISO];
++    try{
++      await jsend("PUT","/plan/"+encodeURIComponent(toISO),{
++        meal_type:"aftensmad",
++        dish_id:plan.dishId ?? null,
++        dish_name:plan.name,
++        cook:plan.cook || "",
++        notes:plan.notes || "",
++        is_done:plan.done ? 1 : 0,
++      });
++      await jsend("DELETE","/plan/"+encodeURIComponent(fromISO)+"?meal_type=aftensmad");
++      await loadWeek();
++    }catch(error){ if(prevTo===null) delete cache.plan[toISO]; else cache.plan[toISO]=prevTo; if(prevFrom===null) delete cache.plan[fromISO]; else cache.plan[fromISO]=prevFrom; await loadWeek(); throw error; }
+   },
++  /* ---- dishes: optimistic ---- */
+   getDishes(){ return cache.dishes.map(d=>({...d})); },
+@@ -141,5 +157,10 @@ const store = {
+     if(!dish) return;
+-    await jsend("PATCH","/dishes/"+id,{is_favorite:dish.fav?0:1});
+-    await loadDishes();
++    const prev=dish.fav;
++    dish.fav=dish.fav?0:1;
++    try{
++      await jsend("PATCH","/dishes/"+id,{is_favorite:dish.fav});
++      await loadDishes();
++    }catch(error){ dish.fav=prev; await loadDishes(); throw error; }
+   },
++  /* ---- shopping: optimistic ---- */
+   getShopping(){ return cache.shopping.map(s=>({...s})); },
+@@ -152,9 +173,41 @@ const store = {
+     if(!item) return;
+-    await jsend("PATCH","/shopping/"+id,{is_checked:item.done?0:1});
+-    await loadShopping();
++    const prev=item.done;
++    item.done=item.done?0:1;
++    try{
++      await jsend("PATCH","/shopping/"+id,{is_checked:item.done});
++      await loadShopping();
++    }catch(error){ item.done=prev; await loadShopping(); throw error; }
++  },
++  async updateShop(id,{name,quantity}){
++    const item=cache.shopping.find(s=>s.id===id);
++    if(!item) return;
++    const prev={name:item.name,qty:item.qty};
++    if(name!=null) item.name=name;
++    if(quantity!=null) item.qty=quantity;
++    try{
++      const patch={};
++      if(name!=null) patch.name=name;
++      if(quantity!=null) patch.quantity=quantity;
++      await jsend("PATCH","/shopping/"+id,patch);
++      await loadShopping();
++    }catch(error){ item.name=prev.name; item.qty=prev.qty; await loadShopping(); throw error; }
++  },
++  async deleteShop(id){
++    const idx=cache.shopping.findIndex(s=>s.id===id);
++    if(idx<0) return;
++    const prev=cache.shopping.splice(idx,1)[0];
++    try{
++      await jsend("DELETE","/shopping/"+id);
++      await loadShopping();
++    }catch(error){ cache.shopping.splice(idx,0,prev); await loadShopping(); throw error; }
+   },
+   async clearChecked(){
+-    await jsend("DELETE","/shopping");
+-    await loadShopping();
++    const prev=cache.shopping.slice();
++    cache.shopping=cache.shopping.filter(s=>!s.done);
++    try{
++      await jsend("DELETE","/shopping");
++      await loadShopping();
++    }catch(error){ cache.shopping=prev; await loadShopping(); throw error; }
+   },
++  /* ---- freezer: optimistic ---- */
+   getFreezer(){ return cache.freezer.map(f=>({...f})); },
+@@ -164,9 +217,32 @@ const store = {
+   },
+-  async updateFreezer(id,item){
+-    await jsend("PATCH","/freezer/"+id,item);
+-    await loadFreezer();
++  async updateFreezer(id,patch){
++    const item=cache.freezer.find(f=>f.id===id);
++    if(!item) return;
++    const prev={drawer:item.drawer,name:item.name,amount:item.amount,unit:item.unit,notes:item.notes};
++    if(patch.drawer!=null) item.drawer=patch.drawer;
++    if(patch.name!=null) item.name=patch.name;
++    if(patch.amount!=null) item.amount=Number(patch.amount);
++    if(patch.unit!=null) item.unit=patch.unit;
++    if(patch.notes!=null) item.notes=patch.notes;
++    try{
++      await jsend("PATCH","/freezer/"+id,patch);
++      await loadFreezer();
++    }catch(error){ Object.assign(item,prev); await loadFreezer(); throw error; }
+   },
+   async deleteFreezer(id){
+-    await jsend("DELETE","/freezer/"+id);
+-    await loadFreezer();
++    const idx=cache.freezer.findIndex(f=>f.id===id);
++    if(idx<0) return;
++    const prev=cache.freezer.splice(idx,1)[0];
++    try{
++      await jsend("DELETE","/freezer/"+id);
++      await loadFreezer();
++    }catch(error){ cache.freezer.splice(idx,0,prev); await loadFreezer(); throw error; }
++  },
++  async clearEmptyFreezer(){
++    const prev=cache.freezer.slice();
++    cache.freezer=cache.freezer.filter(f=>Number(f.amount)!==0);
++    try{
++      await jsend("DELETE","/freezer?empty=1");
++      await loadFreezer();
++    }catch(error){ cache.freezer=prev; await loadFreezer(); throw error; }
+   },
+@@ -343,2 +419,6 @@ function renderShopping(){
+         ${s.qty?`<span class="qty">${escape(s.qty)}</span>`:""}
++        <div class="shop-actions">
++          <button class="shop-edit" aria-label="Rediger ${escapeAttr(s.name)}">✎</button>
++          <button class="shop-del" aria-label="Slet ${escapeAttr(s.name)}">×</button>
++        </div>
+       </div>`);
+@@ -348,2 +428,8 @@ function renderShopping(){
+     });
++    row.querySelector(".shop-edit").addEventListener("click",e=>{ e.stopPropagation(); openShoppingSheet(s); });
++    row.querySelector(".shop-del").addEventListener("click",async e=>{
++      e.stopPropagation();
++      try{ await store.deleteShop(s.id); render(); toast("Slettet"); }
++      catch(error){ reportError(error,"Kunne ikke slette"); }
++    });
+     list.append(row);
+@@ -421,5 +507,2 @@ function freezerQuantityLabel(item){
+ function freezerStep(item){
+-  const amount=Number(item.amount);
+-  return amount > 0 && amount < 1 ? 0.25 : 1;
+-}
+ 
+@@ -435,6 +518,19 @@ function drawerMeta(drawer){
+ 
+-function freezerMatches(item, query){
+-  if(!query) return true;
+-  const haystack=`${item.drawer} ${item.name} ${item.qty} ${freezerQuantityLabel(item)} ${item.notes}`.toLowerCase();
+-  return haystack.includes(query.toLowerCase());
++function applyFreezerFilter(query, root=document){
++  const q=String(query||"").toLowerCase().trim();
++  root.querySelectorAll(".freezer-drawer").forEach(section=>{
++    const rows=section.querySelectorAll(".freezer-item");
++    let visible=0;
++    rows.forEach(row=>{
++      const match=!q || (row.dataset.search||"").includes(q);
++      row.hidden=!match;
++      if(match) visible++;
++    });
++    const empty=section.querySelector(".freezer-empty");
++    if(empty){
++      if(visible>0){ empty.hidden=true; }
++      else{ empty.hidden=false; empty.textContent=q?"Ingen match i denne skuffe":"Tom skuffe"; }
++    }
++    section.hidden = q && visible===0;
++  });
+ }
+@@ -450,3 +546,11 @@ function renderFreezer(){
+ 
+-  out.push(el(`<p class="eyebrow row"><span>Fryseroverblik</span><span>${items.length} linjer</span></p>`));
++  const emptyCount=items.filter(i=>Number(i.amount)===0).length;
++  const eyebrow=el(`<p class="eyebrow row"><span>Fryseroverblik</span><span>${items.length} linjer${emptyCount?` · <span class="link" id="clearEmptyFreezer">Ryd ${emptyCount} tomme</span>`:""}</span></p>`);
++  out.push(eyebrow);
++  if(emptyCount){
++    eyebrow.querySelector("#clearEmptyFreezer").addEventListener("click",async()=>{
++      try{ await store.clearEmptyFreezer(); render(); toast("Tomme linjer ryddet"); }
++      catch(error){ reportError(error,"Kunne ikke rydde"); }
++    });
++  }
+   out.push(el(`
+@@ -459,12 +563,4 @@ function renderFreezer(){
+   search.querySelector("#freezerSearch").addEventListener("input",e=>{
+-    const position=e.currentTarget.selectionStart;
+     freezerQuery=e.currentTarget.value;
+-    render();
+-    requestAnimationFrame(()=>{
+-      const input=$("#freezerSearch");
+-      if(input){
+-        input.focus();
+-        input.setSelectionRange(position,position);
+-      }
+-    });
++    applyFreezerFilter(freezerQuery);
+   });
+@@ -492,3 +588,3 @@ function renderFreezer(){
+     try{
+-      await store.addFreezer({drawer:freezerDrawer,name,quantity,amount:parsed.amount,unit:parsed.unit,notes:""});
++      await store.addFreezer({drawer:freezerDrawer,name,amount:parsed.amount,unit:parsed.unit,notes:""});
+       amountInput.value="";
+@@ -509,6 +605,4 @@ function renderFreezer(){
+   FREEZER_DRAWERS.forEach(drawer=>{
+-    const drawerItems=items
+-      .filter(item=>item.drawer===drawer.name)
+-      .filter(item=>freezerMatches(item,freezerQuery));
+-    const totalInDrawer=items.filter(item=>item.drawer===drawer.name).length;
++    const drawerItems=items.filter(item=>item.drawer===drawer.name);
++    const totalInDrawer=drawerItems.length;
+     const section=el(`
+@@ -522,12 +616,12 @@ function renderFreezer(){
+     const list=section.querySelector(".freezer-items");
+-    if(!drawerItems.length){
+-      list.append(el(`<div class="freezer-empty">${freezerQuery?"Ingen match i denne skuffe":"Tom skuffe"}</div>`));
+-    }else{
+-      drawerItems.forEach(item=>{
+-        const amountLabel=formatFreezerAmount(item.amount);
+-        const row=el(`
+-          <div class="freezer-item">
++    list.append(el(`<div class="freezer-empty"${totalInDrawer?" hidden":""}>${totalInDrawer?"":"Tom skuffe"}</div>`));
++    drawerItems.forEach(item=>{
++      const isEmpty=Number(item.amount)===0;
++      const amountLabel=isEmpty?"Tom":formatFreezerAmount(item.amount);
++      const haystack=`${item.drawer} ${item.name} ${freezerQuantityLabel(item)} ${item.notes}`.toLowerCase();
++      const row=el(`
++          <div class="freezer-item${isEmpty?" is-empty":""}" data-search="${escapeAttr(haystack)}">
+             <div class="freezer-stepper" aria-label="Antal ${escapeAttr(item.name)}">
+               <button class="freezer-dec" aria-label="Træk fra">−</button>
+-              <div class="freezer-amount">${escape(amountLabel)}${item.unit?`<small>${escape(item.unit)}</small>`:""}</div>
++              <div class="freezer-amount">${escape(amountLabel)}${item.unit&&!isEmpty?`<small>${escape(item.unit)}</small>`:""}</div>
+               <button class="freezer-inc" aria-label="Læg til">+</button>
+@@ -540,40 +634,39 @@ function renderFreezer(){
+           </div>`);
+-        row.addEventListener("click",()=>openFreezerSheet(item));
+-        row.querySelector(".freezer-dec").addEventListener("click",async e=>{
+-          e.stopPropagation();
+-          e.currentTarget.disabled=true;
+-          try{
+-            await bumpFreezerAmount(item,-1);
+-            render();
+-          }catch(error){
+-            e.currentTarget.disabled=false;
+-            reportError(error,"Kunne ikke ændre antal");
+-          }
+-        });
+-        row.querySelector(".freezer-inc").addEventListener("click",async e=>{
+-          e.stopPropagation();
+-          e.currentTarget.disabled=true;
+-          try{
+-            await bumpFreezerAmount(item,1);
+-            render();
+-          }catch(error){
+-            e.currentTarget.disabled=false;
+-            reportError(error,"Kunne ikke ændre antal");
+-          }
+-        });
+-        row.querySelector(".freezer-delete").addEventListener("click",async e=>{
+-          e.stopPropagation();
+-          e.currentTarget.disabled=true;
+-          try{
+-            await store.deleteFreezer(item.id);
+-            render();
+-            toast("Slettet fra fryseren");
+-          }catch(error){
+-            e.currentTarget.disabled=false;
+-            reportError(error,"Kunne ikke slette");
+-          }
+-        });
+-        list.append(row);
++      row.addEventListener("click",()=>openFreezerSheet(item));
++      row.querySelector(".freezer-dec").addEventListener("click",async e=>{
++        e.stopPropagation();
++        e.currentTarget.disabled=true;
++        try{
++          await bumpFreezerAmount(item,-1);
++          render();
++        }catch(error){
++          e.currentTarget.disabled=false;
++          reportError(error,"Kunne ikke ændre antal");
++        }
+       });
+-    }
++      row.querySelector(".freezer-inc").addEventListener("click",async e=>{
++        e.stopPropagation();
++        e.currentTarget.disabled=true;
++        try{
++          await bumpFreezerAmount(item,1);
++          render();
++        }catch(error){
++          e.currentTarget.disabled=false;
++          reportError(error,"Kunne ikke ændre antal");
++        }
++      });
++      row.querySelector(".freezer-delete").addEventListener("click",async e=>{
++        e.stopPropagation();
++        e.currentTarget.disabled=true;
++        try{
++          await store.deleteFreezer(item.id);
++          render();
++          toast("Slettet fra fryseren");
++        }catch(error){
++          e.currentTarget.disabled=false;
++          reportError(error,"Kunne ikke slette");
++        }
++      });
++      list.append(row);
++    });
+     drawerWrap.append(section);
+@@ -581,2 +674,3 @@ function renderFreezer(){
+   out.push(drawerWrap);
++  applyFreezerFilter(freezerQuery, drawerWrap);
+   return out;
+@@ -584,2 +678,53 @@ function renderFreezer(){
+ 
++/* ---------------- bottom sheet: rediger indkøbsvare ---------------- */
++function openShoppingSheet(item){
++  const sheet=$("#sheet");
++  sheet.innerHTML=`
++    <div class="grabber"></div>
++    <h2>Rediger vare</h2>
++    <p class="sub">Ret navn eller mængde, eller slet varen.</p>
++    <div class="field">
++      <label>Navn</label>
++      <input id="shopName" maxlength="80" value="${escapeAttr(item.name)}">
++    </div>
++    <div class="field">
++      <label>Mængde</label>
++      <input id="shopQty" maxlength="60" placeholder="fx 2 poser, 500g" value="${escapeAttr(item.qty)}">
++    </div>
++    <div class="sheet-actions">
++      <button class="btn block" id="shopSave">Gem</button>
++    </div>
++    <span class="link-danger" id="shopDelete">Slet vare</span>
++  `;
++
++  sheet.querySelector("#shopSave").addEventListener("click",async e=>{
++    const name=sheet.querySelector("#shopName").value.trim();
++    if(!name) return;
++    e.currentTarget.disabled=true;
++    try{
++      await store.updateShop(item.id,{name,quantity:sheet.querySelector("#shopQty").value.trim()});
++      closeSheet();
++      render();
++      toast("Vare opdateret");
++    }catch(error){
++      e.currentTarget.disabled=false;
++      reportError(error,"Kunne ikke gemme");
++    }
++  });
++
++  sheet.querySelector("#shopDelete").addEventListener("click",async()=>{
++    try{
++      await store.deleteShop(item.id);
++      closeSheet();
++      render();
++      toast("Vare slettet");
++    }catch(error){
++      reportError(error,"Kunne ikke slette");
++    }
++  });
++
++  showSheet();
++}
++
++/* ---------------- bottom sheet: rediger fryserlinje ---------------- */
+ function openFreezerSheet(item){
