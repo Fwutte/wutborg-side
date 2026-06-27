@@ -7,7 +7,7 @@
   <title>Familiens minispil | Wutborg.dk</title>
   <meta
     name="description"
-    content="Spil Fire på stribe, Snake, Neon Breaker, Tetris, Monster Battle Arena og Super Mario Bros. i familien Wutborgs spillehjørne."
+    content="Spil Fire på stribe, Snake, Neon Breaker, Tetris, Geometry Dash, Monster Battle Arena og Super Mario Bros. i familien Wutborgs spillehjørne."
   />
   <style>
     :root {
@@ -283,6 +283,19 @@
       --card-glow: rgba(117, 73, 232, 0.2);
     }
 
+    .game-card.geometry {
+      --card-bg:
+        radial-gradient(circle at 84% 13%, rgba(255, 216, 78, 0.18), transparent 34%),
+        radial-gradient(circle at 20% 86%, rgba(67, 228, 232, 0.16), transparent 38%),
+        linear-gradient(145deg, #182039, #050711);
+      --card-accent: #ffd84e;
+      --card-accent-2: #43e4e8;
+      --card-text: #f8fbff;
+      --card-muted: #bcc9df;
+      --card-outline: rgba(255, 216, 78, 0.28);
+      --card-glow: rgba(67, 228, 232, 0.16);
+    }
+
     .game-card.pokemon {
       grid-column: 1 / -1;
       min-height: 425px;
@@ -338,6 +351,7 @@
 
     .game-card.breaker h2,
     .game-card.tetris h2,
+    .game-card.geometry h2,
     .game-card.pokemon h2,
     .game-card.skybound h2 {
       font-family: Inter, ui-rounded, "Arial Rounded MT Bold", system-ui, sans-serif;
@@ -354,6 +368,12 @@
 
     .game-card.tetris h2 {
       text-shadow: 4px 5px 0 rgba(7, 3, 30, 0.35);
+    }
+
+    .game-card.geometry h2 {
+      max-width: 360px;
+      text-transform: uppercase;
+      text-shadow: 4px 5px 0 rgba(3, 6, 18, 0.38);
     }
 
     .game-card.pokemon h2 {
@@ -622,6 +642,97 @@
     .tetris-block.six { grid-column: 4; grid-row: 4; }
     .tetris-block.seven { grid-column: 4; grid-row: 5; }
     .tetris-block.eight { grid-column: 5; grid-row: 5; }
+
+    .geometry-preview {
+      width: 250px;
+      height: 205px;
+      overflow: hidden;
+      border: 3px solid rgba(255, 216, 78, 0.5);
+      background:
+        linear-gradient(rgba(67,228,232,0.12) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(67,228,232,0.12) 1px, transparent 1px),
+        linear-gradient(180deg, #121932 0%, #070a16 72%);
+      background-size: 34px 34px, 34px 34px, 100% 100%;
+      box-shadow: 0 0 35px rgba(255,216,78,0.14), 0 17px 32px rgba(0,0,0,0.33);
+      transform: rotate(-2.5deg);
+    }
+
+    .geometry-preview::before {
+      content: "ATTEMPT 01";
+      position: absolute;
+      top: 14px;
+      left: 16px;
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 950;
+      letter-spacing: 0.12em;
+      opacity: 0.86;
+    }
+
+    .gd-track {
+      position: absolute;
+      left: -12px;
+      right: -12px;
+      bottom: 31px;
+      height: 13px;
+      background:
+        repeating-linear-gradient(90deg, #ffd84e 0 22px, #43e4e8 22px 44px);
+      box-shadow: 0 0 18px rgba(255,216,78,0.42);
+    }
+
+    .gd-cube {
+      position: absolute;
+      left: 42px;
+      bottom: 54px;
+      width: 48px;
+      height: 48px;
+      border: 4px solid #10131f;
+      background:
+        radial-gradient(circle at 28% 33%, #fff 0 5px, transparent 6px),
+        radial-gradient(circle at 72% 33%, #fff 0 5px, transparent 6px),
+        linear-gradient(135deg, #ffd84e, #f26850);
+      box-shadow: 0 0 18px rgba(255,216,78,0.62), 8px 12px 0 rgba(0,0,0,0.25);
+      transform: rotate(13deg);
+    }
+
+    .gd-cube::after {
+      content: "";
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: 10px;
+      height: 5px;
+      background: #11182a;
+      border-radius: 999px;
+    }
+
+    .gd-spike {
+      position: absolute;
+      bottom: 44px;
+      width: 0;
+      height: 0;
+      border-left: 17px solid transparent;
+      border-right: 17px solid transparent;
+      border-bottom: 45px solid #f8fbff;
+      filter: drop-shadow(0 0 10px rgba(67,228,232,0.35));
+    }
+
+    .gd-spike.one { right: 78px; }
+    .gd-spike.two { right: 45px; }
+    .gd-spike.three { right: 12px; }
+
+    .gd-orb {
+      position: absolute;
+      top: 63px;
+      right: 83px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 4px solid rgba(255,255,255,0.9);
+      background: #43e4e8;
+      box-shadow: 0 0 20px rgba(67,228,232,0.78);
+      animation: pulse 1.35s ease-in-out infinite;
+    }
 
     .pokemon-preview {
       right: 4%;
@@ -920,11 +1031,16 @@
     }
 
     .note-symbol:nth-child(5) {
+      color: #17121f;
+      background: #ffd84e;
+    }
+
+    .note-symbol:nth-child(6) {
       color: #14212a;
       background: #efbd4d;
     }
 
-    .note-symbol:nth-child(6) {
+    .note-symbol:nth-child(7) {
       color: #fff;
       background: #f26850;
     }
@@ -1052,6 +1168,11 @@
       .tetris-preview {
         right: -25px;
         transform: scale(0.87) rotate(4deg);
+      }
+
+      .geometry-preview {
+        right: -24px;
+        transform: scale(0.9) rotate(-3deg);
       }
 
       .game-card.pokemon {
@@ -1217,9 +1338,26 @@
           </span>
         </a>
 
-        <a class="game-card pokemon" href="pokemon-battle.html">
+        <a class="game-card geometry" href="geometry-dash.html">
           <span class="card-content">
             <span class="game-number">Spil 05 · En spiller</span>
+            <h2>Geometry Dash</h2>
+            <p>Hop gennem rytmiske neonbaner med spikes, blokke, orbs og highscore-jagt.</p>
+          </span>
+          <span class="play">Spil Geometry Dash</span>
+          <span class="preview geometry-preview" aria-hidden="true">
+            <i class="gd-orb"></i>
+            <i class="gd-cube"></i>
+            <i class="gd-spike one"></i>
+            <i class="gd-spike two"></i>
+            <i class="gd-spike three"></i>
+            <i class="gd-track"></i>
+          </span>
+        </a>
+
+        <a class="game-card pokemon" href="pokemon-battle.html">
+          <span class="card-content">
+            <span class="game-number">Spil 06 · En spiller</span>
             <h2>Monster <span>Battle Arena</span></h2>
             <p>Vælg blandt 151 Pokémon, sæt level og AI, og kæmp med autentiske FireRed-sprites.</p>
           </span>
@@ -1242,7 +1380,7 @@
 
         <a class="game-card skybound" href="pips-skybound.html">
           <span class="card-content">
-            <span class="game-number">Spil 06 · En spiller</span>
+            <span class="game-number">Spil 07 · En spiller</span>
             <h2>Super <span>Mario Bros.</span></h2>
             <p>Hop gennem tre håndbyggede baner med mønter, Goombas, checkpoints og supersvampe.</p>
           </span>
@@ -1269,6 +1407,7 @@
           <span class="note-symbol">S</span>
           <span class="note-symbol">●</span>
           <span class="note-symbol">T</span>
+          <span class="note-symbol">G</span>
           <span class="note-symbol">M</span>
           <span class="note-symbol">M</span>
         </span>
