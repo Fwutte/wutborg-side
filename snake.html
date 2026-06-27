@@ -127,7 +127,10 @@
     /* ── Realistic theme ── */
     body[data-theme="realistic"] {
       font-family: 'Segoe UI', Arial, sans-serif;
-      background: #0e160c;
+      background:
+        radial-gradient(circle at 20% 4%, rgba(164, 139, 77, 0.18), transparent 26%),
+        radial-gradient(circle at 84% 12%, rgba(77, 120, 54, 0.16), transparent 24%),
+        linear-gradient(145deg, #071009 0%, #0e160c 44%, #151108 100%);
       color: #aaa;
     }
     body[data-theme="realistic"] h1 {
@@ -144,8 +147,36 @@
     }
     body[data-theme="realistic"] #difficulty-screen button:hover { background: #223818; }
     body[data-theme="realistic"] .crt-wrap {
+      position: relative;
+      overflow: hidden;
       border-radius: 3px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.7), 0 0 0 2px #253a1a;
+      border: 1px solid rgba(174, 141, 77, 0.18);
+      background: #0c1409;
+      box-shadow:
+        0 18px 55px rgba(0,0,0,0.78),
+        0 0 0 2px #253a1a,
+        inset 0 0 55px rgba(221, 196, 122, 0.05);
+    }
+    body[data-theme="realistic"] .crt-wrap::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      background:
+        linear-gradient(120deg, rgba(255,255,255,0.16), transparent 22%, transparent 68%, rgba(255,255,255,0.055)),
+        radial-gradient(circle at 16% 12%, rgba(255,244,196,0.11), transparent 32%);
+      mix-blend-mode: screen;
+      opacity: 0.78;
+    }
+    body[data-theme="realistic"] .crt-wrap::after {
+      content: "";
+      position: absolute;
+      inset: 10px;
+      z-index: 3;
+      pointer-events: none;
+      border: 1px solid rgba(236, 211, 146, 0.16);
+      box-shadow: inset 0 0 28px rgba(0,0,0,0.38);
     }
 
     /* ── Shared ── */
@@ -614,6 +645,81 @@
       }
     }
 
+    function drawMossCushion(target, x, y, radius, tint) {
+      const moss = target.createRadialGradient(x - radius * 0.2, y - radius * 0.28, 0, x, y, radius);
+      moss.addColorStop(0, `rgba(${tint},0.42)`);
+      moss.addColorStop(0.62, `rgba(${tint},0.20)`);
+      moss.addColorStop(1, "rgba(18,34,13,0)");
+      target.fillStyle = moss;
+      target.beginPath();
+      target.ellipse(x, y, radius * 1.35, radius * 0.72, Math.random() * Math.PI, 0, Math.PI * 2);
+      target.fill();
+
+      target.save();
+      target.strokeStyle = `rgba(${tint},0.34)`;
+      target.lineWidth = 0.7;
+      target.lineCap = "round";
+      for (let j = 0; j < 28; j++) {
+        const a = Math.random() * Math.PI * 2;
+        const d = Math.random() * radius;
+        const sx = x + Math.cos(a) * d * 1.08;
+        const sy = y + Math.sin(a) * d * 0.56;
+        target.beginPath();
+        target.moveTo(sx, sy);
+        target.lineTo(sx + (Math.random() - 0.5) * 4, sy - 2 - Math.random() * 5);
+        target.stroke();
+      }
+      target.restore();
+    }
+
+    for (let i = 0; i < 16; i++) {
+      drawMossCushion(
+        bgCtx,
+        35 + Math.random() * (canvas.width - 70),
+        35 + Math.random() * (canvas.height - 70),
+        15 + Math.random() * 34,
+        Math.random() < 0.5 ? "54,103,42" : "74,118,48"
+      );
+    }
+
+    for (let i = 0; i < 18; i++) {
+      const x = -30 + Math.random() * (canvas.width + 60);
+      const y = -10 + Math.random() * (canvas.height + 30);
+      const length = 80 + Math.random() * 170;
+      const angle = -0.45 + Math.random() * 0.9;
+      bgCtx.save();
+      bgCtx.translate(x, y);
+      bgCtx.rotate(angle);
+      bgCtx.strokeStyle = `rgba(56,36,19,${0.18 + Math.random() * 0.20})`;
+      bgCtx.lineWidth = 2 + Math.random() * 4;
+      bgCtx.lineCap = "round";
+      bgCtx.beginPath();
+      bgCtx.moveTo(0, 0);
+      bgCtx.bezierCurveTo(length * 0.25, -18, length * 0.68, 20, length, -4);
+      bgCtx.stroke();
+      bgCtx.strokeStyle = "rgba(142,103,54,0.16)";
+      bgCtx.lineWidth = 0.7;
+      bgCtx.beginPath();
+      bgCtx.moveTo(5, -1);
+      bgCtx.bezierCurveTo(length * 0.28, -14, length * 0.66, 14, length - 10, -5);
+      bgCtx.stroke();
+      bgCtx.restore();
+    }
+
+    for (let i = 0; i < 42; i++) {
+      const x = Math.random() * canvas.width;
+      const y = Math.random() * canvas.height;
+      const r = 1.4 + Math.random() * 2.6;
+      const dew = bgCtx.createRadialGradient(x - r * 0.35, y - r * 0.45, 0, x, y, r);
+      dew.addColorStop(0, "rgba(255,255,255,0.72)");
+      dew.addColorStop(0.36, "rgba(177,215,183,0.22)");
+      dew.addColorStop(1, "rgba(42,77,48,0.08)");
+      bgCtx.fillStyle = dew;
+      bgCtx.beginPath();
+      bgCtx.arc(x, y, r, 0, Math.PI * 2);
+      bgCtx.fill();
+    }
+
     const lightWash = bgCtx.createRadialGradient(160, 100, 10, 160, 100, 260);
     lightWash.addColorStop(0, "rgba(217,202,130,0.12)");
     lightWash.addColorStop(0.55, "rgba(217,202,130,0.035)");
@@ -649,6 +755,28 @@
       phase: Math.random() * Math.PI * 2,
       alpha: 0.08 + Math.random() * 0.13
     }));
+
+    const canopyShadows = Array.from({ length: 9 }, () => ({
+      x: -80 + Math.random() * (canvas.width + 160),
+      y: -40 + Math.random() * (canvas.height + 110),
+      w: 80 + Math.random() * 180,
+      h: 24 + Math.random() * 54,
+      angle: Math.random() * Math.PI,
+      speed: 0.00008 + Math.random() * 0.00016,
+      phase: Math.random() * Math.PI * 2,
+      alpha: 0.035 + Math.random() * 0.045
+    }));
+
+    const glassStreaks = Array.from({ length: 8 }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      length: 52 + Math.random() * 120,
+      alpha: 0.035 + Math.random() * 0.055,
+      phase: Math.random() * Math.PI * 2
+    }));
+
+    const FOOD_TYPES = ["berry", "egg", "beetle", "mouse", "glowfruit"];
+    const BONUS_FOOD_TYPES = ["golden-egg", "firefly", "golden-mouse"];
 
     // ── Game state ──
     const BONUS_DURATION = 5000;
@@ -712,6 +840,7 @@
       drawSnake();
       drawParticles();
       drawFloatTexts();
+      if (theme === "realistic") drawForegroundLighting();
 
       if (deathFlash > 0) {
         ctx.fillStyle = `rgba(180,10,10,${deathFlash * 0.45})`;
@@ -734,7 +863,13 @@
       if (theme === "neon") {
         drawGlossCircle(mouseX, mouseY, box * 0.42 + Math.sin(foodPulse) * 2, "#e02020", "#ff4444", 24);
       } else {
-        drawMouse(mouseX, mouseY, 0.9 + Math.sin(foodPulse) * 0.04, "LEFT");
+        drawFoodObject(
+          { type: "glowfruit", seed: 2.4 },
+          mouseX,
+          mouseY,
+          0.95 + Math.sin(foodPulse) * 0.04,
+          "LEFT"
+        );
       }
 
       drawMenuSnake(ts);
@@ -932,6 +1067,26 @@
     function drawRealisticAtmosphere() {
       const now = performance.now();
       ctx.save();
+      ctx.globalCompositeOperation = "multiply";
+      canopyShadows.forEach(shadow => {
+        const driftX = Math.sin(now * shadow.speed + shadow.phase) * 22;
+        const driftY = Math.cos(now * shadow.speed * 0.72 + shadow.phase) * 11;
+        ctx.save();
+        ctx.translate(shadow.x + driftX, shadow.y + driftY);
+        ctx.rotate(shadow.angle + Math.sin(now * 0.00009 + shadow.phase) * 0.12);
+        const leafShadow = ctx.createRadialGradient(0, 0, 0, 0, 0, shadow.w * 0.5);
+        leafShadow.addColorStop(0, `rgba(4,12,3,${shadow.alpha})`);
+        leafShadow.addColorStop(0.72, `rgba(4,12,3,${shadow.alpha * 0.42})`);
+        leafShadow.addColorStop(1, "rgba(4,12,3,0)");
+        ctx.fillStyle = leafShadow;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, shadow.w * 0.52, shadow.h, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      });
+      ctx.restore();
+
+      ctx.save();
       ctx.globalCompositeOperation = "screen";
       forestLightPatches.forEach((patch, i) => {
         const ox = Math.sin(now * 0.00024 + patch.drift) * 12;
@@ -956,6 +1111,43 @@
         ctx.fill();
       });
       ctx.globalAlpha = 1;
+      ctx.restore();
+    }
+
+    function drawForegroundLighting() {
+      const now = performance.now();
+
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      const warmBeam = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+      const pulse = 0.06 + Math.sin(now * 0.0007) * 0.018;
+      warmBeam.addColorStop(0, `rgba(255,236,168,${pulse})`);
+      warmBeam.addColorStop(0.33, "rgba(255,236,168,0.018)");
+      warmBeam.addColorStop(0.66, "rgba(118,176,104,0.012)");
+      warmBeam.addColorStop(1, "rgba(255,236,168,0)");
+      ctx.fillStyle = warmBeam;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      glassStreaks.forEach((streak, i) => {
+        const x = (streak.x + Math.sin(now * 0.00018 + streak.phase) * 9) % canvas.width;
+        const alpha = streak.alpha * (0.72 + Math.sin(now * 0.001 + i) * 0.22);
+        ctx.strokeStyle = `rgba(255,255,230,${alpha})`;
+        ctx.lineWidth = i % 3 === 0 ? 1.6 : 0.8;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(x, streak.y);
+        ctx.lineTo(x + streak.length * 0.28, streak.y + streak.length);
+        ctx.stroke();
+      });
+      ctx.restore();
+
+      ctx.save();
+      const edgeShade = ctx.createRadialGradient(canvas.width / 2, canvas.height / 2, 190, canvas.width / 2, canvas.height / 2, 470);
+      edgeShade.addColorStop(0, "rgba(0,0,0,0)");
+      edgeShade.addColorStop(0.76, "rgba(0,0,0,0.03)");
+      edgeShade.addColorStop(1, "rgba(0,0,0,0.30)");
+      ctx.fillStyle = edgeShade;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.restore();
     }
 
@@ -1060,6 +1252,226 @@
       ctx.restore();
     }
 
+    function pickFoodType(isBonus = false) {
+      const list = isBonus ? BONUS_FOOD_TYPES : FOOD_TYPES;
+      return list[Math.floor(Math.random() * list.length)];
+    }
+
+    function drawFoodShadow(cx, cy, rx, ry, alpha = 0.28) {
+      ctx.save();
+      ctx.fillStyle = `rgba(0,0,0,${alpha})`;
+      ctx.filter = "blur(3px)";
+      ctx.beginPath();
+      ctx.ellipse(cx + 4, cy + 7, rx, ry, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.filter = "none";
+      ctx.restore();
+    }
+
+    function drawBerryCluster(cx, cy, pulse, seed = 0) {
+      const now = performance.now();
+      const bob = Math.sin(now * 0.003 + seed) * 1.1;
+      drawFoodShadow(cx, cy, 12, 5, 0.22);
+      ctx.save();
+      ctx.translate(cx, cy + bob);
+      ctx.scale(pulse, pulse);
+      const berries = [
+        [-5.5, 1.5, 6.8, "#bf2035"],
+        [2.5, -2.2, 7.4, "#de3449"],
+        [7.5, 3.6, 5.7, "#a81931"],
+        [-1.5, 6.4, 5.9, "#c72d40"]
+      ];
+      berries.forEach(([x, y, r, color]) => {
+        const g = ctx.createRadialGradient(x - r * 0.34, y - r * 0.38, 0, x, y, r);
+        g.addColorStop(0, "#ffd2cf");
+        g.addColorStop(0.18, color);
+        g.addColorStop(1, "#5e0d1d");
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "rgba(255,255,255,0.5)";
+        ctx.beginPath();
+        ctx.arc(x - r * 0.32, y - r * 0.38, r * 0.16, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.strokeStyle = "rgba(67,93,34,0.75)";
+      ctx.lineWidth = 1.25;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(-2, -9);
+      ctx.quadraticCurveTo(1, -16, 7, -19);
+      ctx.stroke();
+      ctx.fillStyle = "rgba(80,132,51,0.82)";
+      ctx.beginPath();
+      ctx.ellipse(7, -18, 5.3, 2.4, -0.45, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawEggFood(cx, cy, pulse, golden = false, seed = 0) {
+      const now = performance.now();
+      const rock = Math.sin(now * 0.0022 + seed) * 0.08;
+      drawFoodShadow(cx, cy, 10, 5, golden ? 0.30 : 0.24);
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(rock);
+      ctx.scale(pulse, pulse);
+      ctx.shadowColor = golden ? "rgba(255,213,90,0.52)" : "rgba(255,244,206,0.25)";
+      ctx.shadowBlur = golden ? 16 : 6;
+      const egg = ctx.createRadialGradient(-4, -8, 0, 1, 2, 16);
+      if (golden) {
+        egg.addColorStop(0, "#fff0a6");
+        egg.addColorStop(0.44, "#e3ad2f");
+        egg.addColorStop(1, "#8b5b0f");
+      } else {
+        egg.addColorStop(0, "#fff8df");
+        egg.addColorStop(0.55, "#d9cfac");
+        egg.addColorStop(1, "#8f8665");
+      }
+      ctx.fillStyle = egg;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 10.2, 14.6, -0.08, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = golden ? "rgba(103,61,4,0.27)" : "rgba(81,70,46,0.28)";
+      [[-3, -4, 1.4], [3, 2, 1.1], [-1, 7, 0.9], [5, -7, 0.8]].forEach(([x, y, r]) => {
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.strokeStyle = "rgba(255,255,255,0.34)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(-4.6, -9);
+      ctx.quadraticCurveTo(-8, -2, -5, 6);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawBeetleFood(cx, cy, pulse, seed = 0) {
+      const now = performance.now();
+      const wiggle = Math.sin(now * 0.006 + seed);
+      drawFoodShadow(cx, cy, 12, 5.5, 0.28);
+      ctx.save();
+      ctx.translate(cx, cy + wiggle * 0.8);
+      ctx.rotate(Math.sin(now * 0.002 + seed) * 0.18);
+      ctx.scale(pulse, pulse);
+      ctx.strokeStyle = "rgba(24,12,6,0.72)";
+      ctx.lineWidth = 1.2;
+      ctx.lineCap = "round";
+      for (let side of [-1, 1]) {
+        for (let i = -1; i <= 1; i++) {
+          ctx.beginPath();
+          ctx.moveTo(i * 4, side * 6);
+          ctx.lineTo(i * 5 + Math.sin(now * 0.01 + i + seed) * 1.4, side * 13);
+          ctx.stroke();
+        }
+      }
+      const shell = ctx.createRadialGradient(-4, -6, 0, 0, 0, 15);
+      shell.addColorStop(0, "#6f4a20");
+      shell.addColorStop(0.45, "#2c1710");
+      shell.addColorStop(1, "#090503");
+      ctx.fillStyle = shell;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 9.5, 12.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(0,0,0,0.45)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, -10.5);
+      ctx.lineTo(0, 10.5);
+      ctx.stroke();
+      ctx.fillStyle = "rgba(223,173,76,0.66)";
+      [-3.2, 3.2].forEach(x => {
+        ctx.beginPath();
+        ctx.ellipse(x, -3.2, 1.7, 4.6, 0, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.fillStyle = "#100805";
+      ctx.beginPath();
+      ctx.ellipse(0, -12.2, 5.8, 4.2, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawGlowFruit(cx, cy, pulse, seed = 0) {
+      const now = performance.now();
+      const glowPulse = 0.82 + Math.sin(now * 0.004 + seed) * 0.18;
+      drawFoodShadow(cx, cy, 11, 5, 0.2);
+      ctx.save();
+      ctx.translate(cx, cy + Math.sin(now * 0.0028 + seed) * 1.2);
+      ctx.scale(pulse, pulse);
+      ctx.shadowColor = `rgba(116,226,126,${0.45 + glowPulse * 0.25})`;
+      ctx.shadowBlur = 18;
+      const fruit = ctx.createRadialGradient(-4, -5, 0, 0, 1, 12);
+      fruit.addColorStop(0, "#efffc0");
+      fruit.addColorStop(0.28, "#8fe05f");
+      fruit.addColorStop(1, "#1e622b");
+      ctx.fillStyle = fruit;
+      ctx.beginPath();
+      ctx.ellipse(0, 1, 10, 12.6, 0.18, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = "rgba(20,72,24,0.55)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, -10);
+      ctx.quadraticCurveTo(2, -15, 8, -17);
+      ctx.stroke();
+      ctx.fillStyle = "rgba(146,197,83,0.88)";
+      ctx.beginPath();
+      ctx.ellipse(8, -17, 5.5, 2.4, -0.4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawFireflyFood(cx, cy, pulse, seed = 0) {
+      const now = performance.now();
+      const wing = Math.sin(now * 0.018 + seed);
+      drawFoodShadow(cx, cy, 12, 4.5, 0.18);
+      ctx.save();
+      ctx.translate(cx, cy + Math.sin(now * 0.004 + seed) * 2.2);
+      ctx.scale(pulse, pulse);
+      ctx.shadowColor = "rgba(255,222,94,0.78)";
+      ctx.shadowBlur = 24;
+      ctx.fillStyle = "#ffd94a";
+      ctx.beginPath();
+      ctx.arc(0, 5, 6.5 + Math.sin(now * 0.006 + seed) * 1.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = "#25180a";
+      ctx.beginPath();
+      ctx.ellipse(0, -3, 5.5, 8.2, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "rgba(221,238,205,0.58)";
+      ctx.beginPath();
+      ctx.ellipse(-5.2, -4.2, 4.2, 8.8, -0.75 - wing * 0.12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(5.2, -4.2, 4.2, 8.8, 0.75 + wing * 0.12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawFoodObject(item, cx, cy, pulse, facing, golden = false) {
+      const type = item.type || (golden ? "golden-mouse" : "mouse");
+      const seed = item.seed || 0;
+      if (type === "berry") {
+        drawBerryCluster(cx, cy, pulse, seed);
+      } else if (type === "egg" || type === "golden-egg") {
+        drawEggFood(cx, cy, pulse, golden || type === "golden-egg", seed);
+      } else if (type === "beetle") {
+        drawBeetleFood(cx, cy, pulse, seed);
+      } else if (type === "glowfruit") {
+        drawGlowFruit(cx, cy, pulse, seed);
+      } else if (type === "firefly") {
+        drawFireflyFood(cx, cy, pulse, seed);
+      } else {
+        drawMouse(cx, cy, pulse, facing, golden || type === "golden-mouse");
+      }
+    }
+
     function drawFood() {
       const pulse = 1 + Math.sin(foodPulse) * (theme === "neon" ? 0.11 : 0.08);
       const cx = food.x + box/2, cy = food.y + box/2;
@@ -1071,7 +1483,7 @@
           if (Math.abs(dx)>=Math.abs(dy)) facing = dx>=0 ? "RIGHT" : "LEFT";
           else facing = dy>=0 ? "DOWN" : "UP";
         }
-        drawMouse(cx, cy, pulse, facing);
+        drawFoodObject(food, cx, cy, pulse, facing);
       }
     }
 
@@ -1091,7 +1503,7 @@
           if (Math.abs(dx)>=Math.abs(dy)) bfacing = dx>=0 ? "RIGHT" : "LEFT";
           else bfacing = dy>=0 ? "DOWN" : "UP";
         }
-        drawMouse(cx, cy, pulse, bfacing, true);
+        drawFoodObject(bonusFood, cx, cy, pulse, bfacing, true);
       }
       const remaining = bonusExpiresAt ? Math.max(0, bonusExpiresAt - gameTime) / BONUS_DURATION : 1;
       ctx.save();
@@ -1125,12 +1537,16 @@
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
 
-      ctx.globalAlpha = 0.36;
-      ctx.lineWidth = box + 13;
+      const lightDrift = Math.sin(now_ms * 0.0008) * 1.6;
+      const castX = 8 + lightDrift;
+      const castY = 10 + Math.cos(now_ms * 0.0006) * 1.4;
+
+      ctx.globalAlpha = 0.40;
+      ctx.lineWidth = box + 16;
       ctx.strokeStyle = "#050704";
       ctx.shadowColor = "rgba(0,0,0,0.55)";
-      ctx.shadowBlur = 12;
-      traceSmooth(pts, 6, 7);
+      ctx.shadowBlur = 16;
+      traceSmooth(pts, castX, castY);
       ctx.stroke();
       ctx.shadowBlur = 0;
       ctx.globalAlpha = 1;
@@ -1183,6 +1599,22 @@
         if (i % 3 === 1) {
           ctx.fillStyle = "rgba(208,188,91,0.16)";
           ctx.beginPath(); ctx.ellipse(0, 0, 4.4, 2.4, 0, 0, Math.PI*2); ctx.fill();
+        }
+
+        ctx.strokeStyle = "rgba(231,223,158,0.12)";
+        ctx.lineWidth = 0.55;
+        [-0.18, 0.18].forEach(side => {
+          ctx.beginPath();
+          ctx.moveTo(-radius * 0.52, side * box);
+          ctx.quadraticCurveTo(0, side * box + (side > 0 ? 2 : -2), radius * 0.52, side * box);
+          ctx.stroke();
+        });
+
+        if (i % 4 === 0) {
+          ctx.fillStyle = "rgba(247,231,144,0.10)";
+          ctx.beginPath();
+          ctx.ellipse(0, -radius * 0.18, radius * 0.45, radius * 0.12, 0, 0, Math.PI * 2);
+          ctx.fill();
         }
         ctx.restore();
       }
@@ -1246,9 +1678,31 @@
           ctx.beginPath(); ctx.ellipse(sx, sy, 3.7, 2.2, 0, 0, Math.PI*2); ctx.fill();
         });
 
+        ctx.fillStyle = "rgba(226,216,118,0.20)";
+        [[box * 0.18, 0], [box * 0.02, -box * 0.15], [box * 0.02, box * 0.15], [-box * 0.16, 0]].forEach(([sx, sy], idx) => {
+          ctx.beginPath();
+          ctx.ellipse(sx, sy, idx === 0 ? 4.2 : 3.2, idx === 0 ? 2.7 : 2.1, 0, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        ctx.strokeStyle = "rgba(238,226,156,0.18)";
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(-box * 0.26, 0);
+        ctx.quadraticCurveTo(box * 0.08, -box * 0.08, box * 0.42, -box * 0.05);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(-box * 0.26, 0);
+        ctx.quadraticCurveTo(box * 0.08, box * 0.08, box * 0.42, box * 0.05);
+        ctx.stroke();
+
         ctx.fillStyle = "rgba(4,10,3,0.68)";
         ctx.beginPath(); ctx.ellipse(box * 0.48, -box * 0.11, 1.15, 0.72, 0, 0, Math.PI*2); ctx.fill();
         ctx.beginPath(); ctx.ellipse(box * 0.48, box * 0.11, 1.15, 0.72, 0, 0, Math.PI*2); ctx.fill();
+
+        ctx.fillStyle = "rgba(5,14,4,0.72)";
+        ctx.beginPath(); ctx.ellipse(box * 0.54, -box * 0.055, 0.9, 0.45, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(box * 0.54, box * 0.055, 0.9, 0.45, 0, 0, Math.PI * 2); ctx.fill();
 
         ctx.strokeStyle = "rgba(239,230,168,0.16)";
         ctx.lineWidth = 1.4;
@@ -1343,19 +1797,32 @@
         RIGHT:[{x:e1,y:-e2},{x:e1,y:e2}], LEFT:[{x:-e1,y:-e2},{x:-e1,y:e2}],
         UP:[{x:-e2,y:-e1},{x:e2,y:-e1}],  DOWN:[{x:-e2,y:e1},{x:e2,y:e1}]
       };
+      const eyeOffsets = offsets[eyeDirection] || offsets.RIGHT;
       const isH = eyeDirection === "LEFT" || eyeDirection === "RIGHT";
       const eyeR = box*0.176;
-      offsets[eyeDirection].forEach(e => {
+      let gazeX = 0, gazeY = 0;
+      if (theme === "realistic" && food) {
+        const tx = food.x + box / 2;
+        const ty = food.y + box / 2;
+        const dx = tx - head.x;
+        const dy = ty - head.y;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        gazeX = Math.max(-1, Math.min(1, dx / dist));
+        gazeY = Math.max(-1, Math.min(1, dy / dist));
+      }
+      eyeOffsets.forEach(e => {
         const ex = head.x+e.x, ey = head.y+e.y;
         if (theme === "neon") {
           ctx.fillStyle = "#001a0a"; ctx.beginPath(); ctx.arc(ex, ey, eyeR, 0, Math.PI*2); ctx.fill();
           ctx.fillStyle = "rgba(255,255,255,0.75)"; ctx.beginPath(); ctx.arc(ex-eyeR*0.3, ey-eyeR*0.3, eyeR*0.34, 0, Math.PI*2); ctx.fill();
         } else {
-          ctx.fillStyle = "#c8a020"; ctx.beginPath(); ctx.arc(ex, ey, eyeR, 0, Math.PI*2); ctx.fill();
+          ctx.fillStyle = "rgba(21,42,8,0.36)";
+          ctx.beginPath(); ctx.ellipse(ex, ey - eyeR * 0.28, eyeR * 1.18, eyeR * 0.55, 0, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = "#d5b22d"; ctx.beginPath(); ctx.arc(ex, ey, eyeR, 0, Math.PI*2); ctx.fill();
           ctx.save(); ctx.translate(ex, ey); ctx.scale(isH ? 0.35 : 1, isH ? 1 : 0.35);
-          ctx.fillStyle = "#080808"; ctx.beginPath(); ctx.arc(0, 0, eyeR*0.8, 0, Math.PI*2); ctx.fill();
+          ctx.fillStyle = "#080808"; ctx.beginPath(); ctx.arc(gazeX * eyeR * 0.24, gazeY * eyeR * 0.24, eyeR*0.8, 0, Math.PI*2); ctx.fill();
           ctx.restore();
-          ctx.fillStyle = "rgba(255,255,255,0.55)"; ctx.beginPath(); ctx.arc(ex-eyeR*0.33, ey-eyeR*0.33, eyeR*0.3, 0, Math.PI*2); ctx.fill();
+          ctx.fillStyle = "rgba(255,255,255,0.62)"; ctx.beginPath(); ctx.arc(ex-eyeR*0.33 + gazeX, ey-eyeR*0.33 + gazeY, eyeR*0.3, 0, Math.PI*2); ctx.fill();
         }
       });
     }
@@ -1493,7 +1960,12 @@
         snake.some(p => p.x===pos.x && p.y===pos.y) ||
         (bonusFood && bonusFood.x===pos.x && bonusFood.y===pos.y)
       );
-      food = { ...pos, facing: ["LEFT","RIGHT","UP","DOWN"][Math.floor(Math.random()*4)] };
+      food = {
+        ...pos,
+        type: pickFoodType(),
+        seed: Math.random() * Math.PI * 2,
+        facing: ["LEFT","RIGHT","UP","DOWN"][Math.floor(Math.random()*4)]
+      };
     }
 
     function scheduleBonusFood() {
@@ -1509,7 +1981,13 @@
         snake.some(p => p.x===pos.x && p.y===pos.y) ||
         (food && food.x===pos.x && food.y===pos.y)
       );
-      bonusFood = { ...pos, blink: 0, facing: ["LEFT","RIGHT","UP","DOWN"][Math.floor(Math.random()*4)] };
+      bonusFood = {
+        ...pos,
+        blink: 0,
+        type: pickFoodType(true),
+        seed: Math.random() * Math.PI * 2,
+        facing: ["LEFT","RIGHT","UP","DOWN"][Math.floor(Math.random()*4)]
+      };
       bonusExpiresAt = gameTime + BONUS_DURATION;
       addParticles(pos.x + box/2, pos.y + box/2, "#e6b800", 14, 2.8);
     }
