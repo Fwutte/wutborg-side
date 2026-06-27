@@ -153,8 +153,8 @@
     p { margin-bottom: 2px; }
 
     .crt-wrap {
-      display: none;
-      width: min(600px, calc(100vw - 32px));
+      display: block;
+      width: min(600px, calc(100vw - 32px), max(360px, calc(100vh - 350px)));
       margin-top: 14px;
     }
     canvas {
@@ -166,6 +166,15 @@
     }
 
     #info { display: flex; justify-content: center; gap: 40px; margin-top: 12px; }
+    #score {
+      display: inline-block;
+      transition: transform 0.18s ease, color 0.18s ease, text-shadow 0.18s ease;
+    }
+    #score.score-pop {
+      color: #fff;
+      text-shadow: 0 0 14px currentColor;
+      transform: scale(1.34);
+    }
     #difficulty-screen { margin-top: 20px; }
     #difficulty-screen p { margin-bottom: 12px; }
     #difficulty-screen button {
@@ -341,9 +350,17 @@
         font-size: 0.85rem;
       }
 
+      .site-brand span:last-child {
+        display: none;
+      }
+
       .site-links a {
         padding-inline: 10px;
         font-size: 0.7rem;
+      }
+
+      .site-links a[href="index.html"] {
+        display: none;
       }
 
       body[data-theme="neon"] h1 {
@@ -378,11 +395,7 @@
       }
     }
 
-    @media (max-width: 390px) {
-      .site-brand span:last-child {
-        display: none;
-      }
-
+    @media (max-width: 430px) {
       .dpad {
         grid-template-columns: repeat(3, 54px);
         grid-template-rows: repeat(3, 49px);
@@ -551,15 +564,18 @@
     for (let y = 0; y <= canvas.height; y += box) { bgCtx.beginPath(); bgCtx.moveTo(0,y); bgCtx.lineTo(canvas.width,y); bgCtx.stroke(); }
 
     // ── Game state ──
+    const BONUS_DURATION = 5000;
+    const MAX_DIRECTION_BUFFER = 2;
     let difficulty, highscore = 0, score = 0;
-    let snake, direction, nextDirection, food, bonusFood, bonusTimer, updateTimer;
+    let snake, direction, nextDirection, directionQueue, food, bonusFood, updateTimer;
     let prevSnake = null, lastTickTime = 0, tickInterval = 200;
     let phase = "menu";
     let countdownNum = 3;
     let touchStartX = 0, touchStartY = 0;
+    let gameTime = 0, lastFrameTime = 0, bonusSpawnAt = 0, bonusExpiresAt = 0;
 
     // ── Visual state ──
-    let floatTexts = [], foodPulse = 0, tongueFlick = 0, deathFlash = 0, gameOverTime = 0;
+    let floatTexts = [], particles = [], foodPulse = 0, tongueFlick = 0, deathFlash = 0, gameOverTime = 0, screenShake = 0;
 
     // ── Theme ──
     let theme = localStorage.getItem("snakeTheme") || "realistic";
@@ -577,17 +593,37 @@
     // ══════════════════ RENDER LOOP ══════════════════
     function render(ts) {
       requestAnimationFrame(render);
-      if (phase === "menu") return;
+      const dt = lastFrameTime ? Math.min(80, ts - lastFrameTime) : 0;
+      lastFrameTime = ts;
 
       foodPulse   = ts * 0.003;
       tongueFlick = (tongueFlick + 1) % 70;
       floatTexts  = floatTexts.filter(t => t.life > 0);
       floatTexts.forEach(t => { t.y -= 1.1; t.life -= 0.04; });
+      updateParticles(dt);
 
+      if (phase === "menu") {
+        drawMenuPreview(ts);
+        return;
+      }
+
+      if (phase === "playing") {
+        gameTime += dt;
+        updateBonusFood();
+      }
+
+      ctx.save();
+      if (screenShake > 0) {
+        const wobble = screenShake;
+        ctx.translate((Math.random() - 0.5) * wobble, (Math.random() - 0.5) * wobble);
+        screenShake = screenShake < 0.25 ? 0 : screenShake * 0.86;
+      }
       drawBackground();
+      drawDangerFrame();
       drawFood();
       if (bonusFood) drawBonusFood();
       drawSnake();
+      drawParticles();
       drawFloatTexts();
 
       if (deathFlash > 0) {
@@ -595,12 +631,188 @@
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         deathFlash = Math.max(0, deathFlash - 0.03);
       }
+      ctx.restore();
 
       if (phase === "countdown") drawCountdownOverlay();
       if (phase === "paused")    drawPauseOverlay();
       if (phase === "gameover")  drawGameOverOverlay(ts);
     }
     requestAnimationFrame(render);
+
+    function drawMenuPreview(ts) {
+      drawBackground();
+
+      const mouseX = canvas.width * 0.72 + Math.sin(ts * 0.0012) * 18;
+      const mouseY = canvas.height * 0.47 + Math.cos(ts * 0.0016) * 12;
+      if (theme === "neon") {
+        drawGlossCircle(mouseX, mouseY, box * 0.42 + Math.sin(foodPulse) * 2, "#e02020", "#ff4444", 24);
+      } else {
+        drawMouse(mouseX, mouseY, 0.9 + Math.sin(foodPulse) * 0.04, "LEFT");
+      }
+
+      drawMenuSnake(ts);
+      if (particles.length < 24 && Math.random() < 0.12) {
+        addParticles(
+          mouseX,
+          mouseY,
+          theme === "neon" ? "#00ff88" : "#d9b85a",
+          1,
+          1.1
+        );
+      }
+      drawParticles();
+    }
+
+    function drawMenuSnake(ts) {
+      const pts = [];
+      const headX = canvas.width * 0.58 + Math.sin(ts * 0.0009) * 18;
+      const headY = canvas.height * 0.56 + Math.cos(ts * 0.0011) * 10;
+      for (let i = 0; i < 13; i++) {
+        pts.push({
+          x: headX - i * (box * 0.78),
+          y: headY + Math.sin(ts * 0.004 + i * 0.68) * 20 + Math.cos(ts * 0.0015 + i) * 4
+        });
+      }
+
+      ctx.save();
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
+      if (theme === "neon") {
+        const grad = ctx.createLinearGradient(pts[0].x, pts[0].y, pts[pts.length - 1].x, pts[pts.length - 1].y);
+        grad.addColorStop(0, "#00ffdd");
+        grad.addColorStop(0.4, "#00ff88");
+        grad.addColorStop(1, "#064b20");
+        ctx.lineWidth = box + 12;
+        ctx.strokeStyle = "#00ff8815";
+        ctx.shadowColor = "#00ff88";
+        ctx.shadowBlur = 30;
+        traceSmooth(pts, 0, 0);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+        ctx.lineWidth = box - 2;
+        ctx.strokeStyle = grad;
+        traceSmooth(pts, 0, 0);
+        ctx.stroke();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = "rgba(255,255,255,0.18)";
+        traceSmooth(pts, 0, 0);
+        ctx.stroke();
+      } else {
+        ctx.globalAlpha = 0.32;
+        ctx.lineWidth = box + 8;
+        ctx.strokeStyle = "#000";
+        traceSmooth(pts, 5, 6);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+
+        const grad = ctx.createLinearGradient(pts[0].x, pts[0].y, pts[pts.length - 1].x, pts[pts.length - 1].y);
+        grad.addColorStop(0, "#7fa855");
+        grad.addColorStop(0.45, "#526f32");
+        grad.addColorStop(1, "#273c12");
+        ctx.lineWidth = box - 3;
+        ctx.strokeStyle = grad;
+        traceSmooth(pts, 0, 0);
+        ctx.stroke();
+
+        for (let i = 2; i < pts.length - 1; i += 2) {
+          ctx.fillStyle = "rgba(12,32,5,0.34)";
+          ctx.beginPath();
+          ctx.ellipse(pts[i].x, pts[i].y - 6, 5, 3, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = "rgba(255,255,255,0.12)";
+        traceSmooth(pts, 0, 0);
+        ctx.stroke();
+
+        const head = pts[0];
+        ctx.fillStyle = "#6f8e45";
+        ctx.beginPath();
+        ctx.ellipse(head.x + 3, head.y, box * 0.54, box * 0.62, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "rgba(8,26,4,0.45)";
+        ctx.lineWidth = 1.3;
+        ctx.stroke();
+      }
+
+      ctx.restore();
+      drawTongue(pts[0], "RIGHT", true);
+      drawEyes(pts[0], "RIGHT");
+    }
+
+    function drawDangerFrame() {
+      if (phase !== "playing" || !snake || !snake[0]) return;
+      const head = snake[0];
+      const nearestWall = Math.min(
+        head.x / box,
+        head.y / box,
+        (canvas.width - box - head.x) / box,
+        (canvas.height - box - head.y) / box
+      );
+      const intensity = Math.max(0, (2.2 - nearestWall) / 2.2);
+      if (intensity <= 0) return;
+
+      ctx.save();
+      ctx.lineWidth = 4 + intensity * 8;
+      ctx.strokeStyle = theme === "neon"
+        ? `rgba(255,60,80,${0.22 + intensity * 0.5})`
+        : `rgba(225,88,42,${0.18 + intensity * 0.42})`;
+      ctx.shadowColor = theme === "neon" ? "#ff3355" : "#d75a28";
+      ctx.shadowBlur = 16 + intensity * 18;
+      ctx.strokeRect(3, 3, canvas.width - 6, canvas.height - 6);
+      ctx.restore();
+    }
+
+    function addParticles(x, y, color, count, power = 3) {
+      for (let i = 0; i < count; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const speed = 0.7 + Math.random() * power;
+        particles.push({
+          x,
+          y,
+          vx: Math.cos(a) * speed,
+          vy: Math.sin(a) * speed,
+          r: 1.6 + Math.random() * 3.4,
+          life: 1,
+          color
+        });
+      }
+    }
+
+    function updateParticles(dt) {
+      const step = Math.max(0.25, dt / 16.67);
+      particles = particles.filter(p => p.life > 0);
+      particles.forEach(p => {
+        p.x += p.vx * step;
+        p.y += p.vy * step;
+        p.vy += 0.035 * step;
+        p.life -= 0.025 * step;
+        p.r *= 0.992;
+      });
+    }
+
+    function drawParticles() {
+      particles.forEach(p => {
+        ctx.globalAlpha = Math.max(0, p.life);
+        ctx.fillStyle = p.color;
+        ctx.shadowColor = p.color;
+        ctx.shadowBlur = theme === "neon" ? 12 : 4;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+      ctx.shadowBlur = 0;
+    }
+
+    function popScore() {
+      scoreText.classList.remove("score-pop");
+      void scoreText.offsetWidth;
+      scoreText.classList.add("score-pop");
+      setTimeout(() => scoreText.classList.remove("score-pop"), 180);
+    }
 
     // ══════════════════ DRAW: BACKGROUND ══════════════════
     function drawBackground() {
@@ -725,6 +937,17 @@
         }
         drawMouse(cx, cy, pulse, bfacing, true);
       }
+      const remaining = bonusExpiresAt ? Math.max(0, bonusExpiresAt - gameTime) / BONUS_DURATION : 1;
+      ctx.save();
+      ctx.lineWidth = 3;
+      ctx.lineCap = "round";
+      ctx.strokeStyle = remaining < 0.35 ? "#ff5c42" : "#e6b800";
+      ctx.shadowColor = ctx.strokeStyle;
+      ctx.shadowBlur = theme === "neon" ? 16 : 5;
+      ctx.beginPath();
+      ctx.arc(cx, cy, box * 0.68, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * remaining);
+      ctx.stroke();
+      ctx.restore();
     }
 
     // ══════════════════ DRAW: SNAKE ══════════════════
@@ -876,15 +1099,15 @@
       ctx.lineTo(pts[pts.length-1].x+ox, pts[pts.length-1].y+oy);
     }
 
-    function drawEyes(head) {
+    function drawEyes(head, eyeDirection = direction) {
       const e1 = box*0.25, e2 = box*0.21;
       const offsets = {
         RIGHT:[{x:e1,y:-e2},{x:e1,y:e2}], LEFT:[{x:-e1,y:-e2},{x:-e1,y:e2}],
         UP:[{x:-e2,y:-e1},{x:e2,y:-e1}],  DOWN:[{x:-e2,y:e1},{x:e2,y:e1}]
       };
-      const isH = direction === "LEFT" || direction === "RIGHT";
+      const isH = eyeDirection === "LEFT" || eyeDirection === "RIGHT";
       const eyeR = box*0.176;
-      offsets[direction].forEach(e => {
+      offsets[eyeDirection].forEach(e => {
         const ex = head.x+e.x, ey = head.y+e.y;
         if (theme === "neon") {
           ctx.fillStyle = "#001a0a"; ctx.beginPath(); ctx.arc(ex, ey, eyeR, 0, Math.PI*2); ctx.fill();
@@ -899,9 +1122,9 @@
       });
     }
 
-    function drawTongue(head) {
-      if (phase !== "playing" || tongueFlick > 22) return;
-      const dir = { RIGHT:{dx:1,dy:0}, LEFT:{dx:-1,dy:0}, UP:{dx:0,dy:-1}, DOWN:{dx:0,dy:1} }[direction];
+    function drawTongue(head, tongueDirection = direction, force = false) {
+      if ((!force && phase !== "playing") || tongueFlick > 22) return;
+      const dir = { RIGHT:{dx:1,dy:0}, LEFT:{dx:-1,dy:0}, UP:{dx:0,dy:-1}, DOWN:{dx:0,dy:1} }[tongueDirection];
       const ext = box*0.38, frk = box*0.22;
       const base = { x:head.x+dir.dx*(box/2-1),   y:head.y+dir.dy*(box/2-1) };
       const tip  = { x:head.x+dir.dx*(box/2+ext),  y:head.y+dir.dy*(box/2+ext) };
@@ -996,10 +1219,13 @@
       snake = [{ x:300, y:300 }, { x:270, y:300 }];
       prevSnake = null; lastTickTime = 0;
       direction = "RIGHT"; nextDirection = "RIGHT";
+      directionQueue = [];
+      gameTime = 0; bonusSpawnAt = 0; bonusExpiresAt = 0;
       score = 0; scoreText.textContent = 0;
-      bonusFood = null; floatTexts = [];
+      scoreText.classList.remove("score-pop");
+      bonusFood = null; floatTexts = []; particles = [];
       spawnFood();
-      clearTimeout(updateTimer); clearTimeout(bonusTimer);
+      clearTimeout(updateTimer);
       phase = "countdown"; countdownNum = 3;
       syncControls();
       const tick = () => {
@@ -1033,18 +1259,32 @@
     }
 
     function scheduleBonusFood() {
-      bonusTimer = setTimeout(() => {
-        if (phase !== "playing") return;
-        let pos;
-        do {
-          pos = { x: Math.floor(Math.random()*cols)*box, y: Math.floor(Math.random()*rows)*box };
-        } while (
-          snake.some(p => p.x===pos.x && p.y===pos.y) ||
-          (food && food.x===pos.x && food.y===pos.y)
-        );
-        bonusFood = { ...pos, blink: 0, facing: ["LEFT","RIGHT","UP","DOWN"][Math.floor(Math.random()*4)] };
-        bonusTimer = setTimeout(() => { bonusFood = null; scheduleBonusFood(); }, 5000);
-      }, 8000 + Math.random()*4000);
+      bonusSpawnAt = gameTime + 8000 + Math.random() * 4000;
+      bonusExpiresAt = 0;
+    }
+
+    function spawnBonusFood() {
+      let pos;
+      do {
+        pos = { x: Math.floor(Math.random()*cols)*box, y: Math.floor(Math.random()*rows)*box };
+      } while (
+        snake.some(p => p.x===pos.x && p.y===pos.y) ||
+        (food && food.x===pos.x && food.y===pos.y)
+      );
+      bonusFood = { ...pos, blink: 0, facing: ["LEFT","RIGHT","UP","DOWN"][Math.floor(Math.random()*4)] };
+      bonusExpiresAt = gameTime + BONUS_DURATION;
+      addParticles(pos.x + box/2, pos.y + box/2, "#e6b800", 14, 2.8);
+    }
+
+    function updateBonusFood() {
+      if (phase !== "playing") return;
+      if (!bonusFood && gameTime >= bonusSpawnAt) {
+        spawnBonusFood();
+      }
+      if (bonusFood && gameTime >= bonusExpiresAt) {
+        bonusFood = null;
+        scheduleBonusFood();
+      }
     }
 
     function currentSpeed() {
@@ -1066,6 +1306,9 @@
     }
 
     function updateGame() {
+      if (directionQueue.length) {
+        nextDirection = directionQueue.shift();
+      }
       direction = nextDirection;
       let head = { ...snake[0] };
       if (direction === "UP")    head.y -= box;
@@ -1080,12 +1323,17 @@
 
       if (head.x===food.x && head.y===food.y) {
         score++; scoreText.textContent = score;
+        popScore();
         floatTexts.push({ x:head.x+box/2, y:head.y-4, text:"+1", color: theme==="neon"?"#00ff88":"#7dcc5a", life:1 });
+        addParticles(head.x+box/2, head.y+box/2, theme==="neon"?"#00ff88":"#7dcc5a", 18, 3.4);
         soundEat(); spawnFood();
       } else if (bonusFood && head.x===bonusFood.x && head.y===bonusFood.y) {
         score += 3; scoreText.textContent = score;
+        popScore();
         floatTexts.push({ x:head.x+box/2, y:head.y-4, text:"+3", color:"#e6b800", life:1 });
-        soundBonus(); clearTimeout(bonusTimer); bonusFood = null; scheduleBonusFood();
+        addParticles(head.x+box/2, head.y+box/2, "#e6b800", 30, 4.4);
+        screenShake = Math.max(screenShake, 4);
+        soundBonus(); bonusFood = null; scheduleBonusFood();
       } else {
         snake.pop();
       }
@@ -1093,8 +1341,12 @@
 
     function endGame() {
       phase = "gameover";
-      clearTimeout(updateTimer); clearTimeout(bonusTimer);
+      clearTimeout(updateTimer);
       deathFlash = 1; gameOverTime = performance.now();
+      screenShake = Math.max(screenShake, 13);
+      if (snake && snake[0]) {
+        addParticles(snake[0].x+box/2, snake[0].y+box/2, theme==="neon"?"#ff3355":"#d75a28", 34, 5.2);
+      }
       soundDie();
       if (score > highscore) {
         highscore = score; saveHS(difficulty, highscore);
@@ -1115,9 +1367,12 @@
         RIGHT: "LEFT"
       };
 
-      if (requestedDirection !== opposite[direction]) {
-        nextDirection = requestedDirection;
-      }
+      const basisDirection = directionQueue.length ? directionQueue[directionQueue.length - 1] : nextDirection;
+      if (requestedDirection === basisDirection || requestedDirection === opposite[basisDirection]) return;
+
+      if (directionQueue.length >= MAX_DIRECTION_BUFFER) return;
+      directionQueue.push(requestedDirection);
+      nextDirection = directionQueue[0] || nextDirection;
     }
 
     function togglePause() {
