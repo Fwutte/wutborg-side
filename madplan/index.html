@@ -239,6 +239,7 @@
     padding:9px 14px;font-size:14px;cursor:pointer;color:var(--ink);
   }
   .chip.sel{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .meal-chip.has-plan:not(.sel){border-color:var(--accent);color:var(--accent)}
   .sheet-actions{display:flex;gap:8px;margin-top:6px}
   .sheet-actions.stack{flex-direction:column}
   .day .dish:not(.empty),
@@ -546,6 +547,13 @@
    ============================================================ */
 const API = "/api";
 const cache = {plan:{}, dishes:[], shopping:[], freezer:[]};
+const DEFAULT_MEAL = "aftensmad";
+const MEAL_TYPES = [
+  {id:"morgenmad", label:"Morgenmad"},
+  {id:"frokost", label:"Frokost"},
+  {id:"aftensmad", label:"Aftensmad"},
+];
+const MEAL_IDS = new Set(MEAL_TYPES.map(meal=>meal.id));
 const FREEZER_DRAWERS = [
   {name:"Oksekød", label:"Skuffe 1"},
   {name:"Andet", label:"Skuffe 2"},
@@ -575,16 +583,37 @@ const jsend = (method, path, body) => {
 
 function planRowsToMap(rows){
   const plan={};
-  rows.filter(r=>r.meal_type==="aftensmad").forEach(r=>{
-    plan[r.plan_date]={
+  rows.forEach(r=>{
+    const mealType=MEAL_IDS.has(r.meal_type) ? r.meal_type : DEFAULT_MEAL;
+    if(!plan[r.plan_date]) plan[r.plan_date]={};
+    plan[r.plan_date][mealType]={
       dishId:r.dish_id,
       name:r.dish_name,
       cook:r.cook || "",
       notes:r.notes || "",
       done:Number(r.is_done),
+      mealType,
     };
   });
   return plan;
+}
+
+function clonePlanEntry(entry){
+  return entry ? {...entry} : null;
+}
+
+function cloneDayPlan(day){
+  if(!day) return null;
+  return Object.fromEntries(Object.entries(day).map(([mealType,entry])=>[mealType, clonePlanEntry(entry)]));
+}
+
+function restoreDayPlan(dateISO, day){
+  if(day && Object.keys(day).length) cache.plan[dateISO]=cloneDayPlan(day);
+  else delete cache.plan[dateISO];
+}
+
+function mealLabel(mealType){
+  return MEAL_TYPES.find(meal=>meal.id===mealType)?.label || mealType;
 }
 
 async function fetchWeekPlan(startDate){
@@ -637,15 +666,26 @@ const store = {
     if(view==="shopping") return loadShopping();
     return loadFreezer();
   },
-  getPlan(dateISO){ return cache.plan[dateISO] ? {...cache.plan[dateISO]} : null; },
+  getPlan(dateISO, mealType=DEFAULT_MEAL){
+    return clonePlanEntry(cache.plan[dateISO]?.[mealType]);
+  },
+  getDayPlans(dateISO){
+    const day=cache.plan[dateISO] || {};
+    return MEAL_TYPES.map(meal=>day[meal.id]).filter(Boolean).map(clonePlanEntry);
+  },
+  getDayPlanMap(dateISO){
+    return cloneDayPlan(cache.plan[dateISO]) || {};
+  },
 
   /* ---- plan: optimistic ---- */
   async setPlan(dateISO,data){
-    const prev=cache.plan[dateISO] ? {...cache.plan[dateISO]} : null;
-    cache.plan[dateISO]={dishId:data.dishId ?? null,name:data.name,cook:data.cook||"",notes:data.notes||"",done:data.done?1:0};
+    const mealType=MEAL_IDS.has(data.mealType) ? data.mealType : DEFAULT_MEAL;
+    const prev=cloneDayPlan(cache.plan[dateISO]);
+    cache.plan[dateISO]={...(cache.plan[dateISO] || {})};
+    cache.plan[dateISO][mealType]={dishId:data.dishId ?? null,name:data.name,cook:data.cook||"",notes:data.notes||"",done:data.done?1:0,mealType};
     try{
       await jsend("PUT","/plan/"+encodeURIComponent(dateISO),{
-        meal_type:"aftensmad",
+        meal_type:mealType,
         dish_id:data.dishId ?? null,
         dish_name:data.name,
         cook:data.cook || "",
@@ -653,36 +693,42 @@ const store = {
         is_done:data.done ? 1 : 0,
       });
       await loadWeek();
-    }catch(error){ if(prev===null) delete cache.plan[dateISO]; else cache.plan[dateISO]=prev; await loadWeek(); throw error; }
+    }catch(error){ restoreDayPlan(dateISO, prev); await loadWeek(); throw error; }
   },
-  async clearPlan(dateISO){
-    const prev=cache.plan[dateISO] ? {...cache.plan[dateISO]} : null;
-    delete cache.plan[dateISO];
+  async clearPlan(dateISO, mealType=DEFAULT_MEAL){
+    const prev=cloneDayPlan(cache.plan[dateISO]);
+    if(cache.plan[dateISO]){
+      delete cache.plan[dateISO][mealType];
+      if(!Object.keys(cache.plan[dateISO]).length) delete cache.plan[dateISO];
+    }
     try{
-      await jsend("DELETE","/plan/"+encodeURIComponent(dateISO)+"?meal_type=aftensmad");
+      await jsend("DELETE","/plan/"+encodeURIComponent(dateISO)+"?meal_type="+encodeURIComponent(mealType));
       await loadWeek();
-    }catch(error){ if(prev) cache.plan[dateISO]=prev; await loadWeek(); throw error; }
+    }catch(error){ restoreDayPlan(dateISO, prev); await loadWeek(); throw error; }
   },
   getWeekPlan(startDate){ return fetchWeekPlan(startDate); },
-  async movePlan(fromISO,toISO,planOverride=null){
-    const plan=planOverride || this.getPlan(fromISO);
+  async movePlan(fromISO,toISO,mealType=DEFAULT_MEAL,planOverride=null){
+    const plan=planOverride || this.getPlan(fromISO, mealType);
     if(!plan || fromISO===toISO) return;
-    const prevTo=cache.plan[toISO] ? {...cache.plan[toISO]} : null;
-    const prevFrom=cache.plan[fromISO] ? {...cache.plan[fromISO]} : null;
-    cache.plan[toISO]={...plan};
-    delete cache.plan[fromISO];
+    const prevTo=cloneDayPlan(cache.plan[toISO]);
+    const prevFrom=cloneDayPlan(cache.plan[fromISO]);
+    cache.plan[toISO]={...(cache.plan[toISO] || {}), [mealType]:{...plan, mealType}};
+    if(cache.plan[fromISO]){
+      delete cache.plan[fromISO][mealType];
+      if(!Object.keys(cache.plan[fromISO]).length) delete cache.plan[fromISO];
+    }
     try{
       await jsend("PUT","/plan/"+encodeURIComponent(toISO),{
-        meal_type:"aftensmad",
+        meal_type:mealType,
         dish_id:plan.dishId ?? null,
         dish_name:plan.name,
         cook:plan.cook || "",
         notes:plan.notes || "",
         is_done:plan.done ? 1 : 0,
       });
-      await jsend("DELETE","/plan/"+encodeURIComponent(fromISO)+"?meal_type=aftensmad");
+      await jsend("DELETE","/plan/"+encodeURIComponent(fromISO)+"?meal_type="+encodeURIComponent(mealType));
       await loadWeek();
-    }catch(error){ if(prevTo===null) delete cache.plan[toISO]; else cache.plan[toISO]=prevTo; if(prevFrom===null) delete cache.plan[fromISO]; else cache.plan[fromISO]=prevFrom; await loadWeek(); throw error; }
+    }catch(error){ restoreDayPlan(toISO, prevTo); restoreDayPlan(fromISO, prevFrom); await loadWeek(); throw error; }
   },
   /* ---- dishes: optimistic ---- */
   getDishes(){ return cache.dishes.map(d=>({...d})); },
@@ -827,6 +873,12 @@ function render(){
   if(currentView==="freezer")  view.innerHTML="", view.append(...renderFreezer());
 }
 
+function otherMealSummary(dateISO, excludeMeal=DEFAULT_MEAL){
+  return store.getDayPlans(dateISO)
+    .filter(plan=>plan.mealType!==excludeMeal)
+    .map(plan=>`${mealLabel(plan.mealType)}: ${plan.name}`);
+}
+
 function renderPlan(){
   const out=[];
   const today = new Date();
@@ -834,6 +886,7 @@ function renderPlan(){
   const heroDate = inThisWeek ? today : weekStart;
   const heroISO = iso(heroDate);
   const heroPlan = store.getPlan(heroISO);
+  const heroOtherMeals = otherMealSummary(heroISO);
 
   out.push(el(`<p class="eyebrow">${inThisWeek?"I dag":"Mandag"} · ${WD_LONG[(heroDate.getDay()+6)%7]} ${heroDate.getDate()}. ${MONTHS[heroDate.getMonth()]}</p>`));
 
@@ -848,13 +901,14 @@ function renderPlan(){
       <div class="hero-meta">
         ${heroPlan&&heroPlan.cook?`<span><span class="ic">👩‍🍳</span>${escape(heroPlan.cook)}</span>`:`<span class="ic" style="color:var(--muted)">Tilføj hvem der laver mad</span>`}
         ${heroPlan&&heroPlan.notes?`<span><span class="ic">📝</span>${escape(heroPlan.notes)}</span>`:""}
+        ${heroOtherMeals.length?`<span>${escape(heroOtherMeals.join(" · "))}</span>`:""}
       </div>
     </div></section>`);
   hero.querySelector(".hero-inner").addEventListener("click",()=>openSheet(heroISO));
   if(heroPlan){
     hero.querySelector(".hero-dish").addEventListener("click",e=>{
       e.stopPropagation();
-      openMoveSheet(heroISO);
+      openMoveSheet(heroISO, DEFAULT_MEAL);
     });
   }
   out.push(hero);
@@ -863,13 +917,15 @@ function renderPlan(){
   const week = el(`<div class="week"></div>`);
   for(let i=0;i<7;i++){
     const d=addDays(weekStart,i), di=iso(d), p=store.getPlan(di);
+    const otherMeals=otherMealSummary(di);
+    const sub=[p&&p.cook ? p.cook : "", ...otherMeals].filter(Boolean).join(" · ");
     const isToday = di===todayISO;
     const row = el(`
       <div class="day ${isToday?"is-today":""}">
         <div class="wd"><b>${WD_SHORT[i]}</b><small>${d.getDate()}/${d.getMonth()+1}</small></div>
         <div class="body">
           <div class="dish ${p?"":"empty"}">${p?escape(p.name):"Planlæg ret"}</div>
-          ${p&&p.cook?`<div class="sub">${escape(p.cook)}</div>`:""}
+          ${sub?`<div class="sub">${escape(sub)}</div>`:""}
         </div>
         ${p&&p.done?`<span class="check">✓</span>`:""}
         <span class="chev">›</span>
@@ -878,7 +934,7 @@ function renderPlan(){
     if(p){
       row.querySelector(".dish").addEventListener("click",e=>{
         e.stopPropagation();
-        openMoveSheet(di);
+        openMoveSheet(di, DEFAULT_MEAL);
       });
     }
     week.append(row);
@@ -1352,17 +1408,23 @@ function openFreezerSheet(item){
 
 /* ---------------- bottom sheet: rediger en dag ---------------- */
 let sheetDate=null, sheetDraft=null;
-function openSheet(dateISO){
+function openSheet(dateISO, mealType=DEFAULT_MEAL){
   sheetDate=dateISO;
+  const selectedMeal=MEAL_IDS.has(mealType) ? mealType : DEFAULT_MEAL;
   const d=new Date(dateISO+"T00:00:00");
-  const existing=store.getPlan(dateISO);
-  sheetDraft = existing ? {...existing} : {dishId:null,name:"",cook:"",notes:"",done:0};
+  const dayPlan=store.getDayPlanMap(dateISO);
+  const existing=store.getPlan(dateISO, selectedMeal);
+  sheetDraft = existing ? {...existing} : {dishId:null,name:"",cook:"",notes:"",done:0,mealType:selectedMeal};
 
   const sheet=$("#sheet");
   sheet.innerHTML=`
     <div class="grabber"></div>
     <h2>${WD_LONG[(d.getDay()+6)%7].replace(/^./,c=>c.toUpperCase())} ${d.getDate()}. ${MONTHS[d.getMonth()]}</h2>
-    <p class="sub">Aftensmad</p>
+    <p class="sub">Aftensmad er valgt som standard.</p>
+    <div class="field">
+      <label>Måltid</label>
+      <div class="chips" id="mealTypeChips"></div>
+    </div>
     <div class="field">
       <label>Ret</label>
       <input id="fDish" maxlength="120" placeholder="Skriv en ret, eller vælg nedenfor" value="${escapeAttr(sheetDraft.name)}">
@@ -1381,15 +1443,24 @@ function openSheet(dateISO){
     </div>
     <div class="field">
       <div class="toggle-done ${sheetDraft.done?"on":""}" id="fDone">
-        <span>Maden er lavet</span><span class="sw"></span>
+        <span>Måltidet er lavet</span><span class="sw"></span>
       </div>
     </div>
     <div class="sheet-actions ${existing?"stack":""}">
-      ${existing?`<button class="btn ghost block" id="fMove">Flyt ret</button>`:""}
+      ${existing?`<button class="btn ghost block" id="fMove">Flyt måltid</button>`:""}
       <button class="btn block" id="fSave">Gem</button>
     </div>
-    ${existing?`<span class="link-danger" id="fClear">Ryd dagen</span>`:""}
+    ${existing?`<span class="link-danger" id="fClear">Ryd måltidet</span>`:""}
   `;
+  const mealChips=sheet.querySelector("#mealTypeChips");
+  MEAL_TYPES.forEach(meal=>{
+    const planned=dayPlan[meal.id];
+    const chip=el(`<div class="chip meal-chip ${meal.id===selectedMeal?"sel":""} ${planned?"has-plan":""}" title="${planned?escapeAttr(planned.name):""}">${escape(meal.label)}</div>`);
+    chip.addEventListener("click",()=>{
+      if(meal.id!==selectedMeal) openSheet(dateISO, meal.id);
+    });
+    mealChips.append(chip);
+  });
   const chips=sheet.querySelector("#fChips");
   store.getDishes().slice(0,8).forEach(dish=>{
     const c=el(`<div class="chip ${sheetDraft.name===dish.name?"sel":""}">${escape(dish.name)}</div>`);
@@ -1408,13 +1479,13 @@ function openSheet(dateISO){
   });
   sheet.querySelector("#fDone").addEventListener("click",e=>{ sheetDraft.done=sheetDraft.done?0:1; e.currentTarget.classList.toggle("on"); });
   const move=sheet.querySelector("#fMove");
-  if(move) move.addEventListener("click",()=>openMoveSheet(dateISO));
+  if(move) move.addEventListener("click",()=>openMoveSheet(dateISO, selectedMeal));
   sheet.querySelector("#fSave").addEventListener("click",async e=>{
     const name=sheet.querySelector("#fDish").value.trim();
     e.currentTarget.disabled=true;
     try{
-      if(!name){ await store.clearPlan(sheetDate); }
-      else await store.setPlan(sheetDate,{name, dishId:sheetDraft.dishId, cook:sheet.querySelector("#fCook").value.trim(), notes:sheet.querySelector("#fNote").value.trim(), done:sheetDraft.done});
+      if(!name){ await store.clearPlan(sheetDate, selectedMeal); }
+      else await store.setPlan(sheetDate,{mealType:selectedMeal, name, dishId:sheetDraft.dishId, cook:sheet.querySelector("#fCook").value.trim(), notes:sheet.querySelector("#fNote").value.trim(), done:sheetDraft.done});
       closeSheet(); render(); toast("Gemt");
     }catch(error){
       e.currentTarget.disabled=false; reportError(error);
@@ -1423,7 +1494,7 @@ function openSheet(dateISO){
   const clr=sheet.querySelector("#fClear");
   if(clr) clr.addEventListener("click",async()=>{
     try{
-      await store.clearPlan(sheetDate); closeSheet(); render(); toast("Dagen ryddet");
+      await store.clearPlan(sheetDate, selectedMeal); closeSheet(); render(); toast("Måltidet er ryddet");
     }catch(error){
       reportError(error);
     }
@@ -1435,9 +1506,10 @@ function dayChoiceLabel(date,index){
   return `${WD_SHORT[index]} ${date.getDate()}/${date.getMonth()+1}`;
 }
 
-function openMoveSheet(fromISO){
-  const plan=store.getPlan(fromISO);
-  if(!plan) return openSheet(fromISO);
+function openMoveSheet(fromISO, mealType=DEFAULT_MEAL){
+  const selectedMeal=MEAL_IDS.has(mealType) ? mealType : DEFAULT_MEAL;
+  const plan=store.getPlan(fromISO, selectedMeal);
+  if(!plan) return openSheet(fromISO, selectedMeal);
 
   const sourceDate=new Date(fromISO+"T00:00:00");
   const sourceIndex=(sourceDate.getDay()+6)%7;
@@ -1446,7 +1518,10 @@ function openMoveSheet(fromISO){
   let moveRequest=0;
   sheet.innerHTML=`<div class="grabber"></div>
     <h2>Flyt ${escape(plan.name)}</h2>
-    <p class="sub">Fra ${WD_LONG[sourceIndex]} ${sourceDate.getDate()}. ${MONTHS[sourceDate.getMonth()]}</p>
+    <p class="sub">${escape(mealLabel(selectedMeal))} fra ${WD_LONG[sourceIndex]} ${sourceDate.getDate()}. ${MONTHS[sourceDate.getMonth()]}</p>
+    <div class="sheet-actions">
+      <button class="btn ghost block" id="moveEdit" type="button">Rediger måltid</button>
+    </div>
     <div class="move-week-nav">
       <button id="movePrevWeek" type="button" aria-label="Forrige uge">‹</button>
       <span id="moveWeekLabel"></span>
@@ -1458,6 +1533,7 @@ function openMoveSheet(fromISO){
   const label=sheet.querySelector("#moveWeekLabel");
   const prev=sheet.querySelector("#movePrevWeek");
   const next=sheet.querySelector("#moveNextWeek");
+  sheet.querySelector("#moveEdit").addEventListener("click",()=>openSheet(fromISO, selectedMeal));
 
   async function renderMoveWeek(){
     const request=++moveRequest;
@@ -1472,7 +1548,7 @@ function openMoveSheet(fromISO){
       choices.innerHTML="";
       for(let i=0;i<7;i++){
         const d=addDays(moveWeekStart,i), di=iso(d);
-        const existing=weekPlan[di] || null;
+        const existing=weekPlan[di]?.[selectedMeal] || null;
         const isCurrent=di===fromISO;
         const isOccupied=Boolean(existing) && !isCurrent;
         const state=isCurrent ? "Nuværende" : isOccupied ? "Optaget" : "Ledig";
@@ -1486,7 +1562,7 @@ function openMoveSheet(fromISO){
           button.addEventListener("click",async e=>{
             e.currentTarget.disabled=true;
             try{
-              await store.movePlan(fromISO,di,plan);
+              await store.movePlan(fromISO,di,selectedMeal,plan);
               weekStart=mondayOf(d);
               await store.loadWeek();
               closeSheet();
@@ -1526,15 +1602,28 @@ function openMoveSheet(fromISO){
 }
 
 /* vælg dag når man trykker på en ret i biblioteket */
-function openDayPicker(dish){
+function openDayPicker(dish, mealType=DEFAULT_MEAL){
+  const selectedMeal=MEAL_IDS.has(mealType) ? mealType : DEFAULT_MEAL;
   const sheet=$("#sheet");
   sheet.innerHTML=`<div class="grabber"></div>
-    <h2>${escape(dish.name)}</h2><p class="sub">På hvilken dag?</p>
+    <h2>${escape(dish.name)}</h2><p class="sub">På hvilken dag og hvilket måltid?</p>
+    <div class="field">
+      <label>Måltid</label>
+      <div class="chips" id="dayMealChips"></div>
+    </div>
     <div class="day-picker" id="dayChoices"></div>`;
+  const mealChips=sheet.querySelector("#dayMealChips");
+  MEAL_TYPES.forEach(meal=>{
+    const chip=el(`<div class="chip ${meal.id===selectedMeal?"sel":""}">${escape(meal.label)}</div>`);
+    chip.addEventListener("click",()=>{
+      if(meal.id!==selectedMeal) openDayPicker(dish, meal.id);
+    });
+    mealChips.append(chip);
+  });
   const choices=sheet.querySelector("#dayChoices");
   for(let i=0;i<7;i++){
     const d=addDays(weekStart,i), di=iso(d);
-    const existing=store.getPlan(di);
+    const existing=store.getPlan(di, selectedMeal);
     const button=el(`
       <button class="day-choice ${existing?"occupied":"open"}" type="button" ${existing?"disabled":""}>
         <span><b>${dayChoiceLabel(d,i)}</b><small>${existing?escape(existing.name):"Ingen ret planlagt"}</small></span>
@@ -1544,7 +1633,7 @@ function openDayPicker(dish){
       button.addEventListener("click",async e=>{
         e.currentTarget.disabled=true;
         try{
-          await store.setPlan(di,{name:dish.name, dishId:dish.id, cook:"", notes:"", done:0});
+          await store.setPlan(di,{mealType:selectedMeal, name:dish.name, dishId:dish.id, cook:"", notes:"", done:0});
           closeSheet(); currentView="plan"; render(); toast(dish.name+" sat på "+WD_LONG[i]);
         }catch(error){
           e.currentTarget.disabled=false; reportError(error);
