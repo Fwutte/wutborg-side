@@ -75,16 +75,3 @@ export const amountValue = (value) => {
     : NaN;
 };
 
-export const formatAmount = (amount) => {
-  if (amount === null || amount === undefined || amount === "") return "";
-  return String(Number(amount)).replace(".", ",");
-};
-
-export const quantityLabel = (amount, unit, fallback = "") => {
-  if (amount === null || amount === undefined || Number.isNaN(Number(amount))) {
-    return fallback;
-  }
-  const label = formatAmount(amount);
-  return unit ? `${label} ${unit}` : label;
-};
-

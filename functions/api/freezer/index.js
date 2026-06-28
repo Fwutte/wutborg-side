@@ -5,7 +5,6 @@ import {
   changes,
   cleanText,
   json,
-  quantityLabel,
   validateDrawer,
   withErrors,
 } from "../_helpers.js";
@@ -45,7 +44,6 @@ export const onRequestPost = withErrors(async ({ request, env }) => {
   const amount = amountValue(body.amount);
   if (Number.isNaN(amount)) return bad("amount skal være et tal mellem 0 og 999");
   const unit = cleanText(body.unit, 30);
-  const quantity = quantityLabel(amount, unit);
   const notes = cleanText(body.notes, 160);
 
   const result = await env.DB.prepare(

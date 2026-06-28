@@ -6,7 +6,6 @@ import {
   cleanText,
   json,
   positiveId,
-  quantityLabel,
   validateDrawer,
   withErrors,
 } from "../_helpers.js";
@@ -49,7 +48,6 @@ export const onRequestPatch = withErrors(async ({ params, request, env }) => {
   const notes = Object.hasOwn(body, "notes")
     ? cleanText(body.notes, 160)
     : existing.notes || "";
-  const quantity = quantityLabel(amount, unit);
 
   await env.DB.prepare(
     `UPDATE freezer_items
