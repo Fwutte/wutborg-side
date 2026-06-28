@@ -3,7 +3,7 @@
    API) sendes altid til netværket, så I ser den nyeste madplan.
    Bump CACHE-versionen når du ændrer skallen. */
 
-const CACHE = "madplan-shell-v8";
+const CACHE = "madplan-shell-v9";
 const SHELL = [
   "/madplan/",
   "/madplan/index.html",
