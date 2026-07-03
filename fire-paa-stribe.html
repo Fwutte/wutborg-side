@@ -1199,6 +1199,7 @@
     </main>
   </div>
 
+  <script src="js/highscores.js"></script>
   <script>
     const ROWS = 6;
     const COLS = 7;
@@ -1526,6 +1527,19 @@
       showMessage(`${player.name} vandt! 🎉`);
       playWinSound();
       launchConfetti(playerKey);
+      void window.WutborgHighscores?.submit({
+        gameKey: "fire-paa-stribe",
+        gameTitle: "Fire paa stribe",
+        playerName: player.name,
+        score: score[playerKey],
+        outcome: "won",
+        details: {
+          winner: playerKey,
+          red: score.red,
+          yellow: score.yellow,
+          draw: score.draw
+        }
+      });
 
       const completedRoundId = roundId;
       window.setTimeout(() => {
@@ -1549,6 +1563,18 @@
       turnText.textContent = "God kamp!";
       turnHint.textContent = "Det blev uafgjort";
       showMessage("God kamp! Det blev uafgjort 🤝");
+      void window.WutborgHighscores?.submit({
+        gameKey: "fire-paa-stribe",
+        gameTitle: "Fire paa stribe",
+        playerName: "Uafgjort",
+        score: score.draw,
+        outcome: "draw",
+        details: {
+          red: score.red,
+          yellow: score.yellow,
+          draw: score.draw
+        }
+      });
 
       const completedRoundId = roundId;
       window.setTimeout(() => {

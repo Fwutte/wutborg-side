@@ -490,6 +490,7 @@
     </main>
   </div>
 
+  <script src="js/highscores.js"></script>
   <script>
     class NeonBreaker {
       constructor(canvas) {
@@ -1173,6 +1174,16 @@
         this.controlsButton.style.display = "";
         this.pauseButton.textContent = "Pause";
         this.setStatus(didWin ? "Sejr! Alle fire levels er klaret." : "Game over");
+        void window.WutborgHighscores?.submit({
+          gameKey: "neon-breaker",
+          gameTitle: "Neon Breaker",
+          score: this.score,
+          outcome: didWin ? "won" : "gameover",
+          details: {
+            levelsCleared: didWin ? this.levels.length : this.levelIndex,
+            lives: this.lives
+          }
+        });
       }
 
       showOverlay(kicker, title, text, buttonText) {

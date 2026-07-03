@@ -1280,6 +1280,7 @@
     </main>
   </div>
 
+  <script src="js/highscores.js"></script>
   <script>
     (() => {
       "use strict";
@@ -1615,6 +1616,16 @@
         setControlsEnabled(false);
         setStatus("Game over", "#ff5967");
         gameOverCopy.textContent = `Du fik ${score.toLocaleString("da-DK")} point og ryddede ${lines} linjer.`;
+        void window.WutborgHighscores?.submit({
+          gameKey: "tetris",
+          gameTitle: "Tetris",
+          score,
+          outcome: "gameover",
+          details: {
+            lines,
+            level
+          }
+        });
         gameOverOverlay.hidden = false;
         boardShell.classList.add("is-game-over");
         playGameOverSound();

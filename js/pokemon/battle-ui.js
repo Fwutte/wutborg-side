@@ -444,6 +444,96 @@
     });
   }
 
+  function clearAttackEffects() {
+    dom.arena.querySelectorAll(".attack-fx").forEach((effect) => effect.remove());
+    dom.arena.classList.remove("arena-status-fx", "arena-special-fx");
+    dom.arena.style.removeProperty("--fx-color");
+  }
+
+  function spawnEffect(classNames, options = {}) {
+    const effect = document.createElement("span");
+    effect.className = ["attack-fx", classNames].filter(Boolean).join(" ");
+    effect.setAttribute("aria-hidden", "true");
+
+    for (const [name, value] of Object.entries(options.style || {})) {
+      effect.style.setProperty(name, value);
+    }
+
+    if (options.children) {
+      for (let index = 0; index < options.children; index += 1) {
+        effect.append(document.createElement("i"));
+      }
+    }
+
+    dom.arena.append(effect);
+    return effect;
+  }
+
+  function effectDirection(actorSide) {
+    return actorSide === "player"
+      ? { startX: "25%", startY: "72%", endX: "71%", endY: "35%", sign: 1 }
+      : { startX: "72%", startY: "34%", endX: "25%", endY: "72%", sign: -1 };
+  }
+
+  function moveAnimationType(moveType, category) {
+    if (category === "physical") return ["normal", "fighting", "steel"].includes(moveType)
+      ? "strike"
+      : "slash";
+    if (category === "status") return "status";
+    if (["fire", "water", "electric", "grass", "ice", "psychic", "poison", "ground", "rock", "flying", "bug", "ghost", "dragon", "dark", "steel"].includes(moveType)) {
+      return moveType;
+    }
+    return "beam";
+  }
+
+  function launchAttackEffect(event) {
+    clearAttackEffects();
+
+    const type = event.moveType || "normal";
+    const category = event.category || "physical";
+    const color = TYPE_COLORS[type] || TYPE_COLORS.normal;
+    const direction = effectDirection(event.actorSide);
+    const animation = moveAnimationType(type, category);
+    const style = {
+      "--fx-color": color,
+      "--fx-start-x": direction.startX,
+      "--fx-start-y": direction.startY,
+      "--fx-end-x": direction.endX,
+      "--fx-end-y": direction.endY,
+      "--fx-sign": String(direction.sign),
+    };
+
+    dom.arena.style.setProperty("--fx-color", color);
+
+    if (category === "status" || event.damage === 0) {
+      dom.arena.classList.add("arena-status-fx");
+    } else if (category === "special") {
+      dom.arena.classList.add("arena-special-fx");
+    }
+
+    if (animation === "strike") {
+      spawnEffect("fx-strike", { style, children: 4 });
+      return;
+    }
+
+    if (animation === "slash") {
+      spawnEffect("fx-slash", { style, children: 3 });
+      return;
+    }
+
+    if (["fire", "water", "electric", "grass", "ice", "poison", "ground", "rock", "flying", "bug", "ghost", "dragon", "dark", "steel"].includes(animation)) {
+      spawnEffect(`fx-projectile fx-${animation}`, { style, children: 5 });
+      return;
+    }
+
+    if (animation === "psychic" || animation === "status") {
+      spawnEffect(`fx-ring fx-${animation}`, { style, children: 3 });
+      return;
+    }
+
+    spawnEffect("fx-beam", { style, children: 4 });
+  }
+
   function updateSoundButton() {
     dom.soundToggle.textContent = `Lyd: ${soundEnabled ? "til" : "fra"}`;
     dom.soundToggle.setAttribute("aria-pressed", String(soundEnabled));
@@ -454,6 +544,7 @@
       const actorStage = sideDom[event.actorSide].stage;
       const targetStage = sideDom[event.targetSide].stage;
       actorStage.classList.add("attack-forward");
+      launchAttackEffect(event);
       playTone(event.category === "special" ? 660 : 320, 0.12, "square", 0.035);
       await wait(240);
 
@@ -478,6 +569,7 @@
       actorStage.classList.remove("attack-forward");
       targetStage.classList.remove("hit-shake");
       dom.arena.classList.remove("hit-flash", "critical-hit");
+      clearAttackEffects();
       return;
     }
 
@@ -493,6 +585,7 @@
       if (event.fainted) sideDom[event.targetSide].stage.classList.add("fainted");
       await wait(220);
       sideDom[event.targetSide].stage.classList.remove("hit-shake");
+      clearAttackEffects();
     }
   }
 
@@ -525,6 +618,23 @@
       ? `${currentBattle.player.displayName} vandt over ${currentBattle.opponent.displayName} efter ${currentBattle.turn} ture.`
       : `${currentBattle.opponent.displayName} vandt kampen. Justér matchup eller prøv samme duel igen.`;
     dom.result.hidden = false;
+    void window.WutborgHighscores?.submit({
+      gameKey: "monster-battle-arena",
+      gameTitle: "Monster Battle Arena",
+      score:
+        (won ? 1000 : 0) +
+        Math.round((currentBattle.player.hp / currentBattle.player.maxHp) * 1000) +
+        Math.max(0, 200 - currentBattle.turn * 10),
+      outcome: won ? "won" : "lost",
+      details: {
+        player: currentBattle.player.displayName,
+        opponent: currentBattle.opponent.displayName,
+        difficulty: currentBattle.difficulty,
+        turns: currentBattle.turn,
+        playerHp: currentBattle.player.hp,
+        opponentHp: currentBattle.opponent.hp
+      }
+    });
     playVictorySound(won);
     dom.result.querySelector("button")?.focus();
   }

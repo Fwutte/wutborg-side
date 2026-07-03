@@ -1514,6 +1514,20 @@
       document.getElementById("next-level-button").textContent = finalLevel
         ? "Til hovedmenu"
         : "Næste bane";
+      if (finalLevel) {
+        void window.WutborgHighscores?.submit({
+          gameKey: "pips-skybound",
+          gameTitle: "Super Mario Bros.",
+          score: this.coins * 100 + this.lives * 1000 + Math.ceil(this.timeLeft) * 10,
+          outcome: "won",
+          details: {
+            coins: this.coins,
+            lives: this.lives,
+            timeLeft: Math.ceil(this.timeLeft),
+            startLevel: this.selectedLevel + 1
+          }
+        });
+      }
       this.ui.showOnly("complete");
     }
 

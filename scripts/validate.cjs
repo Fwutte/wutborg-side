@@ -76,6 +76,7 @@ console.log("\n=== Server modules ===");
 checkModule("functions/api/_helpers.js", "helpers");
 checkModule("functions/api/freezer/index.js", "freezer GET/POST/DELETE");
 checkModule("functions/api/freezer/[id].js", "freezer PATCH/DELETE :id");
+checkModule("functions/api/highscores/index.js", "highscores GET/POST");
 checkModule("functions/api/shopping/index.js", "shopping GET/POST/DELETE");
 checkModule("functions/api/shopping/[id].js", "shopping PATCH/DELETE :id");
 checkModule("functions/api/plan/index.js", "plan GET");
@@ -84,7 +85,15 @@ checkModule("functions/api/dishes/index.js", "dishes GET/POST");
 checkModule("functions/api/dishes/[id].js", "dishes PATCH/DELETE");
 
 console.log("\n=== Client JavaScript ===");
+checkModule("js/highscores.js", "highscore client helper");
+checkModule("js/pips-skybound.js", "pips skybound game");
+checkModule("js/pokemon/battle-ui.js", "pokemon battle UI");
+checkHtmlScript("brick-breaker.html", "brick breaker client");
+checkHtmlScript("fire-paa-stribe.html", "fire paa stribe client");
+checkHtmlScript("geometry-dash.html", "geometry dash client");
 checkHtmlScript("madplan/index.html", "madplan client");
+checkHtmlScript("snake.html", "snake client");
+checkHtmlScript("tetris.html", "tetris client");
 
 console.log("\n=== Migrations ===");
 const migration = fs.readFileSync(path.join(ROOT, "migrations/0005_drop_freezer_quantity.sql"), "utf8");
@@ -98,6 +107,21 @@ const checks = [
 checks.forEach(([pattern, name]) => {
   const ok = pattern.test(migration);
   console.log(`  ${ok ? "OK " : "FAIL"} migration 0005: ${name}`);
+  pass += ok ? 1 : 0;
+  fail += ok ? 0 : 1;
+});
+
+const highscoreMigration = fs.readFileSync(path.join(ROOT, "migrations/0006_highscores.sql"), "utf8");
+const highscoreChecks = [
+  [/CREATE TABLE IF NOT EXISTS highscores/, "create highscores"],
+  [/game_key\s+TEXT\s+NOT NULL/, "game_key"],
+  [/score\s+INTEGER\s+NOT NULL/, "score"],
+  [/ix_highscores_game_score/, "leaderboard index"],
+];
+
+highscoreChecks.forEach(([pattern, name]) => {
+  const ok = pattern.test(highscoreMigration);
+  console.log(`  ${ok ? "OK " : "FAIL"} migration 0006: ${name}`);
   pass += ok ? 1 : 0;
   fail += ok ? 0 : 1;
 });

@@ -297,6 +297,8 @@
       targetId: defender.id,
       moveIndex,
       moveName: move?.name || "",
+      moveType: move?.type || "normal",
+      category: move ? getMoveCategory(move) : "status",
       logs: []
     };
 

@@ -1040,6 +1040,298 @@ input[type="search"] {
   animation: arena-shake 0.38s steps(5);
 }
 
+.battle-arena.arena-special-fx {
+  box-shadow:
+    0 24px 70px rgba(3, 11, 15, 0.36),
+    inset 0 0 42px color-mix(in srgb, var(--fx-color, #fff) 18%, transparent);
+}
+
+.battle-arena.arena-status-fx {
+  box-shadow:
+    0 24px 70px rgba(3, 11, 15, 0.36),
+    inset 0 0 36px rgba(255, 255, 255, 0.28);
+}
+
+.attack-fx {
+  position: absolute;
+  z-index: 6;
+  left: var(--fx-start-x, 50%);
+  top: var(--fx-start-y, 50%);
+  width: clamp(28px, 5vw, 74px);
+  height: clamp(28px, 5vw, 74px);
+  color: var(--fx-color, #fff);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  will-change: left, top, opacity, transform;
+}
+
+.attack-fx i {
+  position: absolute;
+  display: block;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.fx-projectile {
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 32%, #fff 0 12%, currentColor 13% 45%, color-mix(in srgb, currentColor 56%, #111) 74%);
+  box-shadow:
+    0 0 0 3px rgba(255, 255, 255, 0.32),
+    0 0 24px currentColor,
+    calc(var(--fx-sign, 1) * -18px) 14px 0 color-mix(in srgb, currentColor 32%, transparent);
+  animation: fx-projectile-flight 0.58s cubic-bezier(0.12, 0.78, 0.28, 1) forwards;
+}
+
+.fx-projectile i {
+  width: 22%;
+  height: 22%;
+  opacity: 0.85;
+  animation: fx-particle-drift 0.56s ease-out forwards;
+}
+
+.fx-projectile i:nth-child(1) { left: -18%; top: 23%; animation-delay: 0.03s; }
+.fx-projectile i:nth-child(2) { left: 11%; top: 78%; animation-delay: 0.08s; }
+.fx-projectile i:nth-child(3) { right: -8%; top: 18%; animation-delay: 0.12s; }
+.fx-projectile i:nth-child(4) { right: 18%; bottom: -15%; animation-delay: 0.16s; }
+.fx-projectile i:nth-child(5) { left: 37%; top: -15%; animation-delay: 0.2s; }
+
+.fx-fire {
+  border-radius: 70% 38% 62% 42%;
+  background:
+    radial-gradient(circle at 39% 34%, #fff8b0 0 11%, #ffdb55 12% 28%, transparent 29%),
+    linear-gradient(135deg, #ffed67, currentColor 45%, #d9482f);
+  clip-path: polygon(45% 0, 62% 28%, 83% 12%, 75% 46%, 100% 62%, 67% 70%, 72% 100%, 48% 80%, 24% 100%, 31% 70%, 0 62%, 24% 44%, 17% 14%, 38% 29%);
+}
+
+.fx-water {
+  border-radius: 66% 58% 62% 48%;
+  background:
+    radial-gradient(circle at 34% 32%, rgba(255,255,255,0.9) 0 12%, transparent 13%),
+    linear-gradient(135deg, #b9f7ff, currentColor);
+  filter: saturate(1.18);
+}
+
+.fx-electric {
+  width: clamp(34px, 6vw, 86px);
+  height: clamp(42px, 7vw, 100px);
+  border-radius: 0;
+  background: linear-gradient(#fff5a6, currentColor);
+  clip-path: polygon(51% 0, 79% 0, 58% 34%, 87% 34%, 33% 100%, 45% 55%, 16% 55%);
+  box-shadow: 0 0 26px currentColor;
+}
+
+.fx-grass {
+  border-radius: 0 90% 0 90%;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.45), transparent 36%),
+    currentColor;
+  box-shadow:
+    0 0 20px currentColor,
+    calc(var(--fx-sign, 1) * -18px) 18px 0 color-mix(in srgb, currentColor 64%, white),
+    calc(var(--fx-sign, 1) * -33px) -10px 0 color-mix(in srgb, currentColor 75%, #243);
+  transform: translate(-50%, -50%) rotate(calc(var(--fx-sign, 1) * 38deg));
+}
+
+.fx-ice {
+  border-radius: 20%;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.86), transparent 30%),
+    currentColor;
+  clip-path: polygon(50% 0, 100% 28%, 87% 86%, 28% 100%, 0 47%);
+  box-shadow:
+    0 0 18px #e7ffff,
+    inset 0 0 12px rgba(255,255,255,0.65);
+}
+
+.fx-poison,
+.fx-ghost,
+.fx-dark,
+.fx-dragon {
+  background:
+    radial-gradient(circle at 32% 32%, rgba(255,255,255,0.72), transparent 15%),
+    radial-gradient(circle at 58% 60%, currentColor 0 47%, transparent 49%);
+  filter: blur(0.2px);
+}
+
+.fx-poison {
+  border-radius: 50% 45% 52% 45%;
+  box-shadow:
+    0 0 24px currentColor,
+    -16px 16px 0 color-mix(in srgb, currentColor 42%, transparent),
+    18px -11px 0 color-mix(in srgb, currentColor 36%, transparent);
+}
+
+.fx-ghost {
+  border-radius: 48% 48% 35% 35%;
+  clip-path: polygon(0 13%, 100% 13%, 91% 100%, 70% 80%, 52% 100%, 34% 80%, 14% 100%);
+  opacity: 0.82;
+}
+
+.fx-dark {
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 37% 34%, rgba(255,255,255,0.28), transparent 11%),
+    radial-gradient(circle, #1d1516 0 38%, currentColor 39% 68%, transparent 70%);
+}
+
+.fx-dragon {
+  border-radius: 38% 62% 39% 60%;
+  clip-path: polygon(6% 32%, 38% 12%, 48% 0, 59% 14%, 94% 33%, 71% 48%, 90% 85%, 53% 68%, 35% 100%, 31% 61%);
+}
+
+.fx-ground,
+.fx-rock,
+.fx-steel {
+  border-radius: 22%;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.33), transparent 34%),
+    currentColor;
+  box-shadow:
+    0 0 18px color-mix(in srgb, currentColor 55%, transparent),
+    calc(var(--fx-sign, 1) * -15px) 16px 0 color-mix(in srgb, currentColor 70%, #342),
+    calc(var(--fx-sign, 1) * -29px) -4px 0 color-mix(in srgb, currentColor 48%, #fff);
+}
+
+.fx-ground {
+  clip-path: polygon(18% 16%, 76% 0, 100% 48%, 70% 100%, 14% 82%, 0 43%);
+}
+
+.fx-rock {
+  clip-path: polygon(14% 8%, 70% 0, 100% 35%, 91% 78%, 45% 100%, 0 69%);
+}
+
+.fx-steel {
+  clip-path: polygon(50% 0, 93% 24%, 93% 74%, 50% 100%, 7% 74%, 7% 24%);
+  filter: brightness(1.16);
+}
+
+.fx-flying,
+.fx-bug {
+  background: none;
+  box-shadow: none;
+}
+
+.fx-flying::before,
+.fx-flying::after,
+.fx-bug::before,
+.fx-bug::after {
+  content: "";
+  position: absolute;
+  inset: 16% 8%;
+  border: 5px solid currentColor;
+  border-left-color: transparent;
+  border-bottom-color: transparent;
+  border-radius: 50%;
+  transform: rotate(calc(var(--fx-sign, 1) * 24deg));
+}
+
+.fx-flying::after,
+.fx-bug::after {
+  inset: 35% 20% 6%;
+  opacity: 0.5;
+  transform: rotate(calc(var(--fx-sign, 1) * -18deg));
+}
+
+.fx-bug i {
+  width: 16%;
+  height: 16%;
+  box-shadow: 0 0 10px currentColor;
+}
+
+.fx-slash {
+  left: var(--fx-end-x, 50%);
+  top: var(--fx-end-y, 50%);
+  width: clamp(86px, 13vw, 170px);
+  height: clamp(66px, 10vw, 130px);
+  animation: fx-impact-pop 0.5s ease-out forwards;
+}
+
+.fx-slash i {
+  left: 7%;
+  width: 88%;
+  height: 16%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, #fff 21%, currentColor 58%, transparent);
+  box-shadow: 0 0 18px currentColor;
+  transform: rotate(calc(var(--fx-sign, 1) * -31deg));
+  animation: fx-slash-cut 0.42s ease-out forwards;
+}
+
+.fx-slash i:nth-child(1) { top: 18%; animation-delay: 0s; }
+.fx-slash i:nth-child(2) { top: 42%; animation-delay: 0.05s; transform: rotate(calc(var(--fx-sign, 1) * -15deg)); }
+.fx-slash i:nth-child(3) { top: 65%; animation-delay: 0.1s; transform: rotate(calc(var(--fx-sign, 1) * -42deg)); }
+
+.fx-strike {
+  left: var(--fx-end-x, 50%);
+  top: var(--fx-end-y, 50%);
+  width: clamp(92px, 14vw, 190px);
+  height: clamp(92px, 14vw, 190px);
+  border: 6px solid currentColor;
+  border-radius: 50%;
+  box-shadow:
+    0 0 24px currentColor,
+    inset 0 0 28px color-mix(in srgb, currentColor 26%, transparent);
+  animation: fx-strike-ring 0.46s ease-out forwards;
+}
+
+.fx-strike i {
+  left: 50%;
+  top: 50%;
+  width: 11%;
+  height: 43%;
+  border-radius: 999px;
+  background: currentColor;
+  transform-origin: 50% 0;
+  box-shadow: 0 0 12px currentColor;
+}
+
+.fx-strike i:nth-child(1) { transform: rotate(0deg) translateY(-105%); }
+.fx-strike i:nth-child(2) { transform: rotate(90deg) translateY(-105%); }
+.fx-strike i:nth-child(3) { transform: rotate(180deg) translateY(-105%); }
+.fx-strike i:nth-child(4) { transform: rotate(270deg) translateY(-105%); }
+
+.fx-ring {
+  left: var(--fx-end-x, 50%);
+  top: var(--fx-end-y, 50%);
+  width: clamp(112px, 16vw, 220px);
+  height: clamp(112px, 16vw, 220px);
+}
+
+.fx-ring i {
+  inset: 50%;
+  width: 30%;
+  height: 30%;
+  border: 5px solid currentColor;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: 0 0 20px currentColor;
+  transform: translate(-50%, -50%);
+  animation: fx-ring-pulse 0.76s ease-out forwards;
+}
+
+.fx-ring i:nth-child(2) { animation-delay: 0.12s; }
+.fx-ring i:nth-child(3) { animation-delay: 0.24s; }
+
+.fx-psychic i {
+  border-color: color-mix(in srgb, currentColor 68%, #fff);
+}
+
+.fx-beam {
+  left: 50%;
+  top: 50%;
+  width: 54%;
+  height: clamp(10px, 1.3vw, 18px);
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, #fff, currentColor, transparent);
+  box-shadow: 0 0 22px currentColor;
+  transform:
+    translate(-50%, -50%)
+    rotate(calc(var(--fx-sign, 1) * -31deg))
+    scaleX(0);
+  animation: fx-beam-fire 0.42s ease-out forwards;
+}
+
 .battle-console {
   display: grid;
   grid-template-columns: minmax(270px, 0.72fr) minmax(0, 1.28fr);
@@ -1369,6 +1661,115 @@ input[type="search"] {
   25% { transform: translateX(-5px); }
   50% { transform: translateX(6px); }
   75% { transform: translateX(-3px); }
+}
+
+@keyframes fx-projectile-flight {
+  0% {
+    left: var(--fx-start-x);
+    top: var(--fx-start-y);
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.35) rotate(0deg);
+  }
+  18% {
+    opacity: 1;
+  }
+  82% {
+    opacity: 1;
+  }
+  100% {
+    left: var(--fx-end-x);
+    top: var(--fx-end-y);
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.08) rotate(calc(var(--fx-sign, 1) * 95deg));
+  }
+}
+
+@keyframes fx-particle-drift {
+  to {
+    opacity: 0;
+    transform:
+      translate(
+        calc(var(--fx-sign, 1) * -34px),
+        24px
+      )
+      scale(0.2);
+  }
+}
+
+@keyframes fx-slash-cut {
+  0% {
+    opacity: 0;
+    transform:
+      translate(calc(var(--fx-sign, 1) * -34px), 14px)
+      rotate(calc(var(--fx-sign, 1) * -31deg))
+      scaleX(0.35);
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform:
+      translate(calc(var(--fx-sign, 1) * 28px), -11px)
+      rotate(calc(var(--fx-sign, 1) * -31deg))
+      scaleX(1);
+  }
+}
+
+@keyframes fx-impact-pop {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
+  32% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.12); }
+}
+
+@keyframes fx-strike-ring {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.18);
+  }
+  35% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.72);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.18);
+  }
+}
+
+@keyframes fx-ring-pulse {
+  0% {
+    opacity: 0.85;
+    transform: translate(-50%, -50%) scale(0.2);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(2.4);
+  }
+}
+
+@keyframes fx-beam-fire {
+  0% {
+    opacity: 0;
+    transform:
+      translate(-50%, -50%)
+      rotate(calc(var(--fx-sign, 1) * -31deg))
+      scaleX(0);
+  }
+  35% {
+    opacity: 1;
+    transform:
+      translate(-50%, -50%)
+      rotate(calc(var(--fx-sign, 1) * -31deg))
+      scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform:
+      translate(-50%, -50%)
+      rotate(calc(var(--fx-sign, 1) * -31deg))
+      scaleX(0.3);
+  }
 }
 
 @keyframes result-in {
