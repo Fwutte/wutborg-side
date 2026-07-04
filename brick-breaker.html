@@ -352,7 +352,7 @@
 
     .power-legend {
       display: grid;
-      grid-template-columns: repeat(7, minmax(90px, 1fr));
+      grid-template-columns: repeat(9, minmax(82px, 1fr));
       gap: 7px;
       margin-top: 12px;
     }
@@ -462,7 +462,8 @@
               <div class="controls-panel">
                 <div class="control-tip"><strong>Flyt paddle</strong>Mus, touch eller piletaster / A og D</div>
                 <div class="control-tip"><strong>Start bolden</strong>Klik på banen eller tryk mellemrum</div>
-                <div class="control-tip"><strong>Laser</strong>Skyder automatisk, mens power-up'en er aktiv</div>
+                <div class="control-tip"><strong>Catch</strong>Fang bolden og slip den igen med klik eller mellemrum</div>
+                <div class="control-tip"><strong>Laser</strong>Klik eller tryk mellemrum for at skyde, mens power-up'en er aktiv</div>
                 <div class="control-tip"><strong>Pause</strong>Tryk P eller brug knappen under banen</div>
               </div>
             </div>
@@ -486,6 +487,8 @@
         <span class="power-chip" style="--power-color:#ff9e4a"><i>↑</i>Hurtig bold</span>
         <span class="power-chip" style="--power-color:#c18bff"><i>M</i>Multi-ball</span>
         <span class="power-chip" style="--power-color:#ffe45e"><i>L</i>Laser</span>
+        <span class="power-chip" style="--power-color:#4dff9a"><i>C</i>Catch</span>
+        <span class="power-chip" style="--power-color:#ffffff"><i>T</i>Through</span>
       </div>
     </main>
   </div>
@@ -498,7 +501,7 @@
         this.context = canvas.getContext("2d");
         this.width = canvas.width;
         this.height = canvas.height;
-        this.basePaddleWidth = 138;
+        this.basePaddleWidth = 126;
         this.maxBallSpeed = 760;
         this.minBallSpeed = 350;
         this.maxBalls = 7;
@@ -508,6 +511,7 @@
         this.levelTimer = 0;
         this.flash = 0;
         this.shake = 0;
+        this.throughUntil = 0;
         this.overlayAction = () => this.startGame();
         this.score = 0;
         this.lives = 3;
@@ -516,41 +520,49 @@
         this.pointerActive = false;
         this.statusTimer = 0;
 
-        // Hvert tegn beskriver en blok; de senere layouts har flere åbninger og rækker.
+        this.brickTypes = {
+          "1": { hits: 1, score: 100 },
+          "2": { hits: 2, score: 150, colors: ["#ff9e4a", "#ffe45e"] },
+          "3": { hits: 3, score: 220, colors: ["#ff4fa3", "#c18bff", "#6eb8ff"] },
+          M: { hits: Infinity, score: 0, solid: true, color: "#b8c7dc" }
+        };
+
+        // Hvert tegn beskriver en blok; 2/3 kræver flere hits, M er metal og tæller ikke mod level-clear.
         this.levels = [
           [
-            "11111111111",
-            "11111111111",
-            "11111111111",
-            "01111111110",
-            "00111111100"
+            "11111111111111",
+            "12222222222221",
+            "10000000000001",
+            "11111111111111",
+            "01111111111110",
+            "00111111111100"
           ],
           [
-            "10101010101",
-            "01111111110",
-            "11101110111",
-            "01111111110",
-            "10111011101",
-            "00111111100"
+            "11111111111111",
+            "102222MM222201",
+            "10100111100101",
+            "11111111111111",
+            "01110333301110",
+            "00111111111100"
           ],
           [
-            "11100100111",
-            "11110101111",
-            "01111111110",
-            "11011111011",
-            "11101110111",
-            "01110101110",
-            "00111111100"
+            "33333333333333",
+            "1222MMMMMM2221",
+            "10111100111101",
+            "11101111110111",
+            "011110MM111110",
+            "00111111111100",
+            "00011111111000"
           ],
           [
-            "11111111111",
-            "10111011101",
-            "11101110111",
-            "01111111110",
-            "11010101011",
-            "11101110111",
-            "01111111110",
-            "10110110101"
+            "3M3333333333M3",
+            "11112222221111",
+            "101100MM001101",
+            "11111133111111",
+            "0M0111111110M0",
+            "11103300330111",
+            "01111111111110",
+            "001111MM111100"
           ]
         ];
 
@@ -561,7 +573,9 @@
           slow: { label: "↓", color: "#6eb8ff", name: "Langsommere bold" },
           fast: { label: "↑", color: "#ff9e4a", name: "Hurtigere bold" },
           multi: { label: "M", color: "#c18bff", name: "Multi-ball" },
-          laser: { label: "L", color: "#ffe45e", name: "Laser" }
+          laser: { label: "L", color: "#ffe45e", name: "Laser" },
+          catch: { label: "C", color: "#4dff9a", name: "Catch" },
+          through: { label: "T", color: "#ffffff", name: "Through-ball" }
         };
 
         this.bindElements();
@@ -601,7 +615,8 @@
           if (["ArrowLeft", "ArrowRight", "Space"].includes(event.code)) event.preventDefault();
           if (event.code === "ArrowLeft" || event.code === "KeyA") this.keys.left = true;
           if (event.code === "ArrowRight" || event.code === "KeyD") this.keys.right = true;
-          if (event.code === "Space") this.launchServe();
+          if (event.code === "Space" && !this.launchServe()) this.tryFireLaser();
+          if (event.code === "KeyF") this.tryFireLaser();
           if (event.code === "KeyP" || event.code === "Escape") this.togglePause();
         });
 
@@ -625,7 +640,7 @@
         this.canvas.addEventListener("pointerdown", (event) => {
           movePointer(event);
           this.canvas.setPointerCapture?.(event.pointerId);
-          this.launchServe();
+          if (!this.launchServe()) this.tryFireLaser();
         });
       }
 
@@ -638,9 +653,11 @@
           speed: 790,
           sizeMode: "normal",
           sizeUntil: 0,
+          catchUntil: 0,
           laserUntil: 0,
           laserCooldown: 0
         };
+        this.throughUntil = 0;
         this.balls = [];
         this.bricks = [];
         this.powerUps = [];
@@ -672,23 +689,31 @@
       loadLevel() {
         const pattern = this.levels[this.levelIndex];
         const columns = pattern[0].length;
-        const gap = 8;
-        const side = 38;
-        const top = 62;
+        const gap = 5;
+        const side = 30;
+        const top = 54;
         const brickWidth = (this.width - side * 2 - gap * (columns - 1)) / columns;
-        const brickHeight = 26;
+        const brickHeight = 22;
         const palette = ["#55f6e7", "#6eb8ff", "#9b78ff", "#ff4fa3", "#ff7c67", "#ffe45e", "#8dff80", "#55d6ff"];
 
         this.bricks = [];
         pattern.forEach((row, rowIndex) => {
           [...row].forEach((cell, columnIndex) => {
-            if (cell !== "1") return;
+            const type = this.brickTypes[cell];
+            if (!type) return;
+            const baseColor = type.color || palette[(rowIndex + columnIndex + this.levelIndex * 2) % palette.length];
+            const colors = type.colors || [baseColor];
             this.bricks.push({
               x: side + columnIndex * (brickWidth + gap),
               y: top + rowIndex * (brickHeight + gap),
               width: brickWidth,
               height: brickHeight,
-              color: palette[(rowIndex + this.levelIndex * 2) % palette.length],
+              color: colors[0],
+              colors,
+              hits: type.solid ? Infinity : type.hits,
+              maxHits: type.solid ? Infinity : type.hits,
+              scoreValue: type.score,
+              solid: Boolean(type.solid),
               active: true,
               pulse: Math.random() * Math.PI * 2
             });
@@ -704,27 +729,37 @@
           vy: 0,
           radius: 8,
           trail: [],
+          catchOffset: this.paddle.width / 2,
+          launchSpeed: this.levelSpeed(),
           stuck: true
         }];
       }
 
       launchServe() {
-        if (this.state === "menu" || this.state === "gameover" || this.state === "win") return;
+        if (this.state === "menu" || this.state === "gameover" || this.state === "win") return false;
         if (this.state === "paused") {
           this.togglePause();
-          return;
+          return true;
         }
 
-        const stuckBall = this.balls.find((ball) => ball.stuck);
-        if (!stuckBall || this.state !== "serve") return;
+        const stuckBalls = this.balls.filter((ball) => ball.stuck);
+        if (!stuckBalls.length || !["serve", "playing"].includes(this.state)) return false;
 
-        const speed = this.levelSpeed();
-        const direction = Math.random() > 0.5 ? 1 : -1;
-        stuckBall.stuck = false;
-        stuckBall.vx = speed * 0.42 * direction;
-        stuckBall.vy = -Math.sqrt(speed * speed - stuckBall.vx * stuckBall.vx);
+        stuckBalls.forEach((ball, index) => {
+          const speed = this.clamp(ball.launchSpeed || this.levelSpeed(), this.minBallSpeed, this.maxBallSpeed);
+          const offset = ball.catchOffset ?? this.paddle.width / 2;
+          let impact = this.clamp((offset - this.paddle.width / 2) / (this.paddle.width / 2), -0.72, 0.72);
+          if (Math.abs(impact) < 0.18) impact = (index % 2 === 0 ? 1 : -1) * 0.36;
+          ball.stuck = false;
+          ball.catchOffset = 0;
+          ball.launchSpeed = 0;
+          ball.vx = speed * impact;
+          ball.vy = -Math.sqrt(speed * speed - ball.vx * ball.vx);
+          this.ensurePlayableAngle(ball, impact || 1);
+        });
         this.state = "playing";
         this.setStatus(`Level ${this.levelIndex + 1} er i gang`);
+        return true;
       }
 
       levelSpeed() {
@@ -800,17 +835,21 @@
           this.paddle.sizeMode = "normal";
         }
 
-        if (now < this.paddle.laserUntil && this.state === "playing") {
-          this.paddle.laserCooldown -= delta;
-          if (this.paddle.laserCooldown <= 0) {
-            this.fireLaser();
-            this.paddle.laserCooldown = 0.34;
-          }
-        }
+        if (this.paddle.catchUntil && now > this.paddle.catchUntil) this.paddle.catchUntil = 0;
+        if (this.throughUntil && now > this.throughUntil) this.throughUntil = 0;
+        if (this.paddle.laserCooldown > 0) this.paddle.laserCooldown -= delta;
+        if (this.paddle.laserUntil && now > this.paddle.laserUntil) this.paddle.laserUntil = 0;
       }
 
       updateBalls(delta) {
         for (const ball of [...this.balls]) {
+          if (ball.stuck) {
+            ball.catchOffset = this.clamp(ball.catchOffset || this.paddle.width / 2, ball.radius, this.paddle.width - ball.radius);
+            ball.x = this.paddle.x + ball.catchOffset;
+            ball.y = this.paddle.y - ball.radius - 2;
+            continue;
+          }
+
           const previousX = ball.x;
           const previousY = ball.y;
           ball.x += ball.vx * delta;
@@ -858,6 +897,17 @@
           1
         );
         const speed = this.clamp(Math.hypot(ball.vx, ball.vy) * 1.015, this.minBallSpeed, this.maxBallSpeed);
+        if (performance.now() < this.paddle.catchUntil) {
+          ball.stuck = true;
+          ball.catchOffset = this.clamp(ball.x - paddle.x, ball.radius, paddle.width - ball.radius);
+          ball.launchSpeed = speed;
+          ball.vx = 0;
+          ball.vy = 0;
+          ball.trail = [];
+          this.spawnParticles(ball.x, paddle.y, "#4dff9a", 10);
+          this.setStatus("Catch: klik eller tryk mellemrum for at slippe bolden", 1.6);
+          return;
+        }
         const angle = impact * 1.08;
         ball.vx = speed * Math.sin(angle);
         ball.vy = -Math.abs(speed * Math.cos(angle));
@@ -866,41 +916,73 @@
       }
 
       collideWithBricks(ball, previousX, previousY) {
+        const throughActive = this.isThroughActive();
         for (const brick of this.bricks) {
           if (!brick.active || !this.circleHitsRect(ball, brick)) continue;
 
+          const result = this.hitBrick(brick, 0.2);
+          if (!throughActive || result.solid) {
+            this.reflectBallFromBrick(ball, brick, previousX, previousY);
+            this.ensurePlayableAngle(ball);
+          }
+          this.checkLevelComplete();
+          if (this.state !== "playing") return;
+          if (!throughActive || result.solid) break;
+        }
+      }
+
+      hitBrick(brick, dropChance) {
+        if (brick.solid) {
+          this.spawnParticles(brick.x + brick.width / 2, brick.y + brick.height / 2, "#d7e1f3", 7);
+          this.shake = Math.min(8, this.shake + 1.3);
+          return { destroyed: false, solid: true };
+        }
+
+        brick.hits -= 1;
+        const destroyed = brick.hits <= 0;
+        if (destroyed) {
           brick.active = false;
-          this.score += 100 * (this.levelIndex + 1);
-          this.updateHud();
+          this.score += brick.scoreValue * (this.levelIndex + 1);
           this.spawnParticles(brick.x + brick.width / 2, brick.y + brick.height / 2, brick.color, 14);
           this.shake = Math.min(8, this.shake + 2.2);
-
-          const wasAbove = previousY + ball.radius <= brick.y;
-          const wasBelow = previousY - ball.radius >= brick.y + brick.height;
-          const wasLeft = previousX + ball.radius <= brick.x;
-          const wasRight = previousX - ball.radius >= brick.x + brick.width;
-
-          if (wasAbove) {
-            ball.y = brick.y - ball.radius;
-            ball.vy = -Math.abs(ball.vy);
-          } else if (wasBelow) {
-            ball.y = brick.y + brick.height + ball.radius;
-            ball.vy = Math.abs(ball.vy);
-          } else if (wasLeft) {
-            ball.x = brick.x - ball.radius;
-            ball.vx = -Math.abs(ball.vx);
-          } else if (wasRight) {
-            ball.x = brick.x + brick.width + ball.radius;
-            ball.vx = Math.abs(ball.vx);
-          } else {
-            ball.vy *= -1;
-          }
-
-          this.ensurePlayableAngle(ball);
-          if (Math.random() < 0.2) this.dropPowerUp(brick);
-          this.checkLevelComplete();
-          break;
+          if (Math.random() < dropChance) this.dropPowerUp(brick);
+        } else {
+          const damageIndex = this.clamp(brick.maxHits - brick.hits, 0, brick.colors.length - 1);
+          brick.color = brick.colors[damageIndex];
+          this.score += 25 * (this.levelIndex + 1);
+          this.spawnParticles(brick.x + brick.width / 2, brick.y + brick.height / 2, brick.color, 6);
+          this.shake = Math.min(8, this.shake + 1.1);
         }
+
+        this.updateHud();
+        return { destroyed, solid: false };
+      }
+
+      reflectBallFromBrick(ball, brick, previousX, previousY) {
+        const wasAbove = previousY + ball.radius <= brick.y;
+        const wasBelow = previousY - ball.radius >= brick.y + brick.height;
+        const wasLeft = previousX + ball.radius <= brick.x;
+        const wasRight = previousX - ball.radius >= brick.x + brick.width;
+
+        if (wasAbove) {
+          ball.y = brick.y - ball.radius;
+          ball.vy = -Math.abs(ball.vy);
+        } else if (wasBelow) {
+          ball.y = brick.y + brick.height + ball.radius;
+          ball.vy = Math.abs(ball.vy);
+        } else if (wasLeft) {
+          ball.x = brick.x - ball.radius;
+          ball.vx = -Math.abs(ball.vx);
+        } else if (wasRight) {
+          ball.x = brick.x + brick.width + ball.radius;
+          ball.vx = Math.abs(ball.vx);
+        } else {
+          ball.vy *= -1;
+        }
+      }
+
+      isThroughActive() {
+        return performance.now() < this.throughUntil;
       }
 
       circleHitsRect(ball, rect) {
@@ -945,7 +1027,7 @@
       }
 
       checkLevelComplete() {
-        if (this.state !== "playing" || this.bricks.some((brick) => brick.active)) return;
+        if (this.state !== "playing" || this.bricks.some((brick) => brick.active && !brick.solid)) return;
         this.state = "levelComplete";
         this.levelTimer = 1.35;
         this.score += 1000 * (this.levelIndex + 1);
@@ -1020,6 +1102,10 @@
         } else if (type === "slow" || type === "fast") {
           const factor = type === "slow" ? 0.78 : 1.22;
           this.balls.forEach((ball) => {
+            if (ball.stuck) {
+              ball.launchSpeed = this.clamp((ball.launchSpeed || this.levelSpeed()) * factor, this.minBallSpeed, this.maxBallSpeed);
+              return;
+            }
             ball.vx *= factor;
             ball.vy *= factor;
             this.ensurePlayableAngle(ball);
@@ -1029,6 +1115,10 @@
         } else if (type === "laser") {
           this.paddle.laserUntil = now + 11000;
           this.paddle.laserCooldown = 0;
+        } else if (type === "catch") {
+          this.paddle.catchUntil = now + 14000;
+        } else if (type === "through") {
+          this.throughUntil = now + 9000;
         }
 
         this.spawnParticles(
@@ -1043,7 +1133,8 @@
       addMultiBall() {
         const sourceBalls = [...this.balls];
         for (const source of sourceBalls) {
-          if (this.balls.length >= this.maxBalls || source.stuck) break;
+          if (this.balls.length >= this.maxBalls) break;
+          if (source.stuck) continue;
           const speed = Math.hypot(source.vx, source.vy);
           const baseAngle = Math.atan2(source.vy, source.vx);
           for (const offset of [-0.3, 0.3]) {
@@ -1055,10 +1146,21 @@
               vy: Math.sin(baseAngle + offset) * speed,
               radius: source.radius,
               trail: [],
+              catchOffset: 0,
+              launchSpeed: speed,
               stuck: false
             });
           }
         }
+      }
+
+      tryFireLaser() {
+        if (this.state !== "playing") return false;
+        if (performance.now() >= this.paddle.laserUntil) return false;
+        if (this.paddle.laserCooldown > 0) return false;
+        this.fireLaser();
+        this.paddle.laserCooldown = 0.24;
+        return true;
       }
 
       fireLaser() {
@@ -1081,11 +1183,7 @@
               bullet.y >= brick.y &&
               bullet.y <= brick.y + brick.height
             ) {
-              brick.active = false;
-              this.score += 100 * (this.levelIndex + 1);
-              this.updateHud();
-              this.spawnParticles(bullet.x, bullet.y, brick.color, 11);
-              if (Math.random() < 0.16) this.dropPowerUp(brick);
+              this.hitBrick(brick, 0.16);
               this.bullets.splice(this.bullets.indexOf(bullet), 1);
               this.checkLevelComplete();
               break;
@@ -1104,7 +1202,10 @@
         this.paddle.x = this.clamp(center - this.paddle.width / 2, 0, this.width - this.paddle.width);
         this.paddle.sizeMode = "normal";
         this.paddle.sizeUntil = 0;
+        this.paddle.catchUntil = 0;
         this.paddle.laserUntil = 0;
+        this.paddle.laserCooldown = 0;
+        this.throughUntil = 0;
       }
 
       spawnParticles(x, y, color, count) {
@@ -1282,14 +1383,37 @@
           shine.addColorStop(1, "rgba(0,0,0,0.3)");
           ctx.fillStyle = shine;
           ctx.fill();
+          if (brick.solid) {
+            ctx.strokeStyle = "rgba(255,255,255,0.72)";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.strokeStyle = "rgba(2,7,19,0.32)";
+            ctx.lineWidth = 1;
+            for (let stripe = -brick.height; stripe < brick.width; stripe += 14) {
+              ctx.beginPath();
+              ctx.moveTo(brick.x + stripe, brick.y + brick.height);
+              ctx.lineTo(brick.x + stripe + brick.height, brick.y);
+              ctx.stroke();
+            }
+          } else if (brick.maxHits > 1 && brick.hits > 1) {
+            ctx.fillStyle = "rgba(2,7,19,0.42)";
+            for (let pip = 0; pip < brick.hits; pip += 1) {
+              ctx.fillRect(brick.x + brick.width - 8 - pip * 7, brick.y + brick.height - 7, 4, 4);
+            }
+          }
           ctx.restore();
         }
       }
 
       drawPaddle(ctx) {
-        const laserActive = performance.now() < this.paddle.laserUntil;
+        const now = performance.now();
+        const laserActive = now < this.paddle.laserUntil;
+        const catchActive = now < this.paddle.catchUntil;
+        const throughActive = this.isThroughActive();
+        const leftColor = laserActive ? "#ffe45e" : catchActive ? "#4dff9a" : throughActive ? "#ffffff" : "#55f6e7";
+        const rightColor = laserActive ? "#ff9e4a" : catchActive ? "#8dff80" : throughActive ? "#c18bff" : "#6eb8ff";
         ctx.save();
-        ctx.shadowColor = laserActive ? "#ffe45e" : "#55f6e7";
+        ctx.shadowColor = leftColor;
         ctx.shadowBlur = laserActive ? 25 : 18;
         const gradient = ctx.createLinearGradient(
           this.paddle.x,
@@ -1297,13 +1421,18 @@
           this.paddle.x + this.paddle.width,
           this.paddle.y
         );
-        gradient.addColorStop(0, laserActive ? "#ffe45e" : "#55f6e7");
+        gradient.addColorStop(0, leftColor);
         gradient.addColorStop(0.5, "#f8fbff");
-        gradient.addColorStop(1, laserActive ? "#ff9e4a" : "#6eb8ff");
+        gradient.addColorStop(1, rightColor);
         ctx.fillStyle = gradient;
         ctx.beginPath();
         ctx.roundRect(this.paddle.x, this.paddle.y, this.paddle.width, this.paddle.height, 8);
         ctx.fill();
+        if (throughActive) {
+          ctx.strokeStyle = "rgba(255,255,255,0.72)";
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
         ctx.restore();
 
         if (laserActive) {
@@ -1311,21 +1440,32 @@
           ctx.fillRect(this.paddle.x + 12, this.paddle.y - 8, 9, 10);
           ctx.fillRect(this.paddle.x + this.paddle.width - 21, this.paddle.y - 8, 9, 10);
         }
+        if (catchActive) {
+          ctx.save();
+          ctx.strokeStyle = "#4dff9a";
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(this.paddle.x + 12, this.paddle.y + 1, 10, Math.PI, Math.PI * 1.72);
+          ctx.arc(this.paddle.x + this.paddle.width - 12, this.paddle.y + 1, 10, Math.PI * 1.28, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        }
       }
 
       drawBalls(ctx) {
+        const throughActive = this.isThroughActive();
         for (const ball of this.balls) {
           ball.trail.forEach((point, index) => {
             const alpha = (1 - index / ball.trail.length) * 0.2;
-            ctx.fillStyle = `rgba(85, 246, 231, ${alpha})`;
+            ctx.fillStyle = throughActive ? `rgba(255, 255, 255, ${alpha})` : `rgba(85, 246, 231, ${alpha})`;
             ctx.beginPath();
             ctx.arc(point.x, point.y, Math.max(1, ball.radius - index * 0.7), 0, Math.PI * 2);
             ctx.fill();
           });
 
           ctx.save();
-          ctx.shadowColor = "#55f6e7";
-          ctx.shadowBlur = 22;
+          ctx.shadowColor = throughActive ? "#ffffff" : "#55f6e7";
+          ctx.shadowBlur = throughActive ? 28 : 22;
           const ballGradient = ctx.createRadialGradient(
             ball.x - 3,
             ball.y - 4,
@@ -1335,8 +1475,8 @@
             ball.radius
           );
           ballGradient.addColorStop(0, "#ffffff");
-          ballGradient.addColorStop(0.45, "#aafff7");
-          ballGradient.addColorStop(1, "#36b8e8");
+          ballGradient.addColorStop(0.45, throughActive ? "#ffe45e" : "#aafff7");
+          ballGradient.addColorStop(1, throughActive ? "#ff4fa3" : "#36b8e8");
           ctx.fillStyle = ballGradient;
           ctx.beginPath();
           ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
