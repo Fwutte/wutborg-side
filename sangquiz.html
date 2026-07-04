@@ -395,9 +395,9 @@
 
     @media (max-width: 620px) {
       .page {
-        width: 100%;
+        width: min(520px, calc(100% - 20px));
         max-width: 520px;
-        padding: 10px 24px 42px;
+        padding: 10px 0 42px;
       }
 
       .nav {
@@ -639,6 +639,16 @@
       border-color: transparent;
     }
 
+    .category-options button[aria-pressed="true"] {
+      color: #120a1f;
+      background: var(--green);
+      border-color: transparent;
+    }
+
+    .category-options button[aria-pressed="true"] small {
+      color: rgba(18, 10, 31, 0.72);
+    }
+
     .app-grid {
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(290px, 360px);
@@ -701,6 +711,7 @@
     }
 
     .setup-box,
+    .category-box,
     .spotify-box,
     .current-card,
     .timeline-box,
@@ -715,6 +726,7 @@
     }
 
     .setup-box h3,
+    .category-box h3,
     .spotify-box h3,
     .timeline-box h3,
     .placement-box h3,
@@ -728,6 +740,29 @@
     .team-list {
       display: grid;
       gap: 10px;
+    }
+
+    .category-options {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .category-options button {
+      display: grid;
+      gap: 4px;
+      align-content: center;
+      min-height: 76px;
+      padding-inline: 12px;
+      font-size: 0.84rem;
+      text-align: left;
+    }
+
+    .category-options small {
+      color: var(--muted);
+      font-size: 0.75rem;
+      font-weight: 800;
+      line-height: 1.25;
     }
 
     .team-row {
@@ -1086,10 +1121,10 @@
       }
 
       .page {
-        width: 100% !important;
+        width: min(calc(100% - 20px), 1240px) !important;
         max-width: 100% !important;
-        margin-inline: 0;
-        padding-inline: 24px;
+        margin-inline: auto;
+        padding-inline: 0;
         overflow-x: hidden;
       }
 
@@ -1107,7 +1142,7 @@
       .nav,
       .quiz-app,
       .footer {
-        width: calc(100% - 64px) !important;
+        width: 100% !important;
         max-width: 100%;
         margin-inline: 0;
       }
@@ -1129,7 +1164,7 @@
       .app-head,
       .screen,
       .score-panel {
-        width: calc(100% - 32px) !important;
+        width: 100% !important;
         max-width: 100% !important;
         margin-inline: 0;
         padding: 16px;
@@ -1152,12 +1187,14 @@
       }
 
       .mode-toggle,
+      .category-options,
       .player-controls,
       .score-actions,
       .primary-actions {
         width: 100%;
       }
 
+      .category-options,
       .mode-toggle {
         display: grid;
         grid-template-columns: 1fr;
@@ -1165,6 +1202,16 @@
         width: 100% !important;
         max-width: 100% !important;
         overflow: visible;
+      }
+
+      .app-head .mode-toggle {
+        width: 100% !important;
+        max-width: 340px !important;
+      }
+
+      .app-head .mode-toggle button {
+        width: 100% !important;
+        max-width: 340px !important;
       }
 
       .player-controls,
@@ -1175,6 +1222,7 @@
       }
 
       .mode-toggle button,
+      .category-options button,
       .player-controls button,
       .player-controls .link-button,
       .score-actions button,
@@ -1268,6 +1316,25 @@
                   <div class="primary-actions">
                     <button id="add-team-button" type="button">Tilføj hold</button>
                   </div>
+                </section>
+
+                <section class="category-box" aria-label="Sangkategori">
+                  <h3>Sangkategori</h3>
+                  <div class="category-options" aria-label="Vælg sangkategori">
+                    <button type="button" data-song-category="mixed" aria-pressed="true">
+                      Blandet
+                      <small>Dansk og internationalt</small>
+                    </button>
+                    <button type="button" data-song-category="danish" aria-pressed="false">
+                      Dansk
+                      <small>Kun danske kunstnere</small>
+                    </button>
+                    <button type="button" data-song-category="international" aria-pressed="false">
+                      Internationalt
+                      <small>Kun internationale kunstnere</small>
+                    </button>
+                  </div>
+                  <p id="category-status" class="hint-text">Sangpulje vælges</p>
                 </section>
 
                 <section class="spotify-box" aria-label="Afspilning">

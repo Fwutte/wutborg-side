@@ -1,10 +1,11 @@
 (() => {
   "use strict";
 
-  const SONGS = Array.isArray(window.SANGQUIZ_SONGS) ? window.SANGQUIZ_SONGS : [];
+  const ALL_SONGS = Array.isArray(window.SANGQUIZ_SONGS) ? window.SANGQUIZ_SONGS : [];
   const STORAGE_KEY = "wutborg.sangquiz.game.v1";
   const TEAM_NAMES_KEY = "wutborg.sangquiz.teams.v1";
   const MODE_KEY = "wutborg.sangquiz.mode.v1";
+  const CATEGORY_KEY = "wutborg.sangquiz.category.v1";
   const CLIENT_ID_KEY = "wutborg.sangquiz.spotify.clientId";
   const DEFAULT_CLIENT_ID = "cbb2b24b20c94b12bf0682e5fb88d860";
   const TOKEN_KEY = "wutborg.sangquiz.spotify.token";
@@ -20,8 +21,14 @@
   const $ = (id) => document.getElementById(id);
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
   const byYear = (a, b) => a.year - b.year || a.title.localeCompare(b.title, "da");
+  const CATEGORY_LABELS = {
+    mixed: "Blandet",
+    danish: "Dansk",
+    international: "Internationalt",
+  };
 
   const els = {};
+  let selectedCategory = normalizeCategory(readTextStorage(CATEGORY_KEY, "mixed"));
   let state = createEmptyState();
   let setupTeamNames = ["Hold 1", "Hold 2"];
   let mode = readTextStorage(MODE_KEY, "screen");
@@ -68,6 +75,7 @@
       "spotify-login-button",
       "spotify-connect-button",
       "spotify-mode-status",
+      "category-status",
       "round-number",
       "deck-status",
       "active-team-name",
@@ -95,6 +103,7 @@
     });
 
     els.modeButtons = [...document.querySelectorAll("[data-sangquiz-mode]")];
+    els.categoryButtons = [...document.querySelectorAll("[data-song-category]")];
     els.scoreButtons = [...document.querySelectorAll("[data-score-action]")];
   }
 
@@ -137,6 +146,10 @@
     els.modeButtons.forEach((button) => {
       button.addEventListener("click", () => setMode(button.dataset.sangquizMode));
     });
+
+    els.categoryButtons.forEach((button) => {
+      button.addEventListener("click", () => setSongCategory(button.dataset.songCategory));
+    });
   }
 
   function toCamel(id) {
@@ -153,6 +166,7 @@
       activeTeamIndex: 0,
       selectedSlot: 0,
       currentSongId: "",
+      songCategory: selectedCategory,
       usedSongIds: [],
       teams: [],
       finishReason: "",
@@ -165,6 +179,7 @@
       ...createEmptyState(),
       started: true,
       phase: "guess",
+      songCategory: selectedCategory,
       teams: names.map((name, index) => ({
         id: `team-${Date.now()}-${index}`,
         name,
@@ -188,6 +203,7 @@
     }));
     next.activeTeamIndex = clamp(Number(next.activeTeamIndex) || 0, 0, Math.max(0, next.teams.length - 1));
     next.selectedSlot = clamp(Number(next.selectedSlot) || 0, 0, getActiveTimeline(next).length);
+    next.songCategory = normalizeCategory(next.songCategory || selectedCategory);
     next.phase = next.phase === "reveal" ? "reveal" : next.started ? "guess" : "setup";
     next.finished = Boolean(next.finished);
     next.highscoreSubmitted = Boolean(next.highscoreSubmitted);
@@ -221,13 +237,14 @@
   }
 
   function getAppStatus() {
-    if (!SONGS.length) return "Sanglisten mangler";
+    const pool = getActiveSongPool();
+    if (!ALL_SONGS.length) return "Sanglisten mangler";
     if (state.finished) return "Spil afsluttet";
     if (state.started) {
       const team = getActiveTeam();
       return team ? `${team.name}: ${teamSongCount(team)} sange spillet` : "Spil i gang";
     }
-    return `${SONGS.length} sange klar`;
+    return `${pool.length} sange klar · ${CATEGORY_LABELS[selectedCategory]}`;
   }
 
   function renderSetupState() {
@@ -239,6 +256,7 @@
 
     const clientId = getSpotifyClientId();
     if (els.spotifyClientId.value !== clientId) els.spotifyClientId.value = clientId;
+    updateCategoryUi();
   }
 
   function renderSetupTeams() {
@@ -300,7 +318,7 @@
   }
 
   function startGame() {
-    if (!SONGS.length) return;
+    if (!getSongPool(selectedCategory).length) return;
     setupTeamNames = collectTeamNames();
     saveSetupTeams();
     state = createGameState(setupTeamNames);
@@ -323,7 +341,7 @@
   }
 
   function drawNextSong() {
-    const unused = SONGS.filter((song) => !state.usedSongIds.includes(song.id));
+    const unused = getActiveSongPool().filter((song) => !state.usedSongIds.includes(song.id));
     if (!unused.length) {
       finishGame("deck");
       return;
@@ -591,11 +609,11 @@
   }
 
   function getCurrentSong() {
-    return SONGS.find((song) => song.id === state.currentSongId) || null;
+    return ALL_SONGS.find((song) => song.id === state.currentSongId) || null;
   }
 
   function remainingSongCount() {
-    return SONGS.filter((song) => !state.usedSongIds.includes(song.id)).length;
+    return getActiveSongPool().filter((song) => !state.usedSongIds.includes(song.id)).length;
   }
 
   function teamSongCount(team) {
@@ -628,6 +646,39 @@
     if (!state.teams.length) return [];
     const maxScore = Math.max(...state.teams.map((team) => team.score));
     return state.teams.filter((team) => team.score === maxScore);
+  }
+
+  function setSongCategory(category) {
+    selectedCategory = normalizeCategory(category);
+    safeSetStorage(CATEGORY_KEY, selectedCategory);
+    if (!state.started || state.finished) state.songCategory = selectedCategory;
+    render();
+  }
+
+  function updateCategoryUi() {
+    if (!els.categoryButtons) return;
+    const category = state.started && !state.finished ? state.songCategory : selectedCategory;
+    els.categoryButtons.forEach((button) => {
+      const pressed = button.dataset.songCategory === category;
+      button.setAttribute("aria-pressed", pressed ? "true" : "false");
+    });
+    if (els.categoryStatus) {
+      els.categoryStatus.textContent = `${getSongPool(category).length} sange i ${CATEGORY_LABELS[category].toLowerCase()} pulje`;
+    }
+  }
+
+  function getActiveSongPool() {
+    return getSongPool(state.started && !state.finished ? state.songCategory : selectedCategory);
+  }
+
+  function getSongPool(category) {
+    const normalized = normalizeCategory(category);
+    if (normalized === "mixed") return ALL_SONGS;
+    return ALL_SONGS.filter((song) => song.category === normalized);
+  }
+
+  function normalizeCategory(category) {
+    return Object.prototype.hasOwnProperty.call(CATEGORY_LABELS, category) ? category : "mixed";
   }
 
   function saveGame() {
