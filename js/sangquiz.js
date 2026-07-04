@@ -165,6 +165,7 @@
         id: `team-${Date.now()}-${index}`,
         name,
         score: 0,
+        playedSongIds: [],
         timeline: [],
       })),
     };
@@ -178,6 +179,7 @@
       id: team.id || `team-${index}`,
       name: String(team.name || `Hold ${index + 1}`),
       score: Number.isFinite(Number(team.score)) ? Number(team.score) : 0,
+      playedSongIds: Array.isArray(team.playedSongIds) ? team.playedSongIds : [],
       timeline: Array.isArray(team.timeline) ? team.timeline.slice().sort(byYear) : [],
     }));
     next.activeTeamIndex = clamp(Number(next.activeTeamIndex) || 0, 0, Math.max(0, next.teams.length - 1));
@@ -217,7 +219,10 @@
   function getAppStatus() {
     if (!SONGS.length) return "Sanglisten mangler";
     if (state.finished) return "Spil afsluttet";
-    if (state.started) return `${remainingSongCount()} sange tilbage`;
+    if (state.started) {
+      const team = getActiveTeam();
+      return team ? `${team.name}: ${teamSongCount(team)} sange spillet` : "Spil i gang";
+    }
     return `${SONGS.length} sange klar`;
   }
 
@@ -344,6 +349,7 @@
     const shouldKeep = action === "award" || action === "keep";
 
     team.score += pointDelta;
+    team.playedSongIds = [...new Set([...(team.playedSongIds || []), song.id])];
     if (shouldKeep) addSongToTimeline(team, song);
 
     state.usedSongIds = [...new Set([...state.usedSongIds, song.id])];
@@ -401,7 +407,9 @@
     const timeline = team ? team.timeline.slice().sort(byYear) : [];
 
     els.roundNumber.textContent = `Runde ${state.round}`;
-    els.deckStatus.textContent = `${state.usedSongIds.length} brugt · ${remainingSongCount()} tilbage`;
+    els.deckStatus.textContent = team
+      ? `${team.name}: ${teamSongCount(team)} spillet · ${remainingSongCount()} i puljen`
+      : `${remainingSongCount()} i puljen`;
     els.activeTeamName.textContent = team ? team.name : "Hold";
     els.hiddenSongLabel.textContent = song ? `Skjult sang ${state.round}` : "Ingen sang";
     els.revealButton.disabled = !song || state.phase === "reveal";
@@ -409,7 +417,7 @@
     els.pauseButton.disabled = !song || !spotify.deviceId;
 
     if (song) {
-      els.djFallbackLink.href = song.spotifyUrl;
+      els.djFallbackLink.href = getSpotifyUrl(song);
       els.djFallbackLink.removeAttribute("aria-disabled");
     } else {
       els.djFallbackLink.href = "#";
@@ -512,7 +520,7 @@
       strong.textContent = team.name;
 
       const small = document.createElement("small");
-      small.textContent = `${team.timeline.length} kort`;
+      small.textContent = `${teamSongCount(team)} sange spillet · ${team.timeline.length} kort`;
 
       name.append(strong, small);
 
@@ -581,6 +589,11 @@
 
   function remainingSongCount() {
     return SONGS.filter((song) => !state.usedSongIds.includes(song.id)).length;
+  }
+
+  function teamSongCount(team) {
+    if (Array.isArray(team.playedSongIds)) return team.playedSongIds.length;
+    return team.timeline.length;
   }
 
   function evaluatePlacement(timeline, song, slot) {
@@ -668,6 +681,7 @@
         teams: state.teams.map((team) => ({
           name: team.name,
           score: team.score,
+          songsPlayed: teamSongCount(team),
           cards: team.timeline.length,
         })),
       },
@@ -919,8 +933,8 @@
       }
     }
 
-    let uri = spotify.resolvedUris[song.id] || song.spotifyUri;
-    let ok = await startSpotifyUri(token, uri);
+    let uri = spotify.resolvedUris[song.id] || song.spotifyUri || "";
+    let ok = uri ? await startSpotifyUri(token, uri) : false;
     if (!ok) {
       uri = await resolveSongUri(token, song);
       ok = Boolean(uri) && (await startSpotifyUri(token, uri));
@@ -932,7 +946,12 @@
   }
 
   function openDjFallback(song) {
-    return Boolean(window.open(song.spotifyUrl, "_blank", "noopener,noreferrer"));
+    return Boolean(window.open(getSpotifyUrl(song), "_blank", "noopener,noreferrer"));
+  }
+
+  function getSpotifyUrl(song) {
+    if (song.spotifyUrl) return song.spotifyUrl;
+    return `https://open.spotify.com/search/${encodeURIComponent(`${song.title} ${song.artist}`)}`;
   }
 
   async function startSpotifyUri(token, uri) {
