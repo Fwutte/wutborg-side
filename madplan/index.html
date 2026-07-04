@@ -45,6 +45,7 @@
     padding:0 18px calc(96px + env(safe-area-inset-bottom));
     position:relative;
   }
+  #view{touch-action:pan-y}
 
   /* ---------- header ---------- */
   .topbar{
@@ -1822,17 +1823,76 @@ function escapeAttr(s){ return String(s).replace(/&/g,"&amp;").replace(/"/g,"&qu
 /* ---------------- events ---------------- */
 $("#overlay").addEventListener("click",closeSheet);
 $("#deviceButton").addEventListener("click",openDeviceManager);
+let weekChangeInProgress=false;
 async function changeWeek(days){
+  if(weekChangeInProgress) return;
+  weekChangeInProgress=true;
   const previous=weekStart;
   weekStart=addDays(weekStart,days);
   try{
     await store.loadWeek(); render();
   }catch(error){
     weekStart=previous; render(); reportError(error,"Kunne ikke hente ugen");
+  }finally{
+    weekChangeInProgress=false;
   }
 }
 $("#prevWeek").addEventListener("click",()=>changeWeek(-7));
 $("#nextWeek").addEventListener("click",()=>changeWeek(7));
+
+let planSwipe=null;
+let suppressPlanClick=false;
+function resetPlanSwipe(){
+  planSwipe=null;
+}
+function canStartPlanSwipe(event){
+  if(currentView!=="plan" || weekChangeInProgress) return false;
+  if(event.pointerType==="mouse" || event.button!==0) return false;
+  if($("#overlay").classList.contains("open")) return false;
+  return true;
+}
+function planSwipeThreshold(){
+  return Math.min(96, Math.max(52, window.innerWidth * 0.18));
+}
+$("#view").addEventListener("pointerdown",event=>{
+  if(!canStartPlanSwipe(event)) return;
+  planSwipe={
+    pointerId:event.pointerId,
+    startX:event.clientX,
+    startY:event.clientY,
+    moved:false,
+    startedAt:Date.now()
+  };
+  event.currentTarget.setPointerCapture?.(event.pointerId);
+});
+$("#view").addEventListener("pointermove",event=>{
+  if(!planSwipe || event.pointerId!==planSwipe.pointerId) return;
+  const dx=event.clientX-planSwipe.startX;
+  const dy=event.clientY-planSwipe.startY;
+  if(Math.abs(dx)>12 && Math.abs(dx)>Math.abs(dy)*1.25) planSwipe.moved=true;
+  if(planSwipe.moved) event.preventDefault();
+});
+$("#view").addEventListener("pointerup",event=>{
+  if(!planSwipe || event.pointerId!==planSwipe.pointerId) return;
+  const dx=event.clientX-planSwipe.startX;
+  const dy=event.clientY-planSwipe.startY;
+  const elapsed=Math.max(1, Date.now()-planSwipe.startedAt);
+  const fastEnough=Math.abs(dx)>=42 && Math.abs(dx)/elapsed>0.45;
+  const farEnough=Math.abs(dx)>=planSwipeThreshold();
+  const horizontal=Math.abs(dx)>Math.abs(dy)*1.35;
+  resetPlanSwipe();
+  if(!horizontal || (!farEnough && !fastEnough)) return;
+  suppressPlanClick=true;
+  setTimeout(()=>{ suppressPlanClick=false; }, 450);
+  changeWeek(dx<0 ? 7 : -7);
+});
+$("#view").addEventListener("pointercancel",resetPlanSwipe);
+$("#view").addEventListener("click",event=>{
+  if(!suppressPlanClick) return;
+  event.preventDefault();
+  event.stopPropagation();
+  suppressPlanClick=false;
+}, true);
 document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",async()=>{
   currentView=b.dataset.view;
   render();
