@@ -83,6 +83,7 @@
       "reveal-artist",
       "reveal-year",
       "placement-result",
+      "bonus-guess",
       "scoreboard",
       "end-game-button",
       "reset-game-button",
@@ -334,6 +335,7 @@
     state.round += 1;
     state.phase = "guess";
     state.selectedSlot = team ? getCorrectSlot(team.timeline, song.year) : 0;
+    if (els.bonusGuess) els.bonusGuess.checked = false;
   }
 
   function revealSong() {
@@ -349,9 +351,10 @@
     if (!song || !team) return;
 
     const pointDelta = action === "award" ? 1 : action === "penalty" ? -1 : 0;
+    const bonusDelta = els.bonusGuess.checked ? 3 : 0;
     const shouldKeep = action === "award" || action === "keep";
 
-    team.score += pointDelta;
+    team.score += pointDelta + bonusDelta;
     team.playedSongIds = [...new Set([...(team.playedSongIds || []), song.id])];
     if (shouldKeep) addSongToTimeline(team, song);
 
@@ -360,6 +363,7 @@
     state.selectedSlot = 0;
     state.phase = "guess";
     state.activeTeamIndex = (state.activeTeamIndex + 1) % state.teams.length;
+    els.bonusGuess.checked = false;
 
     pausePlayback();
 
