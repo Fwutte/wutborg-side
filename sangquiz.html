@@ -1,0 +1,569 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#120a1f" />
+  <title>Sangquiz | Wutborg Arcade</title>
+  <meta
+    name="description"
+    content="Sangquiz er en kommende musikquiz i Wutborg Arcade. Siden er klar, mens selve spillet bygges senere."
+  />
+  <style>
+    :root {
+      --night: #120a1f;
+      --panel: #1e1432;
+      --paper: #fff8ff;
+      --muted: #c9bad9;
+      --pink: #ff5084;
+      --blue: #48d4ff;
+      --amber: #ffb84d;
+      --green: #66f0ad;
+      --border: rgba(255, 255, 255, 0.14);
+      --shadow: 0 28px 80px rgba(0, 0, 0, 0.38);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      min-height: 100vh;
+      overflow-x: hidden;
+      color: var(--paper);
+      font-family: Inter, ui-rounded, "Arial Rounded MT Bold", system-ui, sans-serif;
+      background:
+        radial-gradient(circle at 16% 12%, rgba(255, 80, 132, 0.22), transparent 29rem),
+        radial-gradient(circle at 88% 18%, rgba(72, 212, 255, 0.17), transparent 30rem),
+        radial-gradient(circle at 70% 90%, rgba(255, 184, 77, 0.13), transparent 31rem),
+        linear-gradient(145deg, #080610, #160d26 58%, #07050d);
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      opacity: 0.28;
+      background:
+        linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+      background-size: 42px 42px;
+      mask-image: linear-gradient(#000, transparent 94%);
+    }
+
+    a {
+      color: inherit;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    a:focus-visible {
+      outline: 4px solid var(--blue);
+      outline-offset: 4px;
+    }
+
+    .page {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 18px 0 42px;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+      padding: 11px 15px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: rgba(12, 8, 25, 0.76);
+      backdrop-filter: blur(18px);
+    }
+
+    .brand {
+      color: #fff;
+      text-decoration: none;
+      font-weight: 950;
+      letter-spacing: -0.035em;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-link {
+      padding: 9px 14px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.82rem;
+      font-weight: 850;
+      transition: color 0.2s ease, transform 0.2s ease, background 0.2s ease;
+    }
+
+    .nav-link:hover {
+      color: #fff;
+      background: rgba(255,255,255,0.07);
+      transform: translateY(-2px);
+    }
+
+    .hero {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 0.95fr) minmax(410px, 1.05fr);
+      gap: clamp(28px, 5vw, 62px);
+      min-height: 620px;
+      padding: clamp(42px, 7vw, 76px) clamp(20px, 4vw, 48px);
+      overflow: hidden;
+      border: 1px solid rgba(255, 80, 132, 0.22);
+      border-radius: 30px;
+      background:
+        radial-gradient(circle at 82% 16%, rgba(255, 80, 132, 0.18), transparent 35%),
+        linear-gradient(145deg, rgba(34, 22, 57, 0.92), rgba(8, 7, 18, 0.94));
+      box-shadow: var(--shadow);
+    }
+
+    .hero-copy {
+      align-self: center;
+      max-width: 520px;
+      min-width: 0;
+    }
+
+    .kicker {
+      margin: 0 0 16px;
+      color: var(--blue);
+      font-size: 0.72rem;
+      font-weight: 950;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 560px;
+      font-size: clamp(3.7rem, 8vw, 6.8rem);
+      line-height: 0.78;
+      letter-spacing: -0.075em;
+      text-transform: uppercase;
+      background: linear-gradient(95deg, #fff, #ffb0c9 48%, #48d4ff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .lede {
+      max-width: 500px;
+      margin: 24px 0 0;
+      color: var(--muted);
+      font-size: clamp(1rem, 1.7vw, 1.18rem);
+      line-height: 1.7;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 30px;
+    }
+
+    .status-pill,
+    .back-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 46px;
+      padding: 0 18px;
+      border-radius: 999px;
+      font-size: 0.86rem;
+      font-weight: 950;
+      text-decoration: none;
+    }
+
+    .status-pill {
+      color: #170b1d;
+      background: var(--pink);
+      box-shadow: 0 14px 32px rgba(255, 80, 132, 0.24);
+    }
+
+    .back-button {
+      border: 1px solid var(--border);
+      color: var(--paper);
+      background: rgba(255,255,255,0.07);
+    }
+
+    .player-art {
+      position: relative;
+      align-self: center;
+      min-width: 0;
+      min-height: 430px;
+    }
+
+    .playlist-panel {
+      position: absolute;
+      inset: 0 0 auto auto;
+      width: min(100%, 560px);
+      min-height: 420px;
+      padding: 28px;
+      border: 1px solid rgba(255,255,255,0.13);
+      border-radius: 28px;
+      background:
+        linear-gradient(rgba(255,255,255,0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.07) 1px, transparent 1px),
+        rgba(13, 10, 27, 0.88);
+      background-size: 24px 24px, 24px 24px, auto;
+      box-shadow: 0 24px 70px rgba(0,0,0,0.32);
+      transform: rotate(-1.5deg);
+    }
+
+    .panel-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 28px;
+      color: var(--muted);
+      font-size: 0.74rem;
+      font-weight: 950;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+
+    .meter {
+      display: flex;
+      align-items: end;
+      gap: 5px;
+      height: 38px;
+    }
+
+    .meter i {
+      width: 8px;
+      border-radius: 999px;
+      background: var(--blue);
+      box-shadow: 0 0 12px rgba(72,212,255,0.5);
+    }
+
+    .meter i:nth-child(1) { height: 16px; }
+    .meter i:nth-child(2) { height: 30px; background: var(--pink); }
+    .meter i:nth-child(3) { height: 38px; }
+    .meter i:nth-child(4) { height: 22px; background: var(--amber); }
+    .meter i:nth-child(5) { height: 34px; }
+
+    .record {
+      position: absolute;
+      left: 32px;
+      bottom: 32px;
+      width: 172px;
+      height: 172px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle, #fff 0 10px, var(--pink) 11px 28px, transparent 29px),
+        repeating-radial-gradient(circle, #151021 0 12px, #271b42 13px 19px);
+      box-shadow: 0 0 42px rgba(255,80,132,0.34);
+    }
+
+    .record::after {
+      content: "";
+      position: absolute;
+      inset: 42px;
+      border: 2px solid rgba(255,255,255,0.16);
+      border-radius: 50%;
+    }
+
+    .track-list {
+      display: grid;
+      gap: 13px;
+      margin-left: 190px;
+    }
+
+    .track {
+      display: grid;
+      grid-template-columns: 42px 1fr;
+      gap: 12px;
+      align-items: center;
+      min-height: 56px;
+      padding: 10px 12px;
+      border: 1px solid rgba(255,255,255,0.11);
+      border-radius: 16px;
+      background: rgba(255,255,255,0.07);
+    }
+
+    .track b {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 36px;
+      border-radius: 12px;
+      color: #100914;
+      background: var(--track-color);
+      font-size: 0.78rem;
+    }
+
+    .track span {
+      display: block;
+      height: 9px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--track-color), rgba(255,255,255,0.13));
+    }
+
+    .track small {
+      display: block;
+      grid-column: 2;
+      width: 58%;
+      height: 7px;
+      margin-top: 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.14);
+    }
+
+    .sections {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .setup-item {
+      min-height: 190px;
+      padding: 24px;
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      background: rgba(255,255,255,0.055);
+    }
+
+    .setup-item b {
+      display: block;
+      color: var(--item-color);
+      font-size: 0.72rem;
+      font-weight: 950;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .setup-item h2 {
+      margin: 13px 0 0;
+      font-size: 1.45rem;
+      line-height: 1;
+      letter-spacing: -0.04em;
+    }
+
+    .setup-item p {
+      margin: 14px 0 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.58;
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 31px 5px 0;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .footer strong {
+      color: var(--paper);
+    }
+
+    @media (max-width: 940px) {
+      .hero {
+        grid-template-columns: 1fr;
+        min-height: auto;
+      }
+
+      .player-art {
+        min-height: 390px;
+      }
+
+      .playlist-panel {
+        inset: 0 auto auto 0;
+        width: 100%;
+      }
+
+      .sections {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .page {
+        width: calc(100vw - 20px);
+        max-width: 520px;
+        padding-top: 10px;
+      }
+
+      .nav {
+        align-items: flex-start;
+        flex-direction: column;
+        border-radius: 17px;
+      }
+
+      .nav-links {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: min(330px, calc(100vw - 52px));
+      }
+
+      .nav-link {
+        min-width: 0;
+        padding-inline: 10px;
+        text-align: center;
+      }
+
+      .hero {
+        display: block;
+        width: 100%;
+        max-width: 100%;
+        padding: 34px 18px 22px;
+        border-radius: 22px;
+      }
+
+      .hero-copy,
+      .lede,
+      .hero-actions {
+        width: min(300px, calc(100vw - 64px));
+        max-width: 100%;
+      }
+
+      h1 {
+        font-size: clamp(2.7rem, 15vw, 3.55rem);
+        letter-spacing: -0.065em;
+      }
+
+      .hero-actions {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .status-pill,
+      .back-button {
+        width: min(300px, calc(100vw - 64px));
+        max-width: 100%;
+        padding-inline: 12px;
+      }
+
+      .player-art {
+        width: min(300px, calc(100vw - 64px));
+        max-width: 100%;
+        min-height: 380px;
+        overflow: hidden;
+      }
+
+      .playlist-panel {
+        width: min(300px, calc(100vw - 64px));
+        max-width: 100%;
+        min-height: 355px;
+        padding: 20px;
+        transform: rotate(0);
+      }
+
+      .record {
+        left: 20px;
+        bottom: 28px;
+        width: 118px;
+        height: 118px;
+        opacity: 0.72;
+      }
+
+      .track-list {
+        position: relative;
+        z-index: 2;
+        gap: 10px;
+        margin-left: 0;
+        padding-top: 42px;
+      }
+
+      .track {
+        grid-template-columns: 34px 1fr;
+        gap: 9px;
+        min-height: 48px;
+      }
+
+      .track b {
+        width: 34px;
+        height: 30px;
+      }
+
+      .footer {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <nav class="nav" aria-label="Sangquiz navigation">
+      <a class="brand" href="minispil.html">Wutborg Arcade</a>
+      <div class="nav-links">
+        <a class="nav-link" href="minispil.html">← Alle spil</a>
+        <a class="nav-link" href="index.html">Forsiden</a>
+      </div>
+    </nav>
+
+    <main>
+      <section class="hero" aria-label="Sangquiz">
+        <div class="hero-copy">
+          <p class="kicker">Musikquiz under opbygning</p>
+          <h1>Sangquiz</h1>
+          <p class="lede">
+            En kommende quizside til runder med sange, kunstnere, årtier og hold.
+            Siden er gjort klar i spillehjørnet, mens selve spillet venter til næste trin.
+          </p>
+          <div class="hero-actions">
+            <span class="status-pill">Spillet kommer senere</span>
+            <a class="back-button" href="minispil.html">Tilbage til spillene</a>
+          </div>
+        </div>
+
+        <div class="player-art" aria-hidden="true">
+          <div class="playlist-panel">
+            <div class="panel-top">
+              <span>Quizdeck 00</span>
+              <span class="meter"><i></i><i></i><i></i><i></i><i></i></span>
+            </div>
+            <i class="record"></i>
+            <div class="track-list">
+              <div class="track" style="--track-color:#ff5084"><b>01</b><span></span><small></small></div>
+              <div class="track" style="--track-color:#48d4ff"><b>02</b><span></span><small></small></div>
+              <div class="track" style="--track-color:#ffb84d"><b>03</b><span></span><small></small></div>
+              <div class="track" style="--track-color:#66f0ad"><b>04</b><span></span><small></small></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="sections" aria-label="Sangquiz forberedelse">
+        <article class="setup-item" style="--item-color:#ff5084">
+          <b>Runder</b>
+          <h2>Sangkort</h2>
+          <p>Plads til spørgsmålstyper som titel, kunstner, tekstlinje og årti.</p>
+        </article>
+        <article class="setup-item" style="--item-color:#48d4ff">
+          <b>Hold</b>
+          <h2>Scoreboard</h2>
+          <p>Designet reserverer plads til holdnavne, point og status mellem runder.</p>
+        </article>
+        <article class="setup-item" style="--item-color:#ffb84d">
+          <b>Status</b>
+          <h2>Afventer spil</h2>
+          <p>Der er bevidst ikke bygget gameplay, lydafspiller eller quizlogik endnu.</p>
+        </article>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span><strong>Sangquiz</strong> · Wutborg Arcade</span>
+      <span>Side klar, spillet bygges senere</span>
+    </footer>
+  </div>
+</body>
+</html>
