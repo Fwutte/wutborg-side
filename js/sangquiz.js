@@ -45,9 +45,11 @@
     renderSetupTeams();
     render();
 
-    handleSpotifyCallback().catch((error) => {
-      setSpotifyStatus(`Spotify login fejlede: ${error.message}`);
-    });
+    handleSpotifyCallback()
+      .then(() => autoConnectSpotifyFromSavedLogin())
+      .catch((error) => {
+        setSpotifyStatus(`Spotify login fejlede: ${error.message}`);
+      });
   }
 
   function bindElements() {
@@ -711,6 +713,16 @@
   function setSpotifyStatus(message) {
     spotify.status = message;
     if (els.spotifyModeStatus) els.spotifyModeStatus.textContent = message;
+  }
+
+  async function autoConnectSpotifyFromSavedLogin() {
+    const token = readToken();
+    if (!token?.access_token && !token?.refresh_token) return;
+    if (spotify.ready || spotify.connecting) return;
+
+    setSpotifyStatus("Forbinder Spotify automatisk");
+    updateSpotifyUi();
+    await connectSpotifyPlayer();
   }
 
   function getRedirectUri() {
