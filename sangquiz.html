@@ -7,7 +7,7 @@
   <title>Sangquiz | Wutborg Arcade</title>
   <meta
     name="description"
-    content="Sangquiz er en kommende musikquiz i Wutborg Arcade. Siden er klar, mens selve spillet bygges senere."
+    content="Sangquiz er et musikquiz-spil med hold, tidslinjer, point og manuel eller valgfri Spotify-afspilning i Wutborg Arcade."
   />
   <style>
     :root {
@@ -497,6 +497,704 @@
         flex-direction: column;
       }
     }
+
+    body {
+      background:
+        linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px),
+        linear-gradient(135deg, #070912 0%, #151322 48%, #071d20 100%);
+      background-size: 42px 42px, 42px 42px, auto;
+    }
+
+    body::before {
+      display: none;
+    }
+
+    main > .hero,
+    main > .sections {
+      display: none;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    .page {
+      width: min(1240px, calc(100% - 28px));
+    }
+
+    .quiz-app {
+      display: grid;
+      gap: 16px;
+      min-width: 0;
+    }
+
+    .app-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 18px;
+      align-items: end;
+      padding: clamp(28px, 5vw, 46px) clamp(18px, 4vw, 34px);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 18px;
+      background:
+        linear-gradient(135deg, rgba(255, 80, 132, 0.16), transparent 42%),
+        linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.035));
+      box-shadow: var(--shadow);
+    }
+
+    .quiz-app .kicker {
+      margin: 0 0 12px;
+      color: var(--green);
+      font-size: 0.72rem;
+      font-weight: 950;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .quiz-app h1 {
+      margin: 0;
+      color: var(--paper);
+      font-size: clamp(3rem, 8vw, 6rem);
+      line-height: 0.9;
+      letter-spacing: 0;
+      text-transform: uppercase;
+      background: none;
+    }
+
+    .status-line {
+      margin: 16px 0 0;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+
+    .mode-toggle,
+    .primary-actions,
+    .round-actions,
+    .player-controls,
+    .score-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    button,
+    .link-button {
+      min-width: 0;
+      min-height: 44px;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 12px;
+      padding: 0 15px;
+      color: var(--paper);
+      background: rgba(255,255,255,0.08);
+      font: inherit;
+      font-size: 0.9rem;
+      font-weight: 900;
+      text-decoration: none;
+      white-space: normal;
+      cursor: pointer;
+      transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+    }
+
+    button:hover,
+    .link-button:hover {
+      transform: translateY(-2px);
+      background: rgba(255,255,255,0.13);
+    }
+
+    button:focus-visible,
+    .link-button:focus-visible,
+    input:focus-visible {
+      outline: 4px solid var(--blue);
+      outline-offset: 3px;
+    }
+
+    button:disabled,
+    .link-button[aria-disabled="true"] {
+      opacity: 0.48;
+      pointer-events: none;
+      transform: none;
+    }
+
+    .primary-button,
+    [data-score-action="award"] {
+      border-color: transparent;
+      color: #120a1f;
+      background: var(--green);
+      box-shadow: 0 14px 32px rgba(102, 240, 173, 0.18);
+    }
+
+    .danger-button,
+    [data-score-action="penalty"] {
+      border-color: rgba(255, 80, 132, 0.5);
+      color: #fff;
+      background: rgba(255, 80, 132, 0.18);
+    }
+
+    .mode-toggle button[aria-pressed="true"] {
+      color: #120a1f;
+      background: var(--blue);
+      border-color: transparent;
+    }
+
+    .app-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(290px, 360px);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .app-main,
+    .screen {
+      min-width: 0;
+    }
+
+    .sq-panel {
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 18px;
+      background: rgba(13, 10, 27, 0.82);
+      box-shadow: 0 22px 70px rgba(0, 0, 0, 0.26);
+      backdrop-filter: blur(18px);
+    }
+
+    .screen,
+    .score-panel {
+      padding: clamp(17px, 3vw, 26px);
+    }
+
+    .panel-heading {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: baseline;
+      margin-bottom: 20px;
+    }
+
+    .panel-heading span,
+    .round-meta,
+    .deck-status {
+      color: var(--blue);
+      font-size: 0.72rem;
+      font-weight: 950;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+
+    .panel-heading h2,
+    .current-card h2,
+    .reveal-card h2,
+    .finish-card h2 {
+      margin: 0;
+      color: #fff;
+      font-size: clamp(1.8rem, 3.4vw, 3rem);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .setup-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 0.92fr) minmax(300px, 1.08fr);
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .setup-box,
+    .spotify-box,
+    .current-card,
+    .timeline-box,
+    .placement-box,
+    .reveal-card,
+    .finish-card {
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 14px;
+      padding: 17px;
+      background: rgba(255,255,255,0.055);
+      min-width: 0;
+    }
+
+    .setup-box h3,
+    .spotify-box h3,
+    .timeline-box h3,
+    .placement-box h3,
+    .score-panel h2 {
+      margin: 0 0 14px;
+      color: var(--paper);
+      font-size: 1rem;
+      letter-spacing: 0;
+    }
+
+    .team-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .team-row {
+      display: grid;
+      grid-template-columns: 72px minmax(0, 1fr) 44px;
+      gap: 9px;
+      align-items: center;
+    }
+
+    .team-label,
+    .field-label {
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    input {
+      width: 100%;
+      min-width: 0;
+      min-height: 44px;
+      border: 1px solid rgba(255,255,255,0.16);
+      border-radius: 10px;
+      padding: 0 12px;
+      color: #fff;
+      background: rgba(0,0,0,0.2);
+      font: inherit;
+      font-weight: 800;
+    }
+
+    .spotify-fields {
+      display: grid;
+      gap: 12px;
+    }
+
+    .field-label {
+      display: grid;
+      gap: 7px;
+    }
+
+    .spotify-status {
+      min-height: 22px;
+      margin: 13px 0 0;
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
+
+    .hint-text {
+      margin: 0 0 13px;
+      color: var(--muted);
+      font-size: 0.91rem;
+      line-height: 1.5;
+    }
+
+    .spotify-advanced {
+      margin-top: 13px;
+    }
+
+    .spotify-advanced summary {
+      min-height: 42px;
+      cursor: pointer;
+      color: var(--blue);
+      font-weight: 950;
+    }
+
+    .primary-actions {
+      margin-top: 16px;
+    }
+
+    .round-bar {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .current-card {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 18px;
+      align-items: center;
+      border-color: rgba(72, 212, 255, 0.24);
+    }
+
+    .active-team {
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 1rem;
+    }
+
+    .active-team strong {
+      color: var(--green);
+      font-size: 1.2rem;
+    }
+
+    .play-hidden {
+      color: #10121d;
+      background: var(--amber);
+      border-color: transparent;
+    }
+
+    .placement-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 0.92fr) minmax(300px, 1.08fr);
+      gap: 14px;
+      margin-top: 14px;
+      min-width: 0;
+    }
+
+    .slot-grid,
+    .timeline-list,
+    .scoreboard {
+      display: grid;
+      gap: 10px;
+    }
+
+    .slot-button {
+      justify-content: flex-start;
+      width: 100%;
+      min-height: 48px;
+      text-align: left;
+    }
+
+    .slot-button[aria-pressed="true"] {
+      color: #120a1f;
+      background: var(--pink);
+      border-color: transparent;
+    }
+
+    .timeline-list {
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    }
+
+    .timeline-card {
+      display: grid;
+      gap: 6px;
+      min-height: 102px;
+      padding: 13px;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 12px;
+      background: rgba(0,0,0,0.17);
+    }
+
+    .timeline-card strong {
+      color: var(--amber);
+      font-size: 1.28rem;
+    }
+
+    .timeline-card span,
+    .score-name strong {
+      color: #fff;
+      font-weight: 950;
+      overflow-wrap: anywhere;
+    }
+
+    .timeline-card small,
+    .score-name small,
+    .empty-note {
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .reveal-card {
+      display: grid;
+      gap: 14px;
+      margin-top: 14px;
+      border-color: rgba(102, 240, 173, 0.24);
+    }
+
+    .answer-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .answer-artist {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+
+    .answer-year {
+      display: grid;
+      place-items: center;
+      width: 112px;
+      min-height: 82px;
+      border-radius: 14px;
+      color: #120a1f;
+      background: var(--green);
+      font-size: 2rem;
+      font-weight: 950;
+    }
+
+    .placement-result {
+      margin: 0;
+      padding: 12px 14px;
+      border-radius: 12px;
+      color: #fff;
+      background: rgba(255, 184, 77, 0.16);
+    }
+
+    .placement-result[data-correct="true"] {
+      color: #0b1813;
+      background: var(--green);
+      font-weight: 950;
+    }
+
+    .round-actions {
+      justify-content: flex-end;
+      margin-top: 14px;
+    }
+
+    .score-panel {
+      position: sticky;
+      top: 16px;
+    }
+
+    .score-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 54px auto;
+      gap: 9px;
+      align-items: center;
+      min-height: 68px;
+      padding: 10px;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 13px;
+      background: rgba(255,255,255,0.055);
+    }
+
+    .score-row[data-active="true"] {
+      border-color: rgba(102, 240, 173, 0.5);
+      box-shadow: inset 4px 0 0 var(--green);
+    }
+
+    .score-name {
+      display: grid;
+      gap: 3px;
+      min-width: 0;
+    }
+
+    .score-value {
+      color: var(--amber);
+      font-size: 1.85rem;
+      font-weight: 950;
+      text-align: center;
+    }
+
+    .score-controls {
+      display: flex;
+      gap: 6px;
+    }
+
+    .icon-button {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      min-width: 44px;
+      padding: 0;
+      font-size: 1.3rem;
+    }
+
+    .finish-card {
+      display: grid;
+      gap: 14px;
+      text-align: center;
+    }
+
+    .winner-list {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .winner-list li {
+      padding: 12px;
+      border-radius: 12px;
+      color: #120a1f;
+      background: var(--amber);
+      font-weight: 950;
+    }
+
+    body[data-sangquiz-mode="phone"] .app-grid {
+      grid-template-columns: minmax(0, 560px);
+      justify-content: center;
+    }
+
+    body[data-sangquiz-mode="phone"] .score-panel {
+      position: static;
+      order: -1;
+    }
+
+    body[data-sangquiz-mode="phone"] button,
+    body[data-sangquiz-mode="phone"] .link-button {
+      min-height: 52px;
+    }
+
+    @media (max-width: 920px) {
+      .app-head,
+      .app-grid,
+      .setup-grid,
+      .placement-grid,
+      .current-card {
+        grid-template-columns: 1fr;
+      }
+
+      .score-panel {
+        position: static;
+      }
+
+      .player-controls,
+      .mode-toggle {
+        justify-content: flex-start;
+      }
+    }
+
+    @media (max-width: 560px) {
+      html,
+      body {
+        max-width: 100%;
+        overflow-x: hidden;
+      }
+
+      .page {
+        width: min(300px, calc(100vw - 44px)) !important;
+        max-width: 460px;
+        overflow-x: hidden;
+      }
+
+      .quiz-app,
+      .app-head,
+      .app-grid,
+      .app-main,
+      .screen,
+      .sq-panel {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+      }
+
+      .quiz-app *,
+      .quiz-app *::before,
+      .quiz-app *::after {
+        min-width: 0;
+        max-width: 100%;
+      }
+
+      .app-head {
+        width: calc(100vw - 72px) !important;
+        max-width: 100% !important;
+        margin-inline: auto;
+        overflow: hidden;
+      }
+
+      .app-head,
+      .screen,
+      .score-panel {
+        width: calc(100vw - 72px) !important;
+        max-width: 100% !important;
+        margin-inline: auto;
+        padding: 16px;
+        border-radius: 14px;
+      }
+
+      .quiz-app h1 {
+        font-size: clamp(2.45rem, 12vw, 3.15rem);
+      }
+
+      .panel-heading {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 7px;
+      }
+
+      .panel-heading h2 {
+        font-size: clamp(1.55rem, 9vw, 2.2rem);
+        overflow-wrap: anywhere;
+      }
+
+      .mode-toggle,
+      .player-controls,
+      .score-actions,
+      .primary-actions {
+        width: 100%;
+      }
+
+      .mode-toggle {
+        display: grid;
+        grid-template-columns: 1fr;
+        justify-self: start;
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow: hidden;
+      }
+
+      .mode-toggle button,
+      .player-controls button,
+      .player-controls .link-button,
+      .score-actions button,
+      .primary-actions button {
+        flex: 1 1 138px;
+        width: 100%;
+        max-width: 100%;
+        padding-inline: 8px;
+      }
+
+      .team-row {
+        grid-template-columns: 1fr;
+      }
+
+      .team-label {
+        grid-column: auto;
+      }
+
+      .team-row .icon-button {
+        width: 100%;
+      }
+
+      .team-row .icon-button:disabled {
+        display: none;
+      }
+
+      .answer-grid,
+      .score-row {
+        grid-template-columns: 1fr;
+      }
+
+      .answer-year {
+        width: 100%;
+      }
+
+      .score-value {
+        text-align: left;
+      }
+
+      .score-controls {
+        width: 100%;
+      }
+
+      .score-controls .icon-button {
+        flex: 1;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .page {
+        width: 300px !important;
+      }
+
+      .app-head,
+      .screen,
+      .score-panel {
+        width: 100% !important;
+      }
+
+      .quiz-app h1 {
+        font-size: 2.85rem;
+      }
+
+      .panel-heading h2 {
+        font-size: 1.85rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -510,6 +1208,149 @@
     </nav>
 
     <main>
+      <section id="sangquiz-app" class="quiz-app" data-mode="screen" aria-label="Sangquiz spil">
+        <header class="app-head">
+          <div>
+            <p class="kicker">Musikquiz · tidslinje</p>
+            <h1>Sangquiz</h1>
+            <p id="app-status" class="status-line">Sanglisten indlæses</p>
+          </div>
+
+          <div class="mode-toggle" aria-label="Visning">
+            <button type="button" data-sangquiz-mode="screen" aria-pressed="true">Storskærm</button>
+            <button type="button" data-sangquiz-mode="phone" aria-pressed="false">Telefon</button>
+          </div>
+        </header>
+
+        <div class="app-grid">
+          <div class="app-main">
+            <section id="setup-screen" class="screen sq-panel" aria-label="Opsætning">
+              <div class="panel-heading">
+                <span>Setup</span>
+                <h2>Hold og afspilning</h2>
+              </div>
+
+              <div class="setup-grid">
+                <section class="setup-box" aria-label="Hold">
+                  <h3>Hold</h3>
+                  <div id="setup-teams" class="team-list"></div>
+                  <div class="primary-actions">
+                    <button id="add-team-button" type="button">Tilføj hold</button>
+                  </div>
+                </section>
+
+                <section class="spotify-box" aria-label="Afspilning">
+                  <h3>Afspilning</h3>
+                  <p class="hint-text">
+                    Standard er manuel DJ uden Spotify Developer. Værten åbner sangen i Spotify, mens svarfeltet stadig er skjult i quizzen.
+                  </p>
+                  <details class="spotify-advanced">
+                    <summary>Valgfri Spotify browserafspiller</summary>
+                    <div class="spotify-fields">
+                      <label class="field-label" for="spotify-client-id">
+                        Client ID
+                        <input id="spotify-client-id" type="text" inputmode="text" autocomplete="off" />
+                      </label>
+                      <label class="field-label" for="spotify-redirect-uri">
+                        Redirect URI
+                        <input id="spotify-redirect-uri" type="text" readonly />
+                      </label>
+                    </div>
+                    <div class="primary-actions">
+                      <button id="spotify-login-button" type="button">Log ind</button>
+                      <button id="spotify-connect-button" type="button">Forbind afspiller</button>
+                    </div>
+                  </details>
+                  <p id="spotify-mode-status" class="spotify-status" aria-live="polite">Manuel DJ klar</p>
+                </section>
+              </div>
+
+              <div class="primary-actions">
+                <button id="start-game-button" class="primary-button" type="button">Start quiz</button>
+                <button id="restore-game-button" type="button" hidden>Fortsæt spil</button>
+              </div>
+            </section>
+
+            <section id="game-screen" class="screen sq-panel" aria-label="Sangquiz runde" hidden>
+              <div class="round-bar">
+                <span id="round-number" class="round-meta">Runde 1</span>
+                <span id="deck-status" class="deck-status">0 brugt · 0 tilbage</span>
+              </div>
+
+              <section class="current-card" aria-label="Aktuel sang">
+                <div>
+                  <h2 id="hidden-song-label">Skjult sang</h2>
+                  <p class="active-team">Tur: <strong id="active-team-name">Hold</strong></p>
+                </div>
+                <div class="player-controls">
+                  <button id="play-hidden-button" class="play-hidden" type="button">Åbn i Spotify</button>
+                  <button id="pause-button" type="button">Pause</button>
+                  <a id="dj-fallback-link" class="link-button" href="#" target="_blank" rel="noreferrer">Åbn manuelt</a>
+                </div>
+              </section>
+
+              <div class="placement-grid">
+                <section class="placement-box" aria-label="Placering">
+                  <h3>Placering</h3>
+                  <div id="placement-slots" class="slot-grid"></div>
+                </section>
+
+                <section class="timeline-box" aria-label="Aktiv tidslinje">
+                  <h3>Tidslinje</h3>
+                  <div id="active-timeline" class="timeline-list"></div>
+                </section>
+              </div>
+
+              <div class="primary-actions">
+                <button id="reveal-button" class="primary-button" type="button">Vis svar</button>
+              </div>
+
+              <section id="reveal-panel" class="reveal-card" aria-label="Svar" hidden>
+                <div class="answer-grid">
+                  <div>
+                    <h2 id="reveal-title">Titel</h2>
+                    <p id="reveal-artist" class="answer-artist">Kunstner</p>
+                  </div>
+                  <strong id="reveal-year" class="answer-year">0000</strong>
+                </div>
+                <p id="placement-result" class="placement-result">Placering</p>
+                <div class="score-actions">
+                  <button type="button" data-score-action="award">+1 og gem kort</button>
+                  <button type="button" data-score-action="keep">Gem uden point</button>
+                  <button type="button" data-score-action="discard">0 point, kassér</button>
+                  <button type="button" data-score-action="penalty">-1, kassér</button>
+                </div>
+              </section>
+
+              <div class="round-actions">
+                <button id="end-game-button" type="button">Afslut spil</button>
+                <button id="reset-game-button" class="danger-button" type="button">Nulstil</button>
+              </div>
+            </section>
+
+            <section id="finish-screen" class="screen sq-panel" aria-label="Resultat" hidden>
+              <div class="finish-card">
+                <span class="round-meta">Resultat</span>
+                <h2>Spillet er slut</h2>
+                <p id="finish-summary" class="status-line">0 runder spillet</p>
+                <ul id="winner-list" class="winner-list"></ul>
+                <div class="primary-actions">
+                  <button id="new-game-button" class="primary-button" type="button">Nyt spil</button>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <aside class="score-panel sq-panel" aria-label="Scoreboard">
+            <div class="panel-heading">
+              <span>Point</span>
+              <h2>Scoreboard</h2>
+            </div>
+            <div id="scoreboard" class="scoreboard"></div>
+          </aside>
+        </div>
+      </section>
+
       <section class="hero" aria-label="Sangquiz">
         <div class="hero-copy">
           <p class="kicker">Musikquiz under opbygning</p>
@@ -562,8 +1403,11 @@
 
     <footer class="footer">
       <span><strong>Sangquiz</strong> · Wutborg Arcade</span>
-      <span>Side klar, spillet bygges senere</span>
+      <span>Musikquiz med hold, tidslinjer og point</span>
     </footer>
   </div>
+  <script src="js/highscores.js"></script>
+  <script src="js/sangquiz-data.js"></script>
+  <script src="js/sangquiz.js"></script>
 </body>
 </html>

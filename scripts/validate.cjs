@@ -86,6 +86,8 @@ checkModule("functions/api/dishes/[id].js", "dishes PATCH/DELETE");
 
 console.log("\n=== Client JavaScript ===");
 checkModule("js/highscores.js", "highscore client helper");
+checkModule("js/sangquiz-data.js", "sangquiz song data");
+checkModule("js/sangquiz.js", "sangquiz game");
 checkModule("js/pips-skybound.js", "pips skybound game");
 checkModule("js/pokemon/battle-ui.js", "pokemon battle UI");
 checkHtmlScript("brick-breaker.html", "brick breaker client");
