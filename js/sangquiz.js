@@ -6,6 +6,7 @@
   const TEAM_NAMES_KEY = "wutborg.sangquiz.teams.v1";
   const MODE_KEY = "wutborg.sangquiz.mode.v1";
   const CLIENT_ID_KEY = "wutborg.sangquiz.spotify.clientId";
+  const DEFAULT_CLIENT_ID = "cbb2b24b20c94b12bf0682e5fb88d860";
   const TOKEN_KEY = "wutborg.sangquiz.spotify.token";
   const PKCE_KEY = "wutborg.sangquiz.spotify.pkce";
   const SPOTIFY_SCOPES = [
@@ -233,7 +234,7 @@
       ? `Fortsæt spil (${state.round || 1})`
       : "Fortsæt spil";
 
-    const clientId = readTextStorage(CLIENT_ID_KEY, "");
+    const clientId = getSpotifyClientId();
     if (els.spotifyClientId.value !== clientId) els.spotifyClientId.value = clientId;
   }
 
@@ -645,6 +646,10 @@
     }
   }
 
+  function getSpotifyClientId() {
+    return readTextStorage(CLIENT_ID_KEY, DEFAULT_CLIENT_ID).trim() || DEFAULT_CLIENT_ID;
+  }
+
   function safeSetStorage(key, value) {
     try {
       localStorage.setItem(key, value);
@@ -693,7 +698,7 @@
   }
 
   function updateSpotifyUi() {
-    const clientId = els.spotifyClientId.value.trim();
+    const clientId = els.spotifyClientId.value.trim() || DEFAULT_CLIENT_ID;
     const token = readToken();
     const hasToken = Boolean(token?.access_token || token?.refresh_token);
     els.spotifyLoginButton.disabled = !clientId;
@@ -716,7 +721,7 @@
   }
 
   async function startSpotifyLogin() {
-    const clientId = els.spotifyClientId.value.trim();
+    const clientId = els.spotifyClientId.value.trim() || DEFAULT_CLIENT_ID;
     if (!clientId) return;
     if (!window.crypto?.subtle) {
       setSpotifyStatus("Spotify login kræver HTTPS eller localhost");
@@ -812,7 +817,7 @@
     if (token?.access_token && Number(token.expires_at) > Date.now()) return token.access_token;
     if (!token?.refresh_token) return "";
 
-    const clientId = els.spotifyClientId.value.trim() || readTextStorage(CLIENT_ID_KEY, "");
+    const clientId = els.spotifyClientId.value.trim() || getSpotifyClientId();
     if (!clientId) return "";
 
     const body = new URLSearchParams({
