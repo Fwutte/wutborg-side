@@ -1056,9 +1056,9 @@
       }
 
       .page {
-        width: min(300px, calc(100vw - 44px)) !important;
-        max-width: 460px;
-        overflow-x: hidden;
+        width: min(100% - 20px, 520px) !important;
+        max-width: 520px;
+        overflow-x: visible;
       }
 
       .quiz-app,
@@ -1080,18 +1080,18 @@
       }
 
       .app-head {
-        width: calc(100vw - 72px) !important;
+        width: 100% !important;
         max-width: 100% !important;
-        margin-inline: auto;
-        overflow: hidden;
+        margin-inline: 0;
+        overflow: visible;
       }
 
       .app-head,
       .screen,
       .score-panel {
-        width: calc(100vw - 72px) !important;
+        width: 100% !important;
         max-width: 100% !important;
-        margin-inline: auto;
+        margin-inline: 0;
         padding: 16px;
         border-radius: 14px;
       }
@@ -1124,7 +1124,7 @@
         justify-self: start;
         width: 100% !important;
         max-width: 100% !important;
-        overflow: hidden;
+        overflow: visible;
       }
 
       .mode-toggle button,
@@ -1176,25 +1176,6 @@
       }
     }
 
-    @media (max-width: 400px) {
-      .page {
-        width: 300px !important;
-      }
-
-      .app-head,
-      .screen,
-      .score-panel {
-        width: 100% !important;
-      }
-
-      .quiz-app h1 {
-        font-size: 2.85rem;
-      }
-
-      .panel-heading h2 {
-        font-size: 1.85rem;
-      }
-    }
   </style>
 </head>
 <body>
