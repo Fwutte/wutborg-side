@@ -86,7 +86,6 @@
       "dj-fallback-link",
       "reveal-button",
       "placement-slots",
-      "active-timeline",
       "reveal-panel",
       "reveal-title",
       "reveal-artist",
@@ -166,7 +165,7 @@
       phase: "setup",
       round: 0,
       activeTeamIndex: 0,
-      selectedSlot: 0,
+      selectedSlot: -1,
       currentSongId: "",
       songCategory: selectedCategory,
       usedSongIds: [],
@@ -204,7 +203,9 @@
       timeline: Array.isArray(team.timeline) ? team.timeline.slice().sort(byYear) : [],
     }));
     next.activeTeamIndex = clamp(Number(next.activeTeamIndex) || 0, 0, Math.max(0, next.teams.length - 1));
-    next.selectedSlot = clamp(Number(next.selectedSlot) || 0, 0, getActiveTimeline(next).length);
+    const activeTimelineLength = getActiveTimeline(next).length;
+    const slotValue = Number.isFinite(Number(next.selectedSlot)) ? Number(next.selectedSlot) : -1;
+    next.selectedSlot = clamp(slotValue, activeTimelineLength ? -1 : 0, activeTimelineLength);
     next.songCategory = normalizeCategory(next.songCategory || selectedCategory);
     next.phase = next.phase === "reveal" ? "reveal" : next.started ? "guess" : "setup";
     next.finished = Boolean(next.finished);
@@ -355,12 +356,12 @@
     state.currentSongId = song.id;
     state.round += 1;
     state.phase = "guess";
-    state.selectedSlot = team ? getCorrectSlot(team.timeline, song.year) : 0;
+    state.selectedSlot = team?.timeline.length ? -1 : 0;
     if (els.bonusGuess) els.bonusGuess.checked = false;
   }
 
   function revealSong() {
-    if (!getCurrentSong()) return;
+    if (!getCurrentSong() || state.selectedSlot < 0) return;
     state.phase = "reveal";
     saveGame();
     renderRound();
@@ -381,7 +382,7 @@
 
     state.usedSongIds = [...new Set([...state.usedSongIds, song.id])];
     state.currentSongId = "";
-    state.selectedSlot = 0;
+    state.selectedSlot = -1;
     els.bonusGuess.checked = false;
 
     pausePlayback();
@@ -452,7 +453,7 @@
       : `${remainingSongCount()} i puljen`;
     els.activeTeamName.textContent = team ? team.name : "Hold";
     els.hiddenSongLabel.textContent = songLabel;
-    els.revealButton.disabled = !song || state.phase === "reveal";
+    els.revealButton.disabled = !song || state.phase === "reveal" || state.selectedSlot < 0;
     els.playHiddenButton.disabled = !song;
     els.pauseButton.disabled = !song || !spotify.deviceId;
 
@@ -464,23 +465,23 @@
       els.djFallbackLink.setAttribute("aria-disabled", "true");
     }
 
-    renderPlacementSlots(timeline);
-    renderTimeline(timeline);
+    renderPlacementTimeline(timeline);
     renderRevealPanel(song, timeline);
     updateSpotifyUi();
   }
 
-  function renderPlacementSlots(timeline) {
+  function renderPlacementTimeline(timeline) {
     els.placementSlots.replaceChildren();
 
     if (!timeline.length) {
-      els.placementSlots.append(createSlotButton(0, "Første kort"));
+      els.placementSlots.append(createSlotButton(0, "Placér som første sang"));
       state.selectedSlot = 0;
       return;
     }
 
     for (let index = 0; index <= timeline.length; index += 1) {
-      els.placementSlots.append(createSlotButton(index, formatSlot(timeline, index)));
+      els.placementSlots.append(createSlotButton(index, `Placér ${formatSlot(timeline, index)}`));
+      if (timeline[index]) els.placementSlots.append(createTimelineCard(timeline[index]));
     }
   }
 
@@ -494,33 +495,21 @@
     return button;
   }
 
-  function renderTimeline(timeline) {
-    els.activeTimeline.replaceChildren();
+  function createTimelineCard(entry) {
+    const card = document.createElement("article");
+    card.className = "timeline-card";
 
-    if (!timeline.length) {
-      const empty = document.createElement("p");
-      empty.className = "empty-note";
-      empty.textContent = "Ingen kort endnu";
-      els.activeTimeline.append(empty);
-      return;
-    }
+    const year = document.createElement("strong");
+    year.textContent = entry.year;
 
-    timeline.forEach((entry) => {
-      const card = document.createElement("article");
-      card.className = "timeline-card";
+    const title = document.createElement("span");
+    title.textContent = entry.title;
 
-      const year = document.createElement("strong");
-      year.textContent = entry.year;
+    const artist = document.createElement("small");
+    artist.textContent = entry.artist;
 
-      const title = document.createElement("span");
-      title.textContent = entry.title;
-
-      const artist = document.createElement("small");
-      artist.textContent = entry.artist;
-
-      card.append(year, title, artist);
-      els.activeTimeline.append(card);
-    });
+    card.append(year, title, artist);
+    return card;
   }
 
   function renderRevealPanel(song, timeline) {
@@ -679,10 +668,10 @@
   }
 
   function formatSlot(timeline, slot) {
-    if (!timeline.length) return "Første kort";
-    if (slot <= 0) return `Før ${timeline[0].year}`;
-    if (slot >= timeline.length) return `Efter ${timeline[timeline.length - 1].year}`;
-    return `${timeline[slot - 1].year} - ${timeline[slot].year}`;
+    if (!timeline.length) return "som første sang";
+    if (slot <= 0) return `før ${timeline[0].year}`;
+    if (slot >= timeline.length) return `efter ${timeline[timeline.length - 1].year}`;
+    return `mellem ${timeline[slot - 1].year} og ${timeline[slot].year}`;
   }
 
   function getWinners() {

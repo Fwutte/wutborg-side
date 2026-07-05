@@ -729,7 +729,6 @@
     .category-box,
     .spotify-box,
     .current-card,
-    .timeline-box,
     .placement-box,
     .reveal-card,
     .finish-card {
@@ -743,7 +742,6 @@
     .setup-box h3,
     .category-box h3,
     .spotify-box h3,
-    .timeline-box h3,
     .placement-box h3,
     .score-panel h2 {
       margin: 0 0 14px;
@@ -952,24 +950,32 @@
 
     .placement-grid {
       display: grid;
-      grid-template-columns: minmax(0, 0.92fr) minmax(300px, 1.08fr);
+      grid-template-columns: 1fr;
       gap: 14px;
       margin-top: 14px;
       min-width: 0;
     }
 
     .slot-grid,
-    .timeline-list,
     .scoreboard {
       display: grid;
       gap: 10px;
     }
 
+    .slot-grid {
+      position: relative;
+      gap: 8px;
+    }
+
     .slot-button {
-      justify-content: flex-start;
+      justify-content: center;
       width: 100%;
-      min-height: 48px;
-      text-align: left;
+      min-height: 42px;
+      border-style: dashed;
+      color: var(--blue);
+      background: rgba(72, 212, 255, 0.07);
+      font-size: 0.86rem;
+      text-align: center;
     }
 
     .slot-button[aria-pressed="true"] {
@@ -978,14 +984,10 @@
       border-color: transparent;
     }
 
-    .timeline-list {
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    }
-
     .timeline-card {
       display: grid;
       gap: 6px;
-      min-height: 102px;
+      min-height: 88px;
       padding: 13px;
       border: 1px solid rgba(255,255,255,0.12);
       border-radius: 12px;
@@ -1592,14 +1594,9 @@
               </section>
 
               <div class="placement-grid">
-                <section class="placement-box" aria-label="Placering">
-                  <h3>Placering</h3>
+                <section class="placement-box" aria-label="Tidslinje og placering">
+                  <h3>Tidslinje og placering</h3>
                   <div id="placement-slots" class="slot-grid"></div>
-                </section>
-
-                <section class="timeline-box" aria-label="Aktiv tidslinje">
-                  <h3>Tidslinje</h3>
-                  <div id="active-timeline" class="timeline-list"></div>
                 </section>
               </div>
 
@@ -1715,6 +1712,6 @@
   </div>
   <script src="js/highscores.js"></script>
   <script src="js/sangquiz-data.js"></script>
-  <script src="js/sangquiz.js?v=20260705-ios-playback"></script>
+  <script src="js/sangquiz.js?v=20260705-merged-timeline"></script>
 </body>
 </html>
