@@ -1020,7 +1020,7 @@
     }
 
     setSpotifyStatus(
-      ok ? "Afspiller skjult sang" : openDjFallback(song) ? "Manuel DJ åbnet i Spotify" : "Brug Åbn manuelt",
+      ok ? "Afspiller sang" : openDjFallback(song) ? "Manuel DJ åbnet i Spotify" : "Brug Åbn manuelt",
     );
   }
 

@@ -863,7 +863,7 @@
     .player-controls {
       display: grid;
       grid-template-columns: minmax(150px, 1fr) minmax(112px, auto);
-      grid-template-rows: 34px 44px;
+      grid-template-rows: 38px 44px;
       gap: 8px 10px;
       justify-self: end;
       width: min(430px, 100%);
@@ -875,7 +875,7 @@
       gap: 10px;
       align-items: center;
       justify-content: center;
-      min-height: 54px;
+      min-height: 90px;
       border-radius: 16px;
       color: #10121d;
       background: var(--amber);
@@ -919,7 +919,7 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-height: 34px;
+      min-height: 38px;
       padding: 0 12px;
       border-radius: 999px;
       color: var(--muted);
@@ -1285,7 +1285,7 @@
 
       .current-card .player-controls {
         grid-template-columns: minmax(0, 1fr) minmax(108px, 34%);
-        grid-template-rows: 34px 44px;
+        grid-template-rows: 38px 44px;
         width: 100%;
       }
 
@@ -1303,13 +1303,19 @@
       .current-card .pause-button {
         width: 100%;
         min-width: 0;
+        min-height: 44px;
       }
 
       .current-card .manual-link {
         width: 100%;
         max-width: 100%;
         justify-self: stretch;
+        min-height: 38px;
         padding-inline: 12px;
+      }
+
+      .current-card .play-hidden {
+        min-height: 90px;
       }
 
       .team-row {
@@ -1592,6 +1598,6 @@
   </div>
   <script src="js/highscores.js"></script>
   <script src="js/sangquiz-data.js"></script>
-  <script src="js/sangquiz.js"></script>
+  <script src="js/sangquiz.js?v=20260705-controls2"></script>
 </body>
 </html>
