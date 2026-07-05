@@ -369,7 +369,7 @@
     if (!song || !team) return;
 
     const pointDelta = action === "award" ? 1 : action === "penalty" ? -1 : 0;
-    const bonusDelta = els.bonusGuess.checked ? 3 : 0;
+    const bonusDelta = els.bonusGuess.checked ? 1 : 0;
     const shouldKeep = action === "award" || action === "keep";
 
     team.score += pointDelta + bonusDelta;
