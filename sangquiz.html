@@ -1084,11 +1084,11 @@
 
     .score-row {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 54px auto;
-      gap: 9px;
-      align-items: center;
-      min-height: 68px;
-      padding: 10px;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px 10px;
+      align-items: start;
+      min-height: 92px;
+      padding: 10px 10px 12px;
       border: 1px solid rgba(255,255,255,0.12);
       border-radius: 13px;
       background: rgba(255,255,255,0.055);
@@ -1106,15 +1106,61 @@
     }
 
     .score-value {
+      grid-column: 1 / -1;
       color: var(--amber);
-      font-size: 1.85rem;
+      font-size: 1.75rem;
       font-weight: 950;
-      text-align: center;
+      line-height: 1;
+      text-align: left;
     }
 
     .score-controls {
+      grid-column: 2;
+      grid-row: 1;
+      justify-self: end;
+      align-self: start;
       display: flex;
-      gap: 6px;
+      gap: 5px;
+    }
+
+    .score-controls .icon-button {
+      width: 32px;
+      min-width: 32px;
+      min-height: 32px;
+      height: 32px;
+      border-radius: 9px;
+      font-size: 1rem;
+      line-height: 1;
+    }
+
+    .score-track {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: repeat(10, minmax(0, 1fr));
+      gap: 3px;
+      width: 100%;
+    }
+
+    .score-tick {
+      display: grid;
+      place-items: center;
+      min-height: 24px;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 6px;
+      color: rgba(232, 226, 245, 0.62);
+      background: rgba(0,0,0,0.18);
+      font-size: 0.66rem;
+      font-weight: 950;
+    }
+
+    .score-tick[data-filled="true"] {
+      border-color: transparent;
+      color: #07120d;
+      background: var(--green);
+    }
+
+    .score-tick[data-target="true"] {
+      border-color: rgba(255, 184, 77, 0.65);
     }
 
     .icon-button {
@@ -1353,8 +1399,7 @@
         display: none;
       }
 
-      .answer-grid,
-      .score-row {
+      .answer-grid {
         grid-template-columns: 1fr;
       }
 
@@ -1367,14 +1412,13 @@
       }
 
       .score-controls {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        width: 100%;
+        display: flex;
+        width: auto;
       }
 
       .score-controls .icon-button {
-        width: 100%;
-        min-width: 0;
+        width: 32px;
+        min-width: 32px;
       }
     }
 
@@ -1617,6 +1661,6 @@
   </div>
   <script src="js/highscores.js"></script>
   <script src="js/sangquiz-data.js"></script>
-  <script src="js/sangquiz.js?v=20260705-controls2"></script>
+  <script src="js/sangquiz.js?v=20260705-scoreboard"></script>
 </body>
 </html>

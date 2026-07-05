@@ -10,6 +10,7 @@
   const DEFAULT_CLIENT_ID = "cbb2b24b20c94b12bf0682e5fb88d860";
   const TOKEN_KEY = "wutborg.sangquiz.spotify.token";
   const PKCE_KEY = "wutborg.sangquiz.spotify.pkce";
+  const WINNING_SCORE = 10;
   const SPOTIFY_SCOPES = [
     "streaming",
     "user-read-email",
@@ -379,11 +380,17 @@
     state.usedSongIds = [...new Set([...state.usedSongIds, song.id])];
     state.currentSongId = "";
     state.selectedSlot = 0;
-    state.phase = "guess";
-    state.activeTeamIndex = (state.activeTeamIndex + 1) % state.teams.length;
     els.bonusGuess.checked = false;
 
     pausePlayback();
+
+    if (team.score >= WINNING_SCORE) {
+      finishGame("score");
+      return;
+    }
+
+    state.phase = "guess";
+    state.activeTeamIndex = (state.activeTeamIndex + 1) % state.teams.length;
 
     if (remainingSongCount() <= 0) {
       finishGame("deck");
@@ -409,6 +416,10 @@
     const team = state.teams[index];
     if (!team) return;
     team.score += delta;
+    if (!state.finished && team.score >= WINNING_SCORE) {
+      finishGame("score");
+      return;
+    }
     saveGame();
     renderScoreboard();
   }
@@ -559,9 +570,29 @@
       controls.className = "score-controls";
       controls.append(createScoreButton(index, -1), createScoreButton(index, 1));
 
-      row.append(name, score, controls);
+      const track = createScoreTrack(team.score);
+
+      row.append(name, controls, score, track);
       els.scoreboard.append(row);
     });
+  }
+
+  function createScoreTrack(score) {
+    const track = document.createElement("div");
+    track.className = "score-track";
+    track.setAttribute("aria-label", `${score} af ${WINNING_SCORE} point`);
+
+    const filledScore = clamp(Number(score) || 0, 0, WINNING_SCORE);
+    for (let value = 1; value <= WINNING_SCORE; value += 1) {
+      const tick = document.createElement("span");
+      tick.className = "score-tick";
+      tick.textContent = String(value);
+      tick.dataset.filled = value <= filledScore ? "true" : "false";
+      if (value === WINNING_SCORE) tick.dataset.target = "true";
+      track.append(tick);
+    }
+
+    return track;
   }
 
   function createScoreButton(index, delta) {
@@ -580,7 +611,9 @@
 
     const winners = getWinners();
     const maxScore = winners.length ? winners[0].score : 0;
-    els.finishSummary.textContent = `${state.round} runder spillet · vinderpoint ${maxScore}`;
+    els.finishSummary.textContent = state.finishReason === "score"
+      ? `Først til ${WINNING_SCORE} point · ${state.round} runder spillet`
+      : `${state.round} runder spillet · vinderpoint ${maxScore}`;
     els.winnerList.replaceChildren();
 
     winners.forEach((winner) => {
