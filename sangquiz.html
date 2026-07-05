@@ -860,10 +860,77 @@
       font-size: 1.2rem;
     }
 
+    .player-controls {
+      display: grid;
+      grid-template-columns: minmax(150px, 1fr) 54px;
+      gap: 10px;
+      justify-self: end;
+      width: min(360px, 100%);
+    }
+
     .play-hidden {
+      display: inline-flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+      min-height: 54px;
+      border-radius: 16px;
       color: #10121d;
       background: var(--amber);
       border-color: transparent;
+    }
+
+    .play-hidden::before {
+      content: "";
+      width: 0;
+      height: 0;
+      border-top: 7px solid transparent;
+      border-bottom: 7px solid transparent;
+      border-left: 11px solid currentColor;
+    }
+
+    .pause-button {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: 54px;
+      min-width: 54px;
+      min-height: 54px;
+      padding: 0;
+      border-radius: 16px;
+      font-size: 0;
+    }
+
+    .pause-button::before,
+    .pause-button::after {
+      content: "";
+      width: 5px;
+      height: 18px;
+      border-radius: 999px;
+      background: currentColor;
+    }
+
+    .pause-button::before {
+      transform: translateX(-4px);
+    }
+
+    .pause-button::after {
+      position: absolute;
+      transform: translateX(5px);
+    }
+
+    .manual-link {
+      grid-column: 1 / -1;
+      justify-self: end;
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      padding: 0 12px;
+      border-radius: 999px;
+      color: var(--muted);
+      background: rgba(255,255,255,0.045);
+      font-size: 0.78rem;
+      font-weight: 850;
     }
 
     .placement-grid {
@@ -1221,16 +1288,32 @@
         grid-template-columns: 1fr;
       }
 
+      .current-card .player-controls {
+        grid-template-columns: minmax(0, 1fr) 56px;
+        width: 100%;
+      }
+
       .mode-toggle button,
       .category-options button,
       .player-controls button,
-      .player-controls .link-button,
       .score-actions button,
       .primary-actions button {
         flex: 1 1 138px;
         width: 100%;
         max-width: 100%;
         padding-inline: 8px;
+      }
+
+      .current-card .pause-button {
+        width: 56px;
+        min-width: 56px;
+      }
+
+      .current-card .manual-link {
+        width: auto;
+        max-width: max-content;
+        justify-self: end;
+        padding-inline: 12px;
       }
 
       .team-row {
@@ -1382,8 +1465,8 @@
                 </div>
                 <div class="player-controls">
                   <button id="play-hidden-button" class="play-hidden" type="button">Åbn i Spotify</button>
-                  <button id="pause-button" type="button">Pause</button>
-                  <a id="dj-fallback-link" class="link-button" href="#" target="_blank" rel="noreferrer">Åbn manuelt</a>
+                  <button id="pause-button" class="pause-button" type="button" aria-label="Pause">Pause</button>
+                  <a id="dj-fallback-link" class="link-button manual-link" href="#" target="_blank" rel="noreferrer">Åbn manuelt</a>
                 </div>
               </section>
 

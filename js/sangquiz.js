@@ -768,7 +768,7 @@
     els.spotifyLoginButton.disabled = !clientId;
     els.spotifyConnectButton.disabled = !clientId || spotify.connecting || !hasToken;
     els.spotifyModeStatus.textContent = spotify.status;
-    els.playHiddenButton.textContent = hasToken && spotify.ready ? "Afspil skjult" : "Åbn i Spotify";
+    els.playHiddenButton.textContent = hasToken && spotify.ready ? "Afspil" : "Åbn Spotify";
     els.pauseButton.disabled = !spotify.deviceId || !getCurrentSong();
   }
 
