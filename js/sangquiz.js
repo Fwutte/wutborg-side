@@ -557,8 +557,9 @@
       const strong = document.createElement("strong");
       strong.textContent = team.name;
 
+      const roundCount = teamSongCount(team);
       const small = document.createElement("small");
-      small.textContent = `${teamSongCount(team)} sange spillet · ${team.timeline.length} kort`;
+      small.textContent = `${roundCount} ${roundCount === 1 ? "runde" : "runder"} spillet`;
 
       name.append(strong, small);
 
@@ -580,14 +581,14 @@
   function createScoreTrack(score) {
     const track = document.createElement("div");
     track.className = "score-track";
-    track.setAttribute("aria-label", `${score} af ${WINNING_SCORE} point`);
+    track.setAttribute("aria-label", `Aktuel score: ${score} af ${WINNING_SCORE} point`);
 
-    const filledScore = clamp(Number(score) || 0, 0, WINNING_SCORE);
-    for (let value = 1; value <= WINNING_SCORE; value += 1) {
+    const currentScore = clamp(Number(score) || 0, 0, WINNING_SCORE);
+    for (let value = 0; value <= WINNING_SCORE; value += 1) {
       const tick = document.createElement("span");
       tick.className = "score-tick";
       tick.textContent = String(value);
-      tick.dataset.filled = value <= filledScore ? "true" : "false";
+      tick.dataset.current = value === currentScore ? "true" : "false";
       if (value === WINNING_SCORE) tick.dataset.target = "true";
       track.append(tick);
     }
