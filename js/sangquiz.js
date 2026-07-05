@@ -985,6 +985,11 @@
           updateSpotifyUi();
         });
 
+        spotify.player.addListener("autoplay_failed", () => {
+          setSpotifyStatus("iPad blokerede autoplay. Tryk Afspil igen.");
+          updateSpotifyUi();
+        });
+
         ["initialization_error", "authentication_error", "account_error", "playback_error"].forEach(
           (eventName) => {
             spotify.player.addListener(eventName, ({ message }) => {
@@ -1022,6 +1027,8 @@
   }
 
   async function playCurrentSong() {
+    activateSpotifyElement();
+
     const song = getCurrentSong();
     if (!song) return;
 
@@ -1062,6 +1069,17 @@
 
   function openDjFallback(song) {
     return Boolean(window.open(getSpotifyUrl(song), "_blank", "noopener,noreferrer"));
+  }
+
+  function activateSpotifyElement() {
+    if (!spotify.player?.activateElement) return false;
+    try {
+      const activation = spotify.player.activateElement();
+      if (activation?.catch) void activation.catch(() => {});
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   function getSpotifyUrl(song) {
