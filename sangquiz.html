@@ -626,8 +626,7 @@
       box-shadow: 0 14px 32px rgba(102, 240, 173, 0.18);
     }
 
-    .danger-button,
-    [data-score-action="penalty"] {
+    .danger-button {
       border-color: rgba(255, 80, 132, 0.5);
       color: #fff;
       background: rgba(255, 80, 132, 0.18);
@@ -1074,7 +1073,7 @@
 
     .round-actions {
       justify-content: flex-end;
-      margin-top: 14px;
+      margin: 0 0 14px;
     }
 
     .score-panel {
@@ -1541,6 +1540,11 @@
             </section>
 
             <section id="game-screen" class="screen sq-panel" aria-label="Sangquiz runde" hidden>
+              <div class="round-actions">
+                <button id="end-game-button" type="button">Afslut spil</button>
+                <button id="reset-game-button" class="danger-button" type="button">Nulstil</button>
+              </div>
+
               <div class="round-bar">
                 <span id="round-number" class="round-meta">Sang nr. 1</span>
                 <span id="deck-status" class="deck-status">0 brugt · 0 tilbage</span>
@@ -1594,14 +1598,8 @@
                   <button type="button" data-score-action="award">+1 og gem kort</button>
                   <button type="button" data-score-action="keep">Gem uden point</button>
                   <button type="button" data-score-action="discard">0 point, kassér</button>
-                  <button type="button" data-score-action="penalty">-1, kassér</button>
                 </div>
               </section>
-
-              <div class="round-actions">
-                <button id="end-game-button" type="button">Afslut spil</button>
-                <button id="reset-game-button" class="danger-button" type="button">Nulstil</button>
-              </div>
             </section>
 
             <section id="finish-screen" class="screen sq-panel" aria-label="Resultat" hidden>
