@@ -626,6 +626,22 @@
       box-shadow: 0 14px 32px rgba(102, 240, 173, 0.18);
     }
 
+    .score-actions button {
+      min-height: 54px;
+      font-size: 1.05rem;
+      line-height: 1.12;
+    }
+
+    [data-score-action="keep"] {
+      color: rgba(232, 226, 245, 0.72);
+      background: repeating-linear-gradient(
+        135deg,
+        rgba(255,255,255,0.05) 0 8px,
+        rgba(255,255,255,0.085) 8px 16px
+      );
+      border-color: rgba(255,255,255,0.16);
+    }
+
     .danger-button {
       border-color: rgba(255, 80, 132, 0.5);
       color: #fff;
@@ -1595,9 +1611,9 @@
                   </span>
                 </label>
                 <div class="score-actions">
-                  <button type="button" data-score-action="award">+1 og gem kort</button>
-                  <button type="button" data-score-action="keep">Gem uden point</button>
-                  <button type="button" data-score-action="discard">0 point, kassér</button>
+                  <button type="button" data-score-action="award">1 point, gem sang</button>
+                  <button type="button" data-score-action="discard">0 point, kasser sang</button>
+                  <button type="button" data-score-action="keep">0 point, gem sang</button>
                 </div>
               </section>
             </section>
