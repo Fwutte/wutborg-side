@@ -94,6 +94,7 @@
       "placement-result",
       "bonus-guess",
       "scoreboard",
+      "game-actions",
       "end-game-button",
       "reset-game-button",
       "finish-summary",
@@ -227,6 +228,7 @@
     els.setupScreen.hidden = state.started && !state.finished;
     els.gameScreen.hidden = !state.started || state.finished;
     els.finishScreen.hidden = !state.finished;
+    els.gameActions.hidden = !state.started || state.finished;
 
     els.appStatus.textContent = getAppStatus();
     renderSetupState();

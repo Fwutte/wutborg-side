@@ -1092,6 +1092,21 @@
       margin: 0 0 14px;
     }
 
+    .scoreboard-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      width: 100%;
+    }
+
+    .scoreboard-actions[hidden] {
+      display: none;
+    }
+
+    .scoreboard-actions button {
+      width: 100%;
+    }
+
     .score-panel {
       position: sticky;
       top: 16px;
@@ -1556,11 +1571,6 @@
             </section>
 
             <section id="game-screen" class="screen sq-panel" aria-label="Sangquiz runde" hidden>
-              <div class="round-actions">
-                <button id="end-game-button" type="button">Afslut spil</button>
-                <button id="reset-game-button" class="danger-button" type="button">Nulstil</button>
-              </div>
-
               <div class="round-bar">
                 <span id="round-number" class="round-meta">Sang nr. 1</span>
                 <span id="deck-status" class="deck-status">0 brugt · 0 tilbage</span>
@@ -1632,6 +1642,10 @@
           </div>
 
           <aside class="score-panel sq-panel" aria-label="Scoreboard">
+            <div id="game-actions" class="round-actions scoreboard-actions" hidden>
+              <button id="end-game-button" type="button">Afslut spil</button>
+              <button id="reset-game-button" class="danger-button" type="button">Nulstil</button>
+            </div>
             <div class="panel-heading">
               <span>Point</span>
               <h2>Scoreboard</h2>
@@ -1698,6 +1712,6 @@
   </div>
   <script src="js/highscores.js"></script>
   <script src="js/sangquiz-data.js"></script>
-  <script src="js/sangquiz.js?v=20260705-scoreline"></script>
+  <script src="js/sangquiz.js?v=20260705-scoreboard-actions"></script>
 </body>
 </html>
