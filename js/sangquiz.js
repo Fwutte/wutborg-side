@@ -430,13 +430,15 @@
     const team = getActiveTeam();
     const song = getCurrentSong();
     const timeline = team ? team.timeline.slice().sort(byYear) : [];
+    const songNumber = getTeamTurnNumber(team, song);
+    const songLabel = song ? `Sang nr. ${songNumber}` : "Ingen sang";
 
-    els.roundNumber.textContent = `Runde ${state.round}`;
+    els.roundNumber.textContent = songLabel;
     els.deckStatus.textContent = team
       ? `${team.name}: ${teamSongCount(team)} spillet · ${remainingSongCount()} i puljen`
       : `${remainingSongCount()} i puljen`;
     els.activeTeamName.textContent = team ? team.name : "Hold";
-    els.hiddenSongLabel.textContent = song ? `Skjult sang ${state.round}` : "Ingen sang";
+    els.hiddenSongLabel.textContent = songLabel;
     els.revealButton.disabled = !song || state.phase === "reveal";
     els.playHiddenButton.disabled = !song;
     els.pauseButton.disabled = !song || !spotify.deviceId;
@@ -619,6 +621,11 @@
   function teamSongCount(team) {
     if (Array.isArray(team.playedSongIds)) return team.playedSongIds.length;
     return team.timeline.length;
+  }
+
+  function getTeamTurnNumber(team, song) {
+    if (!team) return state.round || 1;
+    return teamSongCount(team) + (song ? 1 : 0);
   }
 
   function evaluatePlacement(timeline, song, slot) {
