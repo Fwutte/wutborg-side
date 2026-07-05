@@ -10,7 +10,10 @@
   const DEFAULT_CLIENT_ID = "cbb2b24b20c94b12bf0682e5fb88d860";
   const TOKEN_KEY = "wutborg.sangquiz.spotify.token";
   const PKCE_KEY = "wutborg.sangquiz.spotify.pkce";
+  const SOUND_KEY = "wutborg.sangquiz.sound.v1";
   const WINNING_SCORE = 10;
+  const TEAM_COLORS = ["#C63B2F", "#2F5FA8"];
+  const TURN_SPLASH_MS = 1500;
   const SPOTIFY_SCOPES = [
     "streaming",
     "user-read-email",
@@ -33,6 +36,12 @@
   let state = createEmptyState();
   let setupTeamNames = ["Hold 1", "Hold 2"];
   let mode = readTextStorage(MODE_KEY, "screen");
+  let playbackActive = false;
+  let soundEnabled = readTextStorage(SOUND_KEY, "false") === "true";
+  let audioContext = null;
+  let splashTimer = 0;
+  let feedbackTimer = 0;
+  let lastTapeCounter = "";
   let spotify = {
     deviceId: "",
     player: null,
@@ -81,6 +90,13 @@
       "deck-status",
       "active-team-name",
       "hidden-song-label",
+      "tape-counter",
+      "cassette-label",
+      "now-song-card",
+      "current-card-back-number",
+      "current-card-front-year",
+      "current-card-front-title",
+      "current-card-front-artist",
       "play-hidden-button",
       "pause-button",
       "dj-fallback-link",
@@ -94,11 +110,17 @@
       "bonus-guess",
       "scoreboard",
       "game-actions",
+      "host-panel",
+      "sound-toggle-button",
       "end-game-button",
       "reset-game-button",
+      "finish-title",
       "finish-summary",
       "winner-list",
       "new-game-button",
+      "turn-splash",
+      "turn-splash-team",
+      "turn-splash-song",
     ].forEach((id) => {
       els[toCamel(id)] = $(id);
     });
@@ -120,6 +142,7 @@
     els.pauseButton.addEventListener("click", pausePlayback);
     els.spotifyLoginButton.addEventListener("click", startSpotifyLogin);
     els.spotifyConnectButton.addEventListener("click", connectSpotifyPlayer);
+    els.soundToggleButton.addEventListener("click", toggleSound);
 
     els.spotifyClientId.addEventListener("input", () => {
       safeSetStorage(CLIENT_ID_KEY, els.spotifyClientId.value.trim());
@@ -224,12 +247,21 @@
   }
 
   function render() {
+    const pagePhase = state.finished ? "finish" : state.started ? "game" : "setup";
+    const colorIndex = state.finished ? getWinnerTeamIndex() : state.activeTeamIndex;
+    const activeColor = getTeamColor(colorIndex);
+
     document.body.dataset.sangquizMode = mode;
+    document.body.dataset.sangquizPhase = pagePhase;
+    document.body.dataset.playback = playbackActive ? "playing" : "idle";
+    document.body.style.setProperty("--active-team-color", activeColor);
+    els.sangquizApp.style.setProperty("--active-team-color", activeColor);
     els.sangquizApp.dataset.mode = mode;
-    els.setupScreen.hidden = state.started && !state.finished;
+    els.setupScreen.hidden = state.started;
     els.gameScreen.hidden = !state.started || state.finished;
     els.finishScreen.hidden = !state.finished;
     els.gameActions.hidden = !state.started || state.finished;
+    if (els.hostPanel && mode === "phone") els.hostPanel.open = true;
 
     els.appStatus.textContent = getAppStatus();
     renderSetupState();
@@ -238,6 +270,7 @@
     renderFinish();
     updateModeUi();
     updateSpotifyUi();
+    updateSoundUi();
   }
 
   function getAppStatus() {
@@ -329,6 +362,7 @@
     drawNextSong();
     saveGame();
     render();
+    showTurnSplash(getActiveTeam(), state.round || 1);
   }
 
   function restoreGame() {
@@ -339,6 +373,7 @@
   }
 
   function resetGame() {
+    setPlaybackActive(false);
     state = createEmptyState();
     safeRemoveStorage(STORAGE_KEY);
     render();
@@ -348,7 +383,7 @@
     const unused = getActiveSongPool().filter((song) => !state.usedSongIds.includes(song.id));
     if (!unused.length) {
       finishGame("deck");
-      return;
+      return false;
     }
 
     const song = unused[Math.floor(Math.random() * unused.length)];
@@ -358,13 +393,21 @@
     state.phase = "guess";
     state.selectedSlot = team?.timeline.length ? -1 : 0;
     if (els.bonusGuess) els.bonusGuess.checked = false;
+    return true;
   }
 
   function revealSong() {
-    if (!getCurrentSong() || state.selectedSlot < 0) return;
+    const song = getCurrentSong();
+    const team = getActiveTeam();
+    const timeline = team ? team.timeline.slice().sort(byYear) : [];
+    if (!song || state.selectedSlot < 0) return;
+
+    const result = evaluatePlacement(timeline, song, state.selectedSlot);
     state.phase = "reveal";
     saveGame();
     renderRound();
+    triggerRevealFeedback(result.correct, getTeamColor(state.activeTeamIndex));
+    playUiSound(result.correct ? "flip" : "wrong");
   }
 
   function applyScoreAction(action) {
@@ -375,10 +418,12 @@
     const pointDelta = action === "award" ? 1 : action === "penalty" ? -1 : 0;
     const bonusDelta = els.bonusGuess.checked ? 1 : 0;
     const shouldKeep = action === "award" || action === "keep";
+    const awardedPoints = pointDelta + bonusDelta > 0;
 
     team.score += pointDelta + bonusDelta;
     team.playedSongIds = [...new Set([...(team.playedSongIds || []), song.id])];
     if (shouldKeep) addSongToTimeline(team, song);
+    if (awardedPoints) playUiSound("point");
 
     state.usedSongIds = [...new Set([...state.usedSongIds, song.id])];
     state.currentSongId = "";
@@ -400,9 +445,10 @@
       return;
     }
 
-    drawNextSong();
+    if (!drawNextSong()) return;
     saveGame();
     render();
+    showTurnSplash(getActiveTeam(), state.round || 1);
   }
 
   function addSongToTimeline(team, song) {
@@ -411,6 +457,7 @@
       title: song.title,
       artist: song.artist,
       year: song.year,
+      round: state.round,
     };
     team.timeline = team.timeline.filter((entry) => entry.songId !== song.id).concat(item).sort(byYear);
   }
@@ -432,10 +479,13 @@
     state.phase = "finished";
     state.finishReason = reason;
     state.currentSongId = "";
+    setPlaybackActive(false);
     pausePlayback();
     saveGame();
     render();
     submitHighscore();
+    launchConfetti(getTeamColor(getWinnerTeamIndex()), true);
+    playUiSound("fanfare");
   }
 
   function renderRound() {
@@ -446,13 +496,18 @@
     const timeline = team ? team.timeline.slice().sort(byYear) : [];
     const songNumber = getTeamTurnNumber(team, song);
     const songLabel = song ? `Sang nr. ${songNumber}` : "Ingen sang";
+    const activeColor = getTeamColor(state.activeTeamIndex);
 
+    document.body.style.setProperty("--active-team-color", activeColor);
+    els.sangquizApp.style.setProperty("--active-team-color", activeColor);
     els.roundNumber.textContent = songLabel;
     els.deckStatus.textContent = team
       ? `${team.name}: ${teamSongCount(team)} spillet · ${remainingSongCount()} i puljen`
       : `${remainingSongCount()} i puljen`;
     els.activeTeamName.textContent = team ? team.name : "Hold";
     els.hiddenSongLabel.textContent = songLabel;
+    els.cassetteLabel.textContent = team ? team.name : "Mixtape";
+    renderCurrentSongCard(song, songNumber);
     els.revealButton.disabled = !song || state.phase === "reveal" || state.selectedSlot < 0;
     els.playHiddenButton.disabled = !song;
     els.pauseButton.disabled = !song || !spotify.deviceId;
@@ -470,45 +525,113 @@
     updateSpotifyUi();
   }
 
+  function renderCurrentSongCard(song, songNumber) {
+    const counterText = song ? `SANG ${String(state.round || songNumber || 1).padStart(4, "0")}` : "SANG 0000";
+    if (els.tapeCounter.textContent !== counterText) {
+      els.tapeCounter.textContent = counterText;
+      if (lastTapeCounter && lastTapeCounter !== counterText) {
+        els.tapeCounter.classList.remove("is-rolling");
+        void els.tapeCounter.offsetWidth;
+        els.tapeCounter.classList.add("is-rolling");
+      }
+      lastTapeCounter = counterText;
+    }
+
+    els.currentCardBackNumber.textContent = counterText;
+    els.nowSongCard.classList.toggle("is-revealed", state.phase === "reveal" && Boolean(song));
+    els.nowSongCard.toggleAttribute("aria-busy", !song);
+    if (!song) {
+      els.currentCardFrontYear.textContent = "0000";
+      els.currentCardFrontTitle.textContent = "Ingen sang";
+      els.currentCardFrontArtist.textContent = "";
+      return;
+    }
+
+    els.currentCardFrontYear.textContent = String(song.year);
+    els.currentCardFrontTitle.textContent = song.title;
+    els.currentCardFrontArtist.textContent = song.artist;
+  }
+
   function renderPlacementTimeline(timeline) {
     els.placementSlots.replaceChildren();
+    const song = state.phase === "reveal" ? getCurrentSong() : null;
+    const correctSlot = song ? getCorrectSlot(timeline, song.year) : -1;
 
     if (!timeline.length) {
-      els.placementSlots.append(createSlotButton(0, "Placér som første sang"));
+      els.placementSlots.append(createSlotButton(0, "Læg her", "som første sang", correctSlot));
       state.selectedSlot = 0;
       return;
     }
 
     for (let index = 0; index <= timeline.length; index += 1) {
-      els.placementSlots.append(createSlotButton(index, `Placér ${formatSlot(timeline, index)}`));
-      if (timeline[index]) els.placementSlots.append(createTimelineCard(timeline[index]));
+      els.placementSlots.append(createSlotButton(index, "Læg her", formatSlot(timeline, index), correctSlot));
+      if (timeline[index]) els.placementSlots.append(createTimelineCard(timeline[index], index));
     }
   }
 
-  function createSlotButton(index, label) {
+  function createSlotButton(index, mainLabel, hint, correctSlot) {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "slot-button";
     button.dataset.slot = String(index);
-    button.textContent = label;
+    button.setAttribute("aria-label", `Placér ${hint}`);
     button.setAttribute("aria-pressed", index === state.selectedSlot ? "true" : "false");
+    if (index === correctSlot) button.dataset.correctSlot = "true";
+    if (state.phase === "reveal" && index === state.selectedSlot && index !== correctSlot) {
+      button.dataset.missedSlot = "true";
+    }
+
+    const main = document.createElement("span");
+    main.className = "slot-main";
+    main.textContent = mainLabel;
+
+    const detail = document.createElement("span");
+    detail.className = "slot-hint";
+    detail.textContent = hint;
+
+    button.append(main, detail);
     return button;
   }
 
-  function createTimelineCard(entry) {
+  function createTimelineCard(entry, index) {
     const card = document.createElement("article");
-    card.className = "timeline-card";
+    card.className = "timeline-card song-card is-revealed";
+    card.setAttribute("aria-label", `${entry.title} af ${entry.artist} fra ${entry.year}`);
+
+    const inner = document.createElement("div");
+    inner.className = "song-card-inner";
+
+    const back = document.createElement("div");
+    back.className = "song-card-face song-card-back";
+
+    const mark = document.createElement("span");
+    mark.className = "song-card-mark";
+    mark.textContent = "?";
+
+    const number = document.createElement("span");
+    number.className = "song-card-number";
+    number.textContent = `SANG ${String(entry.round || index + 1).padStart(4, "0")}`;
+
+    back.append(mark, number);
+
+    const front = document.createElement("div");
+    front.className = "song-card-face song-card-front";
 
     const year = document.createElement("strong");
+    year.className = "song-card-year";
     year.textContent = entry.year;
 
     const title = document.createElement("span");
+    title.className = "song-card-title";
     title.textContent = entry.title;
 
     const artist = document.createElement("small");
+    artist.className = "song-card-artist";
     artist.textContent = entry.artist;
 
-    card.append(year, title, artist);
+    front.append(year, title, artist);
+    inner.append(back, front);
+    card.append(inner);
     return card;
   }
 
@@ -537,10 +660,16 @@
       return;
     }
 
+    const maxScore = Math.max(...state.teams.map((team) => team.score));
+
     state.teams.forEach((team, index) => {
+      const teamColor = getTeamColor(index);
       const row = document.createElement("article");
       row.className = "score-row";
+      row.style.setProperty("--team-color", teamColor);
       row.dataset.active = index === state.activeTeamIndex && !state.finished ? "true" : "false";
+      row.dataset.leading = maxScore > 0 && team.score === maxScore ? "true" : "false";
+      row.dataset.matchball = team.score >= WINNING_SCORE - 1 && team.score < WINNING_SCORE ? "true" : "false";
 
       const name = document.createElement("div");
       name.className = "score-name";
@@ -575,11 +704,11 @@
     track.setAttribute("aria-label", `Aktuel score: ${score} af ${WINNING_SCORE} point`);
 
     const currentScore = clamp(Number(score) || 0, 0, WINNING_SCORE);
-    for (let value = 0; value <= WINNING_SCORE; value += 1) {
+    for (let value = 1; value <= WINNING_SCORE; value += 1) {
       const tick = document.createElement("span");
       tick.className = "score-tick";
       tick.textContent = String(value);
-      tick.dataset.current = value === currentScore ? "true" : "false";
+      tick.dataset.filled = value <= currentScore ? "true" : "false";
       if (value === WINNING_SCORE) tick.dataset.target = "true";
       track.append(tick);
     }
@@ -603,14 +732,33 @@
 
     const winners = getWinners();
     const maxScore = winners.length ? winners[0].score : 0;
+    els.finishTitle.textContent = winners.length
+      ? winners.map((winner) => winner.name).join(" & ")
+      : "Spillet er slut";
     els.finishSummary.textContent = state.finishReason === "score"
       ? `Først til ${WINNING_SCORE} point · ${state.round} runder spillet`
       : `${state.round} runder spillet · vinderpoint ${maxScore}`;
     els.winnerList.replaceChildren();
 
-    winners.forEach((winner) => {
+    state.teams.forEach((team, index) => {
       const item = document.createElement("li");
-      item.textContent = `${winner.name} (${winner.score})`;
+      item.style.setProperty("--team-color", getTeamColor(index));
+
+      const name = document.createElement("strong");
+      name.textContent = team.name;
+
+      const score = document.createElement("span");
+      score.textContent = `${team.score} point`;
+
+      const years = team.timeline
+        .slice()
+        .sort(byYear)
+        .map((entry) => entry.year)
+        .join(" · ");
+      const path = document.createElement("small");
+      path.textContent = years ? `${team.timeline.length} gemte kort: ${years}` : "Ingen gemte kort";
+
+      item.append(name, score, path);
       els.winnerList.append(item);
     });
   }
@@ -625,6 +773,22 @@
     mode = nextMode === "phone" ? "phone" : "screen";
     safeSetStorage(MODE_KEY, mode);
     render();
+  }
+
+  function updateSoundUi() {
+    if (!els.soundToggleButton) return;
+    els.soundToggleButton.textContent = soundEnabled ? "Lyde til" : "Lyde fra";
+    els.soundToggleButton.setAttribute("aria-pressed", soundEnabled ? "true" : "false");
+  }
+
+  function toggleSound() {
+    soundEnabled = !soundEnabled;
+    safeSetStorage(SOUND_KEY, String(soundEnabled));
+    updateSoundUi();
+    if (soundEnabled) {
+      ensureAudioContext();
+      playUiSound("point");
+    }
   }
 
   function getActiveTeam() {
@@ -678,6 +842,18 @@
     if (!state.teams.length) return [];
     const maxScore = Math.max(...state.teams.map((team) => team.score));
     return state.teams.filter((team) => team.score === maxScore);
+  }
+
+  function getWinnerTeamIndex() {
+    const winner = getWinners()[0];
+    if (!winner) return state.activeTeamIndex || 0;
+    const index = state.teams.findIndex((team) => team.id === winner.id);
+    return index >= 0 ? index : 0;
+  }
+
+  function getTeamColor(index) {
+    const safeIndex = Number.isFinite(Number(index)) ? Number(index) : 0;
+    return TEAM_COLORS[((safeIndex % TEAM_COLORS.length) + TEAM_COLORS.length) % TEAM_COLORS.length];
   }
 
   function setSongCategory(category) {
@@ -755,6 +931,115 @@
     }
   }
 
+  function setPlaybackActive(active) {
+    playbackActive = Boolean(active);
+    document.body.dataset.playback = playbackActive ? "playing" : "idle";
+    if (els.playHiddenButton) updateSpotifyUi();
+  }
+
+  function showTurnSplash(team, songNumber) {
+    if (!els.turnSplash || !team) return;
+    window.clearTimeout(splashTimer);
+
+    const color = getTeamColor(state.activeTeamIndex);
+    els.turnSplash.style.background = color;
+    els.turnSplashTeam.textContent = team.name;
+    els.turnSplashSong.textContent = `Sang nr. ${songNumber}`;
+    els.turnSplash.hidden = false;
+    els.turnSplash.setAttribute("aria-hidden", "false");
+
+    splashTimer = window.setTimeout(() => {
+      els.turnSplash.setAttribute("aria-hidden", "true");
+      window.setTimeout(() => {
+        els.turnSplash.hidden = true;
+      }, 220);
+    }, TURN_SPLASH_MS);
+  }
+
+  function triggerRevealFeedback(correct, color) {
+    if (!els.nowSongCard) return;
+
+    delete els.nowSongCard.dataset.feedback;
+    void els.nowSongCard.offsetWidth;
+    els.nowSongCard.dataset.feedback = correct ? "correct" : "wrong";
+
+    window.clearTimeout(feedbackTimer);
+    feedbackTimer = window.setTimeout(() => {
+      delete els.nowSongCard.dataset.feedback;
+    }, 760);
+
+    if (correct) launchConfetti(color, false);
+  }
+
+  function launchConfetti(color, big) {
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+
+    const layer = document.createElement("div");
+    layer.className = "confetti-layer";
+    layer.dataset.big = big ? "true" : "false";
+    layer.setAttribute("aria-hidden", "true");
+
+    const count = big ? 86 : 26;
+    const colors = [color, "#F26A2A", "#FFF9EB"];
+    for (let index = 0; index < count; index += 1) {
+      const piece = document.createElement("span");
+      piece.className = "confetti-piece";
+      piece.style.setProperty("--piece-color", colors[index % colors.length]);
+      piece.style.setProperty("--piece-rotate", `${Math.round(Math.random() * 360)}deg`);
+
+      if (big) {
+        piece.style.left = `${Math.random() * 100}%`;
+        piece.style.setProperty("--piece-x", `${Math.round((Math.random() - 0.5) * 180)}px`);
+        piece.style.animationDelay = `${Math.random() * 0.55}s`;
+      } else {
+        piece.style.setProperty("--piece-x", `${Math.round((Math.random() - 0.5) * 520)}px`);
+        piece.style.setProperty("--piece-y", `${Math.round(-120 - Math.random() * 310)}px`);
+      }
+
+      layer.append(piece);
+    }
+
+    document.body.append(layer);
+    window.setTimeout(() => layer.remove(), big ? 3100 : 1150);
+  }
+
+  function ensureAudioContext() {
+    if (audioContext) return audioContext;
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return null;
+    audioContext = new AudioContextClass();
+    return audioContext;
+  }
+
+  function playUiSound(kind) {
+    if (!soundEnabled) return;
+
+    const context = ensureAudioContext();
+    if (!context) return;
+    if (context.state === "suspended") void context.resume().catch(() => {});
+
+    const now = context.currentTime + 0.01;
+    const patterns = {
+      flip: [[420, 0.07, 0], [680, 0.09, 0.08]],
+      wrong: [[180, 0.12, 0], [130, 0.14, 0.12]],
+      point: [[520, 0.08, 0], [830, 0.11, 0.09]],
+      fanfare: [[440, 0.16, 0], [660, 0.16, 0.16], [880, 0.24, 0.32]],
+    };
+
+    (patterns[kind] || patterns.flip).forEach(([frequency, duration, delay]) => {
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      oscillator.type = kind === "wrong" ? "sawtooth" : "triangle";
+      oscillator.frequency.setValueAtTime(frequency, now + delay);
+      gain.gain.setValueAtTime(0.0001, now + delay);
+      gain.gain.exponentialRampToValueAtTime(0.055, now + delay + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + delay + duration);
+      oscillator.connect(gain).connect(context.destination);
+      oscillator.start(now + delay);
+      oscillator.stop(now + delay + duration + 0.02);
+    });
+  }
+
   function submitHighscore() {
     if (state.highscoreSubmitted || !window.WutborgHighscores?.submit) return;
 
@@ -793,7 +1078,7 @@
     els.spotifyLoginButton.disabled = !clientId;
     els.spotifyConnectButton.disabled = !clientId || spotify.connecting || !hasToken;
     els.spotifyModeStatus.textContent = spotify.status;
-    els.playHiddenButton.textContent = hasToken && spotify.ready ? "Afspil" : "Åbn Spotify";
+    els.playHiddenButton.textContent = playbackActive ? "Musik kører" : hasToken && spotify.ready ? "Afspil" : "Åbn Spotify";
     els.pauseButton.disabled = !spotify.deviceId || !getCurrentSong();
   }
 
@@ -1023,14 +1308,18 @@
 
     const savedToken = readToken();
     if (!savedToken?.access_token && !savedToken?.refresh_token) {
-      setSpotifyStatus(openDjFallback(song) ? "Manuel DJ åbnet i Spotify" : "Brug Åbn manuelt");
+      const fallbackOpened = openDjFallback(song);
+      setPlaybackActive(fallbackOpened);
+      setSpotifyStatus(fallbackOpened ? "Manuel DJ åbnet i Spotify" : "Brug Åbn manuelt");
       updateSpotifyUi();
       return;
     }
 
     const token = await getAccessToken();
     if (!token) {
-      setSpotifyStatus(openDjFallback(song) ? "Manuel DJ åbnet i Spotify" : "Brug Åbn manuelt");
+      const fallbackOpened = openDjFallback(song);
+      setPlaybackActive(fallbackOpened);
+      setSpotifyStatus(fallbackOpened ? "Manuel DJ åbnet i Spotify" : "Brug Åbn manuelt");
       updateSpotifyUi();
       return;
     }
@@ -1038,7 +1327,9 @@
     if (!spotify.ready || !spotify.deviceId) {
       await connectSpotifyPlayer();
       if (!spotify.deviceId) {
-        setSpotifyStatus(openDjFallback(song) ? "Manuel DJ åbnet i Spotify" : "Brug Åbn manuelt");
+        const fallbackOpened = openDjFallback(song);
+        setPlaybackActive(fallbackOpened);
+        setSpotifyStatus(fallbackOpened ? "Manuel DJ åbnet i Spotify" : "Brug Åbn manuelt");
         updateSpotifyUi();
         return;
       }
@@ -1051,9 +1342,10 @@
       ok = Boolean(uri) && (await startSpotifyUri(token, uri));
     }
 
-    setSpotifyStatus(
-      ok ? "Afspiller sang" : openDjFallback(song) ? "Manuel DJ åbnet i Spotify" : "Brug Åbn manuelt",
-    );
+    const fallbackOpened = ok ? false : openDjFallback(song);
+    setPlaybackActive(ok || fallbackOpened);
+    setSpotifyStatus(ok ? "Afspiller sang" : fallbackOpened ? "Manuel DJ åbnet i Spotify" : "Brug Åbn manuelt");
+    updateSpotifyUi();
   }
 
   function openDjFallback(song) {
@@ -1108,6 +1400,7 @@
   }
 
   async function pausePlayback() {
+    setPlaybackActive(false);
     if (!spotify.deviceId) return;
     const token = await getAccessToken();
     if (!token) return;
