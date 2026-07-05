@@ -12,7 +12,7 @@
   const PKCE_KEY = "wutborg.sangquiz.spotify.pkce";
   const SOUND_KEY = "wutborg.sangquiz.sound.v1";
   const WINNING_SCORE = 10;
-  const TEAM_COLORS = ["#C63B2F", "#2F5FA8"];
+  const TEAM_COLORS = ["#D0502C", "#5B84A8"];
   const TURN_SPLASH_MS = 1500;
   const SPOTIFY_SCOPES = [
     "streaming",
@@ -41,7 +41,7 @@
   let audioContext = null;
   let splashTimer = 0;
   let feedbackTimer = 0;
-  let lastTapeCounter = "";
+  let lastRecordCounter = "";
   let spotify = {
     deviceId: "",
     player: null,
@@ -90,8 +90,8 @@
       "deck-status",
       "active-team-name",
       "hidden-song-label",
-      "tape-counter",
-      "cassette-label",
+      "record-counter",
+      "record-label",
       "now-song-card",
       "current-card-back-number",
       "current-card-front-year",
@@ -506,11 +506,11 @@
       : `${remainingSongCount()} i puljen`;
     els.activeTeamName.textContent = team ? team.name : "Hold";
     els.hiddenSongLabel.textContent = songLabel;
-    els.cassetteLabel.textContent = team ? team.name : "Mixtape";
+    els.recordLabel.textContent = team ? team.name : "Plade";
     renderCurrentSongCard(song, songNumber);
     els.revealButton.disabled = !song || state.phase === "reveal" || state.selectedSlot < 0;
     els.playHiddenButton.disabled = !song;
-    els.pauseButton.disabled = !song || !spotify.deviceId;
+    els.pauseButton.disabled = !song || (!spotify.deviceId && !playbackActive);
 
     if (song) {
       els.djFallbackLink.href = getSpotifyUrl(song);
@@ -527,14 +527,14 @@
 
   function renderCurrentSongCard(song, songNumber) {
     const counterText = song ? `SANG ${String(state.round || songNumber || 1).padStart(4, "0")}` : "SANG 0000";
-    if (els.tapeCounter.textContent !== counterText) {
-      els.tapeCounter.textContent = counterText;
-      if (lastTapeCounter && lastTapeCounter !== counterText) {
-        els.tapeCounter.classList.remove("is-rolling");
-        void els.tapeCounter.offsetWidth;
-        els.tapeCounter.classList.add("is-rolling");
+    if (els.recordCounter.textContent !== counterText) {
+      els.recordCounter.textContent = counterText;
+      if (lastRecordCounter && lastRecordCounter !== counterText) {
+        els.recordCounter.classList.remove("is-rolling");
+        void els.recordCounter.offsetWidth;
+        els.recordCounter.classList.add("is-rolling");
       }
-      lastTapeCounter = counterText;
+      lastRecordCounter = counterText;
     }
 
     els.currentCardBackNumber.textContent = counterText;
@@ -980,7 +980,7 @@
     layer.setAttribute("aria-hidden", "true");
 
     const count = big ? 86 : 26;
-    const colors = [color, "#F26A2A", "#FFF9EB"];
+    const colors = [color, "#E5A83B", "#F6EFE2"];
     for (let index = 0; index < count; index += 1) {
       const piece = document.createElement("span");
       piece.className = "confetti-piece";
@@ -1078,8 +1078,9 @@
     els.spotifyLoginButton.disabled = !clientId;
     els.spotifyConnectButton.disabled = !clientId || spotify.connecting || !hasToken;
     els.spotifyModeStatus.textContent = spotify.status;
-    els.playHiddenButton.textContent = playbackActive ? "Musik kører" : hasToken && spotify.ready ? "Afspil" : "Åbn Spotify";
-    els.pauseButton.disabled = !spotify.deviceId || !getCurrentSong();
+    const fallbackLabel = mode === "screen" ? "Start musikvisning" : "Åbn Spotify";
+    els.playHiddenButton.textContent = playbackActive ? "Musik kører" : hasToken && spotify.ready ? "Afspil" : fallbackLabel;
+    els.pauseButton.disabled = !getCurrentSong() || (!spotify.deviceId && !playbackActive);
   }
 
   function setSpotifyStatus(message) {
@@ -1310,7 +1311,7 @@
     if (!savedToken?.access_token && !savedToken?.refresh_token) {
       const fallbackOpened = openDjFallback(song);
       setPlaybackActive(fallbackOpened);
-      setSpotifyStatus(fallbackOpened ? "Manuel DJ åbnet i Spotify" : "Brug Åbn manuelt");
+      setSpotifyStatus(getFallbackStatus(fallbackOpened));
       updateSpotifyUi();
       return;
     }
@@ -1319,7 +1320,7 @@
     if (!token) {
       const fallbackOpened = openDjFallback(song);
       setPlaybackActive(fallbackOpened);
-      setSpotifyStatus(fallbackOpened ? "Manuel DJ åbnet i Spotify" : "Brug Åbn manuelt");
+      setSpotifyStatus(getFallbackStatus(fallbackOpened));
       updateSpotifyUi();
       return;
     }
@@ -1329,7 +1330,7 @@
       if (!spotify.deviceId) {
         const fallbackOpened = openDjFallback(song);
         setPlaybackActive(fallbackOpened);
-        setSpotifyStatus(fallbackOpened ? "Manuel DJ åbnet i Spotify" : "Brug Åbn manuelt");
+        setSpotifyStatus(getFallbackStatus(fallbackOpened));
         updateSpotifyUi();
         return;
       }
@@ -1344,12 +1345,18 @@
 
     const fallbackOpened = ok ? false : openDjFallback(song);
     setPlaybackActive(ok || fallbackOpened);
-    setSpotifyStatus(ok ? "Afspiller sang" : fallbackOpened ? "Manuel DJ åbnet i Spotify" : "Brug Åbn manuelt");
+    setSpotifyStatus(ok ? "Afspiller sang" : getFallbackStatus(fallbackOpened));
     updateSpotifyUi();
   }
 
   function openDjFallback(song) {
+    if (mode === "screen") return true;
     return Boolean(window.open(getSpotifyUrl(song), "_blank", "noopener,noreferrer"));
+  }
+
+  function getFallbackStatus(opened) {
+    if (!opened) return "Brug Åbn manuelt";
+    return mode === "screen" ? "Musikvisning startet" : "Manuel DJ åbnet i Spotify";
   }
 
   function activateSpotifyElement() {
