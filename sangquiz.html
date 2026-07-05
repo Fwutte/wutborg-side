@@ -850,23 +850,30 @@
     }
 
     .active-team {
-      margin: 12px 0 0;
-      color: var(--muted);
-      font-size: 1rem;
+      margin: 0 0 8px;
+      color: var(--green);
+      font-size: clamp(1.5rem, 3.4vw, 2.25rem);
+      font-weight: 950;
+      line-height: 1.02;
     }
 
     .active-team strong {
-      color: var(--green);
-      font-size: 1.2rem;
+      color: inherit;
+      font-size: inherit;
+    }
+
+    .current-card h2 {
+      color: var(--muted);
+      font-size: clamp(1.15rem, 2.2vw, 1.7rem);
     }
 
     .player-controls {
       display: grid;
       grid-template-columns: minmax(150px, 1fr) minmax(112px, auto);
-      grid-template-rows: 38px 44px;
+      grid-template-rows: 34px 40px;
       gap: 8px 10px;
       justify-self: end;
-      width: min(430px, 100%);
+      width: min(410px, 100%);
     }
 
     .play-hidden {
@@ -875,8 +882,8 @@
       gap: 10px;
       align-items: center;
       justify-content: center;
-      min-height: 90px;
-      border-radius: 16px;
+      min-height: 82px;
+      border-radius: 14px;
       color: #10121d;
       background: var(--amber);
       border-color: transparent;
@@ -898,9 +905,9 @@
       justify-content: center;
       width: 100%;
       min-width: 0;
-      min-height: 44px;
+      min-height: 40px;
       padding: 0 12px;
-      border-radius: 14px;
+      border-radius: 13px;
       color: var(--paper);
       font-size: 0.82rem;
       font-weight: 900;
@@ -919,7 +926,7 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-height: 38px;
+      min-height: 34px;
       padding: 0 12px;
       border-radius: 999px;
       color: var(--muted);
@@ -1285,7 +1292,7 @@
 
       .current-card .player-controls {
         grid-template-columns: minmax(0, 1fr) minmax(108px, 34%);
-        grid-template-rows: 38px 44px;
+        grid-template-rows: 34px 40px;
         width: 100%;
       }
 
@@ -1303,19 +1310,31 @@
       .current-card .pause-button {
         width: 100%;
         min-width: 0;
-        min-height: 44px;
+        min-height: 40px;
       }
 
       .current-card .manual-link {
         width: 100%;
         max-width: 100%;
         justify-self: stretch;
-        min-height: 38px;
+        min-height: 34px;
         padding-inline: 12px;
       }
 
       .current-card .play-hidden {
-        min-height: 90px;
+        min-height: 82px;
+      }
+
+      body[data-sangquiz-mode="phone"] .current-card .manual-link {
+        min-height: 34px;
+      }
+
+      body[data-sangquiz-mode="phone"] .current-card .pause-button {
+        min-height: 40px;
+      }
+
+      body[data-sangquiz-mode="phone"] .current-card .play-hidden {
+        min-height: 82px;
       }
 
       .team-row {
@@ -1462,8 +1481,8 @@
 
               <section class="current-card" aria-label="Aktuel sang">
                 <div>
+                  <p class="active-team"><strong id="active-team-name">Hold</strong></p>
                   <h2 id="hidden-song-label">Sang nr. 1</h2>
-                  <p class="active-team">Tur: <strong id="active-team-name">Hold</strong></p>
                 </div>
                 <div class="player-controls">
                   <button id="play-hidden-button" class="play-hidden" type="button">Åbn i Spotify</button>
