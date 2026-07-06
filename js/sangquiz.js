@@ -525,9 +525,13 @@
   }
 
   function renderCurrentSongCard(song) {
+    const showAnswerCard = state.phase === "reveal" && Boolean(song);
+    const currentCard = els.nowSongCard.closest(".current-card");
+    if (currentCard) currentCard.dataset.answerVisible = showAnswerCard ? "true" : "false";
     els.recordCounter.textContent = "";
     els.currentCardBackNumber.textContent = "";
-    els.nowSongCard.classList.toggle("is-revealed", state.phase === "reveal" && Boolean(song));
+    els.nowSongCard.hidden = !showAnswerCard;
+    els.nowSongCard.classList.toggle("is-revealed", showAnswerCard);
     els.nowSongCard.toggleAttribute("aria-busy", !song);
     if (!song) {
       els.currentCardFrontYear.textContent = "0000";

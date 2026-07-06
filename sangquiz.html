@@ -2829,6 +2829,10 @@
       background: var(--felt);
     }
 
+    .current-card[data-answer-visible="false"] {
+      grid-template-columns: minmax(260px, 1fr) minmax(190px, 0.45fr);
+    }
+
     .active-team {
       color: var(--active-team-color);
       font-size: clamp(2.4rem, 4vw, 3.8rem);
@@ -3179,8 +3183,11 @@
     }
 
     .timeline-card .song-card-title {
+      color: var(--ink) !important;
       font-size: 0.84rem;
+      font-weight: 950;
       line-height: 1.05;
+      text-shadow: none;
     }
 
     .timeline-card .song-card-artist {
@@ -3529,7 +3536,7 @@
                 <span id="deck-status" class="deck-status">0 brugt · 0 tilbage</span>
               </div>
 
-              <section class="current-card" aria-label="Aktuel sang">
+              <section class="current-card" data-answer-visible="false" aria-label="Aktuel sang">
                 <div>
                   <p class="active-team"><strong id="active-team-name">Hold</strong></p>
                   <span id="hidden-song-label" class="turn-label">Sang nr. 1</span>
@@ -3545,7 +3552,7 @@
                     <div class="record-progress" aria-hidden="true"></div>
                   </div>
                 </div>
-                <article id="now-song-card" class="song-card now-card" aria-label="Aktuelt sangkort">
+                <article id="now-song-card" class="song-card now-card" aria-label="Aktuelt sangkort" hidden>
                   <div class="song-card-inner">
                     <div class="song-card-face song-card-back">
                       <span class="song-card-mark">?</span>
