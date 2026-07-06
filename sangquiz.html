@@ -2860,12 +2860,12 @@
     .record-topline {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: flex-end;
       gap: 12px;
     }
 
     .record-counter {
-      display: inline-grid;
+      display: none;
       place-items: center;
       min-width: 10ch;
       min-height: 34px;
@@ -2878,10 +2878,6 @@
       font-size: 1rem;
       letter-spacing: 0.04em;
       text-transform: uppercase;
-    }
-
-    .record-counter.is-rolling {
-      animation: counterRoll 0.48s ease;
     }
 
     .record-label {
@@ -3034,6 +3030,10 @@
       color: var(--ink);
     }
 
+    .song-card.is-revealed .song-card-front::before {
+      border-color: color-mix(in srgb, var(--active-team-color) 48%, rgba(43, 32, 22, 0.18));
+    }
+
     .song-card-mark {
       font-family: Shrikhand, Archivo, sans-serif;
       font-size: clamp(5.8rem, 8vw, 8rem);
@@ -3041,6 +3041,7 @@
     }
 
     .song-card-number {
+      display: none;
       color: currentColor;
       font-family: Archivo, Arial, Helvetica, sans-serif;
       font-size: 0.82rem;
@@ -3049,7 +3050,7 @@
     }
 
     .song-card-year {
-      color: var(--active-team-color);
+      color: var(--ink);
       font-family: "Archivo Black", Archivo, sans-serif;
       font-size: clamp(3.8rem, 5.7vw, 6rem);
       line-height: 0.9;
@@ -3106,17 +3107,18 @@
     .slot-grid {
       display: flex;
       align-items: stretch;
-      gap: 14px;
-      min-height: 248px;
-      padding: 12px 2px 18px;
+      gap: 10px;
+      min-height: 174px;
+      padding: 10px 2px 14px;
       overflow-x: auto;
       scrollbar-color: var(--brass) rgba(246, 239, 226, 0.18);
     }
 
     .slot-button {
-      flex: 0 0 116px;
-      min-height: 220px;
-      border: 3px dashed var(--brass);
+      flex: 0 0 96px;
+      min-height: 150px;
+      padding: 8px;
+      border: 2px dashed var(--brass);
       border-radius: 10px;
       color: var(--brass);
       background: transparent;
@@ -3160,15 +3162,31 @@
     }
 
     .timeline-card {
-      flex: 0 0 clamp(170px, 15vw, 220px);
-      min-height: 220px;
+      flex: 0 0 clamp(134px, 12vw, 172px);
+      min-height: 150px;
       padding: 0;
       border: 0;
       background: transparent;
     }
 
+    .timeline-card .song-card-face {
+      gap: 5px;
+      padding: 10px;
+    }
+
     .timeline-card .song-card-year {
-      font-size: clamp(2.8rem, 4vw, 4.25rem);
+      font-size: clamp(2rem, 2.8vw, 3rem);
+    }
+
+    .timeline-card .song-card-title {
+      font-size: 0.84rem;
+      line-height: 1.05;
+    }
+
+    .timeline-card .song-card-artist {
+      color: rgba(43, 32, 22, 0.78);
+      font-size: 0.72rem;
+      line-height: 1.15;
     }
 
     .reveal-card {
@@ -3179,10 +3197,11 @@
     .answer-year {
       border: 0;
       border-radius: 10px;
-      color: var(--active-team-color);
+      color: var(--ink);
       background: var(--paper);
       font-family: "Archivo Black", Archivo, sans-serif;
       font-size: clamp(3.8rem, 6vw, 5.8rem);
+      box-shadow: inset 0 -8px 0 color-mix(in srgb, var(--active-team-color) 42%, transparent);
     }
 
     .placement-result {
@@ -3383,8 +3402,13 @@
         flex-basis: auto;
       }
 
-      .timeline-card,
-      .song-card {
+      .timeline-card {
+        min-height: 154px;
+        width: 100%;
+        flex-basis: auto;
+      }
+
+      .song-card:not(.timeline-card) {
         min-height: 208px;
         width: 100%;
         flex-basis: auto;
@@ -3511,7 +3535,7 @@
                   <span id="hidden-song-label" class="turn-label">Sang nr. 1</span>
                   <div class="record-player" aria-label="Afspilning">
                     <div class="record-topline">
-                      <span id="record-counter" class="record-counter">SANG 0001</span>
+                      <span id="record-counter" class="record-counter" aria-hidden="true"></span>
                       <span id="record-label" class="record-label">Plade</span>
                     </div>
                     <div class="turntable" aria-hidden="true">
@@ -3525,7 +3549,7 @@
                   <div class="song-card-inner">
                     <div class="song-card-face song-card-back">
                       <span class="song-card-mark">?</span>
-                      <span id="current-card-back-number" class="song-card-number">SANG 0001</span>
+                      <span id="current-card-back-number" class="song-card-number" aria-hidden="true"></span>
                     </div>
                     <div class="song-card-face song-card-front">
                       <strong id="current-card-front-year" class="song-card-year">0000</strong>

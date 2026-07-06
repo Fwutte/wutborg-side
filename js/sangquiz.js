@@ -41,7 +41,6 @@
   let audioContext = null;
   let splashTimer = 0;
   let feedbackTimer = 0;
-  let lastRecordCounter = "";
   let spotify = {
     deviceId: "",
     player: null,
@@ -507,7 +506,7 @@
     els.activeTeamName.textContent = team ? team.name : "Hold";
     els.hiddenSongLabel.textContent = songLabel;
     els.recordLabel.textContent = team ? team.name : "Plade";
-    renderCurrentSongCard(song, songNumber);
+    renderCurrentSongCard(song);
     els.revealButton.disabled = !song || state.phase === "reveal" || state.selectedSlot < 0;
     els.playHiddenButton.disabled = !song;
     els.pauseButton.disabled = !song || (!spotify.deviceId && !playbackActive);
@@ -525,19 +524,9 @@
     updateSpotifyUi();
   }
 
-  function renderCurrentSongCard(song, songNumber) {
-    const counterText = song ? `SANG ${String(state.round || songNumber || 1).padStart(4, "0")}` : "SANG 0000";
-    if (els.recordCounter.textContent !== counterText) {
-      els.recordCounter.textContent = counterText;
-      if (lastRecordCounter && lastRecordCounter !== counterText) {
-        els.recordCounter.classList.remove("is-rolling");
-        void els.recordCounter.offsetWidth;
-        els.recordCounter.classList.add("is-rolling");
-      }
-      lastRecordCounter = counterText;
-    }
-
-    els.currentCardBackNumber.textContent = counterText;
+  function renderCurrentSongCard(song) {
+    els.recordCounter.textContent = "";
+    els.currentCardBackNumber.textContent = "";
     els.nowSongCard.classList.toggle("is-revealed", state.phase === "reveal" && Boolean(song));
     els.nowSongCard.toggleAttribute("aria-busy", !song);
     if (!song) {
@@ -608,11 +597,7 @@
     mark.className = "song-card-mark";
     mark.textContent = "?";
 
-    const number = document.createElement("span");
-    number.className = "song-card-number";
-    number.textContent = `SANG ${String(entry.round || index + 1).padStart(4, "0")}`;
-
-    back.append(mark, number);
+    back.append(mark);
 
     const front = document.createElement("div");
     front.className = "song-card-face song-card-front";
