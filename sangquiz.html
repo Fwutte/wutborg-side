@@ -2823,7 +2823,7 @@
     }
 
     .current-card {
-      grid-template-columns: minmax(260px, 0.64fr) minmax(250px, 0.7fr) minmax(190px, 0.44fr);
+      grid-template-columns: minmax(280px, 1fr) minmax(250px, 0.72fr);
       align-items: stretch;
       border: 2px solid color-mix(in srgb, var(--active-team-color) 48%, rgba(246, 239, 226, 0.24));
       background: var(--felt);
@@ -2850,11 +2850,10 @@
 
     .record-player {
       display: grid;
-      gap: 12px;
+      gap: 10px;
       align-content: center;
-      min-height: 236px;
       margin-top: 12px;
-      padding: 16px;
+      padding: 14px;
       border: 2px solid rgba(246, 239, 226, 0.28);
       border-radius: 10px;
       background: var(--paper);
@@ -2896,110 +2895,226 @@
     .turntable {
       position: relative;
       display: grid;
-      place-items: center;
-      min-height: 138px;
-      border: 2px solid rgba(43, 32, 22, 0.18);
-      border-radius: 10px;
-      background: var(--paper);
+      grid-template-columns: minmax(172px, 1fr) minmax(126px, 0.48fr);
+      gap: clamp(12px, 3vw, 24px);
+      align-items: center;
+      min-height: clamp(232px, 34vw, 340px);
+      padding: clamp(16px, 3vw, 28px);
+      border: 3px solid rgba(43, 32, 22, 0.18);
+      border-radius: 24px;
+      background:
+        linear-gradient(rgba(43, 32, 22, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(43, 32, 22, 0.035) 1px, transparent 1px),
+        linear-gradient(145deg, #fff8ec, #efe3cf);
+      background-size: 46px 46px, 46px 46px, auto;
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.45),
+        0 14px 24px rgba(4, 28, 21, 0.22);
       overflow: hidden;
     }
 
-    .vinyl-record {
-      position: relative;
-      display: block;
-      width: min(126px, 46vw);
-      aspect-ratio: 1;
-      border: 10px solid #16110D;
-      border-radius: 50%;
-      background: #241B15;
-    }
-
-    .vinyl-record::before {
-      content: "";
+    .turntable-note {
       position: absolute;
-      inset: 14px;
-      border: 2px solid rgba(246, 239, 226, 0.26);
-      border-radius: 50%;
-    }
-
-    .vinyl-record::after {
-      content: "";
-      position: absolute;
-      left: 50%;
-      top: 8px;
-      width: 10px;
-      height: 26px;
+      z-index: 0;
+      width: 7px;
+      height: 46px;
       border-radius: 999px;
-      background: var(--brass);
-      transform: translateX(-50%);
-      transform-origin: 50% calc(50% + 47px);
+      background: currentColor;
+      color: var(--brass);
+      opacity: 0.58;
+      filter: drop-shadow(0 5px 4px rgba(43, 32, 22, 0.16));
+      transform: rotate(-12deg);
     }
 
-    .tonearm {
+    .turntable-note::before {
+      content: "";
       position: absolute;
-      right: 16%;
+      left: -16px;
+      bottom: -7px;
+      width: 26px;
+      height: 18px;
+      border-radius: 50%;
+      background: currentColor;
+      transform: rotate(-18deg);
+    }
+
+    .turntable-note::after {
+      content: "";
+      position: absolute;
+      left: 6px;
+      top: -7px;
+      width: 42px;
+      height: 23px;
+      border-radius: 70% 20% 20% 0;
+      background: currentColor;
+      clip-path: polygon(0 0, 100% 20%, 100% 72%, 0 34%);
+    }
+
+    .note-one {
+      left: 12%;
+      top: 24%;
+    }
+
+    .note-two {
+      right: 12%;
       top: 18%;
-      width: 74px;
-      height: 10px;
-      border-radius: 999px;
-      background: var(--brass);
-      transform: rotate(-28deg);
-      transform-origin: 88% 50%;
-      transition: transform 0.35s ease;
+      color: #6f887d;
+      transform: rotate(11deg) scale(0.82);
     }
 
-    .tonearm::before {
-      content: "";
-      position: absolute;
-      right: -13px;
-      top: -8px;
-      width: 24px;
-      height: 24px;
-      border: 4px solid var(--ink);
-      border-radius: 50%;
-      background: var(--paper);
+    .note-three {
+      right: 17%;
+      bottom: 14%;
+      transform: rotate(-18deg) scale(0.64);
     }
 
-    .tonearm::after {
-      content: "";
-      position: absolute;
-      left: -8px;
-      top: 5px;
-      width: 18px;
-      height: 4px;
-      border-radius: 999px;
-      background: var(--ink);
-      transform: rotate(24deg);
-      transform-origin: right center;
+    .note-four {
+      left: 11%;
+      bottom: 18%;
+      color: #6f887d;
+      opacity: 0.44;
+      transform: rotate(16deg) scale(0.58);
     }
 
-    .record-progress {
+    .record-play-button {
       position: relative;
-      height: 8px;
-      border-radius: 999px;
-      background: rgba(43, 32, 22, 0.18);
-      overflow: hidden;
+      z-index: 1;
+      display: grid;
+      place-items: center;
+      justify-self: center;
+      width: clamp(168px, 29vw, 300px);
+      max-width: 100%;
+      aspect-ratio: 1;
+      min-height: 0;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
+      box-shadow: none;
     }
 
-    .record-progress::before {
+    .record-play-button:disabled {
+      cursor: not-allowed;
+      filter: saturate(0.65);
+      opacity: 0.72;
+    }
+
+    .record-play-button:focus-visible {
+      outline: 5px solid var(--brass);
+      outline-offset: 7px;
+    }
+
+    .record-disc {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      filter: drop-shadow(0 18px 14px rgba(8, 5, 4, 0.34));
+    }
+
+    .record-disc::before {
       content: "";
       position: absolute;
-      inset: 0 auto 0 0;
-      width: 32%;
+      left: 4%;
+      right: 4%;
+      bottom: -2%;
+      height: 31%;
+      border-radius: 50%;
+      background: rgba(8, 5, 4, 0.28);
+      filter: blur(7px);
+    }
+
+    .record-spin {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at center, transparent 0 34%, rgba(246, 239, 226, 0.12) 34.8% 36%, transparent 37% 49%, rgba(246, 239, 226, 0.16) 49.8% 51%, transparent 52% 67%, rgba(246, 239, 226, 0.11) 67.8% 69%, transparent 70%),
+        radial-gradient(circle at 38% 30%, #4b3a31 0 8%, #221815 23%, #100b09 58%, #050303 84%, #000 100%);
+      box-shadow:
+        inset 0 0 0 7px #080403,
+        inset 0 0 0 12px #3b2a22,
+        inset 0 0 0 18px #090605,
+        inset -18px -26px 28px rgba(0, 0, 0, 0.32),
+        inset 18px 18px 28px rgba(255, 255, 255, 0.07);
+    }
+
+    .record-spin::before {
+      content: "";
+      position: absolute;
+      left: 21%;
+      top: 11%;
+      width: 48%;
+      height: 14%;
+      border-radius: 999px;
+      background: rgba(255, 247, 232, 0.14);
+      transform: rotate(-17deg);
+    }
+
+    .record-spin::after {
+      content: "";
+      position: absolute;
+      left: 12%;
+      right: 10%;
+      bottom: 18%;
+      height: 14%;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.36);
+      transform: rotate(8deg);
+    }
+
+    .record-center {
+      position: absolute;
+      inset: 27%;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 38% 30%, #fff0b3 0, #f2bd4b 50%, #c77b1e 100%);
+      border: 6px solid color-mix(in srgb, var(--ink) 34%, transparent);
+      box-shadow:
+        0 0 0 7px rgba(91, 52, 15, 0.42),
+        inset -9px -15px 14px rgba(127, 71, 20, 0.22),
+        inset 10px 10px 12px rgba(255, 244, 192, 0.32);
+    }
+
+    .record-center::before {
+      content: "";
+      position: absolute;
+      left: 18%;
+      top: 16%;
+      width: 64%;
+      height: 16%;
       border-radius: inherit;
-      background: var(--brass);
+      background: rgba(255, 244, 192, 0.38);
+      transform: rotate(-10deg);
     }
 
-    body[data-playback="playing"] .vinyl-record {
-      animation: vinylSpin 1.2s linear infinite;
+    .record-play-icon {
+      position: relative;
+      z-index: 1;
+      width: 0;
+      height: 0;
+      margin-left: 9%;
+      border-top: clamp(22px, 3.9vw, 38px) solid transparent;
+      border-bottom: clamp(22px, 3.9vw, 38px) solid transparent;
+      border-left: clamp(40px, 6.5vw, 70px) solid var(--ink);
+      filter: drop-shadow(4px 2px 0 rgba(43, 32, 22, 0.12));
     }
 
-    body[data-playback="playing"] .tonearm {
-      transform: rotate(-6deg);
+    .record-play-text {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+      border: 0;
     }
 
-    body[data-playback="playing"] .record-progress::before {
-      animation: recordProgress 12s linear infinite;
+    body[data-playback="playing"] .record-spin {
+      animation: vinylSpin 1.35s linear infinite;
     }
 
     .song-card {
@@ -3127,6 +3242,48 @@
     body[data-sangquiz-mode="phone"] .current-card .manual-link {
       width: 100%;
       min-height: 42px;
+    }
+
+    .current-card .record-play-button,
+    body[data-sangquiz-mode="phone"] .current-card .record-play-button {
+      grid-row: auto;
+      width: clamp(168px, 29vw, 300px);
+      max-width: 100%;
+      min-height: 0;
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
+      justify-self: center;
+      align-self: center;
+    }
+
+    .record-play-button::before {
+      display: none;
+    }
+
+    .turntable .player-controls {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+      justify-self: center;
+      align-self: center;
+      width: min(148px, 100%);
+      margin: 0;
+    }
+
+    .turntable .manual-link,
+    .turntable .pause-button {
+      justify-self: stretch;
+      min-height: 76px;
+      border: 0;
+      border-radius: 18px;
+      color: var(--paper);
+      background: var(--felt);
+      box-shadow: 0 9px 16px rgba(43, 32, 22, 0.13);
+      font-size: 1.04rem;
+      font-weight: 950;
     }
 
     body[data-sangquiz-mode="screen"] .manual-link {
@@ -3443,12 +3600,6 @@
       50% { box-shadow: inset 8px 0 0 var(--team-color), 0 0 0 5px rgba(229, 168, 59, 0.22) !important; }
     }
 
-    @media (min-width: 1041px) {
-      .current-card[data-answer-visible="false"] {
-        grid-template-columns: minmax(260px, 1fr) minmax(190px, 0.45fr);
-      }
-    }
-
     @media (max-width: 1040px) {
       .current-card,
       .current-card[data-answer-visible="false"] {
@@ -3470,6 +3621,26 @@
         width: 100%;
         max-width: 100%;
         justify-self: stretch;
+      }
+
+      .turntable {
+        grid-template-columns: 1fr;
+      }
+
+      .current-card .record-play-button {
+        width: clamp(176px, 58vw, 270px);
+        justify-self: center;
+      }
+
+      .turntable .player-controls {
+        grid-column: auto;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: 100%;
+        margin-top: 4px;
+      }
+
+      body[data-sangquiz-mode="screen"] .turntable .player-controls {
+        grid-template-columns: 1fr;
       }
     }
 
@@ -3622,11 +3793,25 @@
                       <span id="record-counter" class="record-counter" aria-hidden="true"></span>
                       <span id="record-label" class="record-label">Plade</span>
                     </div>
-                    <div class="turntable" aria-hidden="true">
-                      <span class="vinyl-record"></span>
-                      <span class="tonearm"></span>
+                    <div class="turntable">
+                      <span class="turntable-note note-one" aria-hidden="true"></span>
+                      <span class="turntable-note note-two" aria-hidden="true"></span>
+                      <span class="turntable-note note-three" aria-hidden="true"></span>
+                      <span class="turntable-note note-four" aria-hidden="true"></span>
+                      <button id="play-hidden-button" class="play-hidden record-play-button" type="button" aria-label="Åbn i Spotify">
+                        <span class="record-disc" aria-hidden="true">
+                          <span class="record-spin"></span>
+                          <span class="record-center">
+                            <span class="record-play-icon"></span>
+                          </span>
+                        </span>
+                        <span id="play-hidden-label" class="record-play-text">Åbn i Spotify</span>
+                      </button>
+                      <div class="player-controls">
+                        <a id="dj-fallback-link" class="link-button manual-link" href="#" target="_blank" rel="noreferrer">Åbn manuelt</a>
+                        <button id="pause-button" class="pause-button" type="button" aria-label="Pause">Pause</button>
+                      </div>
                     </div>
-                    <div class="record-progress" aria-hidden="true"></div>
                   </div>
                 </div>
                 <article id="now-song-card" class="song-card now-card" aria-label="Aktuelt sangkort" hidden>
@@ -3642,11 +3827,6 @@
                     </div>
                   </div>
                 </article>
-                <div class="player-controls">
-                  <button id="play-hidden-button" class="play-hidden" type="button">Åbn i Spotify</button>
-                  <a id="dj-fallback-link" class="link-button manual-link" href="#" target="_blank" rel="noreferrer">Åbn manuelt</a>
-                  <button id="pause-button" class="pause-button" type="button" aria-label="Pause">Pause</button>
-                </div>
               </section>
 
               <div class="placement-grid">

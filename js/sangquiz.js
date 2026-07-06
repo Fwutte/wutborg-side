@@ -97,6 +97,7 @@
       "current-card-front-title",
       "current-card-front-artist",
       "play-hidden-button",
+      "play-hidden-label",
       "pause-button",
       "dj-fallback-link",
       "reveal-button",
@@ -1068,7 +1069,10 @@
     els.spotifyConnectButton.disabled = !clientId || spotify.connecting || !hasToken;
     els.spotifyModeStatus.textContent = spotify.status;
     const fallbackLabel = mode === "screen" ? "Start musikvisning" : "Åbn Spotify";
-    els.playHiddenButton.textContent = playbackActive ? "Musik kører" : hasToken && spotify.ready ? "Afspil" : fallbackLabel;
+    const playLabel = playbackActive ? "Musik kører" : hasToken && spotify.ready ? "Afspil" : fallbackLabel;
+    els.playHiddenButton.setAttribute("aria-label", playLabel);
+    if (els.playHiddenLabel) els.playHiddenLabel.textContent = playLabel;
+    else els.playHiddenButton.textContent = playLabel;
     els.pauseButton.disabled = !getCurrentSong() || (!spotify.deviceId && !playbackActive);
   }
 
