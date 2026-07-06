@@ -2830,7 +2830,7 @@
     }
 
     .current-card[data-answer-visible="false"] {
-      grid-template-columns: minmax(260px, 1fr) minmax(190px, 0.45fr);
+      grid-template-columns: minmax(0, 1fr);
     }
 
     .active-team {
@@ -3443,9 +3443,33 @@
       50% { box-shadow: inset 8px 0 0 var(--team-color), 0 0 0 5px rgba(229, 168, 59, 0.22) !important; }
     }
 
+    @media (min-width: 1041px) {
+      .current-card[data-answer-visible="false"] {
+        grid-template-columns: minmax(260px, 1fr) minmax(190px, 0.45fr);
+      }
+    }
+
     @media (max-width: 1040px) {
-      .current-card {
+      .current-card,
+      .current-card[data-answer-visible="false"] {
         grid-template-columns: 1fr;
+      }
+
+      .current-card .player-controls {
+        grid-column: 1;
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+        width: 100%;
+        max-width: 100%;
+        margin-top: 12px;
+      }
+
+      .current-card .play-hidden,
+      .current-card .manual-link,
+      .current-card .pause-button {
+        width: 100%;
+        max-width: 100%;
+        justify-self: stretch;
       }
     }
 
