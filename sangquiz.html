@@ -3004,6 +3004,97 @@
       outline-offset: 7px;
     }
 
+    .record-active-visual {
+      position: absolute;
+      left: -15%;
+      top: -15%;
+      z-index: 1;
+      width: 130%;
+      height: 130%;
+      color: var(--active-team-color);
+      opacity: 0;
+      overflow: visible;
+      pointer-events: none;
+      transform: scale(0.88);
+      transition: opacity 0.22s ease, transform 0.22s ease;
+    }
+
+    .record-active-glow,
+    .record-active-ring,
+    .record-active-sweep,
+    .record-active-dot,
+    .record-active-needle,
+    .record-active-note,
+    .record-active-bar {
+      transform-box: fill-box;
+    }
+
+    .record-active-glow {
+      fill: currentColor;
+      opacity: 0.14;
+      transform-origin: center;
+    }
+
+    .record-active-ring,
+    .record-active-sweep {
+      fill: none;
+      stroke-linecap: round;
+      vector-effect: non-scaling-stroke;
+      transform-origin: 160px 160px;
+    }
+
+    .record-active-ring {
+      stroke: currentColor;
+      stroke-width: 4;
+      stroke-dasharray: 24 22;
+      opacity: 0.82;
+    }
+
+    .record-active-ring-alt {
+      stroke: var(--brass);
+      stroke-width: 3;
+      stroke-dasharray: 5 15;
+      opacity: 0.74;
+    }
+
+    .record-active-sweep {
+      stroke: var(--paper);
+      stroke-width: 7;
+      stroke-dasharray: 64 520;
+      stroke-opacity: 0.8;
+      filter: url(#recordActiveGlow);
+    }
+
+    .record-active-dot {
+      fill: var(--brass);
+      filter: url(#recordActiveGlow);
+      transform-origin: 160px 160px;
+    }
+
+    .record-active-note {
+      fill: currentColor;
+      filter: url(#recordActiveGlow);
+      opacity: 0.88;
+      transform-origin: center;
+    }
+
+    .record-active-needle {
+      fill: none;
+      stroke: var(--ink);
+      stroke-width: 8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      opacity: 0.7;
+      filter: drop-shadow(0 4px 0 rgba(43, 32, 22, 0.14));
+      transform-origin: 226px 88px;
+    }
+
+    .record-active-bar {
+      fill: var(--ink);
+      opacity: 0.86;
+      transform-origin: center bottom;
+    }
+
     .record-disc {
       position: absolute;
       inset: 0;
@@ -3025,6 +3116,7 @@
 
     .record-spin {
       position: absolute;
+      z-index: 0;
       inset: 0;
       border-radius: 50%;
       background:
@@ -3064,6 +3156,7 @@
 
     .record-center {
       position: absolute;
+      z-index: 2;
       inset: 27%;
       display: grid;
       place-items: center;
@@ -3115,6 +3208,67 @@
 
     body[data-playback="playing"] .record-spin {
       animation: vinylSpin 1.35s linear infinite;
+    }
+
+    body[data-playback="playing"] .record-active-visual {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    body[data-playback="playing"] .record-active-glow {
+      animation: recordGlowPulse 1.35s ease-in-out infinite;
+    }
+
+    body[data-playback="playing"] .record-active-ring {
+      animation: recordHaloSpin 5.6s linear infinite, recordDashFlow 1.15s linear infinite;
+    }
+
+    body[data-playback="playing"] .record-active-ring-alt {
+      animation: recordHaloSpinReverse 3.8s linear infinite, recordDashFlow 0.9s linear infinite;
+    }
+
+    body[data-playback="playing"] .record-active-sweep {
+      animation: recordHaloSpin 1.55s linear infinite;
+    }
+
+    body[data-playback="playing"] .record-active-dot {
+      animation: recordHaloSpin 2.05s linear infinite;
+    }
+
+    body[data-playback="playing"] .record-active-needle {
+      animation: recordNeedleRide 1.25s ease-in-out infinite;
+    }
+
+    body[data-playback="playing"] .record-active-note {
+      animation: recordNoteFloat 1.8s ease-in-out infinite;
+    }
+
+    body[data-playback="playing"] .record-active-note-b {
+      animation-delay: 0.22s;
+    }
+
+    body[data-playback="playing"] .record-active-note-c {
+      animation-delay: 0.44s;
+    }
+
+    body[data-playback="playing"] .record-active-bar {
+      animation: recordEqBounce 0.72s ease-in-out infinite;
+    }
+
+    body[data-playback="playing"] .record-active-bar:nth-child(2) {
+      animation-delay: 0.12s;
+    }
+
+    body[data-playback="playing"] .record-active-bar:nth-child(3) {
+      animation-delay: 0.24s;
+    }
+
+    body[data-playback="playing"] .record-active-bar:nth-child(4) {
+      animation-delay: 0.06s;
+    }
+
+    body[data-playback="playing"] .record-active-bar:nth-child(5) {
+      animation-delay: 0.3s;
     }
 
     .song-card {
@@ -3589,6 +3743,38 @@
       to { transform: rotate(360deg); }
     }
 
+    @keyframes recordGlowPulse {
+      0%, 100% { opacity: 0.1; transform: scale(0.96); }
+      50% { opacity: 0.22; transform: scale(1.04); }
+    }
+
+    @keyframes recordHaloSpin {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes recordHaloSpinReverse {
+      to { transform: rotate(-360deg); }
+    }
+
+    @keyframes recordDashFlow {
+      to { stroke-dashoffset: -92; }
+    }
+
+    @keyframes recordNeedleRide {
+      0%, 100% { transform: rotate(-3deg) translateY(0); }
+      50% { transform: rotate(4deg) translateY(3px); }
+    }
+
+    @keyframes recordNoteFloat {
+      0%, 100% { opacity: 0.42; transform: translateY(6px) scale(0.9); }
+      45% { opacity: 0.94; transform: translateY(-10px) scale(1.05); }
+    }
+
+    @keyframes recordEqBounce {
+      0%, 100% { transform: scaleY(0.38); }
+      50% { transform: scaleY(1); }
+    }
+
     @keyframes recordProgress {
       0% { width: 4%; }
       70% { width: 100%; }
@@ -3801,6 +3987,51 @@
                       <button id="play-hidden-button" class="play-hidden record-play-button" type="button" aria-label="Åbn i Spotify">
                         <span class="record-disc" aria-hidden="true">
                           <span class="record-spin"></span>
+                          <svg class="record-active-visual" viewBox="0 0 320 320" focusable="false">
+                            <defs>
+                              <filter id="recordActiveGlow" x="-60%" y="-60%" width="220%" height="220%">
+                                <feGaussianBlur stdDeviation="5" result="blur" />
+                                <feMerge>
+                                  <feMergeNode in="blur" />
+                                  <feMergeNode in="SourceGraphic" />
+                                </feMerge>
+                              </filter>
+                            </defs>
+                            <circle class="record-active-glow" cx="160" cy="160" r="142" />
+                            <circle class="record-active-ring" cx="160" cy="160" r="137" />
+                            <circle class="record-active-ring record-active-ring-alt" cx="160" cy="160" r="116" />
+                            <path class="record-active-sweep" d="M160 23a137 137 0 0 1 131 99" />
+                            <circle class="record-active-dot" cx="160" cy="23" r="7" />
+                            <path class="record-active-needle" d="M236 55l33 31-78 82" />
+                            <g class="record-active-eq" aria-hidden="true">
+                              <rect class="record-active-bar" x="228" y="216" width="9" height="42" rx="4" />
+                              <rect class="record-active-bar" x="243" y="198" width="9" height="60" rx="4" />
+                              <rect class="record-active-bar" x="258" y="207" width="9" height="51" rx="4" />
+                              <rect class="record-active-bar" x="273" y="188" width="9" height="70" rx="4" />
+                              <rect class="record-active-bar" x="288" y="212" width="9" height="46" rx="4" />
+                            </g>
+                            <g transform="translate(50 70) rotate(-15)">
+                              <g class="record-active-note record-active-note-a">
+                                <ellipse cx="0" cy="43" rx="13" ry="9" />
+                                <rect x="9" y="0" width="7" height="44" rx="3" />
+                                <path d="M16 2c18 2 31 8 40 18v12c-10-9-24-14-40-16z" />
+                              </g>
+                            </g>
+                            <g transform="translate(78 222) rotate(13) scale(0.78)">
+                              <g class="record-active-note record-active-note-b">
+                                <ellipse cx="0" cy="43" rx="13" ry="9" />
+                                <rect x="9" y="0" width="7" height="44" rx="3" />
+                                <path d="M16 2c18 2 31 8 40 18v12c-10-9-24-14-40-16z" />
+                              </g>
+                            </g>
+                            <g transform="translate(236 116) rotate(18) scale(0.68)">
+                              <g class="record-active-note record-active-note-c">
+                                <ellipse cx="0" cy="43" rx="13" ry="9" />
+                                <rect x="9" y="0" width="7" height="44" rx="3" />
+                                <path d="M16 2c18 2 31 8 40 18v12c-10-9-24-14-40-16z" />
+                              </g>
+                            </g>
+                          </svg>
                           <span class="record-center">
                             <span class="record-play-icon"></span>
                           </span>
