@@ -2850,18 +2850,18 @@
 
     .record-player {
       display: grid;
-      gap: 10px;
-      align-content: center;
-      margin-top: 12px;
-      padding: 14px;
-      border: 2px solid rgba(246, 239, 226, 0.28);
-      border-radius: 10px;
-      background: var(--paper);
-      color: var(--ink);
+      gap: 0;
+      align-content: stretch;
+      margin-top: 14px;
+      padding: 0;
+      border: 0;
+      border-radius: 18px;
+      background: transparent;
+      color: var(--paper);
     }
 
     .record-topline {
-      display: flex;
+      display: none;
       align-items: center;
       justify-content: flex-end;
       gap: 12px;
@@ -2895,25 +2895,21 @@
     .turntable {
       position: relative;
       display: grid;
-      grid-template-columns: minmax(172px, 1fr) minmax(126px, 0.48fr);
-      gap: clamp(12px, 3vw, 24px);
-      align-items: center;
-      min-height: clamp(232px, 34vw, 340px);
-      padding: clamp(16px, 3vw, 28px);
-      border: 3px solid rgba(43, 32, 22, 0.18);
-      border-radius: 24px;
-      background:
-        linear-gradient(rgba(43, 32, 22, 0.035) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(43, 32, 22, 0.035) 1px, transparent 1px),
-        linear-gradient(145deg, #fff8ec, #efe3cf);
-      background-size: 46px 46px, 46px 46px, auto;
-      box-shadow:
-        inset 0 0 0 1px rgba(255, 255, 255, 0.45),
-        0 14px 24px rgba(4, 28, 21, 0.22);
-      overflow: hidden;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0;
+      align-items: stretch;
+      justify-items: center;
+      min-height: 0;
+      padding: 0;
+      border: 0;
+      border-radius: 18px;
+      background: transparent;
+      box-shadow: none;
+      overflow: visible;
     }
 
     .turntable-note {
+      display: none;
       position: absolute;
       z-index: 0;
       width: 7px;
@@ -3271,6 +3267,426 @@
       animation-delay: 0.3s;
     }
 
+    .dance-play-button {
+      width: min(100%, clamp(280px, 44vw, 520px));
+      aspect-ratio: 4 / 3;
+      display: block;
+      overflow: hidden;
+      padding: 0;
+      border: 0;
+      border-radius: 18px;
+      color: var(--paper);
+      background: #081f19;
+      box-shadow: 0 18px 30px rgba(3, 14, 11, 0.32);
+      line-height: 0;
+      transition: box-shadow 0.24s ease, transform 0.24s ease;
+    }
+
+    .dance-play-button svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    button.dance-play-button:focus-visible {
+      outline: 0;
+    }
+
+    button.dance-play-button:focus-visible .dance-control-core {
+      stroke: var(--active-team-color);
+      stroke-width: 7;
+    }
+
+    .dance-club-back {
+      fill: url(#danceClubBack);
+    }
+
+    .dance-edge-glow {
+      fill: none;
+      stroke: var(--active-team-color);
+      stroke-width: 3;
+      stroke-dasharray: 30 18;
+      stroke-opacity: 0;
+      vector-effect: non-scaling-stroke;
+      transition: stroke-opacity 0.24s ease;
+    }
+
+    .dance-live-badge {
+      opacity: 0;
+      transform-box: fill-box;
+      transform-origin: left center;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+
+    .dance-live-badge rect {
+      fill: rgba(8, 31, 25, 0.78);
+      stroke: rgba(246, 239, 226, 0.36);
+      stroke-width: 2;
+    }
+
+    .dance-live-badge text {
+      fill: var(--paper);
+      font-family: Archivo, Arial, sans-serif;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 1.8px;
+    }
+
+    .dance-live-dot {
+      fill: var(--active-team-color);
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+
+    .dance-beam {
+      opacity: 0.18;
+      transform-box: fill-box;
+      transform-origin: top center;
+    }
+
+    .dance-beam-red {
+      fill: var(--active-team-color);
+    }
+
+    .dance-beam-blue {
+      fill: var(--denim);
+    }
+
+    .dance-beam-brass {
+      fill: var(--brass);
+    }
+
+    .dance-disco-wire {
+      stroke: rgba(246, 239, 226, 0.42);
+      stroke-width: 2;
+    }
+
+    .dance-disco-ball {
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+
+    .dance-disco-shell {
+      fill: url(#danceDiscoBall);
+      stroke: var(--paper);
+      stroke-opacity: 0.65;
+      stroke-width: 2;
+    }
+
+    .dance-mirror-line {
+      fill: none;
+      stroke: rgba(43, 32, 22, 0.38);
+      stroke-width: 1.4;
+    }
+
+    .dance-spark {
+      fill: var(--paper);
+      opacity: 0.72;
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+
+    .dance-floor-back {
+      fill: #102b22;
+      stroke: rgba(246, 239, 226, 0.28);
+      stroke-width: 3;
+    }
+
+    .dance-floor-glow {
+      fill: url(#danceFloorGlow);
+      opacity: 0;
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+
+    .dance-floor-line {
+      stroke: rgba(246, 239, 226, 0.2);
+      stroke-width: 2;
+    }
+
+    .dance-floor-tile {
+      opacity: 0.72;
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+
+    .dance-tile-red {
+      fill: var(--active-team-color);
+    }
+
+    .dance-tile-blue {
+      fill: var(--denim);
+    }
+
+    .dance-tile-brass {
+      fill: var(--brass);
+    }
+
+    .dance-tile-mint {
+      fill: #7fc5a1;
+    }
+
+    .dance-dancer {
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transform-box: fill-box;
+      transform-origin: center bottom;
+    }
+
+    .dance-dancer-left {
+      stroke: var(--active-team-color);
+      stroke-width: 9;
+    }
+
+    .dance-dancer-right {
+      stroke: var(--denim);
+      stroke-width: 9;
+    }
+
+    .dance-dancer-head {
+      fill: var(--paper);
+      stroke: var(--ink);
+      stroke-width: 5;
+    }
+
+    .dance-dancer-skirt {
+      fill: var(--brass);
+      stroke: var(--ink);
+      stroke-width: 5;
+    }
+
+    .dance-limb,
+    .dance-torso {
+      transform-box: fill-box;
+      transform-origin: center top;
+    }
+
+    .dance-shoe {
+      fill: var(--ink);
+      stroke: none;
+    }
+
+    .dance-speaker {
+      fill: #0b1714;
+      stroke: rgba(246, 239, 226, 0.22);
+      stroke-width: 3;
+    }
+
+    .dance-speaker-cone {
+      fill: var(--ink);
+      stroke: var(--brass);
+      stroke-width: 3;
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+
+    .dance-sound-wave {
+      fill: none;
+      stroke: var(--brass);
+      stroke-width: 5;
+      stroke-linecap: round;
+      opacity: 0;
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+
+    .dance-float-note {
+      fill: var(--paper);
+      opacity: 0;
+      filter: drop-shadow(0 0 7px rgba(229, 168, 59, 0.5));
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+
+    .dance-eq-bar {
+      fill: var(--brass);
+      transform-box: fill-box;
+      transform-origin: center bottom;
+    }
+
+    .dance-control-core {
+      fill: var(--paper);
+      stroke: var(--ink);
+      stroke-width: 5;
+      filter: url(#danceSoftShadow);
+      transition: fill 0.2s ease, stroke 0.2s ease, opacity 0.2s ease;
+    }
+
+    .dance-play-mark {
+      fill: var(--ink);
+      transition: opacity 0.18s ease, transform 0.18s ease;
+    }
+
+    .dance-playing-mark {
+      transform-box: fill-box;
+      transform-origin: center bottom;
+    }
+
+    .dance-playing-bar {
+      fill: var(--paper);
+      opacity: 0;
+      transform-box: fill-box;
+      transform-origin: center bottom;
+    }
+
+    body[data-playback="playing"] .dance-play-button {
+      box-shadow:
+        0 20px 34px rgba(3, 14, 11, 0.38),
+        0 0 0 2px color-mix(in srgb, var(--active-team-color) 68%, transparent),
+        0 0 30px color-mix(in srgb, var(--active-team-color) 24%, transparent);
+    }
+
+    body[data-playback="playing"] .dance-edge-glow {
+      stroke-opacity: 0.82;
+      animation: danceEdgeFlow 2.2s linear infinite;
+    }
+
+    body[data-playback="playing"] .dance-live-badge {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    body[data-playback="playing"] .dance-live-dot {
+      animation: danceLivePulse 1.05s ease-in-out infinite;
+    }
+
+    body[data-playback="playing"] .dance-play-mark {
+      opacity: 0;
+      transform: scale(0.72);
+    }
+
+    body[data-playback="playing"] .dance-control-core {
+      fill: rgba(8, 31, 25, 0.82);
+      stroke: rgba(246, 239, 226, 0.88);
+      opacity: 0.92;
+    }
+
+    body[data-playback="playing"] .dance-playing-bar {
+      opacity: 1;
+      animation: danceCenterEq 0.72s ease-in-out infinite;
+    }
+
+    body[data-playback="playing"] .dance-playing-bar:nth-child(2) {
+      animation-delay: 0.12s;
+    }
+
+    body[data-playback="playing"] .dance-playing-bar:nth-child(3) {
+      animation-delay: 0.24s;
+    }
+
+    body[data-playback="playing"] .dance-beam-red {
+      animation: danceSweepLeft 2.4s ease-in-out infinite;
+    }
+
+    body[data-playback="playing"] .dance-beam-blue {
+      animation: danceSweepRight 2.1s ease-in-out infinite;
+    }
+
+    body[data-playback="playing"] .dance-beam-brass {
+      animation: dancePulseBeam 1.3s ease-in-out infinite;
+    }
+
+    body[data-playback="playing"] .dance-disco-ball {
+      animation: danceDiscoSpin 5.8s linear infinite;
+    }
+
+    body[data-playback="playing"] .dance-spark {
+      animation: danceSparkFlash 1.2s ease-in-out infinite;
+    }
+
+    body[data-playback="playing"] .dance-spark:nth-of-type(2n) {
+      animation-delay: 0.28s;
+    }
+
+    body[data-playback="playing"] .dance-spark:nth-of-type(3n) {
+      animation-delay: 0.48s;
+    }
+
+    body[data-playback="playing"] .dance-floor-tile {
+      animation: danceTilePulse 0.95s ease-in-out infinite;
+    }
+
+    body[data-playback="playing"] .dance-floor-tile:nth-child(2n) {
+      animation-delay: 0.16s;
+    }
+
+    body[data-playback="playing"] .dance-floor-tile:nth-child(3n) {
+      animation-delay: 0.32s;
+    }
+
+    body[data-playback="playing"] .dance-floor-glow {
+      animation: danceFloorBreathe 1.35s ease-in-out infinite;
+    }
+
+    body[data-playback="playing"] .dance-speaker-cone {
+      animation: danceSpeakerBeat 0.72s ease-in-out infinite;
+    }
+
+    body[data-playback="playing"] .dance-speaker-cone:nth-child(3n) {
+      animation-delay: 0.16s;
+    }
+
+    body[data-playback="playing"] .dance-sound-wave {
+      animation: danceSoundWave 1.45s ease-out infinite;
+    }
+
+    body[data-playback="playing"] .dance-sound-wave-b {
+      animation-delay: 0.48s;
+    }
+
+    body[data-playback="playing"] .dance-float-note {
+      animation: danceNoteRise 2.35s ease-in-out infinite;
+    }
+
+    body[data-playback="playing"] .dance-float-note-b {
+      animation-delay: 0.7s;
+    }
+
+    body[data-playback="playing"] .dance-float-note-c {
+      animation-delay: 1.35s;
+    }
+
+    body[data-playback="playing"] .dance-dancer-left {
+      animation: danceLeftStep 0.78s ease-in-out infinite;
+    }
+
+    body[data-playback="playing"] .dance-dancer-right {
+      animation: danceRightStep 0.82s ease-in-out infinite;
+    }
+
+    body[data-playback="playing"] .dance-dancer-left .dance-arm-front,
+    body[data-playback="playing"] .dance-dancer-right .dance-arm-back {
+      animation: danceArmUp 0.78s ease-in-out infinite;
+    }
+
+    body[data-playback="playing"] .dance-dancer-left .dance-arm-back,
+    body[data-playback="playing"] .dance-dancer-right .dance-arm-front {
+      animation: danceArmDown 0.78s ease-in-out infinite;
+    }
+
+    body[data-playback="playing"] .dance-dancer-left .dance-leg-front,
+    body[data-playback="playing"] .dance-dancer-right .dance-leg-back {
+      animation: danceKickOut 0.78s ease-in-out infinite;
+    }
+
+    body[data-playback="playing"] .dance-dancer-left .dance-leg-back,
+    body[data-playback="playing"] .dance-dancer-right .dance-leg-front {
+      animation: danceStepIn 0.78s ease-in-out infinite;
+    }
+
+    body[data-playback="playing"] .dance-eq-bar {
+      animation: danceEqBounce 0.62s ease-in-out infinite;
+    }
+
+    body[data-playback="playing"] .dance-eq-bar:nth-child(2) {
+      animation-delay: 0.12s;
+    }
+
+    body[data-playback="playing"] .dance-eq-bar:nth-child(3) {
+      animation-delay: 0.24s;
+    }
+
     .song-card {
       flex: 0 0 clamp(170px, 15vw, 220px);
       min-height: 220px;
@@ -3411,33 +3827,82 @@
       align-self: center;
     }
 
+    .current-card .dance-play-button,
+    body[data-sangquiz-mode="phone"] .current-card .dance-play-button {
+      width: min(100%, 620px);
+      max-width: 100%;
+      aspect-ratio: 4 / 3;
+      border: 0;
+      border-radius: 18px;
+      background: #081f19;
+      box-shadow: 0 18px 30px rgba(3, 14, 11, 0.32);
+    }
+
     .record-play-button::before {
       display: none;
     }
 
     .turntable .player-controls {
-      position: relative;
-      z-index: 1;
-      display: grid;
+      position: absolute;
+      left: clamp(12px, 3vw, 22px);
+      right: clamp(12px, 3vw, 22px);
+      bottom: clamp(12px, 3vw, 22px);
+      z-index: 2;
+      display: flex;
       grid-template-columns: 1fr;
-      gap: 18px;
-      justify-self: center;
-      align-self: center;
-      width: min(148px, 100%);
+      justify-content: center;
+      justify-self: stretch;
+      align-self: end;
+      width: auto;
       margin: 0;
+      pointer-events: none;
     }
 
-    .turntable .manual-link,
+    .turntable .manual-link {
+      display: none !important;
+    }
+
     .turntable .pause-button {
-      justify-self: stretch;
-      min-height: 76px;
-      border: 0;
-      border-radius: 18px;
+      justify-self: center;
+      flex: 0 1 174px;
+      width: 56%;
+      max-width: 174px;
+      min-height: 42px;
+      border: 1px solid rgba(246, 239, 226, 0.2);
+      border-radius: 999px;
+      color: rgba(246, 239, 226, 0.82);
+      background: rgba(7, 24, 19, 0.52);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.16);
+      font-size: 0.84rem;
+      font-weight: 850;
+      pointer-events: auto;
+      transform: translateY(0);
+      backdrop-filter: blur(7px);
+      transition: opacity 0.18s ease, transform 0.18s ease, background 0.18s ease, color 0.18s ease;
+    }
+
+    .turntable .pause-button::before {
+      width: 12px;
+      height: 14px;
+      border-radius: 2px;
+      background: linear-gradient(90deg, currentColor 0 3px, transparent 3px 9px, currentColor 9px 12px);
+      opacity: 0.78;
+    }
+
+    body[data-playback="idle"] .turntable .pause-button {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(8px);
+    }
+
+    body[data-playback="playing"] .turntable .pause-button {
+      opacity: 0.74;
+    }
+
+    .turntable .pause-button:hover {
       color: var(--paper);
-      background: var(--felt);
-      box-shadow: 0 9px 16px rgba(43, 32, 22, 0.13);
-      font-size: 1.04rem;
-      font-weight: 950;
+      background: rgba(7, 24, 19, 0.72);
+      opacity: 0.96;
     }
 
     body[data-sangquiz-mode="screen"] .manual-link {
@@ -3775,6 +4240,107 @@
       50% { transform: scaleY(1); }
     }
 
+    @keyframes danceSweepLeft {
+      0%, 100% { opacity: 0.1; transform: rotate(-8deg); }
+      50% { opacity: 0.38; transform: rotate(12deg); }
+    }
+
+    @keyframes danceSweepRight {
+      0%, 100% { opacity: 0.1; transform: rotate(9deg); }
+      50% { opacity: 0.34; transform: rotate(-13deg); }
+    }
+
+    @keyframes dancePulseBeam {
+      0%, 100% { opacity: 0.14; }
+      50% { opacity: 0.42; }
+    }
+
+    @keyframes danceDiscoSpin {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes danceSparkFlash {
+      0%, 100% { opacity: 0.24; transform: scale(0.7); }
+      45% { opacity: 1; transform: scale(1.18); }
+    }
+
+    @keyframes danceTilePulse {
+      0%, 100% { opacity: 0.34; transform: scale(0.985); }
+      50% { opacity: 0.96; transform: scale(1.01); }
+    }
+
+    @keyframes danceLeftStep {
+      0%, 100% { transform: translateY(0) rotate(-2deg); }
+      50% { transform: translateY(-10px) rotate(5deg); }
+    }
+
+    @keyframes danceRightStep {
+      0%, 100% { transform: translateY(-7px) rotate(3deg); }
+      50% { transform: translateY(1px) rotate(-5deg); }
+    }
+
+    @keyframes danceArmUp {
+      0%, 100% { transform: rotate(-12deg); }
+      50% { transform: rotate(22deg); }
+    }
+
+    @keyframes danceArmDown {
+      0%, 100% { transform: rotate(14deg); }
+      50% { transform: rotate(-20deg); }
+    }
+
+    @keyframes danceKickOut {
+      0%, 100% { transform: rotate(-8deg); }
+      50% { transform: rotate(18deg); }
+    }
+
+    @keyframes danceStepIn {
+      0%, 100% { transform: rotate(10deg); }
+      50% { transform: rotate(-15deg); }
+    }
+
+    @keyframes danceEqBounce {
+      0%, 100% { transform: scaleY(0.45); }
+      50% { transform: scaleY(1); }
+    }
+
+    @keyframes danceEdgeFlow {
+      to { stroke-dashoffset: -96; }
+    }
+
+    @keyframes danceLivePulse {
+      0%, 100% { opacity: 0.48; transform: scale(0.72); }
+      48% { opacity: 1; transform: scale(1.24); }
+    }
+
+    @keyframes danceFloorBreathe {
+      0%, 100% { opacity: 0.22; transform: scale(0.94); }
+      50% { opacity: 0.72; transform: scale(1.04); }
+    }
+
+    @keyframes danceSpeakerBeat {
+      0%, 100% { transform: scale(0.9); stroke-width: 3; }
+      42% { transform: scale(1.09); stroke-width: 5; }
+    }
+
+    @keyframes danceSoundWave {
+      0% { opacity: 0; transform: scale(0.72); }
+      28% { opacity: 0.86; }
+      100% { opacity: 0; transform: scale(1.22); }
+    }
+
+    @keyframes danceNoteRise {
+      0% { opacity: 0; transform: translateY(14px) rotate(-8deg) scale(0.72); }
+      26% { opacity: 0.9; }
+      72% { opacity: 0.74; }
+      100% { opacity: 0; transform: translateY(-34px) rotate(10deg) scale(1.08); }
+    }
+
+    @keyframes danceCenterEq {
+      0%, 100% { transform: scaleY(0.44); }
+      50% { transform: scaleY(1); }
+    }
+
     @keyframes recordProgress {
       0% { width: 4%; }
       70% { width: 100%; }
@@ -3787,6 +4353,11 @@
     }
 
     @media (max-width: 1040px) {
+      body[data-sangquiz-mode="screen"][data-sangquiz-phase="game"] .app-grid {
+        grid-template-columns: 1fr;
+        min-height: 0;
+      }
+
       .current-card,
       .current-card[data-answer-visible="false"] {
         grid-template-columns: 1fr;
@@ -3818,11 +4389,24 @@
         justify-self: center;
       }
 
+      .current-card .dance-play-button {
+        width: min(100%, 560px);
+      }
+
       .turntable .player-controls {
         grid-column: auto;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        width: 100%;
-        margin-top: 4px;
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        grid-template-columns: 1fr;
+        width: auto;
+        margin-top: 0;
+      }
+
+      .turntable .pause-button {
+        width: 56%;
+        max-width: 174px;
+        justify-self: center;
       }
 
       body[data-sangquiz-mode="screen"] .turntable .player-controls {
@@ -3856,7 +4440,7 @@
       }
 
       .record-player {
-        min-height: 218px;
+        min-height: 0;
       }
 
       .score-value {
@@ -3984,62 +4568,126 @@
                       <span class="turntable-note note-two" aria-hidden="true"></span>
                       <span class="turntable-note note-three" aria-hidden="true"></span>
                       <span class="turntable-note note-four" aria-hidden="true"></span>
-                      <button id="play-hidden-button" class="play-hidden record-play-button" type="button" aria-label="Åbn i Spotify">
-                        <span class="record-disc" aria-hidden="true">
-                          <span class="record-spin"></span>
-                          <svg class="record-active-visual" viewBox="0 0 320 320" focusable="false">
-                            <defs>
-                              <filter id="recordActiveGlow" x="-60%" y="-60%" width="220%" height="220%">
-                                <feGaussianBlur stdDeviation="5" result="blur" />
-                                <feMerge>
-                                  <feMergeNode in="blur" />
-                                  <feMergeNode in="SourceGraphic" />
-                                </feMerge>
-                              </filter>
-                            </defs>
-                            <circle class="record-active-glow" cx="160" cy="160" r="142" />
-                            <circle class="record-active-ring" cx="160" cy="160" r="137" />
-                            <circle class="record-active-ring record-active-ring-alt" cx="160" cy="160" r="116" />
-                            <path class="record-active-sweep" d="M160 23a137 137 0 0 1 131 99" />
-                            <circle class="record-active-dot" cx="160" cy="23" r="7" />
-                            <path class="record-active-needle" d="M236 55l33 31-78 82" />
-                            <g class="record-active-eq" aria-hidden="true">
-                              <rect class="record-active-bar" x="228" y="216" width="9" height="42" rx="4" />
-                              <rect class="record-active-bar" x="243" y="198" width="9" height="60" rx="4" />
-                              <rect class="record-active-bar" x="258" y="207" width="9" height="51" rx="4" />
-                              <rect class="record-active-bar" x="273" y="188" width="9" height="70" rx="4" />
-                              <rect class="record-active-bar" x="288" y="212" width="9" height="46" rx="4" />
+                      <button id="play-hidden-button" class="play-hidden record-play-button dance-play-button" type="button" aria-label="Afspil i Spotify">
+                        <svg class="dance-play-scene" viewBox="0 0 640 480" aria-hidden="true" focusable="false">
+                          <defs>
+                            <linearGradient id="danceClubBack" x1="0" x2="1" y1="0" y2="1">
+                              <stop offset="0" stop-color="#0a1714" />
+                              <stop offset="0.55" stop-color="#16382c" />
+                              <stop offset="1" stop-color="#081f19" />
+                            </linearGradient>
+                            <radialGradient id="danceDiscoBall" cx="34%" cy="28%" r="72%">
+                              <stop offset="0" stop-color="#fff8e8" />
+                              <stop offset="0.4" stop-color="#e5a83b" />
+                              <stop offset="1" stop-color="#5b84a8" />
+                            </radialGradient>
+                            <radialGradient id="danceFloorGlow" cx="50%" cy="50%" r="50%">
+                              <stop offset="0" stop-color="#f6efe2" stop-opacity="0.72" />
+                              <stop offset="0.38" stop-color="#e5a83b" stop-opacity="0.34" />
+                              <stop offset="1" stop-color="#e5a83b" stop-opacity="0" />
+                            </radialGradient>
+                            <filter id="danceSoftShadow" x="-40%" y="-40%" width="180%" height="180%">
+                              <feDropShadow dx="0" dy="10" stdDeviation="7" flood-color="#000" flood-opacity="0.26" />
+                            </filter>
+                          </defs>
+                          <rect class="dance-club-back" width="640" height="480" rx="18" />
+                          <rect class="dance-edge-glow" x="5" y="5" width="630" height="470" rx="14" />
+                          <path class="dance-beam dance-beam-red" d="M286 42 64 414h190z" />
+                          <path class="dance-beam dance-beam-blue" d="M356 42 386 414h196z" />
+                          <path class="dance-beam dance-beam-brass" d="M320 52 180 410h280z" />
+                          <g class="dance-live-badge" transform="translate(24 24)">
+                            <rect width="126" height="34" rx="17" />
+                            <circle class="dance-live-dot" cx="19" cy="17" r="6" />
+                            <text x="34" y="22">NU SPILLER</text>
+                          </g>
+                          <line class="dance-disco-wire" x1="320" y1="0" x2="320" y2="48" />
+                          <g class="dance-disco-ball">
+                            <circle class="dance-disco-shell" cx="320" cy="72" r="42" />
+                            <path class="dance-mirror-line" d="M284 58h72M282 76h76M292 94h56M302 35c18 22 18 52 0 74M338 35c-18 22-18 52 0 74" />
+                            <circle class="dance-disco-glint" cx="303" cy="54" r="7" fill="#fff8e8" opacity="0.86" />
+                          </g>
+                          <circle class="dance-spark" cx="118" cy="92" r="5" />
+                          <circle class="dance-spark" cx="522" cy="96" r="4" />
+                          <circle class="dance-spark" cx="154" cy="184" r="3.5" />
+                          <circle class="dance-spark" cx="500" cy="178" r="5" />
+                          <circle class="dance-spark" cx="272" cy="142" r="4" />
+                          <circle class="dance-spark" cx="382" cy="142" r="3.5" />
+                          <path class="dance-float-note dance-float-note-a" d="M132 188v-30l25-6v27a11 8-18 1 1-7-7v-12l-12 3v20a11 8-18 1 1-6-7z" />
+                          <path class="dance-float-note dance-float-note-b" d="M478 202v-34l24 8v9l-16-5v22a10 8 18 1 1-8-7z" />
+                          <path class="dance-float-note dance-float-note-c" d="M438 126v-24l20-5v8l-13 3v18a8 6-18 1 1-7-5z" />
+                          <ellipse class="dance-floor-glow" cx="320" cy="382" rx="224" ry="76" />
+                          <path class="dance-floor-back" d="M56 356h528l-50 92H106z" />
+                          <path class="dance-floor-line" d="M106 448 196 356M188 448 248 356M270 448 300 356M352 448 352 356M434 448 404 356M516 448 456 356M58 394h524M82 424h474" />
+                          <g>
+                            <path class="dance-floor-tile dance-tile-red" d="M72 366h78l-18 27H58z" />
+                            <path class="dance-floor-tile dance-tile-blue" d="M160 366h78l-10 27h-78z" />
+                            <path class="dance-floor-tile dance-tile-brass" d="M248 366h74v27h-82z" />
+                            <path class="dance-floor-tile dance-tile-mint" d="M332 366h74l10 27h-82z" />
+                            <path class="dance-floor-tile dance-tile-red" d="M416 366h78l18 27h-74z" />
+                            <path class="dance-floor-tile dance-tile-blue" d="M92 402h86l-20 28H76z" />
+                            <path class="dance-floor-tile dance-tile-brass" d="M190 402h86l-8 28h-90z" />
+                            <path class="dance-floor-tile dance-tile-mint" d="M288 402h76v28h-84z" />
+                            <path class="dance-floor-tile dance-tile-red" d="M376 402h86l12 28h-90z" />
+                            <path class="dance-floor-tile dance-tile-blue" d="M474 402h80l18 28h-82z" />
+                          </g>
+                          <g>
+                            <rect class="dance-speaker" x="38" y="236" width="70" height="102" rx="14" />
+                            <circle class="dance-speaker-cone" cx="73" cy="268" r="18" />
+                            <circle class="dance-speaker-cone" cx="73" cy="312" r="14" />
+                            <rect class="dance-speaker" x="532" y="236" width="70" height="102" rx="14" />
+                            <circle class="dance-speaker-cone" cx="567" cy="268" r="18" />
+                            <circle class="dance-speaker-cone" cx="567" cy="312" r="14" />
+                          </g>
+                          <g aria-hidden="true">
+                            <path class="dance-sound-wave dance-sound-wave-a" d="M118 257c20 15 20 37 0 52" />
+                            <path class="dance-sound-wave dance-sound-wave-b" d="M130 246c32 22 32 56 0 78" />
+                            <path class="dance-sound-wave dance-sound-wave-a" d="M522 257c-20 15-20 37 0 52" />
+                            <path class="dance-sound-wave dance-sound-wave-b" d="M510 246c-32 22-32 56 0 78" />
+                          </g>
+                          <g transform="translate(236 186)">
+                            <g class="dance-dancer dance-dancer-left">
+                              <circle class="dance-dancer-head" cx="0" cy="0" r="22" />
+                              <path class="dance-torso" d="M0 28v74" />
+                              <path class="dance-limb dance-arm-front" d="M-2 45c-38 4-56-18-70-45" />
+                              <path class="dance-limb dance-arm-back" d="M4 46c34 10 48 36 62 62" />
+                              <path class="dance-limb dance-leg-front" d="M-2 100c-34 26-46 55-52 88" />
+                              <path class="dance-limb dance-leg-back" d="M2 100c30 20 52 44 68 78" />
+                              <ellipse class="dance-shoe" cx="-54" cy="190" rx="17" ry="8" />
+                              <ellipse class="dance-shoe" cx="72" cy="180" rx="17" ry="8" />
                             </g>
-                            <g transform="translate(50 70) rotate(-15)">
-                              <g class="record-active-note record-active-note-a">
-                                <ellipse cx="0" cy="43" rx="13" ry="9" />
-                                <rect x="9" y="0" width="7" height="44" rx="3" />
-                                <path d="M16 2c18 2 31 8 40 18v12c-10-9-24-14-40-16z" />
-                              </g>
+                          </g>
+                          <g transform="translate(404 184)">
+                            <g class="dance-dancer dance-dancer-right">
+                              <circle class="dance-dancer-head" cx="0" cy="0" r="21" />
+                              <path class="dance-torso" d="M0 26v56" />
+                              <path class="dance-dancer-skirt" d="M-31 96 0 54l31 42z" />
+                              <path class="dance-limb dance-arm-front" d="M-5 42c-36 4-50 32-63 60" />
+                              <path class="dance-limb dance-arm-back" d="M5 42c34-6 54-28 68-58" />
+                              <path class="dance-limb dance-leg-front" d="M-12 98c-28 24-38 50-42 84" />
+                              <path class="dance-limb dance-leg-back" d="M12 98c26 22 42 48 54 78" />
+                              <ellipse class="dance-shoe" cx="-56" cy="184" rx="16" ry="8" />
+                              <ellipse class="dance-shoe" cx="68" cy="178" rx="16" ry="8" />
                             </g>
-                            <g transform="translate(78 222) rotate(13) scale(0.78)">
-                              <g class="record-active-note record-active-note-b">
-                                <ellipse cx="0" cy="43" rx="13" ry="9" />
-                                <rect x="9" y="0" width="7" height="44" rx="3" />
-                                <path d="M16 2c18 2 31 8 40 18v12c-10-9-24-14-40-16z" />
-                              </g>
+                          </g>
+                          <g transform="translate(514 364)">
+                            <rect class="dance-eq-bar" x="0" y="-42" width="12" height="42" rx="5" />
+                            <rect class="dance-eq-bar" x="20" y="-70" width="12" height="70" rx="5" />
+                            <rect class="dance-eq-bar" x="40" y="-54" width="12" height="54" rx="5" />
+                          </g>
+                          <g transform="translate(320 296)">
+                            <circle class="dance-control-core" r="46" />
+                            <path class="dance-play-mark" d="M-12-24 28 0-12 24z" />
+                            <g class="dance-playing-mark">
+                              <rect class="dance-playing-bar" x="-19" y="-16" width="9" height="32" rx="4.5" />
+                              <rect class="dance-playing-bar" x="-4.5" y="-25" width="9" height="50" rx="4.5" />
+                              <rect class="dance-playing-bar" x="10" y="-11" width="9" height="22" rx="4.5" />
                             </g>
-                            <g transform="translate(236 116) rotate(18) scale(0.68)">
-                              <g class="record-active-note record-active-note-c">
-                                <ellipse cx="0" cy="43" rx="13" ry="9" />
-                                <rect x="9" y="0" width="7" height="44" rx="3" />
-                                <path d="M16 2c18 2 31 8 40 18v12c-10-9-24-14-40-16z" />
-                              </g>
-                            </g>
-                          </svg>
-                          <span class="record-center">
-                            <span class="record-play-icon"></span>
-                          </span>
-                        </span>
-                        <span id="play-hidden-label" class="record-play-text">Åbn i Spotify</span>
+                          </g>
+                        </svg>
+                        <span id="play-hidden-label" class="record-play-text">Afspil i Spotify</span>
                       </button>
                       <div class="player-controls">
-                        <a id="dj-fallback-link" class="link-button manual-link" href="#" target="_blank" rel="noreferrer">Åbn manuelt</a>
+                        <a id="dj-fallback-link" class="link-button manual-link" href="#" target="_blank" rel="noreferrer" hidden aria-hidden="true" tabindex="-1">Åbn manuelt</a>
                         <button id="pause-button" class="pause-button" type="button" aria-label="Pause">Pause</button>
                       </div>
                     </div>

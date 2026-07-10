@@ -1068,7 +1068,7 @@
     els.spotifyLoginButton.disabled = !clientId;
     els.spotifyConnectButton.disabled = !clientId || spotify.connecting || !hasToken;
     els.spotifyModeStatus.textContent = spotify.status;
-    const fallbackLabel = mode === "screen" ? "Start musikvisning" : "Åbn Spotify";
+    const fallbackLabel = mode === "screen" ? "Start musikvisning" : "Afspil i Spotify";
     const playLabel = playbackActive ? "Musik kører" : hasToken && spotify.ready ? "Afspil" : fallbackLabel;
     els.playHiddenButton.setAttribute("aria-label", playLabel);
     if (els.playHiddenLabel) els.playHiddenLabel.textContent = playLabel;
