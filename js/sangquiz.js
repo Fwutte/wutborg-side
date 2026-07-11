@@ -49,6 +49,8 @@
     ready: false,
     status: "Manuel DJ klar",
     resolvedUris: {},
+    manualFallbackSongId: "",
+    sessionVersion: 0,
   };
 
   function init() {
@@ -83,6 +85,7 @@
       "spotify-redirect-uri",
       "spotify-login-button",
       "spotify-connect-button",
+      "spotify-forget-button",
       "spotify-mode-status",
       "category-status",
       "round-number",
@@ -142,7 +145,16 @@
     els.pauseButton.addEventListener("click", pausePlayback);
     els.spotifyLoginButton.addEventListener("click", startSpotifyLogin);
     els.spotifyConnectButton.addEventListener("click", connectSpotifyPlayer);
+    els.spotifyForgetButton.addEventListener("click", forgetSpotifyLogin);
     els.soundToggleButton.addEventListener("click", toggleSound);
+
+    els.djFallbackLink.addEventListener("click", () => {
+      const song = getCurrentSong();
+      if (!song) return;
+      spotify.manualFallbackSongId = song.id;
+      setSpotifyStatus("Sangen er åbnet manuelt i Spotify");
+      setPlaybackActive(true);
+    });
 
     els.spotifyClientId.addEventListener("input", () => {
       safeSetStorage(CLIENT_ID_KEY, els.spotifyClientId.value.trim());
@@ -511,14 +523,6 @@
     els.revealButton.disabled = !song || state.phase === "reveal" || state.selectedSlot < 0;
     els.playHiddenButton.disabled = !song;
     els.pauseButton.disabled = !song || (!spotify.deviceId && !playbackActive);
-
-    if (song) {
-      els.djFallbackLink.href = getSpotifyUrl(song);
-      els.djFallbackLink.removeAttribute("aria-disabled");
-    } else {
-      els.djFallbackLink.href = "#";
-      els.djFallbackLink.setAttribute("aria-disabled", "true");
-    }
 
     renderPlacementTimeline(timeline);
     renderRevealPanel(song, timeline);
@@ -1065,15 +1069,42 @@
     const clientId = els.spotifyClientId.value.trim() || DEFAULT_CLIENT_ID;
     const token = readToken();
     const hasToken = Boolean(token?.access_token || token?.refresh_token);
+    const hasPendingLogin = Boolean(readStorage(PKCE_KEY, null));
+    const song = getCurrentSong();
     els.spotifyLoginButton.disabled = !clientId;
     els.spotifyConnectButton.disabled = !clientId || spotify.connecting || !hasToken;
+    els.spotifyForgetButton.disabled = !(hasToken || hasPendingLogin || spotify.player);
     els.spotifyModeStatus.textContent = spotify.status;
-    const fallbackLabel = mode === "screen" ? "Start musikvisning" : "Afspil i Spotify";
-    const playLabel = playbackActive ? "Musik kører" : hasToken && spotify.ready ? "Afspil" : fallbackLabel;
+    const playLabel = playbackActive
+      ? "Musik kører"
+      : hasToken && spotify.ready
+        ? "Afspil via Spotify"
+        : "Åbn sang i Spotify";
     els.playHiddenButton.setAttribute("aria-label", playLabel);
     if (els.playHiddenLabel) els.playHiddenLabel.textContent = playLabel;
     else els.playHiddenButton.textContent = playLabel;
     els.pauseButton.disabled = !getCurrentSong() || (!spotify.deviceId && !playbackActive);
+    updateManualFallbackLink(
+      song,
+      Boolean(song && (!hasToken || spotify.manualFallbackSongId === song.id)),
+    );
+  }
+
+  function updateManualFallbackLink(song, visible) {
+    if (!els.djFallbackLink) return;
+
+    if (song) {
+      els.djFallbackLink.href = getSpotifyUrl(song);
+      els.djFallbackLink.removeAttribute("aria-disabled");
+    } else {
+      els.djFallbackLink.href = "#";
+      els.djFallbackLink.setAttribute("aria-disabled", "true");
+    }
+
+    const shouldShow = Boolean(song && visible);
+    els.djFallbackLink.hidden = !shouldShow;
+    els.djFallbackLink.setAttribute("aria-hidden", shouldShow ? "false" : "true");
+    els.djFallbackLink.tabIndex = shouldShow ? 0 : -1;
   }
 
   function setSpotifyStatus(message) {
@@ -1190,6 +1221,33 @@
     );
   }
 
+  function forgetSpotifyLogin() {
+    const player = spotify.player;
+    spotify.sessionVersion += 1;
+    spotify.player = null;
+    spotify.deviceId = "";
+    spotify.connecting = false;
+    spotify.ready = false;
+    spotify.resolvedUris = {};
+    spotify.manualFallbackSongId = getCurrentSong()?.id || "";
+
+    if (player) {
+      try {
+        player.disconnect();
+      } catch {
+        /* Playeren kan allerede være afbrudt. */
+      }
+    }
+
+    safeRemoveStorage(TOKEN_KEY);
+    safeRemoveStorage(PKCE_KEY);
+    safeRemoveStorage(CLIENT_ID_KEY);
+    els.spotifyClientId.value = DEFAULT_CLIENT_ID;
+    setSpotifyStatus("Spotify-login og afspiller er fjernet fra denne browser");
+    setPlaybackActive(false);
+    updateSpotifyUi();
+  }
+
   async function getAccessToken() {
     const token = readToken();
     if (token?.access_token && Number(token.expires_at) > Date.now()) return token.access_token;
@@ -1221,7 +1279,9 @@
   }
 
   async function connectSpotifyPlayer() {
+    const sessionVersion = spotify.sessionVersion;
     const token = await getAccessToken();
+    if (sessionVersion !== spotify.sessionVersion) return;
     if (!token) {
       setSpotifyStatus("Log ind med Spotify først");
       updateSpotifyUi();
@@ -1233,34 +1293,40 @@
 
     try {
       await loadSpotifySdk();
+      if (sessionVersion !== spotify.sessionVersion) return;
       if (!spotify.player) {
-        spotify.player = new Spotify.Player({
+        const player = new Spotify.Player({
           name: "Wutborg Sangquiz",
           getOAuthToken: async (callback) => callback(await getAccessToken()),
           volume: 0.85,
         });
+        spotify.player = player;
 
-        spotify.player.addListener("ready", ({ device_id: deviceId }) => {
+        player.addListener("ready", ({ device_id: deviceId }) => {
+          if (spotify.player !== player) return;
           spotify.deviceId = deviceId;
           spotify.ready = true;
           setSpotifyStatus("Spotify afspiller klar");
           updateSpotifyUi();
         });
 
-        spotify.player.addListener("not_ready", () => {
+        player.addListener("not_ready", () => {
+          if (spotify.player !== player) return;
           spotify.ready = false;
           setSpotifyStatus("Spotify afspiller ikke klar");
           updateSpotifyUi();
         });
 
-        spotify.player.addListener("autoplay_failed", () => {
+        player.addListener("autoplay_failed", () => {
+          if (spotify.player !== player) return;
           setSpotifyStatus("iPad blokerede autoplay. Tryk Afspil igen.");
           updateSpotifyUi();
         });
 
         ["initialization_error", "authentication_error", "account_error", "playback_error"].forEach(
           (eventName) => {
-            spotify.player.addListener(eventName, ({ message }) => {
+            player.addListener(eventName, ({ message }) => {
+              if (spotify.player !== player) return;
               setSpotifyStatus(`Spotify fejl: ${message}`);
               updateSpotifyUi();
             });
@@ -1268,13 +1334,19 @@
         );
       }
 
-      await spotify.player.connect();
+      const player = spotify.player;
+      await player.connect();
+      if (sessionVersion !== spotify.sessionVersion || spotify.player !== player) return;
       setSpotifyStatus(spotify.ready ? "Spotify afspiller klar" : "Forbinder Spotify afspiller");
     } catch (error) {
-      setSpotifyStatus(`Spotify SDK fejlede: ${error.message}`);
+      if (sessionVersion === spotify.sessionVersion) {
+        setSpotifyStatus(`Spotify SDK fejlede: ${error.message}`);
+      }
     } finally {
-      spotify.connecting = false;
-      updateSpotifyUi();
+      if (sessionVersion === spotify.sessionVersion) {
+        spotify.connecting = false;
+        updateSpotifyUi();
+      }
     }
   }
 
@@ -1337,19 +1409,21 @@
     }
 
     const fallbackOpened = ok ? false : openDjFallback(song);
+    if (ok) spotify.manualFallbackSongId = "";
     setPlaybackActive(ok || fallbackOpened);
     setSpotifyStatus(ok ? "Afspiller sang" : getFallbackStatus(fallbackOpened));
     updateSpotifyUi();
   }
 
   function openDjFallback(song) {
-    if (mode === "screen") return true;
+    spotify.manualFallbackSongId = song.id;
+    updateManualFallbackLink(song, true);
     return Boolean(window.open(getSpotifyUrl(song), "_blank", "noopener,noreferrer"));
   }
 
   function getFallbackStatus(opened) {
-    if (!opened) return "Brug Åbn manuelt";
-    return mode === "screen" ? "Musikvisning startet" : "Manuel DJ åbnet i Spotify";
+    if (!opened) return "Automatisk åbning blev blokeret. Brug Åbn sang i Spotify";
+    return "Sangen er åbnet manuelt i Spotify";
   }
 
   function activateSpotifyElement() {

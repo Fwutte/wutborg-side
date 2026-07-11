@@ -427,14 +427,14 @@
       }
 
       .stage {
-        min-height: 320px;
+        min-height: 0;
       }
 
       canvas {
-        width: auto;
-        height: min(58vh, 430px);
-        min-height: 320px;
-        transform: translateX(calc((100vw - 100%) * 0));
+        width: 100%;
+        height: auto;
+        min-height: 0;
+        transform: none;
       }
 
       .game-footer {
@@ -485,7 +485,7 @@
       <header class="game-header">
         <div class="title">
           <h1>Geometry Dash</h1>
-          <span>Spil 07 &middot; En spiller</span>
+          <span>Spil 05 &middot; En spiller</span>
         </div>
         <div class="hud" aria-label="Spilstatus">
           <div class="hud-item"><span>Score</span><strong id="score">0</strong></div>

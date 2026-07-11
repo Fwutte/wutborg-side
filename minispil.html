@@ -1145,6 +1145,62 @@
       color: var(--ink);
     }
 
+    .local-records {
+      margin-top: 22px;
+      padding: 24px 25px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: rgba(255, 253, 248, 0.69);
+    }
+
+    .local-records h2 {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(1.7rem, 4vw, 2.35rem);
+      letter-spacing: -0.035em;
+    }
+
+    .local-records-copy,
+    .local-records-empty {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 0.84rem;
+      line-height: 1.55;
+    }
+
+    .local-record-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 9px;
+      margin-top: 16px;
+    }
+
+    .local-record-card {
+      display: grid;
+      gap: 3px;
+      padding: 13px 14px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      color: var(--ink);
+      background: #fff;
+      text-decoration: none;
+    }
+
+    .local-record-card:hover {
+      border-color: #c8bfb1;
+      transform: translateY(-1px);
+    }
+
+    .local-record-card strong {
+      font-size: 1.22rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .local-record-card small {
+      color: var(--muted);
+      font-weight: 700;
+    }
+
     .note-symbols {
       display: flex;
       flex: 0 0 auto;
@@ -1606,6 +1662,17 @@
           <span class="note-symbol">M</span>
         </span>
       </aside>
+
+      <section class="local-records" aria-labelledby="local-records-title">
+        <h2 id="local-records-title">Dine lokale rekorder</h2>
+        <p class="local-records-copy">
+          Rekorder gemmes kun i denne browser og sendes ikke til Wutborg.dk.
+        </p>
+        <div class="local-record-grid" id="local-record-grid"></div>
+        <p class="local-records-empty" id="local-records-empty">
+          Spil en runde, så dukker din første lokale rekord op her.
+        </p>
+      </section>
     </main>
 
     <footer class="footer">
@@ -1613,5 +1680,42 @@
       <span>Flere spil flytter ind senere</span>
     </footer>
   </div>
+  <script src="js/highscores.js"></script>
+  <script>
+    const localRecordGames = [
+      ["fire-paa-stribe", "Fire på stribe", "fire-paa-stribe.html"],
+      ["snake", "Snake", "snake.html"],
+      ["neon-breaker", "Neon Breaker", "brick-breaker.html"],
+      ["tetris", "Tetris", "tetris.html"],
+      ["geometry-dash", "Geometry Dash", "geometry-dash.html"],
+      ["monster-battle-arena", "Monster Battle Arena", "pokemon-battle.html"],
+      ["pips-skybound", "Super Mario Bros.", "pips-skybound.html"],
+      ["sangquiz", "Sangquiz", "sangquiz.html"]
+    ];
+    const localRecordGrid = document.querySelector("#local-record-grid");
+    const localRecords = localRecordGames
+      .map(([key, title, href]) => ({
+        title,
+        href,
+        entry: window.WutborgHighscores.best(key)
+      }))
+      .filter((record) => record.entry);
+
+    localRecords.forEach((record) => {
+      const link = document.createElement("a");
+      const title = document.createElement("span");
+      const score = document.createElement("strong");
+      const label = document.createElement("small");
+      link.className = "local-record-card";
+      link.href = record.href;
+      title.textContent = record.title;
+      score.textContent = `${Number(record.entry.score).toLocaleString("da-DK")} point`;
+      label.textContent = "Lokal rekord · spil igen";
+      link.append(title, score, label);
+      localRecordGrid.append(link);
+    });
+
+    document.querySelector("#local-records-empty").hidden = localRecords.length > 0;
+  </script>
 </body>
 </html>

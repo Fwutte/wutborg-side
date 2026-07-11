@@ -125,8 +125,25 @@
     return currentStatus;
   };
 
+  const setAppAvailable = (available) => {
+    [document.getElementById("appShell"), document.getElementById("tabbar")]
+      .filter(Boolean)
+      .forEach((element) => {
+        if (available) {
+          element.removeAttribute("inert");
+          element.removeAttribute("aria-hidden");
+        } else {
+          element.setAttribute("inert", "");
+          element.setAttribute("aria-hidden", "true");
+        }
+      });
+  };
+
   const showApp = () => {
-    document.getElementById("authGate").hidden = true;
+    const gate = document.getElementById("authGate");
+    gate.hidden = true;
+    gate.setAttribute("aria-hidden", "true");
+    setAppAvailable(true);
     document.body.classList.remove("auth-pending");
   };
 
@@ -136,6 +153,7 @@
     const ip = document.getElementById("authIp");
     const registerPanel = document.getElementById("authRegisterPanel");
 
+    setAppAvailable(false);
     if (message) {
       text.textContent = message;
     } else if (!status.configured) {
@@ -143,7 +161,7 @@
         "Adgangen er ikke færdigkonfigureret. Tilføj MADPLAN_SETUP_KEY i Cloudflare.";
     } else if (status.setup_key_configured) {
       text.textContent =
-        "Indtast opsætningskoden for at godkende denne telefon. Det skal kun gøres én gang.";
+        "Indtast opsætningskoden for at godkende denne enhed. Det skal kun gøres én gang.";
     } else {
       text.textContent =
         "Denne enhed er ikke godkendt. Forbind den til hjemmets Wi-Fi, genindlæs siden, og registrer den via nøgleknappen.";
@@ -154,7 +172,9 @@
       : "";
     registerPanel.hidden = !status.setup_key_configured;
     gate.hidden = false;
-    document.body.classList.remove("auth-pending");
+    gate.removeAttribute("aria-hidden");
+    document.body.classList.add("auth-pending");
+    requestAnimationFrame(() => document.getElementById("authTitle")?.focus());
   };
 
   const ensureAccess = async () => {
@@ -278,9 +298,10 @@
   });
 
   document
-    .getElementById("authRegisterDevice")
-    .addEventListener("click", async (event) => {
-      const button = event.currentTarget;
+    .getElementById("authRegisterPanel")
+    .addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const button = document.getElementById("authRegisterDevice");
       const name = document.getElementById("authDeviceName").value.trim();
       const setupKey = document.getElementById("authSetupKey").value;
       if (!name) return;
@@ -293,7 +314,7 @@
         button.disabled = false;
         showGate(
           currentStatus || { configured: true, setup_key_configured: true },
-          error.message || "Telefonen kunne ikke godkendes"
+          error.message || "Enheden kunne ikke godkendes"
         );
       }
     });

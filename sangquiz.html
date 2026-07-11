@@ -4453,6 +4453,106 @@
       }
     }
 
+    .mode-picker {
+      display: grid;
+      gap: 8px;
+      justify-items: end;
+      max-width: 420px;
+    }
+
+    .mode-hint {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 750;
+      line-height: 1.4;
+      text-align: right;
+    }
+
+    .setup-steps {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 9px;
+      margin: 0 0 16px;
+      padding: 0;
+      list-style: none;
+    }
+
+    .setup-steps li {
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr);
+      gap: 8px;
+      align-items: center;
+      min-height: 48px;
+      padding: 8px 10px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.04);
+      font-size: 0.78rem;
+      font-weight: 850;
+      line-height: 1.25;
+    }
+
+    .setup-steps strong {
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      color: var(--ink);
+      background: var(--brass);
+      font-size: 0.78rem;
+    }
+
+    .turntable .manual-link:not([hidden]) {
+      display: inline-flex !important;
+      pointer-events: auto;
+    }
+
+    @media (max-width: 920px) {
+      .app-head,
+      body[data-sangquiz-phase="game"][data-sangquiz-mode="screen"] .app-head {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        align-items: start;
+      }
+
+      .mode-picker {
+        width: 100%;
+        justify-items: start;
+        max-width: 100%;
+      }
+
+      .app-head .mode-toggle {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: 100% !important;
+        max-width: none !important;
+      }
+
+      .app-head .mode-toggle button {
+        max-width: none !important;
+      }
+
+      .mode-hint {
+        text-align: left;
+      }
+
+      .setup-steps {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 520px) {
+      .app-head .mode-toggle {
+        grid-template-columns: 1fr;
+      }
+
+      .setup-steps {
+        grid-template-columns: 1fr;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -4474,9 +4574,12 @@
             <p id="app-status" class="status-line">Sanglisten indlæses</p>
           </div>
 
-          <div class="mode-toggle" aria-label="Visning">
-            <button type="button" data-sangquiz-mode="screen" aria-pressed="true">Storskærm</button>
-            <button type="button" data-sangquiz-mode="phone" aria-pressed="false">Telefon</button>
+          <div class="mode-picker">
+            <div class="mode-toggle" aria-label="Visningslayout">
+              <button type="button" data-sangquiz-mode="screen" aria-pressed="true">Storskærm</button>
+              <button type="button" data-sangquiz-mode="phone" aria-pressed="false">Kompakt visning</button>
+            </div>
+            <p class="mode-hint">Valget ændrer kun layoutet på denne enhed – det forbinder ikke en ekstra skærm eller telefon.</p>
           </div>
         </header>
 
@@ -4487,6 +4590,13 @@
                 <span>Setup</span>
                 <h2>Hold og afspilning</h2>
               </div>
+
+              <ol class="setup-steps" aria-label="Kom i gang i fire trin">
+                <li><strong aria-hidden="true">1</strong><span>Navngiv holdene</span></li>
+                <li><strong aria-hidden="true">2</strong><span>Vælg sangkategori</span></li>
+                <li><strong aria-hidden="true">3</strong><span>Vælg afspilning</span></li>
+                <li><strong aria-hidden="true">4</strong><span>Start quizzen</span></li>
+              </ol>
 
               <div class="setup-grid">
                 <section class="setup-box" aria-label="Hold">
@@ -4519,10 +4629,10 @@
                 <section class="spotify-box" aria-label="Afspilning">
                   <h3>Afspilning</h3>
                   <p class="hint-text">
-                    Standard er manuel DJ uden Spotify Developer. Værten åbner sangen i Spotify, mens svarfeltet stadig er skjult i quizzen.
+                    Manuel DJ virker uden login: værten åbner sangen i Spotify, mens svaret forbliver skjult i quizzen.
                   </p>
                   <details class="spotify-advanced">
-                    <summary>Valgfri Spotify browserafspiller</summary>
+                    <summary>Automatisk browserafspilning (valgfri)</summary>
                     <div class="spotify-fields">
                       <label class="field-label" for="spotify-client-id">
                         Client ID
@@ -4534,9 +4644,11 @@
                       </label>
                     </div>
                     <div class="primary-actions">
-                      <button id="spotify-login-button" type="button">Log ind</button>
+                      <button id="spotify-login-button" type="button">Log ind med Spotify</button>
                       <button id="spotify-connect-button" type="button">Forbind afspiller</button>
+                      <button id="spotify-forget-button" type="button">Log ud og glem Spotify</button>
                     </div>
+                    <p class="hint-text">“Log ud og glem” fjerner det gemte Spotify-login fra denne browser.</p>
                   </details>
                   <p id="spotify-mode-status" class="spotify-status" aria-live="polite">Manuel DJ klar</p>
                 </section>
@@ -4568,7 +4680,7 @@
                       <span class="turntable-note note-two" aria-hidden="true"></span>
                       <span class="turntable-note note-three" aria-hidden="true"></span>
                       <span class="turntable-note note-four" aria-hidden="true"></span>
-                      <button id="play-hidden-button" class="play-hidden record-play-button dance-play-button" type="button" aria-label="Afspil i Spotify">
+                      <button id="play-hidden-button" class="play-hidden record-play-button dance-play-button" type="button" aria-label="Åbn sang i Spotify">
                         <svg class="dance-play-scene" viewBox="0 0 640 480" aria-hidden="true" focusable="false">
                           <defs>
                             <linearGradient id="danceClubBack" x1="0" x2="1" y1="0" y2="1">
@@ -4684,10 +4796,10 @@
                             </g>
                           </g>
                         </svg>
-                        <span id="play-hidden-label" class="record-play-text">Afspil i Spotify</span>
+                        <span id="play-hidden-label" class="record-play-text">Åbn sang i Spotify</span>
                       </button>
                       <div class="player-controls">
-                        <a id="dj-fallback-link" class="link-button manual-link" href="#" target="_blank" rel="noreferrer" hidden aria-hidden="true" tabindex="-1">Åbn manuelt</a>
+                        <a id="dj-fallback-link" class="link-button manual-link" href="#" target="_blank" rel="noopener noreferrer" hidden aria-hidden="true" tabindex="-1">Åbn sang i Spotify</a>
                         <button id="pause-button" class="pause-button" type="button" aria-label="Pause">Pause</button>
                       </div>
                     </div>

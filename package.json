@@ -1,6 +1,7 @@
 {
   "private": true,
   "scripts": {
-    "validate": "node scripts/validate.cjs"
+    "validate": "node scripts/validate.cjs && node scripts/highscores.test.cjs",
+    "test:highscores": "node scripts/highscores.test.cjs"
   }
 }

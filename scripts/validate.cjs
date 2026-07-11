@@ -93,7 +93,9 @@ checkModule("js/pokemon/battle-ui.js", "pokemon battle UI");
 checkHtmlScript("brick-breaker.html", "brick breaker client");
 checkHtmlScript("fire-paa-stribe.html", "fire paa stribe client");
 checkHtmlScript("geometry-dash.html", "geometry dash client");
+checkHtmlScript("kalender.html", "kalender client");
 checkHtmlScript("madplan/index.html", "madplan client");
+checkHtmlScript("minispil.html", "minispil client");
 checkHtmlScript("snake.html", "snake client");
 checkHtmlScript("tetris.html", "tetris client");
 

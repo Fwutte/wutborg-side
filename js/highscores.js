@@ -1,7 +1,8 @@
 (() => {
   "use strict";
 
-  const endpoint = "/api/highscores";
+  const STORAGE_KEY = "wutborg.highscores.v1";
+  const MAX_ENTRIES_PER_GAME = 10;
 
   function normalizePayload(payload) {
     if (!payload || typeof payload !== "object") return null;
@@ -16,7 +17,9 @@
     return {
       game_key: gameKey,
       game_title: String(payload.gameTitle || payload.game_title || gameKey).trim(),
-      player_name: String(payload.playerName || payload.player_name || "").trim(),
+      player_name:
+        String(payload.playerName || payload.player_name || "").trim() ||
+        "Spiller",
       score: Math.max(0, Math.round(score)),
       outcome: String(payload.outcome || "completed").trim().toLowerCase(),
       details:
@@ -26,29 +29,81 @@
     };
   }
 
+  function readStore() {
+    try {
+      const value = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+      return value && typeof value === "object" && !Array.isArray(value)
+        ? value
+        : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function writeStore(value) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
+  }
+
+  function normalizeLimit(value) {
+    const limit = Number(value);
+    return Number.isInteger(limit)
+      ? Math.min(Math.max(limit, 1), MAX_ENTRIES_PER_GAME)
+      : MAX_ENTRIES_PER_GAME;
+  }
+
+  function sortEntries(entries) {
+    return entries.sort(
+      (left, right) =>
+        right.score - left.score ||
+        String(left.completed_at).localeCompare(String(right.completed_at)),
+    );
+  }
+
   async function submit(payload) {
     const body = normalizePayload(payload);
-    if (!body || typeof fetch !== "function") return { ok: false, skipped: true };
+    if (!body) return { ok: false, skipped: true };
 
     try {
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        credentials: "same-origin",
-        keepalive: true,
-        body: JSON.stringify(body),
-      });
+      const store = readStore();
+      const entry = {
+        ...body,
+        id:
+          globalThis.crypto?.randomUUID?.() || `${Date.now()}-${body.score}`,
+        completed_at: new Date().toISOString(),
+      };
+      const entries = Array.isArray(store[body.game_key])
+        ? store[body.game_key]
+        : [];
 
-      return response.ok
-        ? { ok: true, entry: await response.json().catch(() => null) }
-        : { ok: false, status: response.status };
+      store[body.game_key] = sortEntries([...entries, entry]).slice(
+        0,
+        MAX_ENTRIES_PER_GAME,
+      );
+      writeStore(store);
+
+      return { ok: true, local: true, entry };
     } catch (error) {
-      console.debug?.("Highscore kunne ikke gemmes", error);
+      console.debug?.("Lokal highscore kunne ikke gemmes", error);
       return { ok: false, error };
     }
   }
 
+  function list(gameKey, limit = MAX_ENTRIES_PER_GAME) {
+    const key = String(gameKey || "").trim().toLowerCase();
+    const entries = readStore()[key];
+    return Array.isArray(entries)
+      ? sortEntries([...entries]).slice(0, normalizeLimit(limit))
+      : [];
+  }
+
+  function best(gameKey) {
+    return list(gameKey, 1)[0] || null;
+  }
+
   window.WutborgHighscores = {
+    best,
+    list,
     submit,
+    storage: "local",
   };
 })();
