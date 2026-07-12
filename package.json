@@ -1,7 +1,8 @@
 {
   "private": true,
   "scripts": {
-    "validate": "node scripts/validate.cjs && node scripts/highscores.test.cjs",
-    "test:highscores": "node scripts/highscores.test.cjs"
+    "validate": "node scripts/validate.cjs && node scripts/highscores.test.cjs && node scripts/pips-skybound.test.cjs",
+    "test:highscores": "node scripts/highscores.test.cjs",
+    "test:mario": "node scripts/pips-skybound.test.cjs"
   }
 }

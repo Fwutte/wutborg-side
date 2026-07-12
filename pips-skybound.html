@@ -9,7 +9,7 @@
     content="Spil Super Mario Bros. med tre baner, mønter, fjender, bonusblokke og power-ups."
   />
   <title>Super Mario Bros. | Wutborg.dk</title>
-  <link rel="stylesheet" href="css/pips-skybound.css" />
+  <link rel="stylesheet" href="css/pips-skybound.css?v=20260711-nes6" />
 </head>
 <body>
   <div class="page-shell">
@@ -30,50 +30,48 @@
 
     <main class="game-frame">
       <header class="game-header">
-        <div>
-          <span class="eyebrow">Klassisk platformeventyr</span>
-          <h1>Super <span>Mario Bros.</span></h1>
-        </div>
+        <h1 class="visually-hidden">Super Mario Bros.</h1>
         <div class="hud" id="hud" aria-label="Spilstatus">
-          <span><small>Liv</small><strong id="hud-lives">3</strong></span>
-          <span><small>Mønter</small><strong id="hud-coins">0</strong></span>
-          <span><small>Bane</small><strong id="hud-level">1 / 3</strong></span>
-          <span><small>Tid</small><strong id="hud-time">180</strong></span>
+          <span class="hud-mario">
+            <small>Mario</small>
+            <strong id="hud-score">000000</strong>
+            <span class="hud-life">Liv × <b id="hud-lives">3</b></span>
+          </span>
+          <span>
+            <small>Mønter</small>
+            <strong><span aria-hidden="true">● × </span><span id="hud-coins">00</span></strong>
+          </span>
+          <span><small>Verden</small><strong id="hud-level">1-1</strong></span>
+          <span><small>Tid</small><strong id="hud-time">170</strong></span>
         </div>
       </header>
 
       <section class="canvas-wrap" id="canvas-wrap">
         <canvas
           id="game-canvas"
-          width="1152"
+          width="864"
           height="648"
           aria-label="Super Mario Bros. spilleplade. Brug piletaster eller WASD og Space for at hoppe."
         ></canvas>
 
         <div class="screen screen-menu" id="menu-screen">
-          <div class="menu-art" aria-hidden="true">
-            <span class="menu-cloud cloud-one"></span>
-            <span class="menu-cloud cloud-two"></span>
-            <span class="menu-island"></span>
-            <span class="menu-mario"></span>
-          </div>
           <div class="menu-card">
-            <span class="menu-kicker">Tre verdener venter</span>
-            <h2>Hop højere.<br />Find hjem.</h2>
+            <span class="menu-kicker">Wutborg Arcade præsenterer</span>
+            <h2><span>Super</span><br />Mario Bros.</h2>
             <p>
-              Hjælp Mario gennem blomsterenge, skybroer og
-              solnedgangens gamle ruiner.
+              Tre håndbyggede verdener med klassiske blokke,
+              Goombas, mønter og supersvampe.
             </p>
             <div class="menu-buttons">
-              <button class="primary-button" id="start-button" type="button">Start spil</button>
+              <button class="primary-button" id="start-button" type="button">1 spiller</button>
               <button class="secondary-button" id="instructions-button" type="button">Sådan spiller du</button>
             </div>
             <div class="level-picker" aria-label="Vælg startbane">
-              <span>Vælg bane</span>
+              <span>Startverden</span>
               <div>
-                <button class="level-choice active" type="button" data-level="0">1</button>
-                <button class="level-choice" type="button" data-level="1">2</button>
-                <button class="level-choice" type="button" data-level="2">3</button>
+                <button class="level-choice active" type="button" data-level="0">1-1</button>
+                <button class="level-choice" type="button" data-level="1">1-2</button>
+                <button class="level-choice" type="button" data-level="2">1-3</button>
               </div>
             </div>
           </div>
@@ -86,7 +84,7 @@
             <div class="instruction-grid">
               <div><kbd>← →</kbd><strong>Bevæg Mario</strong><span>Brug også A og D.</span></div>
               <div><kbd>Space</kbd><strong>Hop</strong><span>Hold knappen for et højere hop.</span></div>
-              <div><span class="instruction-icon">●</span><strong>Saml solmønter</strong><span>20 mønter giver et ekstra liv.</span></div>
+              <div><span class="instruction-icon">●</span><strong>Saml mønter</strong><span>100 mønter giver et ekstra liv.</span></div>
               <div><span class="instruction-icon">✦</span><strong>Find supersvampe</strong><span>Bliv større og modstå ét hit.</span></div>
               <div><span class="instruction-icon">↓</span><strong>Hop på fjender</strong><span>Undgå at ramme dem fra siden.</span></div>
               <div><kbd>Esc</kbd><strong>Pause</strong><span>Tag en rolig pause midt i banen.</span></div>
@@ -157,6 +155,6 @@
   </div>
 
   <script src="js/highscores.js"></script>
-  <script src="js/pips-skybound.js"></script>
+  <script src="js/pips-skybound.js?v=20260711-nes6"></script>
 </body>
 </html>
