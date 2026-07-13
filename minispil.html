@@ -7,7 +7,7 @@
   <title>Familiens minispil | Wutborg.dk</title>
   <meta
     name="description"
-    content="Ni gratis minispil samlet i familien Wutborgs spillehjørne – fra Wutborg Kart og Super Mario Bros. til Snake, Tetris og Sangquiz."
+    content="Ti gratis minispil samlet i familien Wutborgs spillehjørne – fra Borgstorm og Wutborg Kart til Snake, Tetris og Sangquiz."
   />
   <style>
     :root {
@@ -610,6 +610,38 @@
     .kart-car.one { left: 26%; bottom: 58px; transform: rotate(-19deg); }
     .kart-car.two { right: 20%; top: 83px; background: #46ad69; transform: rotate(30deg) scale(.8); }
     .kart-item { position: absolute; right: 25%; bottom: 42px; width: 28px; height: 28px; border: 4px solid #173b59; border-radius: 8px; background: #5dd9f5; transform: rotate(45deg); }
+
+    .game-card.battle {
+      --card-bg:
+        radial-gradient(circle at 78% 16%, rgba(234, 153, 73, 0.38), transparent 27%),
+        linear-gradient(145deg, #d8f0f1, #e9dfca);
+      --card-ink: #1d4055;
+      --card-muted: #5e7381;
+      --card-accent: #d3534c;
+      --card-button-ink: #fff;
+      --card-outline: rgba(29, 64, 85, 0.22);
+      --card-glow: rgba(63, 145, 194, 0.18);
+    }
+
+    .game-card.battle h2 { max-width: 290px; }
+    .battle-preview {
+      right: 6%;
+      bottom: 57px;
+      width: 47%;
+      height: 255px;
+      overflow: hidden;
+      border: 5px solid #29465a;
+      border-radius: 28px 28px 46px 46px;
+      background:
+        linear-gradient(90deg, transparent 0 26%, rgba(87, 86, 88, .85) 27% 73%, transparent 74%),
+        linear-gradient(#b7dfe1 0 34%, #8a6d63 35% 100%);
+      box-shadow: 0 16px 36px rgba(29, 64, 85, 0.2);
+      transform: rotate(2deg);
+    }
+    .battle-preview::before { content:"BORGSTORM"; position:absolute; top:18px; left:20px; color:rgba(255,255,255,.84); font:900 .65rem/1 ui-monospace,monospace; letter-spacing:.14em; }
+    .battle-gate { position:absolute; top:69px; width:38%; height:126px; border:4px solid #743d38; border-radius:13px; background:repeating-linear-gradient(#e2944d 0 19px,#c86d43 20px 23px); box-shadow:inset 0 0 0 5px rgba(255,221,159,.22); }
+    .battle-gate::after { content:attr(data-power); position:absolute; left:50%; top:43px; display:grid; place-items:center; width:58px; height:52px; border-radius:12px; color:#fff9df; background:#304055; font:950 1.5rem/1 Inter,sans-serif; transform:translateX(-50%); }
+    .battle-gate.left { left:9%; }.battle-gate.right { right:9%; }.battle-squad { position:absolute; bottom:21px; left:50%; width:104px; height:54px; transform:translateX(-50%); background:radial-gradient(circle at 10% 70%,#5ad0ed 0 7px,transparent 8px),radial-gradient(circle at 28% 37%,#2e86d8 0 8px,transparent 9px),radial-gradient(circle at 47% 72%,#57bee6 0 8px,transparent 9px),radial-gradient(circle at 68% 36%,#2e86d8 0 8px,transparent 9px),radial-gradient(circle at 87% 70%,#5ad0ed 0 7px,transparent 8px); }
 
     .game-card.sangquiz {
       grid-column: 1 / -1;
@@ -1594,8 +1626,20 @@
 
       .game-card.pokemon .card-content,
       .game-card.skybound .card-content,
-      .game-card.sangquiz .card-content {
+      .game-card.sangquiz .card-content,
+      .game-card.battle .card-content {
         max-width: 100%;
+      }
+
+      .game-card.battle {
+        min-height: 550px;
+      }
+
+      .battle-preview {
+        right: 4%;
+        bottom: 58px;
+        width: 72%;
+        height: 250px;
       }
 
       .pokemon-preview {
@@ -1727,6 +1771,18 @@
         font-size: clamp(2.8rem, 14vw, 4.3rem);
       }
 
+      .game-card.battle {
+        min-height: 570px;
+      }
+
+      .battle-preview {
+        right: -4%;
+        bottom: 62px;
+        width: 94%;
+        height: 250px;
+        transform: scale(0.88) rotate(1deg);
+      }
+
       .game-card.sangquiz {
         min-height: 600px;
       }
@@ -1807,7 +1863,7 @@
           <h1>Små spil.<br /><span>Stor hygge.</span></h1>
           <div class="hero-actions">
             <a class="hero-action primary" href="kart-racer.html"><span aria-hidden="true">🏁</span> Prøv Wutborg Kart</a>
-            <a class="hero-action" href="#spil">Se alle ni spil <span aria-hidden="true">↓</span></a>
+            <a class="hero-action" href="#spil">Se alle ti spil <span aria-hidden="true">↓</span></a>
           </div>
         </div>
         <div>
@@ -1816,7 +1872,7 @@
             og tage en runde mere, når nogen siger <strong>“bedst af tre”</strong>.
           </p>
           <div class="hero-meta" aria-label="Om spillearkivet">
-            <span><strong>9</strong> spil klar</span>
+            <span><strong>10</strong> spil klar</span>
             <span><strong>1–2</strong> spillere</span>
             <span><strong>0</strong> login</span>
           </div>
@@ -1827,7 +1883,7 @@
         <div class="game-browser-top">
           <div>
             <h2 id="game-browser-title">Find næste runde</h2>
-            <p class="catalog-status" id="catalog-status" aria-live="polite">Viser alle 9 spil</p>
+            <p class="catalog-status" id="catalog-status" aria-live="polite">Viser alle 10 spil</p>
           </div>
           <label class="game-search">
             <span aria-hidden="true">⌕</span>
@@ -1989,9 +2045,19 @@
           <span class="preview kart-preview" aria-hidden="true"><i class="kart-car one"></i><i class="kart-car two"></i><i class="kart-item"></i></span>
         </a>
 
+        <a class="game-card battle" href="battle-gates.html" data-game-mode="solo" data-game-search="borgstorm battle gates hær soldater tårne strategi porte boss kampagne en spiller nyhed">
+          <span class="card-content">
+            <span class="game-number">Spil 09 · En spiller</span>
+            <h2>Borgstorm</h2>
+            <p>Kæmp gennem 20 baner, rekruttér specialenheder, opgradér hæren og erobr fem store borge.</p>
+          </span>
+          <span class="play">Før hæren frem</span>
+          <span class="preview battle-preview" aria-hidden="true"><i class="battle-gate left" data-power="8"></i><i class="battle-gate right" data-power="31"></i><i class="battle-squad"></i></span>
+        </a>
+
         <a class="game-card sangquiz" href="sangquiz.html" data-game-mode="quiz together" data-game-search="sangquiz musik quiz hold årstal sammen">
           <span class="card-content">
-            <span class="game-number">Spil 09 · Musikquiz</span>
+            <span class="game-number">Spil 10 · Musikquiz</span>
             <h2>Sangquiz</h2>
             <p>Gæt årstallet, byg holdenes tidslinjer, og styr pointene fra én skærm.</p>
           </span>
@@ -2030,6 +2096,7 @@
           <span class="note-symbol">M</span>
           <span class="note-symbol">M</span>
           <span class="note-symbol">K</span>
+          <span class="note-symbol">B</span>
           <span class="note-symbol">Q</span>
         </span>
       </aside>
@@ -2104,6 +2171,7 @@
       ["monster-battle-arena", "Monster Battle Arena", "pokemon-battle.html"],
       ["pips-skybound", "Super Mario Bros.", "pips-skybound.html"],
       ["wutborg-kart", "Wutborg Kart", "kart-racer.html"],
+      ["borgstorm", "Borgstorm", "battle-gates.html"],
       ["sangquiz", "Sangquiz", "sangquiz.html"]
     ];
     const localRecordGrid = document.querySelector("#local-record-grid");

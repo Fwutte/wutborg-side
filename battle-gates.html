@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#2e82d5" />
+  <meta name="description" content="Borgstorm: et talbaseret strategispil med 20 baner, bosskampe, enheder, opgraderinger og gemt progression." />
+  <title>Borgstorm | Wutborg Spillehjørne</title>
+  <link rel="stylesheet" href="css/battle-gates.css?v=20260713-borg2" />
+</head>
+<body>
+  <div class="battle-page">
+    <nav class="battle-nav" aria-label="Borgstorm navigation">
+      <a class="battle-brand" href="minispil.html"><span class="battle-brand-mark" aria-hidden="true">B</span><span>Borgstorm<small>Familiens spillehjørne</small></span></a>
+      <div class="battle-nav-links"><a href="minispil.html">← Minispil</a><a href="index.html">Forsiden</a><button class="battle-nav-button" id="battle-sound" type="button">Lyd: til</button><button class="battle-nav-button" id="battle-pause-button" type="button">Pause</button></div>
+    </nav>
+
+    <header class="battle-hero">
+      <div><p>Vælg din vej</p><h1>Wutborg<br /><span>Borgstorm</span></h1></div>
+      <p class="battle-hero-copy">Tyve slag gennem fem riger. Byg hæren, rekruttér specialenheder og erobr alle borge på vejen mod Guldborgen.</p>
+    </header>
+
+    <main class="battle-shell">
+      <canvas class="battle-canvas" id="battle-canvas" width="960" height="600" aria-label="Borgstorm-arena. Vælg venstre eller højre port med piletasterne eller knapperne under banen."></canvas>
+      <section class="battle-hud" aria-label="Spilstatus">
+        <div class="battle-hud-top"><div class="battle-hud-cluster"><div class="battle-stat"><small>Bane</small><strong id="battle-level">1/20</strong></div><div class="battle-stat"><small>Port</small><strong id="battle-stage">1/6</strong></div></div><div class="battle-hud-cluster"><div class="battle-stat"><small>Combo</small><strong id="battle-combo">0×</strong></div><div class="battle-stat"><small>Hær</small><strong id="battle-army">24</strong></div></div></div>
+        <div class="battle-unit-roster" id="battle-unit-roster" aria-label="Hærens enheder"></div>
+        <div class="battle-message" id="battle-message" role="status" aria-live="polite">Tryk start for at føre hæren frem.</div>
+      </section>
+
+      <section class="battle-screen" id="battle-menu">
+        <div class="battle-screen-card battle-campaign-card">
+          <div class="campaign-heading"><div><p class="battle-kicker">Det store felttog</p><h2 id="battle-campaign-title">Bane 1: Porten ved engen</h2><p class="battle-copy" id="battle-campaign-copy">Kløvermarken · 6 porte · start med 24 soldater</p></div><div class="campaign-wallet"><strong id="battle-coins">0 mønter</strong><span id="battle-campaign-progress">0/60 stjerner · 1/20 baner åbne</span></div></div>
+          <div class="campaign-level-grid" id="battle-level-grid" aria-label="Vælg bane"></div>
+          <section class="battle-upgrades" aria-label="Hæropgraderinger">
+            <button type="button" data-battle-upgrade="reinforcement"><span>⚔ <b>Forstærkninger</b></span><strong>Niveau 0/5</strong><small>80 mønter</small></button>
+            <button type="button" data-battle-upgrade="armor"><span>◆ <b>Rustning</b></span><strong>Niveau 0/5</strong><small>80 mønter</small></button>
+            <button type="button" data-battle-upgrade="banner"><span>⚑ <b>Fanebærer</b></span><strong>Niveau 0/5</strong><small>80 mønter</small></button>
+          </section>
+          <div class="campaign-actions"><button class="battle-primary" id="battle-start" type="button">Start banen</button><p class="battle-copy" id="battle-best">Bedste: ingen endnu</p></div>
+        </div>
+      </section>
+
+      <section class="battle-screen" id="battle-pause" hidden>
+        <div class="battle-screen-card"><p class="battle-kicker">Hæren holder pause</p><h2>Pause</h2><p class="battle-copy">Dine soldater bliver stående, til du er klar igen.</p><button class="battle-primary" id="battle-resume" type="button">Fortsæt</button><button class="battle-secondary" id="battle-menu-button" type="button">Til menuen</button></div>
+      </section>
+
+      <section class="battle-screen" id="battle-result" hidden>
+        <div class="battle-screen-card"><p class="battle-kicker">Slaget er afgjort</p><h2 id="battle-result-title">Borgen er din!</h2><p class="battle-result-score" id="battle-result-copy"></p><div class="battle-result-stats" id="battle-result-stats"></div><button class="battle-primary" id="battle-retry" type="button">Spil banen igen</button><button class="battle-secondary" id="battle-result-menu" type="button">Til kampagnekortet</button></div>
+      </section>
+    </main>
+
+    <section class="battle-controls" aria-label="Vælg port">
+      <button class="battle-choice" id="battle-left" type="button" aria-label="Vælg venstre port"><span><b>←</b><span><strong>–</strong><small>Vælg venstre</small></span></span><i>VÆLG</i></button>
+      <button class="battle-choice" id="battle-right" type="button" aria-label="Vælg højre port"><span><b>→</b><span><strong>–</strong><small>Vælg højre</small></span></span><i>VÆLG</i></button>
+    </section>
+    <section class="battle-help"><span><strong>Desktop:</strong> Pil venstre/A · Pil højre/D · Esc pause</span><span><strong>Tip:</strong> Bonusporte kan redde en lille hær.</span></section>
+    <footer class="battle-footer"><span><strong>Borgstorm</strong> · 20 baner gennem fem riger</span><span>Progression og rekorder gemmes lokalt</span></footer>
+  </div>
+  <script src="js/highscores.js"></script>
+  <script src="js/battle-gates-data.js?v=20260713-borg2"></script>
+  <script src="js/battle-gates.js?v=20260713-borg2"></script>
+</body>
+</html>
