@@ -1,10 +1,14 @@
 {
   "private": true,
   "scripts": {
-    "validate": "node scripts/validate.cjs && node scripts/highscores.test.cjs && node scripts/pips-skybound.test.cjs && node scripts/kart-racer.test.cjs && node scripts/battle-gates.test.cjs",
+    "validate": "node scripts/validate.cjs && node scripts/highscores.test.cjs && node scripts/pips-skybound.test.cjs && node scripts/kart-racer.test.cjs && node scripts/battle-gates.test.cjs && node scripts/battle-gates-3d.test.cjs",
     "test:highscores": "node scripts/highscores.test.cjs",
     "test:mario": "node scripts/pips-skybound.test.cjs",
     "test:kart": "node scripts/kart-racer.test.cjs",
-    "test:borgstorm": "node scripts/battle-gates.test.cjs"
+    "test:borgstorm": "node scripts/battle-gates.test.cjs",
+    "test:borgstorm-3d": "node scripts/battle-gates-3d.test.cjs"
+  },
+  "dependencies": {
+    "three": "0.183.0"
   }
 }
