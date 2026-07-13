@@ -32,6 +32,8 @@
     a.x + a.w > b.x &&
     a.y < b.y + b.h &&
     a.y + a.h > b.y;
+  const touchesFinishPole = (player, finish) =>
+    player.x < finish.x + finish.w && player.x + player.w > finish.x;
 
   function roundedRect(ctx, x, y, width, height, radius) {
     const r = Math.min(radius, width / 2, height / 2);
@@ -1575,7 +1577,9 @@
       }
 
       const bossAlive = this.enemies.some((enemy) => enemy.isBoss && enemy.active);
-      if (this.finish && rectsOverlap(player, this.finish)) {
+      // Flagstangen er høj: Mario skal også afslutte banen, når han rammer
+      // den under et højt spring, ikke kun når hans fødder er ved jorden.
+      if (this.finish && touchesFinishPole(player, this.finish)) {
         if (this.finish.exit) this.game.exitSubarea();
         else if (bossAlive) this.game.showToast("Besejr slotsherren først");
         else this.game.completeLevel();
@@ -2497,7 +2501,7 @@
       FIXED_STEP,
       MAX_STEPS_PER_FRAME,
     },
-    testHooks: { Camera, Game, TileMap },
+    testHooks: { Camera, Game, TileMap, touchesFinishPole },
   };
 
   window.addEventListener("DOMContentLoaded", () => {

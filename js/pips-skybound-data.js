@@ -99,13 +99,20 @@
     rect(grid, 0, groundTop, width, 3, "X");
     add("player", 2, 10);
 
-    const gapCount = stage === 1 ? 2 : stage === 2 ? 3 : 4;
+    // Verdens første fire baner introducerer spring i et roligt tempo.
+    // Senere verdener beholder den tættere platformrytme.
+    const gapCount = worldIndex === 0
+      ? stage === 1 || stage === 2 ? 1 : stage === 3 ? 2 : 3
+      : stage === 1 ? 2 : stage === 2 ? 3 : 4;
     for (let index = 0; index < gapCount; index += 1) {
       const gapStart = 18 + index * Math.floor((width - 34) / gapCount) + ((seed + index * 3) % 4);
       const gapWidth = 2 + ((seed + index) % (stage === 4 ? 2 : 1));
       rect(grid, gapStart, groundTop, gapWidth, 3, ".");
-      line(grid, gapStart - 1, gapStart + gapWidth, 9 - (index % 2), "X");
-      for (let coin = 0; coin < gapWidth + 1; coin += 1) add("coin", gapStart - 1 + coin, 7 - (index % 2));
+      // Hængende broer ligger højt nok til, at et normalt spring ikke rammer
+      // undersiden lige før hullet.
+      const bridgeY = 7 - (index % 2);
+      line(grid, gapStart - 1, gapStart + gapWidth, bridgeY, "X");
+      for (let coin = 0; coin < gapWidth + 1; coin += 1) add("coin", gapStart - 1 + coin, bridgeY - 1);
     }
 
     const platformStep = 10 + (seed % 3);
@@ -135,7 +142,10 @@
         subareas.push(buildBonusRoom(worldIndex, stage, target));
         add("pipe", pipeX, 9, { target });
       }
-      if (stage > 1 && index === 1) add("piranha", pipeX, 8, { range: 1 + (stage % 2) });
+      // Piranhaen introduceres først efter de to første læreniveauer.
+      if (stage > (worldIndex === 0 ? 2 : 1) && index === 1) {
+        add("piranha", pipeX, 8, { range: 1 + (stage % 2) });
+      }
     }
 
     if (stage >= 2) add("checkpoint", Math.floor(width * 0.53), 10);

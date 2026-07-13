@@ -86,13 +86,46 @@ const campaignSymbols = game.LEVEL_DEFINITIONS.map((level) => level.map.join("")
   assert.ok(campaignSymbols.includes(symbol), `Kampagnen mangler power-up-blok: ${symbol}`);
 });
 
+const firstWorldGaps = game.LEVEL_DEFINITIONS.slice(0, 4).map((level) => {
+  let runs = 0;
+  let inGap = false;
+  for (const symbol of level.map[11]) {
+    if (symbol === "." && !inGap) runs += 1;
+    inGap = symbol === ".";
+  }
+  return runs;
+});
+assert.deepEqual(Array.from(firstWorldGaps), [1, 1, 2, 3], "Verden 1 skal introducere huller gradvist");
+game.LEVEL_DEFINITIONS.slice(0, 2).forEach((level) => {
+  level.map[11].split("").forEach((symbol, column) => {
+    if (symbol !== ".") return;
+    assert.equal(level.map[9][column], ".", "Tidlige huller mÃ¥ ikke have lavt loft");
+    assert.equal(level.map[10][column], ".", "Tidlige huller mÃ¥ ikke have lavt loft");
+  });
+});
+assert.equal(
+  game.LEVEL_DEFINITIONS[1].entities.some((entity) => entity.type === "piranha"),
+  false,
+  "1-2 skal ikke kombinere de fÃ¸rste huller med en piranha"
+);
+
 const generated = game.createMap(4, 3, (map) => {
   map.line(0, 3, 2, "X");
   map.set(1, 1, "P");
 });
 assert.deepEqual(Array.from(generated), ["....", ".P..", "XXXX"]);
 
-const { Camera, Game, TileMap } = game.testHooks;
+const { Camera, Game, TileMap, touchesFinishPole } = game.testHooks;
+assert.equal(
+  touchesFinishPole({ x: 3700, y: 120, w: 34, h: 44 }, { x: 3720, y: 408, w: 45, h: 120 }),
+  true,
+  "Et spring ind i flagstangen skal afslutte banen uanset hÃ¸jde"
+);
+assert.equal(
+  touchesFinishPole({ x: 3800, y: 120, w: 34, h: 44 }, { x: 3720, y: 408, w: 45, h: 120 }),
+  false,
+  "Flagstangen mÃ¥ ikke afslutte banen, efter Mario er passeret"
+);
 const camera = new Camera();
 camera.reset(10);
 assert.equal(camera.x, 9, "Kameraet skal snappe til 3 px-grid ved reset");
