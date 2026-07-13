@@ -2175,6 +2175,37 @@
       margin: 0;
     }
 
+    .host-spotify {
+      display: grid;
+      gap: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+    }
+
+    .host-spotify h3,
+    .host-spotify .spotify-status {
+      margin: 0;
+      color: var(--ink);
+    }
+
+    .host-spotify .field-label {
+      color: var(--ink-soft);
+    }
+
+    .host-spotify input {
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.55);
+    }
+
+    .host-spotify-actions {
+      display: grid;
+      gap: 8px;
+    }
+
+    body:not([data-sangquiz-phase="game"]) .host-spotify {
+      display: none;
+    }
+
     body[data-sangquiz-mode="screen"] .host-panel:not([open]) .host-tools,
     body[data-sangquiz-mode="screen"] .score-controls {
       display: none;
@@ -2406,6 +2437,11 @@
       overflow: hidden;
     }
 
+    .confetti-layer[data-big="false"] {
+      background: radial-gradient(circle at 50% 42%, rgba(246, 239, 226, 0.42), transparent 44%);
+      animation: celebrationFlash 1.8s ease-out forwards;
+    }
+
     .confetti-piece {
       position: absolute;
       left: 50%;
@@ -2415,12 +2451,25 @@
       border-radius: 2px;
       background: var(--piece-color, var(--accent));
       transform: translate(-50%, -50%) rotate(var(--piece-rotate, 0deg));
-      animation: confettiPop 900ms ease-out forwards;
+      box-shadow: 0 0 10px color-mix(in srgb, var(--piece-color) 72%, transparent);
+      animation: confettiPop 1.65s cubic-bezier(0.12, 0.66, 0.24, 1) forwards;
     }
 
     .confetti-layer[data-big="true"] .confetti-piece {
       top: -20px;
       animation: confettiRain 2.3s ease-in forwards;
+    }
+
+    .confetti-burst {
+      position: absolute;
+      width: 42px;
+      height: 42px;
+      border: 8px solid var(--burst-color, var(--accent));
+      border-radius: 50%;
+      transform: translate(-50%, -50%) scale(0.15);
+      box-shadow: 0 0 34px var(--burst-color, var(--accent));
+      opacity: 0;
+      animation: confettiBurst 1.05s ease-out forwards;
     }
 
     @keyframes spinReel {
@@ -2461,10 +2510,29 @@
     }
 
     @keyframes confettiPop {
-      to {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.2) rotate(var(--piece-rotate));
+      }
+      10%, 72% {
+        opacity: 1;
+      }
+      100% {
         opacity: 0;
         transform: translate(calc(-50% + var(--piece-x)), calc(-50% + var(--piece-y))) rotate(calc(var(--piece-rotate) + 360deg));
       }
+    }
+
+    @keyframes confettiBurst {
+      0% { opacity: 0; transform: translate(-50%, -50%) scale(0.15); }
+      22% { opacity: 1; }
+      100% { opacity: 0; transform: translate(-50%, -50%) scale(5.4); }
+    }
+
+    @keyframes celebrationFlash {
+      0% { opacity: 0; }
+      12% { opacity: 1; }
+      100% { opacity: 0; }
     }
 
     @keyframes confettiRain {
@@ -4880,6 +4948,25 @@
                   <button id="reset-game-button" class="danger-button" type="button">Nulstil</button>
                 </div>
                 <button id="sound-toggle-button" type="button" aria-pressed="false">Lyde fra</button>
+                <section class="host-spotify" aria-label="Spotify-indstillinger under spillet">
+                  <h3>Spotify-afspiller</h3>
+                  <p id="spotify-game-mode-status" class="spotify-status" aria-live="polite">Manuel DJ klar</p>
+                  <div class="spotify-fields">
+                    <label class="field-label" for="spotify-game-client-id">
+                      Client ID
+                      <input id="spotify-game-client-id" type="text" inputmode="text" autocomplete="off" />
+                    </label>
+                    <label class="field-label" for="spotify-game-redirect-uri">
+                      Redirect URI
+                      <input id="spotify-game-redirect-uri" type="text" readonly />
+                    </label>
+                  </div>
+                  <div class="host-spotify-actions">
+                    <button id="spotify-game-login-button" type="button">Log ind med Spotify</button>
+                    <button id="spotify-game-connect-button" type="button">Forbind afspiller</button>
+                    <button id="spotify-game-forget-button" type="button">Log ud og glem Spotify</button>
+                  </div>
+                </section>
               </div>
             </details>
             <div class="panel-heading">
@@ -4954,6 +5041,6 @@
   </div>
   <script src="js/highscores.js"></script>
   <script src="js/sangquiz-data.js"></script>
-  <script src="js/sangquiz.js?v=20260705-record-collection"></script>
+  <script src="js/sangquiz.js?v=20260713-game-controls"></script>
 </body>
 </html>

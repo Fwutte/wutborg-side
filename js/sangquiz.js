@@ -87,6 +87,12 @@
       "spotify-connect-button",
       "spotify-forget-button",
       "spotify-mode-status",
+      "spotify-game-client-id",
+      "spotify-game-redirect-uri",
+      "spotify-game-login-button",
+      "spotify-game-connect-button",
+      "spotify-game-forget-button",
+      "spotify-game-mode-status",
       "category-status",
       "round-number",
       "deck-status",
@@ -143,9 +149,15 @@
     els.revealButton.addEventListener("click", revealSong);
     els.playHiddenButton.addEventListener("click", playCurrentSong);
     els.pauseButton.addEventListener("click", pausePlayback);
-    els.spotifyLoginButton.addEventListener("click", startSpotifyLogin);
-    els.spotifyConnectButton.addEventListener("click", connectSpotifyPlayer);
-    els.spotifyForgetButton.addEventListener("click", forgetSpotifyLogin);
+    [els.spotifyLoginButton, els.spotifyGameLoginButton].forEach((button) => {
+      button.addEventListener("click", startSpotifyLogin);
+    });
+    [els.spotifyConnectButton, els.spotifyGameConnectButton].forEach((button) => {
+      button.addEventListener("click", connectSpotifyPlayer);
+    });
+    [els.spotifyForgetButton, els.spotifyGameForgetButton].forEach((button) => {
+      button.addEventListener("click", forgetSpotifyLogin);
+    });
     els.soundToggleButton.addEventListener("click", toggleSound);
 
     els.djFallbackLink.addEventListener("click", () => {
@@ -156,9 +168,13 @@
       setPlaybackActive(true);
     });
 
-    els.spotifyClientId.addEventListener("input", () => {
-      safeSetStorage(CLIENT_ID_KEY, els.spotifyClientId.value.trim());
-      updateSpotifyUi();
+    [els.spotifyClientId, els.spotifyGameClientId].forEach((input) => {
+      input.addEventListener("input", () => {
+        const clientId = input.value.trim();
+        safeSetStorage(CLIENT_ID_KEY, clientId);
+        syncSpotifyClientIdInputs(clientId, input);
+        updateSpotifyUi();
+      });
     });
 
     els.placementSlots.addEventListener("click", (event) => {
@@ -241,6 +257,7 @@
     const activeTimelineLength = getActiveTimeline(next).length;
     const slotValue = Number.isFinite(Number(next.selectedSlot)) ? Number(next.selectedSlot) : -1;
     next.selectedSlot = clamp(slotValue, activeTimelineLength ? -1 : 0, activeTimelineLength);
+    next.selectedSlot = coerceSelectableSlot(getActiveTimeline(next), next.selectedSlot);
     next.songCategory = normalizeCategory(next.songCategory || selectedCategory);
     next.phase = next.phase === "reveal" ? "reveal" : next.started ? "guess" : "setup";
     next.finished = Boolean(next.finished);
@@ -303,8 +320,7 @@
       ? `Fortsæt spil (${state.round || 1})`
       : "Fortsæt spil";
 
-    const clientId = getSpotifyClientId();
-    if (els.spotifyClientId.value !== clientId) els.spotifyClientId.value = clientId;
+    syncSpotifyClientIdInputs(getSpotifyClientId());
     updateCategoryUi();
   }
 
@@ -562,7 +578,9 @@
     }
 
     for (let index = 0; index <= timeline.length; index += 1) {
-      els.placementSlots.append(createSlotButton(index, "Læg her", formatSlot(timeline, index), correctSlot));
+      if (isSelectableSlot(timeline, index)) {
+        els.placementSlots.append(createSlotButton(index, "Læg her", formatSlot(timeline, index), correctSlot));
+      }
       if (timeline[index]) els.placementSlots.append(createTimelineCard(timeline[index], index));
     }
   }
@@ -825,6 +843,19 @@
     return index === -1 ? sorted.length : index;
   }
 
+  function isSelectableSlot(timeline, slot) {
+    if (slot <= 0 || slot >= timeline.length) return true;
+    return timeline[slot - 1].year !== timeline[slot].year;
+  }
+
+  function coerceSelectableSlot(timeline, slot) {
+    let nextSlot = slot;
+    while (nextSlot >= 0 && nextSlot < timeline.length && !isSelectableSlot(timeline, nextSlot)) {
+      nextSlot += 1;
+    }
+    return nextSlot;
+  }
+
   function formatSlot(timeline, slot) {
     if (!timeline.length) return "som første sang";
     if (slot <= 0) return `før ${timeline[0].year}`;
@@ -973,28 +1004,49 @@
     layer.dataset.big = big ? "true" : "false";
     layer.setAttribute("aria-hidden", "true");
 
-    const count = big ? 86 : 26;
-    const colors = [color, "#E5A83B", "#F6EFE2"];
+    const count = big ? 86 : 108;
+    const colors = [color, "#E5A83B", "#F6EFE2", "#4FD1A5", "#5B84A8"];
+
+    if (!big) {
+      [18, 50, 82].forEach((left, index) => {
+        const burst = document.createElement("span");
+        burst.className = "confetti-burst";
+        burst.style.left = `${left}%`;
+        burst.style.top = `${index === 1 ? 34 : 52}%`;
+        burst.style.setProperty("--burst-color", colors[index]);
+        burst.style.animationDelay = `${index * 0.08}s`;
+        layer.append(burst);
+      });
+    }
+
     for (let index = 0; index < count; index += 1) {
       const piece = document.createElement("span");
       piece.className = "confetti-piece";
       piece.style.setProperty("--piece-color", colors[index % colors.length]);
       piece.style.setProperty("--piece-rotate", `${Math.round(Math.random() * 360)}deg`);
+      piece.style.width = `${7 + Math.round(Math.random() * 8)}px`;
+      piece.style.height = `${12 + Math.round(Math.random() * 14)}px`;
 
       if (big) {
         piece.style.left = `${Math.random() * 100}%`;
         piece.style.setProperty("--piece-x", `${Math.round((Math.random() - 0.5) * 180)}px`);
         piece.style.animationDelay = `${Math.random() * 0.55}s`;
       } else {
-        piece.style.setProperty("--piece-x", `${Math.round((Math.random() - 0.5) * 520)}px`);
-        piece.style.setProperty("--piece-y", `${Math.round(-120 - Math.random() * 310)}px`);
+        const origin = index % 3;
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 170 + Math.random() * 420;
+        piece.style.left = `${[18, 50, 82][origin]}%`;
+        piece.style.top = `${origin === 1 ? 34 : 52}%`;
+        piece.style.setProperty("--piece-x", `${Math.round(Math.cos(angle) * distance)}px`);
+        piece.style.setProperty("--piece-y", `${Math.round(Math.sin(angle) * distance)}px`);
+        piece.style.animationDelay = `${Math.random() * 0.18}s`;
       }
 
       layer.append(piece);
     }
 
     document.body.append(layer);
-    window.setTimeout(() => layer.remove(), big ? 3100 : 1150);
+    window.setTimeout(() => layer.remove(), big ? 3100 : 2100);
   }
 
   function ensureAudioContext() {
@@ -1062,19 +1114,30 @@
   }
 
   function updateRedirectUri() {
-    els.spotifyRedirectUri.value = getRedirectUri();
+    const redirectUri = getRedirectUri();
+    els.spotifyRedirectUri.value = redirectUri;
+    els.spotifyGameRedirectUri.value = redirectUri;
   }
 
   function updateSpotifyUi() {
-    const clientId = els.spotifyClientId.value.trim() || DEFAULT_CLIENT_ID;
+    const clientId = getSpotifyClientId();
     const token = readToken();
     const hasToken = Boolean(token?.access_token || token?.refresh_token);
     const hasPendingLogin = Boolean(readStorage(PKCE_KEY, null));
     const song = getCurrentSong();
-    els.spotifyLoginButton.disabled = !clientId;
-    els.spotifyConnectButton.disabled = !clientId || spotify.connecting || !hasToken;
-    els.spotifyForgetButton.disabled = !(hasToken || hasPendingLogin || spotify.player);
-    els.spotifyModeStatus.textContent = spotify.status;
+    [els.spotifyLoginButton, els.spotifyGameLoginButton].forEach((button) => {
+      button.disabled = !clientId;
+    });
+    [els.spotifyConnectButton, els.spotifyGameConnectButton].forEach((button) => {
+      button.disabled = !clientId || spotify.connecting || !hasToken;
+      button.textContent = spotify.connecting ? "Forbinder…" : spotify.ready ? "Forbind igen" : "Forbind afspiller";
+    });
+    [els.spotifyForgetButton, els.spotifyGameForgetButton].forEach((button) => {
+      button.disabled = !(hasToken || hasPendingLogin || spotify.player);
+    });
+    [els.spotifyModeStatus, els.spotifyGameModeStatus].forEach((status) => {
+      status.textContent = spotify.status;
+    });
     const playLabel = playbackActive
       ? "Musik kører"
       : hasToken && spotify.ready
@@ -1109,7 +1172,15 @@
 
   function setSpotifyStatus(message) {
     spotify.status = message;
-    if (els.spotifyModeStatus) els.spotifyModeStatus.textContent = message;
+    [els.spotifyModeStatus, els.spotifyGameModeStatus].forEach((status) => {
+      if (status) status.textContent = message;
+    });
+  }
+
+  function syncSpotifyClientIdInputs(clientId, source = null) {
+    [els.spotifyClientId, els.spotifyGameClientId].forEach((input) => {
+      if (input && input !== source && input.value !== clientId) input.value = clientId;
+    });
   }
 
   async function autoConnectSpotifyFromSavedLogin() {
@@ -1130,7 +1201,7 @@
   }
 
   async function startSpotifyLogin() {
-    const clientId = els.spotifyClientId.value.trim() || DEFAULT_CLIENT_ID;
+    const clientId = getSpotifyClientId();
     if (!clientId) return;
     if (!window.crypto?.subtle) {
       setSpotifyStatus("Spotify login kræver HTTPS eller localhost");
@@ -1242,7 +1313,7 @@
     safeRemoveStorage(TOKEN_KEY);
     safeRemoveStorage(PKCE_KEY);
     safeRemoveStorage(CLIENT_ID_KEY);
-    els.spotifyClientId.value = DEFAULT_CLIENT_ID;
+    syncSpotifyClientIdInputs(DEFAULT_CLIENT_ID);
     setSpotifyStatus("Spotify-login og afspiller er fjernet fra denne browser");
     setPlaybackActive(false);
     updateSpotifyUi();
@@ -1253,7 +1324,7 @@
     if (token?.access_token && Number(token.expires_at) > Date.now()) return token.access_token;
     if (!token?.refresh_token) return "";
 
-    const clientId = els.spotifyClientId.value.trim() || getSpotifyClientId();
+    const clientId = getSpotifyClientId();
     if (!clientId) return "";
 
     const body = new URLSearchParams({
