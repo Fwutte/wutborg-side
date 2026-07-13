@@ -6,6 +6,7 @@ const vm = require("node:vm");
 const root = path.resolve(__dirname, "..");
 const logicSource = fs.readFileSync(path.join(root, "js", "battle-gates-3d-logic.js"), "utf8");
 const sceneSource = fs.readFileSync(path.join(root, "js", "battle-gates-3d.js"), "utf8");
+const gameSource = fs.readFileSync(path.join(root, "js", "battle-gates.js"), "utf8");
 const htmlSource = fs.readFileSync(path.join(root, "battle-gates.html"), "utf8");
 const characterPath = path.join(root, "assets", "borgstorm-3d", "kaykit-adventurers", "Knight.glb");
 const browserWindow = {};
@@ -27,7 +28,9 @@ for (const token of ["PerspectiveCamera", "WebGLRenderer", "InstancedMesh", "GLT
 }
 assert.ok(!sceneSource.includes("https://"), "Del 1 skal køre uden eksterne runtime-assets");
 
-assert.match(htmlSource, /<script type="module" src="js\/battle-gates\.js\?v=20260713-borg4"><\/script>/, "Hovedspillet skal vente pÃ¥ 3D-modulet");
+assert.match(gameSource, /^import \{ BattleScene3D \} from "\.\/battle-gates-3d\.js\?v=20260713-borg5";/, "Hovedspillet skal importere 3D-scenen som en direkte afhængighed");
+assert.match(htmlSource, /<script type="module" src="js\/battle-gates\.js\?v=20260713-borg5"><\/script>/, "Hovedspillet skal bruge den aktuelle cacheversion");
+assert.doesNotMatch(htmlSource, /<script type="module" src="js\/battle-gates-3d\.js/, "3D-scenen må ikke konkurrere med hovedspillet om indlæsningsrækkefølgen");
 
 const glb = fs.readFileSync(characterPath);
 assert.equal(glb.subarray(0, 4).toString("ascii"), "glTF", "KayKit-figuren skal være en gyldig binær glTF-fil");

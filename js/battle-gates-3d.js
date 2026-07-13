@@ -22,18 +22,9 @@ const THEMES = {
 };
 const UNIT_COLORS = { soldier: 0x3d7dde, archer: 0x42b98e, shield: 0x696fd2, giant: 0xde803f, enemy: 0xc94b53, boss: 0xe0a52f };
 
-class BattleScene3D {
-  static isSupported() {
-    try {
-      const canvas = document.createElement("canvas");
-      return Boolean(canvas.getContext("webgl2") || canvas.getContext("webgl"));
-    } catch {
-      return false;
-    }
-  }
-
+export class BattleScene3D {
   constructor(canvas, onGateChoice) {
-    if (!logic || !BattleScene3D.isSupported()) throw new Error("WebGL er ikke tilgængelig.");
+    if (!logic) throw new Error("Borgstorm 3D-logikken er ikke indlæst.");
     this.canvas = canvas;
     this.onGateChoice = onGateChoice;
     this.time = 0;
