@@ -455,6 +455,11 @@ a:focus-visible {
   box-shadow: 4px 4px 0 var(--navy-deep);
 }
 
+.primary-button:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
 .secondary-button {
   color: #fff;
   background: var(--coral);
@@ -652,6 +657,22 @@ a:focus-visible {
   color: var(--navy-deep);
   background: var(--sun);
   font-size: 0.88rem;
+}
+
+.touch-controls .run-control {
+  min-width: 72px;
+  color: #fff;
+  background: #e52521;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+
+.touch-controls .pipe-control {
+  min-width: 48px;
+  color: #fff;
+  background: #307c56;
+  font-size: 0.64rem;
+  text-transform: uppercase;
 }
 
 .jump-control span {
@@ -1065,6 +1086,50 @@ body {
   box-shadow: 3px 3px 0 #8c5e00;
 }
 
+.world-picker {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 5px;
+  width: min(100%, 430px);
+  margin: 16px auto 0;
+}
+
+.world-choice {
+  min-height: 30px;
+  border: 2px solid #fff;
+  border-radius: 0;
+  color: #fff;
+  background: #161616;
+  font: 900 0.62rem/1 var(--pixel-font);
+}
+
+.world-choice.active {
+  color: #000;
+  background: #fbd000;
+}
+
+.world-choice:disabled,
+.level-choice:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+.campaign-progress {
+  min-height: 1.2em;
+  margin: 12px 0 0;
+  color: #fbd000;
+  font: 800 0.62rem/1.35 var(--pixel-font);
+  text-transform: uppercase;
+}
+
+.asset-status {
+  min-height: 1.2em;
+  margin: 9px 0 0;
+  color: #b9d8ff;
+  font: 800 0.6rem/1.35 var(--pixel-font);
+  text-transform: uppercase;
+}
+
 .compact-screen {
   background: rgba(0, 0, 0, 0.78);
   backdrop-filter: none;
@@ -1215,11 +1280,45 @@ body {
     height: 32px;
     font-size: 0.68rem;
   }
+
+  .world-picker {
+    margin-top: 10px;
+  }
+
+  .world-choice {
+    min-height: 26px;
+    font-size: 0.52rem;
+  }
+
+  .campaign-progress {
+    margin-top: 8px;
+    font-size: 0.52rem;
+  }
+
+  .asset-status {
+    display: none;
+  }
 }
 
 @media (max-width: 430px) {
   .compact-screen {
     padding: 8px;
+  }
+
+  .touch-controls {
+    gap: 10px;
+  }
+
+  .touch-controls .run-control {
+    min-width: 60px;
+  }
+
+  .touch-controls .pipe-control {
+    min-width: 48px;
+  }
+
+  .touch-controls .jump-control {
+    min-width: 96px;
   }
 }
 

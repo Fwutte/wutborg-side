@@ -58,22 +58,18 @@
           <div class="menu-card">
             <span class="menu-kicker">Wutborg Arcade præsenterer</span>
             <h2><span>Super</span><br />Mario Bros.</h2>
-            <p>
-              Tre håndbyggede verdener med klassiske blokke,
-              Goombas, mønter og supersvampe.
-            </p>
+            <p id="campaign-summary">Otte verdener. Toogtredive baner. Ét stort eventyr.</p>
+            <p class="asset-status" id="asset-status" role="status">Indlæser spilverdenen …</p>
             <div class="menu-buttons">
               <button class="primary-button" id="start-button" type="button">1 spiller</button>
               <button class="secondary-button" id="instructions-button" type="button">Sådan spiller du</button>
             </div>
+            <div class="world-picker" id="world-picker" aria-label="Vælg verden"></div>
             <div class="level-picker" aria-label="Vælg startbane">
-              <span>Startverden</span>
-              <div>
-                <button class="level-choice active" type="button" data-level="0">1-1</button>
-                <button class="level-choice" type="button" data-level="1">1-2</button>
-                <button class="level-choice" type="button" data-level="2">1-3</button>
-              </div>
+              <span id="level-picker-label">Startbane</span>
+              <div id="level-choice-list"></div>
             </div>
+            <p class="campaign-progress" id="campaign-progress" aria-live="polite"></p>
           </div>
         </div>
 
@@ -83,6 +79,8 @@
             <h2>Løb, hop og udforsk</h2>
             <div class="instruction-grid">
               <div><kbd>← →</kbd><strong>Bevæg Mario</strong><span>Brug også A og D.</span></div>
+              <div><kbd>Shift / X</kbd><strong>Løb</strong><span>Hold knappen for fart og lange hop.</span></div>
+              <div><kbd>Z</kbd><strong>Ildkugle</strong><span>Når Mario har ildkraft.</span></div>
               <div><kbd>Space</kbd><strong>Hop</strong><span>Hold knappen for et højere hop.</span></div>
               <div><span class="instruction-icon">●</span><strong>Saml mønter</strong><span>100 mønter giver et ekstra liv.</span></div>
               <div><span class="instruction-icon">✦</span><strong>Find supersvampe</strong><span>Bliv større og modstå ét hit.</span></div>
@@ -141,6 +139,8 @@
           <button type="button" data-control="left" aria-label="Gå til venstre">←</button>
           <button type="button" data-control="right" aria-label="Gå til højre">→</button>
         </div>
+        <button class="run-control" type="button" data-control="run" aria-label="Løb">Løb</button>
+        <button class="pipe-control" type="button" data-control="down" aria-label="Gå ned i rør">Rør</button>
         <button class="jump-control" type="button" data-control="jump" aria-label="Hop">
           <span>↑</span>
           Hop
@@ -148,13 +148,14 @@
       </section>
 
       <footer class="game-notes">
-        <span><strong>Styring:</strong> Piletaster/WASD · Space for hop · Esc for pause</span>
+        <span><strong>Styring:</strong> Piletaster/WASD · Space hop · Shift/X løb · Z ild · Esc pause</span>
         <span>Sprites: Super Mario Bros. · Sheet-rips: Superjustinbros / Spriters Resource</span>
       </footer>
     </main>
   </div>
 
   <script src="js/highscores.js"></script>
-  <script src="js/pips-skybound.js?v=20260711-nes6"></script>
+  <script src="js/pips-skybound-data.js?v=20260712-campaign6"></script>
+  <script src="js/pips-skybound.js?v=20260712-campaign6"></script>
 </body>
 </html>

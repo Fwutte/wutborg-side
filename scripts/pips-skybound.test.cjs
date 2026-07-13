@@ -4,15 +4,18 @@ const path = require("node:path");
 const vm = require("node:vm");
 
 const root = path.resolve(__dirname, "..");
+const campaignSource = fs.readFileSync(path.join(root, "js", "pips-skybound-data.js"), "utf8");
 const source = fs.readFileSync(path.join(root, "js", "pips-skybound.js"), "utf8");
 const browserWindow = {
   addEventListener() {},
 };
 
-vm.runInNewContext(source, {
+const sandbox = {
   window: browserWindow,
   console,
-});
+};
+vm.runInNewContext(campaignSource, sandbox);
+vm.runInNewContext(source, sandbox);
 
 const game = browserWindow.PipsSkybound;
 assert.ok(game, "Spillets test-API skal eksporteres");
@@ -32,31 +35,55 @@ assert.ok(
   "Fixed-step-loopet skal kunne indhente et 250 ms frame"
 );
 
-const expectedWidths = [82, 94, 108];
-const expectedEnemies = [5, 7, 10];
-const expectedMushroomBlocks = [1, 1, 2];
-const allowedSymbols = new Set([".", "X", "?", "M", "B", "R", "P", "C", "E", "K", "F", "^"]);
+const allowedSymbols = new Set([".", "X", "?", "M", "I", "S", "L", "B", "R", "^"]);
+const allowedEntities = new Set([
+  "player",
+  "coin",
+  "goomba",
+  "koopa",
+  "buzzy",
+  "flyer",
+  "piranha",
+  "swimmer",
+  "boss",
+  "pipe",
+  "checkpoint",
+  "finish",
+]);
+
+assert.equal(game.LEVEL_DEFINITIONS.length, 32, "Den komplette kampagne skal have 32 baner");
+assert.equal(browserWindow.PipsSkyboundCampaign.worlds.length, 8, "Kampagnen skal have otte verdener");
 
 game.LEVEL_DEFINITIONS.forEach((level, index) => {
   assert.equal(level.map.length, 14, `Bane ${index + 1} skal være 14 tiles høj`);
   level.map.forEach((row) => {
-    assert.equal(row.length, expectedWidths[index], `Bane ${index + 1} har en forkert rækkelængde`);
+    assert.ok(row.length >= 78, `Bane ${index + 1} skal have en reel sidescroll-bredde`);
     Array.from(row).forEach((symbol) => {
       assert.ok(allowedSymbols.has(symbol), `Bane ${index + 1} bruger ukendt symbol: ${symbol}`);
     });
   });
 
-  const symbols = level.map.join("");
-  const count = (symbol) => Array.from(symbols).filter((item) => item === symbol).length;
-  assert.equal(count("P"), 1, `Bane ${index + 1} skal have præcis ét startpunkt`);
-  assert.equal(count("F"), 1, `Bane ${index + 1} skal have præcis ét mål`);
-  assert.equal(count("E"), expectedEnemies[index], `Bane ${index + 1} har mistet en fjende`);
-  assert.equal(
-    count("M"),
-    expectedMushroomBlocks[index],
-    `Bane ${index + 1} skal have authored svampeblokke`
-  );
-  assert.equal(count("U"), 0, `Bane ${index + 1} må ikke have fritsvævende svampe`);
+  assert.equal(level.id, `${Math.floor(index / 4) + 1}-${(index % 4) + 1}`);
+  assert.equal(level.entities.filter((entity) => entity.type === "player").length, 1);
+  assert.equal(level.entities.filter((entity) => entity.type === "finish").length, 1);
+  assert.ok(level.entities.some((entity) => entity.type === "coin"), `Bane ${index + 1} mangler mønter`);
+  assert.ok(level.entities.some((entity) => entity.type === "goomba" || entity.type === "koopa"), `Bane ${index + 1} mangler kernefjender`);
+  level.entities.forEach((entity) => {
+    assert.ok(allowedEntities.has(entity.type), `Bane ${index + 1} bruger ukendt entity: ${entity.type}`);
+    assert.ok(entity.x >= 0 && entity.x < level.map[0].length, `Entity uden for bane ${index + 1}`);
+  });
+  if (level.stage !== 4) {
+    assert.equal(level.subareas.length, 1, `Bane ${index + 1} skal have ét bonusrum`);
+    assert.equal(level.subareas[0].entities.filter((entity) => entity.type === "finish" && entity.exit).length, 1);
+    assert.equal(level.entities.filter((entity) => entity.type === "pipe").length, 1);
+  } else {
+    assert.equal(level.entities.filter((entity) => entity.type === "boss").length, 1, `Slot ${index + 1} mangler boss`);
+  }
+});
+
+const campaignSymbols = game.LEVEL_DEFINITIONS.map((level) => level.map.join("")).join("");
+["M", "I", "S", "L"].forEach((symbol) => {
+  assert.ok(campaignSymbols.includes(symbol), `Kampagnen mangler power-up-blok: ${symbol}`);
 });
 
 const generated = game.createMap(4, 3, (map) => {
@@ -88,16 +115,24 @@ const tileGame = {
 };
 const tileMap = new TileMap(
   {
-    map: ["....", ".M?.", "XXXX"],
+    map: ["......", ".MISL?", "XXXXXX"],
   },
   tileGame
 );
 tileMap.hitBlock(1, 1, { powered: false });
 tileMap.hitBlock(1, 1, { powered: false });
-tileMap.hitBlock(2, 1, { powered: false });
-tileMap.hitBlock(2, 1, { powered: false });
-assert.equal(tileGame.level.powerUps.length, 1, "En M-blok må kun udløse én svamp");
+tileMap.hitBlock(2, 1, { powered: true });
+tileMap.hitBlock(3, 1, { powered: false });
+tileMap.hitBlock(4, 1, { powered: false });
+tileMap.hitBlock(5, 1, { powered: false });
+tileMap.hitBlock(5, 1, { powered: false });
+assert.equal(tileGame.level.powerUps.length, 4, "Power-up-blokke må kun udløse ét item hver");
 assert.equal(questionCoins, 1, "En ?-blok må kun udløse én mønt");
+assert.deepEqual(
+  Array.from(tileGame.level.powerUps, (powerUp) => powerUp.type),
+  ["mushroom", "flower", "star", "life"],
+  "Power-up-blokke skal have deres korrekte indhold"
+);
 
 const restartGame = Object.create(Game.prototype);
 restartGame.levelIndex = 1;
@@ -125,4 +160,17 @@ assert.equal(restartGame.score, 3600, "Genstart skal fjerne farmet score");
 assert.equal(restartGame.loadedLevel, 1, "Genstart skal indlæse den aktuelle bane");
 assert.equal(restartGame.introStarted, true, "Genstart skal vise baneintroen");
 
-console.log("Mario-test: viewport, kamera, blokke, genstart og tre banekort bestået");
+const campaignGame = Object.create(Game.prototype);
+campaignGame.levelIndex = 0;
+campaignGame.score = 2200;
+campaignGame.progress = { unlocked: 0, completed: [], bestScores: {} };
+campaignGame.saveProgress = () => {
+  campaignGame.saved = true;
+};
+campaignGame.unlockLevel(1);
+assert.equal(campaignGame.progress.unlocked, 1, "Næste bane skal låses op efter gennemførsel");
+assert.deepEqual(campaignGame.progress.completed, ["1-1"], "Gennemført bane skal gemmes");
+assert.equal(campaignGame.progress.bestScores["1-1"], 2200, "Bedste score skal gemmes pr. bane");
+assert.equal(campaignGame.saved, true, "Kampagnefremdrift skal gemmes");
+
+console.log("Mario-test: kampagne, power-ups, kamera, blokke, genstart og progression bestået");

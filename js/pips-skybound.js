@@ -6,10 +6,10 @@
   const TILE = 48;
   const GRAVITY = 1850;
   const MAX_FALL_SPEED = 920;
-  const TOTAL_LEVELS = 3;
+  let TOTAL_LEVELS = 3;
   const FIXED_STEP = 1 / 60;
   const MAX_STEPS_PER_FRAME = 15;
-  const WORLD_LABELS = ["1-1", "1-2", "1-3"];
+  const getLevelLabel = (index) => LEVEL_DEFINITIONS[index]?.id || `1-${index + 1}`;
 
   const SPRITE_RECTS = {
     marioSmall: { x: 2, y: 8, w: 16, h: 16 },
@@ -26,6 +26,7 @@
   };
 
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+  const snapPixel = (value) => Math.round(value / 3) * 3;
   const rectsOverlap = (a, b) =>
     a.x < b.x + b.w &&
     a.x + a.w > b.x &&
@@ -51,6 +52,19 @@
         objects: this.load("assets/mario/items-objects-npcs-transparent.png"),
         tiles: this.load("assets/mario/tileset-transparent.png"),
       };
+      this.readyPromise = Promise.all(
+        Object.values(this.images).map(
+          (image) => new Promise((resolve, reject) => {
+            if (image.complete) {
+              if (image.naturalWidth) resolve();
+              else reject(new Error("Et spriteark kunne ikke indlæses"));
+              return;
+            }
+            image.addEventListener("load", resolve, { once: true });
+            image.addEventListener("error", () => reject(new Error("Et spriteark kunne ikke indlæses")), { once: true });
+          })
+        )
+      );
     }
 
     load(src) {
@@ -64,11 +78,15 @@
       return Boolean(image?.complete && image.naturalWidth);
     }
 
+    ready() {
+      return this.readyPromise;
+    }
+
     draw(ctx, name, rect, dx, dy, dw, dh, flipX = false) {
       if (!this.isReady(name)) return false;
       const image = this.images[name];
-      const renderX = Math.round(dx / 3) * 3;
-      const renderY = Math.round(dy / 3) * 3;
+      const renderX = snapPixel(dx);
+      const renderY = snapPixel(dy);
       ctx.save();
       ctx.imageSmoothingEnabled = false;
       if (flipX) {
@@ -112,7 +130,7 @@
     map.rect(0, 11, width, 3, "X");
   }
 
-  const LEVEL_DEFINITIONS = [
+  const LEGACY_LEVEL_DEFINITIONS = [
     {
       name: "Kløverengen",
       subtitle: "Lær Marios bevægelser på den solrige eng.",
@@ -293,10 +311,17 @@
     },
   ];
 
+  const LEVEL_DEFINITIONS = window.PipsSkyboundCampaign?.levels || LEGACY_LEVEL_DEFINITIONS;
+  TOTAL_LEVELS = LEVEL_DEFINITIONS.length;
+
   class InputManager {
     constructor() {
       this.left = false;
       this.right = false;
+      this.down = false;
+      this.run = false;
+      this.fire = false;
+      this.firePressed = false;
       this.jump = false;
       this.jumpPressed = false;
       this.jumpReleased = false;
@@ -314,8 +339,13 @@
         "ArrowUp",
         "KeyA",
         "KeyD",
+        "ArrowDown",
+        "KeyS",
         "KeyW",
         "Space",
+        "ShiftLeft",
+        "ShiftRight",
+        "KeyX",
       ]);
 
       window.addEventListener("keydown", (event) => {
@@ -324,6 +354,12 @@
 
         if (["ArrowLeft", "KeyA"].includes(event.code)) this.left = true;
         if (["ArrowRight", "KeyD"].includes(event.code)) this.right = true;
+        if (["ArrowDown", "KeyS"].includes(event.code)) this.down = true;
+        if (["ShiftLeft", "ShiftRight", "KeyX"].includes(event.code)) this.run = true;
+        if (event.code === "KeyZ") {
+          if (!this.fire) this.firePressed = true;
+          this.fire = true;
+        }
         if (["ArrowUp", "KeyW", "Space"].includes(event.code)) {
           if (!this.jump) this.jumpPressed = true;
           this.jump = true;
@@ -334,6 +370,9 @@
       window.addEventListener("keyup", (event) => {
         if (["ArrowLeft", "KeyA"].includes(event.code)) this.left = false;
         if (["ArrowRight", "KeyD"].includes(event.code)) this.right = false;
+        if (["ArrowDown", "KeyS"].includes(event.code)) this.down = false;
+        if (["ShiftLeft", "ShiftRight", "KeyX"].includes(event.code)) this.run = false;
+        if (event.code === "KeyZ") this.fire = false;
         if (["ArrowUp", "KeyW", "Space"].includes(event.code)) {
           this.jump = false;
           this.jumpReleased = true;
@@ -349,6 +388,11 @@
         button.classList.toggle("active", active);
         if (control === "left") this.left = active;
         if (control === "right") this.right = active;
+        if (control === "down") this.down = active;
+        if (control === "run") {
+          if (active && !this.run) this.firePressed = true;
+          this.run = active;
+        }
         if (control === "jump") {
           if (active && !this.jump) this.jumpPressed = true;
           if (!active && this.jump) this.jumpReleased = true;
@@ -378,12 +422,17 @@
     endFrame() {
       this.jumpPressed = false;
       this.jumpReleased = false;
+      this.firePressed = false;
       this.pausePressed = false;
     }
 
     releaseAll() {
       this.left = false;
       this.right = false;
+      this.down = false;
+      this.run = false;
+      this.fire = false;
+      this.firePressed = false;
       this.jump = false;
       this.jumpReleased = true;
       this.touchButtons.forEach((button) => button.classList.remove("active"));
@@ -394,6 +443,9 @@
     constructor() {
       this.context = null;
       this.muted = false;
+      this.musicTimer = null;
+      this.musicStep = 0;
+      this.musicTheme = "overworld";
     }
 
     ensureContext() {
@@ -438,6 +490,10 @@
           this.tone(130, 0.09, "square", 0.06);
           this.tone(230, 0.11, "triangle", 0.035, 0.04);
         },
+        fire: () => {
+          this.tone(980, 0.07, "square", 0.05);
+          this.tone(620, 0.12, "triangle", 0.04, 0.03);
+        },
         power: () => {
           [523, 659, 784, 1047].forEach((note, index) => {
             this.tone(note, 0.16, "triangle", 0.05, index * 0.06);
@@ -468,8 +524,41 @@
 
     toggle() {
       this.muted = !this.muted;
-      if (!this.muted) this.ensureContext();
+      if (this.muted) this.stopMusic();
+      else this.ensureContext();
       return this.muted;
+    }
+
+    startMusic(theme = "overworld") {
+      this.musicTheme = theme;
+      this.stopMusic();
+      if (!this.ensureContext()) return;
+      const patterns = {
+        overworld: [523, 659, 784, 659, 587, 523, 440, 0],
+        underground: [196, 0, 220, 0, 196, 147, 0, 0],
+        athletic: [659, 784, 880, 784, 659, 587, 659, 0],
+        night: [392, 440, 523, 440, 392, 330, 294, 0],
+        water: [330, 392, 440, 392, 330, 294, 262, 0],
+        castle: [147, 175, 147, 131, 147, 110, 98, 0],
+        bonus: [784, 988, 1175, 988, 784, 659, 784, 0],
+      };
+      const pattern = patterns[theme] || patterns.overworld;
+      this.musicStep = 0;
+      const playStep = () => {
+        if (this.muted) return;
+        const note = pattern[this.musicStep % pattern.length];
+        const bass = pattern[(this.musicStep + 4) % pattern.length] || 0;
+        if (note) this.tone(note, 0.11, "square", 0.022);
+        if (bass && this.musicStep % 2 === 0) this.tone(bass / 2, 0.14, "triangle", 0.018);
+        this.musicStep += 1;
+      };
+      playStep();
+      this.musicTimer = window.setInterval(playStep, 150);
+    }
+
+    stopMusic() {
+      if (this.musicTimer) window.clearInterval(this.musicTimer);
+      this.musicTimer = null;
     }
   }
 
@@ -535,6 +624,50 @@
     }
   }
 
+  class Fireball {
+    constructor(x, y, direction) {
+      this.x = x;
+      this.y = y;
+      this.w = 18;
+      this.h = 18;
+      this.vx = direction * 460;
+      this.vy = -120;
+      this.bounces = 0;
+      this.active = true;
+    }
+
+    update(dt, tileMap) {
+      this.vy = Math.min(MAX_FALL_SPEED, this.vy + GRAVITY * 0.75 * dt);
+      this.x += this.vx * dt;
+      if (tileMap.resolveHorizontal(this)) {
+        this.active = false;
+        return;
+      }
+      this.y += this.vy * dt;
+      if (tileMap.resolveVertical(this)) {
+        if (this.bounces >= 3) {
+          this.active = false;
+        } else {
+          this.vy = -360;
+          this.bounces += 1;
+        }
+      }
+      if (this.y > tileMap.worldHeight + TILE) this.active = false;
+    }
+
+    draw(ctx, camera) {
+      if (!this.active) return;
+      const x = snapPixel(this.x - camera.x);
+      const y = snapPixel(this.y - camera.y);
+      ctx.save();
+      ctx.fillStyle = "#fff2a4";
+      ctx.fillRect(x, y, 18, 18);
+      ctx.fillStyle = "#e6472f";
+      ctx.fillRect(x + 3, y + 3, 12, 12);
+      ctx.restore();
+    }
+  }
+
   class Coin {
     constructor(x, y) {
       this.x = x + TILE / 2;
@@ -567,7 +700,7 @@
   }
 
   class PowerUp {
-    constructor(x, y, emerging = false) {
+    constructor(x, y, emerging = false, type = "mushroom") {
       this.x = x + 7;
       this.y = emerging ? y + 10 : y + 7;
       this.w = 34;
@@ -578,10 +711,17 @@
       this.emerging = emerging ? 0.5 : 0;
       this.targetY = y - 36;
       this.phase = Math.random() * Math.PI * 2;
+      this.type = type;
+      this.life = type === "star" ? 9 : Infinity;
     }
 
     update(dt, tileMap) {
       this.phase += dt * 4;
+      this.life -= dt;
+      if (this.life <= 0) {
+        this.active = false;
+        return;
+      }
       if (this.emerging > 0) {
         this.emerging -= dt;
         this.y = Math.max(this.targetY, this.y - 90 * dt);
@@ -599,22 +739,73 @@
       if (!this.active) return;
       const x = this.x - camera.x - 7;
       const y = this.y - camera.y - 7;
-      sprites.draw(ctx, "objects", SPRITE_RECTS.mushroom, x, y, 48, 48);
+      if (this.type === "mushroom") {
+        sprites.draw(ctx, "objects", SPRITE_RECTS.mushroom, x, y, 48, 48);
+        return;
+      }
+      const color = this.type === "flower" ? "#f4e647" : this.type === "star" ? "#fbd000" : "#54d45d";
+      ctx.save();
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(snapPixel(x + 9), snapPixel(y + 9), 30, 30);
+      ctx.fillStyle = color;
+      if (this.type === "star") {
+        ctx.beginPath();
+        for (let point = 0; point < 10; point += 1) {
+          const angle = -Math.PI / 2 + point * Math.PI / 5;
+          const radius = point % 2 ? 10 : 21;
+          const px = x + 24 + Math.cos(angle) * radius;
+          const py = y + 24 + Math.sin(angle) * radius;
+          if (point === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.fill();
+      } else if (this.type === "flower") {
+        ctx.fillRect(snapPixel(x + 15), snapPixel(y + 6), 18, 18);
+        ctx.fillStyle = "#e63931";
+        ctx.fillRect(snapPixel(x + 6), snapPixel(y + 15), 36, 18);
+        ctx.fillStyle = "#48aa4e";
+        ctx.fillRect(snapPixel(x + 21), snapPixel(y + 30), 9, 15);
+      } else {
+        ctx.fillRect(snapPixel(x + 12), snapPixel(y + 12), 24, 24);
+        ctx.fillStyle = "#fff";
+        ctx.font = "900 18px ui-monospace, monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("1", snapPixel(x + 24), snapPixel(y + 32));
+      }
+      ctx.restore();
     }
   }
 
   class Enemy {
-    constructor(x, y) {
+    constructor(x, y, type = "goomba", options = {}) {
+      const profiles = {
+        goomba: { w: 38, h: 31, speed: 66, offsetY: 15 },
+        koopa: { w: 38, h: 44, speed: 58, offsetY: 4 },
+        buzzy: { w: 40, h: 35, speed: 62, offsetY: 11 },
+        flyer: { w: 40, h: 34, speed: 72, offsetY: 0, airborne: true },
+        piranha: { w: 34, h: 48, speed: 0, offsetY: 0, anchored: true },
+        swimmer: { w: 42, h: 30, speed: 54, offsetY: 0, airborne: true },
+        boss: { w: 64, h: 54, speed: 46, offsetY: 42, boss: true },
+      };
+      const profile = profiles[type] || profiles.goomba;
+      this.type = type;
       this.x = x + 5;
-      this.y = y + 15;
-      this.w = 38;
-      this.h = 31;
-      this.vx = -66;
+      this.y = y + profile.offsetY;
+      this.anchorY = this.y;
+      this.w = profile.w;
+      this.h = profile.h;
+      this.vx = profile.speed ? -profile.speed : 0;
       this.vy = 0;
       this.active = true;
       this.awake = false;
       this.squished = 0;
       this.phase = Math.random() * Math.PI * 2;
+      this.airborne = Boolean(profile.airborne);
+      this.anchored = Boolean(profile.anchored);
+      this.isBoss = Boolean(profile.boss);
+      this.shell = false;
+      this.hitsRemaining = options.hits || (this.isBoss ? 3 : 1);
     }
 
     update(dt, tileMap, cameraX) {
@@ -630,6 +821,18 @@
       }
 
       this.phase += dt * 7;
+      if (this.anchored) {
+        this.y = this.anchorY + Math.max(0, Math.sin(this.phase * 0.55) * 20);
+        return;
+      }
+
+      if (this.airborne) {
+        this.x += this.vx * dt;
+        this.y = this.anchorY + Math.sin(this.phase * 0.75) * (this.type === "flyer" ? 42 : 22);
+        if (this.x < cameraX - TILE || this.x > tileMap.worldWidth - this.w) this.vx *= -1;
+        return;
+      }
+
       this.vy = Math.min(MAX_FALL_SPEED, this.vy + GRAVITY * dt);
       this.x += this.vx * dt;
       if (tileMap.resolveHorizontal(this)) this.vx *= -1;
@@ -639,14 +842,35 @@
     }
 
     stomp() {
+      if (this.anchored) return { defeated: false, score: 0 };
+      if (this.isBoss) {
+        this.hitsRemaining -= 1;
+        this.vx *= -1;
+        if (this.hitsRemaining <= 0) {
+          this.squished = 0.45;
+          return { defeated: true, score: 5000 };
+        }
+        return { defeated: false, score: 1000 };
+      }
+      if (this.type === "koopa" && !this.shell) {
+        this.shell = true;
+        this.vx = 0;
+        this.h = 30;
+        return { defeated: false, score: 100 };
+      }
+      if (this.type === "koopa" && this.shell) {
+        this.vx = this.vx === 0 ? 360 : 0;
+        return { defeated: false, score: 400 };
+      }
       this.squished = 0.28;
       this.vx = 0;
+      return { defeated: true, score: this.type === "buzzy" ? 200 : 100 };
     }
 
     draw(ctx, camera, sprites) {
       if (!this.active) return;
-      const x = this.x - camera.x;
-      const y = this.y - camera.y;
+      const x = snapPixel(this.x - camera.x);
+      const y = snapPixel(this.y - camera.y);
       if (this.squished > 0) {
         sprites.draw(
           ctx,
@@ -659,9 +883,71 @@
         );
         return;
       }
+      if (this.type !== "goomba") {
+        this.drawVariant(ctx, x, y);
+        return;
+      }
       const frame = Math.floor(this.phase * 0.65) % 2;
       const rect = { ...SPRITE_RECTS.goomba, x: SPRITE_RECTS.goomba.x + frame * 18 };
       sprites.draw(ctx, "enemies", rect, x - 5, y + this.h - 48, 48, 48);
+    }
+
+    drawVariant(ctx, x, y) {
+      const left = x + this.w / 2 - 24;
+      const bottom = y + this.h;
+      ctx.save();
+      ctx.imageSmoothingEnabled = false;
+
+      if (this.type === "piranha") {
+        ctx.fillStyle = "#19883a";
+        ctx.fillRect(snapPixel(left + 19), snapPixel(bottom - 27), 12, 30);
+        ctx.fillStyle = "#e53b2c";
+        ctx.fillRect(snapPixel(left + 6), snapPixel(bottom - 48), 36, 27);
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(snapPixel(left + 12), snapPixel(bottom - 42), 9, 9);
+        ctx.fillRect(snapPixel(left + 30), snapPixel(bottom - 42), 9, 9);
+        ctx.fillStyle = "#111";
+        ctx.fillRect(snapPixel(left + 15), snapPixel(bottom - 39), 3, 3);
+        ctx.fillRect(snapPixel(left + 33), snapPixel(bottom - 39), 3, 3);
+      } else if (this.type === "flyer" || this.type === "swimmer") {
+        ctx.fillStyle = this.type === "flyer" ? "#a96ee1" : "#41bde5";
+        ctx.fillRect(snapPixel(left + 9), snapPixel(bottom - 33), 30, 24);
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(snapPixel(left + 30), snapPixel(bottom - 27), 9, 9);
+        ctx.fillStyle = "#111";
+        ctx.fillRect(snapPixel(left + 33), snapPixel(bottom - 24), 3, 3);
+        ctx.fillStyle = this.type === "flyer" ? "#f4d7ff" : "#8deaff";
+        ctx.fillRect(snapPixel(left), snapPixel(bottom - 30), 9, 15);
+        ctx.fillRect(snapPixel(left + 39), snapPixel(bottom - 30), 9, 15);
+      } else if (this.type === "boss") {
+        ctx.fillStyle = "#7e251e";
+        ctx.fillRect(snapPixel(left), snapPixel(bottom - 60), 48, 57);
+        ctx.fillStyle = "#e75635";
+        ctx.fillRect(snapPixel(left + 6), snapPixel(bottom - 54), 36, 27);
+        ctx.fillStyle = "#fff2a4";
+        ctx.fillRect(snapPixel(left + 9), snapPixel(bottom - 45), 9, 9);
+        ctx.fillRect(snapPixel(left + 30), snapPixel(bottom - 45), 9, 9);
+        ctx.fillStyle = "#111";
+        ctx.fillRect(snapPixel(left + 12), snapPixel(bottom - 42), 3, 3);
+        ctx.fillRect(snapPixel(left + 33), snapPixel(bottom - 42), 3, 3);
+        ctx.fillStyle = "#fbd000";
+        for (let spike = 0; spike < this.hitsRemaining; spike += 1) {
+          ctx.fillRect(snapPixel(left + 6 + spike * 12), snapPixel(bottom - 66), 9, 9);
+        }
+      } else {
+        const shellColor = this.type === "buzzy" ? "#9aa4aa" : "#38a84f";
+        ctx.fillStyle = "#2d4a31";
+        ctx.fillRect(snapPixel(left + 6), snapPixel(bottom - 36), 36, 33);
+        ctx.fillStyle = shellColor;
+        ctx.fillRect(snapPixel(left + 9), snapPixel(bottom - 33), 30, 24);
+        if (this.type === "koopa" && !this.shell) {
+          ctx.fillStyle = "#f5cf73";
+          ctx.fillRect(snapPixel(left + 15), snapPixel(bottom - 48), 18, 18);
+          ctx.fillRect(snapPixel(left + 3), snapPixel(bottom - 15), 12, 12);
+          ctx.fillRect(snapPixel(left + 33), snapPixel(bottom - 15), 12, 12);
+        }
+      }
+      ctx.restore();
     }
   }
 
@@ -690,7 +976,7 @@
     }
 
     isSolidTile(symbol) {
-      return ["X", "?", "M", "B", "R"].includes(symbol);
+      return ["X", "?", "M", "I", "S", "L", "B", "R"].includes(symbol);
     }
 
     isSolidAtPixel(x, y) {
@@ -748,14 +1034,19 @@
     hitBlock(tx, ty, player) {
       const symbol = this.getTile(tx, ty);
       const key = this.key(tx, ty);
-      if (!["?", "M", "B"].includes(symbol)) return;
+      if (!["?", "M", "I", "S", "L", "B"].includes(symbol)) return;
       this.bumpTimers.set(key, 0.16);
       this.game.audio.play("bump");
 
-      if (symbol === "M" && !this.usedBlocks.has(key)) {
+      if (["M", "I", "S", "L"].includes(symbol) && !this.usedBlocks.has(key)) {
         this.usedBlocks.add(key);
-        this.game.level.powerUps.push(new PowerUp(tx * TILE, ty * TILE, true));
-        this.game.showToast("En supersvamp!");
+        const type = symbol === "M"
+          ? "mushroom"
+          : symbol === "I"
+            ? player.powered ? "flower" : "mushroom"
+            : symbol === "S" ? "star" : "life";
+        this.game.level.powerUps.push(new PowerUp(tx * TILE, ty * TILE, true, type));
+        this.game.showToast(type === "star" ? "Stjernekraft!" : type === "life" ? "Ekstra liv!" : "Power-up!");
       } else if (symbol === "?" && !this.usedBlocks.has(key)) {
         this.usedBlocks.add(key);
         this.game.collectCoin(tx * TILE + TILE / 2, ty * TILE - 6);
@@ -923,7 +1214,7 @@
         return;
       }
 
-      const isBonusBlock = symbol === "?" || symbol === "M";
+      const isBonusBlock = ["?", "M", "I", "S", "L"].includes(symbol);
       const used = isBonusBlock && this.usedBlocks.has(key);
       const spriteRect =
         symbol === "B"
@@ -992,14 +1283,20 @@
       this.jumpBuffer = 0;
       this.facing = 1;
       this.powered = false;
+      this.fire = false;
+      this.starTimer = 0;
       this.invincible = 0;
       this.runTime = 0;
+      this.running = false;
+      this.skidding = false;
+      this.crouching = false;
       this.previousBottom = this.y + this.h;
     }
 
     update(dt, input, tileMap, audio) {
       this.previousBottom = this.y + this.h;
       this.invincible = Math.max(0, this.invincible - dt);
+      this.starTimer = Math.max(0, this.starTimer - dt);
       this.runTime += dt * (1 + Math.abs(this.vx) / 80);
 
       if (this.grounded) this.coyoteTime = 0.11;
@@ -1009,19 +1306,25 @@
       else this.jumpBuffer = Math.max(0, this.jumpBuffer - dt);
 
       const axis = input.axis;
+      this.running = input.run;
+      this.crouching = this.powered && this.grounded && input.down;
+      this.skidding = axis !== 0 && Math.abs(this.vx) > 95 && Math.sign(this.vx) !== axis;
       if (axis !== 0) {
-        const acceleration = this.grounded ? 1650 : 1040;
+        const acceleration = this.grounded
+          ? this.skidding ? 2900 : input.run ? 2250 : 1650
+          : input.run ? 1180 : 960;
         this.vx += axis * acceleration * dt;
         this.facing = axis;
       } else {
-        const drag = this.grounded ? 0.00004 : 0.045;
+        const drag = this.grounded ? this.crouching ? 0.000001 : 0.00004 : 0.045;
         this.vx *= Math.pow(drag, dt);
         if (Math.abs(this.vx) < 3) this.vx = 0;
       }
-      this.vx = clamp(this.vx, -320, 320);
+      const maxSpeed = this.crouching ? 120 : input.run ? 430 : 290;
+      this.vx = clamp(this.vx, -maxSpeed, maxSpeed);
 
-      if (this.jumpBuffer > 0 && this.coyoteTime > 0) {
-        this.vy = -670;
+      if (!this.crouching && this.jumpBuffer > 0 && this.coyoteTime > 0) {
+        this.vy = input.run ? -700 : -670;
         this.grounded = false;
         this.coyoteTime = 0;
         this.jumpBuffer = 0;
@@ -1045,8 +1348,20 @@
       this.invincible = 1;
     }
 
+    grantFire() {
+      this.powered = true;
+      this.fire = true;
+      this.invincible = 1;
+    }
+
+    grantStar() {
+      this.starTimer = 9;
+      this.invincible = 0.3;
+    }
+
     shrink() {
       this.powered = false;
+      this.fire = false;
       this.invincible = 2;
     }
 
@@ -1057,6 +1372,8 @@
       let frame = 0;
       if (!this.grounded) {
         frame = 3;
+      } else if (this.skidding) {
+        frame = 4;
       } else if (Math.abs(this.vx) > 24) {
         frame = 1 + (Math.floor(this.runTime * 0.7) % 3);
       }
@@ -1064,7 +1381,7 @@
       const baseRect = this.powered ? SPRITE_RECTS.marioBig : SPRITE_RECTS.marioSmall;
       const rect = { ...baseRect, x: baseRect.x + frame * 18 };
       const drawWidth = 48;
-      const drawHeight = this.powered ? 96 : 48;
+      const drawHeight = this.powered ? this.crouching ? 72 : 96 : 48;
       const drawX = x + this.w / 2 - drawWidth / 2;
       const drawY = y + this.h - drawHeight;
       const drawn = sprites.draw(
@@ -1082,6 +1399,13 @@
         ctx.fillStyle = "#e23b2e";
         ctx.fillRect(x + 4, y, this.w - 8, this.h);
       }
+      if (this.starTimer > 0) {
+        ctx.save();
+        ctx.globalAlpha = 0.45;
+        ctx.fillStyle = Math.floor(this.starTimer * 14) % 2 ? "#fbd000" : "#51d9ff";
+        ctx.fillRect(snapPixel(x - 3), snapPixel(y - 3), 42, this.h + 6);
+        ctx.restore();
+      }
     }
   }
 
@@ -1094,6 +1418,7 @@
       this.enemies = [];
       this.powerUps = [];
       this.checkpoints = [];
+      this.pipes = [];
       this.hazards = [];
       this.finish = null;
       this.spawn = { x: TILE * 2, y: TILE * 9 };
@@ -1101,18 +1426,49 @@
     }
 
     parseEntities() {
+      const addEntity = (entity) => {
+        const x = entity.x * TILE;
+        const y = entity.y * TILE;
+        if (entity.type === "player") this.spawn = { x, y };
+        if (entity.type === "coin") this.coins.push(new Coin(x, y));
+        if (["goomba", "koopa", "buzzy", "flyer", "piranha", "swimmer", "boss"].includes(entity.type)) {
+          this.enemies.push(new Enemy(x, y, entity.type, entity));
+        }
+        if (entity.type === "powerUp") this.powerUps.push(new PowerUp(x, y));
+        if (entity.type === "checkpoint") {
+          this.checkpoints.push({ x: x + 13, y: y - 47, w: 30, h: 95, active: false });
+        }
+        if (entity.type === "pipe") {
+          this.pipes.push({ x, y, w: TILE * 2, h: TILE * 2, target: entity.target });
+        }
+        if (entity.type === "finish") {
+          this.finish = {
+            x: x + 8,
+            y: y - 24,
+            w: 45,
+            h: 120,
+            castle: Boolean(entity.castle),
+            exit: Boolean(entity.exit),
+          };
+        }
+      };
+
+      if (Array.isArray(this.definition.entities)) {
+        this.definition.entities.forEach(addEntity);
+      }
+
       this.definition.map.forEach((row, ty) => {
         Array.from(row).forEach((symbol, tx) => {
           const x = tx * TILE;
           const y = ty * TILE;
-          if (symbol === "P") this.spawn = { x, y };
-          if (symbol === "C") this.coins.push(new Coin(x, y));
-          if (symbol === "E") this.enemies.push(new Enemy(x, y));
-          if (symbol === "U") this.powerUps.push(new PowerUp(x, y));
-          if (symbol === "K") {
+          if (!this.definition.entities && symbol === "P") this.spawn = { x, y };
+          if (!this.definition.entities && symbol === "C") this.coins.push(new Coin(x, y));
+          if (!this.definition.entities && symbol === "E") this.enemies.push(new Enemy(x, y, "goomba"));
+          if (!this.definition.entities && symbol === "U") this.powerUps.push(new PowerUp(x, y));
+          if (!this.definition.entities && symbol === "K") {
             this.checkpoints.push({ x: x + 13, y: y - 47, w: 30, h: 95, active: false });
           }
-          if (symbol === "F") this.finish = { x: x + 8, y: y - 24, w: 45, h: 120 };
+          if (!this.definition.entities && symbol === "F") this.finish = { x: x + 8, y: y - 24, w: 45, h: 120 };
           if (symbol === "^") this.hazards.push({ x: x + 5, y: y + 18, w: TILE - 10, h: 30 });
         });
       });
@@ -1132,14 +1488,39 @@
 
       this.enemies.forEach((enemy) => {
         enemy.update(dt, this.tileMap, this.game.camera.x);
+        const fireball = this.game.fireballs.find(
+          (item) => item.active && enemy.active && rectsOverlap(item, enemy)
+        );
+        if (fireball) {
+          fireball.active = false;
+          if (enemy.type !== "buzzy") {
+            if (enemy.isBoss) {
+              enemy.hitsRemaining -= 1;
+              if (enemy.hitsRemaining <= 0) enemy.squished = 0.45;
+            } else {
+              enemy.squished = 0.24;
+            }
+            enemy.vx = 0;
+            this.game.addScore(enemy.isBoss ? 3000 : 200);
+            this.game.audio.play("stomp");
+          }
+        }
         if (!enemy.active || enemy.squished > 0 || !rectsOverlap(player, enemy)) return;
+        if (player.starTimer > 0 && !enemy.isBoss) {
+          enemy.squished = 0.18;
+          enemy.vx = 0;
+          this.game.addScore(500);
+          this.game.audio.play("stomp");
+          return;
+        }
         const stomped = player.vy > 80 && player.previousBottom <= enemy.y + 13;
-        if (stomped) {
-          enemy.stomp();
+        if (stomped && !enemy.anchored) {
+          const result = enemy.stomp();
           player.vy = -430;
-          this.game.addScore(100);
+          this.game.addScore(result.score);
           this.game.audio.play("stomp");
           this.game.burst(enemy.x + enemy.w / 2, enemy.y + 5, "#fff2a4", 7);
+          if (enemy.isBoss && !result.defeated) this.game.showToast(`${enemy.hitsRemaining} træffere tilbage`);
         } else {
           this.game.damagePlayer();
         }
@@ -1149,10 +1530,21 @@
         powerUp.update(dt, this.tileMap);
         if (powerUp.active && rectsOverlap(player, powerUp)) {
           powerUp.active = false;
-          player.grow();
+          if (powerUp.type === "mushroom") player.grow();
+          if (powerUp.type === "flower") player.grantFire();
+          if (powerUp.type === "star") player.grantStar();
+          if (powerUp.type === "life") this.game.lives += 1;
           this.game.addScore(1000);
           this.game.audio.play("power");
-          this.game.showToast("Supersvamp! Ét ekstra hit.");
+          this.game.showToast(
+            powerUp.type === "star"
+              ? "Uovervindelig!"
+              : powerUp.type === "life"
+                ? "Ekstra liv!"
+                : powerUp.type === "flower"
+                  ? "Ildkraft!"
+                  : "Supersvamp! Ét ekstra hit."
+          );
           this.game.burst(powerUp.x + powerUp.w / 2, powerUp.y, "#ffd45d", 12);
         }
       });
@@ -1172,7 +1564,22 @@
         }
       });
 
-      if (this.finish && rectsOverlap(player, this.finish)) this.game.completeLevel();
+      const pipe = this.pipes.find((item) =>
+        player.x + player.w > item.x + 6 &&
+        player.x < item.x + item.w - 6 &&
+        Math.abs(player.y + player.h - item.y) < 14
+      );
+      if (pipe && this.game.input.down && this.game.pipeCooldown <= 0) {
+        this.game.enterSubarea(pipe);
+        return;
+      }
+
+      const bossAlive = this.enemies.some((enemy) => enemy.isBoss && enemy.active);
+      if (this.finish && rectsOverlap(player, this.finish)) {
+        if (this.finish.exit) this.game.exitSubarea();
+        else if (bossAlive) this.game.showToast("Besejr slotsherren først");
+        else this.game.completeLevel();
+      }
       if (this.hazards.some((hazard) => rectsOverlap(player, hazard))) this.game.damagePlayer(true);
     }
 
@@ -1259,6 +1666,19 @@
       ctx.beginPath();
       ctx.arc(x + 26, y + 20, 6, 0, Math.PI * 2);
       ctx.fill();
+      if (finish.castle) {
+        const castleX = x + 58;
+        const castleY = y + 18;
+        ctx.fillStyle = "#173f5d";
+        ctx.fillRect(castleX, castleY, 84, 90);
+        ctx.fillStyle = "#8e4d43";
+        ctx.fillRect(castleX + 6, castleY + 18, 72, 72);
+        ctx.fillStyle = "#fff2a4";
+        ctx.fillRect(castleX + 12, castleY + 6, 15, 18);
+        ctx.fillRect(castleX + 57, castleY + 6, 15, 18);
+        ctx.fillStyle = "#111";
+        ctx.fillRect(castleX + 33, castleY + 60, 18, 30);
+      }
     }
 
     drawHazard(ctx, camera, hazard) {
@@ -1315,7 +1735,7 @@
       this.hud.lives.textContent = String(game.lives);
       this.hud.score.textContent = String(game.score).padStart(6, "0");
       this.hud.coins.textContent = String(game.coins).padStart(2, "0");
-      this.hud.level.textContent = WORLD_LABELS[game.levelIndex];
+      this.hud.level.textContent = getLevelLabel(game.levelIndex);
       this.hud.time.textContent = String(Math.max(0, Math.ceil(game.timeLeft)));
     }
 
@@ -1329,15 +1749,19 @@
 
   class Game {
     constructor() {
+      this.saveKey = "wutborg-mario-campaign-v2";
       this.canvas = document.getElementById("game-canvas");
       this.ctx = this.canvas.getContext("2d");
       this.sprites = new SpriteAtlas();
+      this.assetsReady = false;
       this.input = new InputManager();
       this.audio = new AudioManager();
       this.camera = new Camera();
       this.ui = new UI();
       this.state = "menu";
-      this.selectedLevel = 0;
+      this.progress = this.loadProgress();
+      this.selectedLevel = Math.min(this.progress.unlocked, TOTAL_LEVELS - 1);
+      this.selectedWorld = Math.floor(this.selectedLevel / 4);
       this.levelIndex = 0;
       this.level = null;
       this.player = null;
@@ -1348,15 +1772,20 @@
       this.timeLeft = LEVEL_DEFINITIONS[0].time;
       this.respawnPoint = null;
       this.particles = [];
+      this.fireballs = [];
       this.transition = 0;
       this.transitionKind = "";
       this.shake = 0;
       this.readyTimer = 0;
       this.finishTimer = 0;
+      this.pipeCooldown = 0;
+      this.subareaContext = null;
       this.accumulator = 0;
       this.lastTime = performance.now();
       this.bindUI();
-      this.loadLevel(0);
+      this.prepareAssets();
+      this.populateCampaignPicker();
+      this.loadLevel(this.selectedLevel);
       this.state = "menu";
       this.ui.showOnly("menu");
       this.loop = this.loop.bind(this);
@@ -1365,6 +1794,7 @@
 
     bindUI() {
       document.getElementById("start-button").addEventListener("click", () => {
+        if (!this.assetsReady) return;
         this.audio.ensureContext();
         this.startNewGame(this.selectedLevel);
       });
@@ -1373,16 +1803,6 @@
       });
       document.querySelectorAll("[data-close-instructions]").forEach((button) => {
         button.addEventListener("click", () => this.ui.showOnly("menu"));
-      });
-      document.querySelectorAll(".level-choice").forEach((button) => {
-        button.addEventListener("click", () => {
-          this.selectedLevel = Number(button.dataset.level);
-          document.querySelectorAll(".level-choice").forEach((choice) => {
-            choice.classList.toggle("active", choice === button);
-          });
-          this.loadLevel(this.selectedLevel);
-          this.state = "menu";
-        });
       });
       document.getElementById("resume-button").addEventListener("click", () => this.resume());
       document.getElementById("pause-button").addEventListener("click", () => {
@@ -1408,9 +1828,117 @@
       });
       document.getElementById("mute-button").addEventListener("click", (event) => {
         const muted = this.audio.toggle();
+        if (!muted && this.state === "playing") this.audio.startMusic(this.level.definition.biome);
         event.currentTarget.textContent = muted ? "Lyd: fra" : "Lyd: til";
         event.currentTarget.setAttribute("aria-pressed", String(muted));
       });
+    }
+
+    prepareAssets() {
+      const startButton = document.getElementById("start-button");
+      const status = document.getElementById("asset-status");
+      startButton.disabled = true;
+      this.sprites.ready().then(
+        () => {
+          this.assetsReady = true;
+          startButton.disabled = false;
+          status.textContent = "Klar til eventyr";
+        },
+        () => {
+          this.assetsReady = true;
+          startButton.disabled = false;
+          status.textContent = "Sprites mangler – spillet bruger en enkel reservegrafik.";
+        }
+      );
+    }
+
+    loadProgress() {
+      try {
+        const stored = JSON.parse(window.localStorage.getItem(this.saveKey));
+        if (stored && Number.isInteger(stored.unlocked)) {
+          return {
+            unlocked: clamp(stored.unlocked, 0, TOTAL_LEVELS - 1),
+            completed: Array.isArray(stored.completed) ? stored.completed : [],
+            bestScores: stored.bestScores && typeof stored.bestScores === "object" ? stored.bestScores : {},
+          };
+        }
+      } catch {
+        // Et ugyldigt lokalt save må aldrig blokere spilstarten.
+      }
+      return { unlocked: 0, completed: [], bestScores: {} };
+    }
+
+    saveProgress() {
+      try {
+        window.localStorage.setItem(this.saveKey, JSON.stringify(this.progress));
+      } catch {
+        // Kampagnen forbliver spilbar, hvis privat browsertilstand blokerer storage.
+      }
+    }
+
+    populateCampaignPicker() {
+      const worldPicker = document.getElementById("world-picker");
+      const levelList = document.getElementById("level-choice-list");
+      const summary = document.getElementById("campaign-summary");
+      const label = document.getElementById("level-picker-label");
+      const worlds = window.PipsSkyboundCampaign?.worlds || [{ name: "Verden 1" }];
+
+      worldPicker.replaceChildren();
+      worlds.forEach((world, worldIndex) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "world-choice";
+        button.textContent = String(worldIndex + 1);
+        button.title = world.name;
+        button.disabled = worldIndex * 4 > this.progress.unlocked;
+        button.classList.toggle("active", worldIndex === this.selectedWorld);
+        button.addEventListener("click", () => {
+          this.selectedWorld = worldIndex;
+          this.populateCampaignPicker();
+        });
+        worldPicker.append(button);
+      });
+
+      const worldStart = this.selectedWorld * 4;
+      label.textContent = worlds[this.selectedWorld]?.name || "Startbane";
+      levelList.replaceChildren();
+      for (let stage = 0; stage < 4; stage += 1) {
+        const levelIndex = worldStart + stage;
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "level-choice";
+        button.dataset.level = String(levelIndex);
+        button.textContent = getLevelLabel(levelIndex);
+        button.disabled = levelIndex > this.progress.unlocked || !LEVEL_DEFINITIONS[levelIndex];
+        button.classList.toggle("active", levelIndex === this.selectedLevel);
+        button.addEventListener("click", () => this.selectLevel(levelIndex));
+        levelList.append(button);
+      }
+
+      const completed = new Set(this.progress.completed).size;
+      summary.textContent = `${completed} / ${TOTAL_LEVELS} baner klaret · ${this.progress.unlocked + 1} åbnet`;
+    }
+
+    selectLevel(levelIndex) {
+      if (levelIndex > this.progress.unlocked || !LEVEL_DEFINITIONS[levelIndex]) return;
+      this.selectedLevel = levelIndex;
+      this.selectedWorld = Math.floor(levelIndex / 4);
+      this.loadLevel(levelIndex);
+      this.state = "menu";
+      this.populateCampaignPicker();
+    }
+
+    unlockLevel(levelIndex) {
+      const completedId = LEVEL_DEFINITIONS[this.levelIndex]?.id;
+      if (completedId && !this.progress.completed.includes(completedId)) {
+        this.progress.completed.push(completedId);
+      }
+      this.progress.unlocked = Math.max(this.progress.unlocked, Math.min(levelIndex, TOTAL_LEVELS - 1));
+      this.progress.bestScores[LEVEL_DEFINITIONS[this.levelIndex]?.id] = Math.max(
+        this.progress.bestScores[LEVEL_DEFINITIONS[this.levelIndex]?.id] || 0,
+        this.score
+      );
+      this.saveProgress();
     }
 
     startNewGame(levelIndex = 0) {
@@ -1433,12 +1961,15 @@
     loadLevel(levelIndex) {
       this.levelIndex = clamp(levelIndex, 0, TOTAL_LEVELS - 1);
       this.level = new Level(LEVEL_DEFINITIONS[this.levelIndex], this);
+      this.subareaContext = null;
+      this.pipeCooldown = 0;
       this.respawnPoint = { ...this.level.spawn };
       this.player = new Player(this.respawnPoint.x, this.respawnPoint.y);
       this.timeLeft = this.level.definition.time;
       this.transition = 0;
       this.transitionKind = "";
       this.particles = [];
+      this.fireballs = [];
       this.camera.reset(this.player.x + this.player.w / 2 - VIEW_WIDTH * 0.42);
       this.levelStartSnapshot = {
         lives: this.lives,
@@ -1447,6 +1978,48 @@
         score: this.score,
       };
       this.ui.updateHud(this);
+    }
+
+    enterSubarea(pipe) {
+      if (this.subareaContext) return;
+      const destination = this.level.definition.subareas?.find((area) => area.id === pipe.target);
+      if (!destination) return;
+      this.subareaContext = {
+        level: this.level,
+        respawnPoint: { ...this.respawnPoint },
+        pipe,
+        playerState: {
+          powered: this.player.powered,
+          fire: this.player.fire,
+          starTimer: this.player.starTimer,
+        },
+      };
+      this.level = new Level(destination, this);
+      this.respawnPoint = { ...this.level.spawn };
+      this.player = new Player(this.respawnPoint.x, this.respawnPoint.y);
+      this.player.powered = this.subareaContext.playerState.powered;
+      this.player.fire = this.subareaContext.playerState.fire;
+      this.player.starTimer = this.subareaContext.playerState.starTimer;
+      this.camera.reset(this.player.x + this.player.w / 2 - VIEW_WIDTH * 0.42);
+      this.pipeCooldown = 0.7;
+      this.showToast("Bonusrum!");
+    }
+
+    exitSubarea() {
+      const context = this.subareaContext;
+      if (!context) return;
+      this.level = context.level;
+      this.respawnPoint = context.respawnPoint;
+      const exitX = context.pipe.x + context.pipe.w + 8;
+      const exitY = context.pipe.y + TILE;
+      this.player = new Player(exitX, exitY);
+      this.player.powered = context.playerState.powered;
+      this.player.fire = context.playerState.fire;
+      this.player.starTimer = context.playerState.starTimer;
+      this.camera.reset(this.player.x + this.player.w / 2 - VIEW_WIDTH * 0.42);
+      this.subareaContext = null;
+      this.pipeCooldown = 0.7;
+      this.showToast("Tilbage på banen");
     }
 
     restartCurrentLevel() {
@@ -1464,9 +2037,8 @@
     returnToMenu() {
       this.input.releaseAll();
       this.selectedLevel = this.levelIndex;
-      document.querySelectorAll(".level-choice").forEach((choice) => {
-        choice.classList.toggle("active", Number(choice.dataset.level) === this.selectedLevel);
-      });
+      this.selectedWorld = Math.floor(this.selectedLevel / 4);
+      this.populateCampaignPicker();
       this.state = "menu";
       this.ui.showOnly("menu");
     }
@@ -1475,6 +2047,7 @@
       if (this.state !== "playing" || this.transition > 0) return;
       this.state = "paused";
       this.input.releaseAll();
+      this.audio.stopMusic();
       this.ui.showOnly("pause");
     }
 
@@ -1482,6 +2055,7 @@
       if (this.state !== "paused") return;
       this.state = "playing";
       this.ui.hideAll();
+      this.audio.startMusic(this.level.definition.biome);
       this.accumulator = 0;
       this.lastTime = performance.now();
     }
@@ -1506,6 +2080,15 @@
       this.ui.updateHud(this);
     }
 
+    throwFireball() {
+      if (!this.player.fire || this.fireballs.filter((item) => item.active).length >= 2) return;
+      const direction = this.player.facing || 1;
+      const x = this.player.x + (direction > 0 ? this.player.w : -18);
+      const y = this.player.y + this.player.h * 0.45;
+      this.fireballs.push(new Fireball(x, y, direction));
+      this.audio.play("fire");
+    }
+
     damagePlayer(forceDeath = false) {
       if (this.state !== "playing" || this.transition > 0 || this.player.invincible > 0) return;
       if (this.player.powered && !forceDeath) {
@@ -1521,6 +2104,7 @@
     killPlayer() {
       if (this.transition > 0) return;
       this.audio.play("hurt");
+      this.audio.stopMusic();
       this.transition = 0.85;
       this.transitionKind = "death";
       this.player.vy = -430;
@@ -1535,6 +2119,7 @@
         this.audio.play("gameOver");
         this.ui.showOnly("gameOver");
       } else {
+        this.subareaContext = null;
         const savedRespawn = { ...this.respawnPoint };
         this.level = new Level(LEVEL_DEFINITIONS[this.levelIndex], this);
         this.respawnPoint = savedRespawn;
@@ -1555,11 +2140,13 @@
     completeLevel() {
       if (this.state !== "playing" || this.transition > 0) return;
       this.state = "finishing";
-      this.finishTimer = 1.35;
+      this.finishTimer = 2.1;
+      this.finishDuration = this.finishTimer;
       this.completedTime = Math.max(0, Math.ceil(this.timeLeft));
       this.addScore(this.completedTime * 50);
       this.input.releaseAll();
       this.audio.play("complete");
+      this.audio.stopMusic();
       this.burst(this.player.x + this.player.w / 2, this.player.y, "#ffd45d", 24);
     }
 
@@ -1567,6 +2154,7 @@
       this.state = "complete";
 
       const finalLevel = this.levelIndex === TOTAL_LEVELS - 1;
+      this.unlockLevel(this.levelIndex + 1);
       document.getElementById("complete-kicker").textContent = finalLevel
         ? "Hele eventyret klaret"
         : "Bane klaret";
@@ -1574,8 +2162,8 @@
         ? "Mario klarede eventyret!"
         : "Godt gået!";
       document.getElementById("complete-copy").textContent = finalLevel
-        ? "Alle tre skyveje er erobret. En flot rejse fra eng til solruin."
-        : `${this.level.definition.name} er gennemført. Den næste skyvej venter.`;
+        ? "Alle otte verdener er erobret. Mario har klaret hele kampagnen!"
+        : `${this.level.definition.name} er gennemført. ${getLevelLabel(this.levelIndex + 1)} venter.`;
       document.getElementById("result-coins").textContent = String(this.totalCoins);
       document.getElementById("result-time").textContent = `${this.completedTime} sek.`;
       document.getElementById("next-level-button").textContent = finalLevel
@@ -1625,17 +2213,30 @@
 
       this.particles = this.particles.filter((particle) => particle.update(dt));
       this.shake = Math.max(0, this.shake - dt);
+      this.pipeCooldown = Math.max(0, this.pipeCooldown - dt);
 
       if (this.state === "ready") {
         this.readyTimer -= dt;
         if (this.readyTimer <= 0) {
           this.state = "playing";
+          this.audio.startMusic(this.level.definition.biome);
           this.showToast(this.level.definition.name);
         }
         return;
       }
 
       if (this.state === "finishing") {
+        const elapsed = this.finishDuration - this.finishTimer;
+        const finish = this.level.finish;
+        if (finish) {
+          if (elapsed < 0.7) {
+            const targetY = finish.y + finish.h - this.player.h;
+            this.player.y = Math.min(targetY, this.player.y + 170 * dt);
+          } else {
+            this.player.x += 105 * dt;
+            this.player.facing = 1;
+          }
+        }
         this.finishTimer -= dt;
         if (this.finishTimer <= 0) this.showCompleteScreen();
         return;
@@ -1662,6 +2263,9 @@
       }
 
       this.player.update(dt, this.input, this.level.tileMap, this.audio);
+      if (this.input.firePressed) this.throwFireball();
+      this.fireballs.forEach((fireball) => fireball.update(dt, this.level.tileMap));
+      this.fireballs = this.fireballs.filter((fireball) => fireball.active);
       const cameraEdge = this.camera.x + 3;
       if (this.player.x < cameraEdge) {
         this.player.x = cameraEdge;
@@ -1676,13 +2280,71 @@
     drawBackground() {
       const ctx = this.ctx;
       const palette = this.level.definition.palette;
+      const biome = this.level.definition.biome || "overworld";
       ctx.fillStyle = palette.skyTop;
       ctx.fillRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
+
+      if (["underground", "castle"].includes(biome)) {
+        this.drawDungeonBackdrop(biome === "castle");
+        return;
+      }
+
+      if (biome === "night") this.drawStars();
 
       this.drawClouds(this.camera.x * 0.08);
       this.drawHills(palette.hillFar, 474, 96, this.camera.x * 0.12);
       this.drawHills(palette.hillNear, 522, 132, this.camera.x * 0.2);
       this.drawBushes(palette.grass, 552, this.camera.x * 0.32);
+      if (biome === "water") this.drawWaterline();
+      if (biome === "snow") this.drawSnow();
+    }
+
+    drawDungeonBackdrop(castle) {
+      const ctx = this.ctx;
+      const color = castle ? "#5b3030" : "#365070";
+      const highlight = castle ? "#8b4741" : "#557b9a";
+      for (let y = 24; y < VIEW_HEIGHT; y += 36) {
+        for (let x = (Math.floor(this.camera.x / 12) % 2) * -24; x < VIEW_WIDTH; x += 48) {
+          ctx.fillStyle = color;
+          ctx.fillRect(x, y, 42, 30);
+          ctx.fillStyle = highlight;
+          ctx.fillRect(x + 3, y + 3, 36, 6);
+        }
+      }
+      if (castle) {
+        ctx.fillStyle = "#f06b3b";
+        for (let x = 42; x < VIEW_WIDTH; x += 150) {
+          ctx.fillRect(x, 170 + ((x / 3) % 4) * 18, 18, 18);
+        }
+      }
+    }
+
+    drawStars() {
+      const ctx = this.ctx;
+      ctx.fillStyle = "#fff2a4";
+      for (let index = 0; index < 28; index += 1) {
+        const x = (index * 97 + 31) % VIEW_WIDTH;
+        const y = 30 + ((index * 53) % 310);
+        ctx.fillRect(snapPixel(x), snapPixel(y), 6, 6);
+      }
+    }
+
+    drawWaterline() {
+      const ctx = this.ctx;
+      ctx.fillStyle = "#6ee4ee";
+      for (let x = 0; x < VIEW_WIDTH; x += 24) {
+        ctx.fillRect(x, 520 + ((x / 24) % 2) * 6, 18, 9);
+      }
+    }
+
+    drawSnow() {
+      const ctx = this.ctx;
+      ctx.fillStyle = "rgba(255,255,255,0.7)";
+      for (let index = 0; index < 24; index += 1) {
+        const x = (index * 71 - this.camera.x * 0.18) % VIEW_WIDTH;
+        const y = 42 + ((index * 89) % 420);
+        ctx.fillRect(snapPixel(x), snapPixel(y), 6, 6);
+      }
     }
 
     drawClouds(offset) {
@@ -1743,7 +2405,7 @@
       ctx.font = "900 30px ui-monospace, Consolas, monospace";
       ctx.fillText("VERDEN", VIEW_WIDTH / 2, 205);
       ctx.font = "900 42px ui-monospace, Consolas, monospace";
-      ctx.fillText(WORLD_LABELS[this.levelIndex], VIEW_WIDTH / 2, 255);
+      ctx.fillText(getLevelLabel(this.levelIndex), VIEW_WIDTH / 2, 255);
 
       const marioX = VIEW_WIDTH / 2 - 55;
       const marioY = 340;
@@ -1774,7 +2436,7 @@
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.font = "900 34px ui-monospace, Consolas, monospace";
-      ctx.fillText(`${WORLD_LABELS[this.levelIndex]} KLARET!`, VIEW_WIDTH / 2, 275);
+      ctx.fillText(`${getLevelLabel(this.levelIndex)} KLARET!`, VIEW_WIDTH / 2, 275);
       ctx.fillStyle = "#ffd800";
       ctx.font = "900 24px ui-monospace, Consolas, monospace";
       ctx.fillText(`TIDSBONUS  ${this.completedTime * 50}`, VIEW_WIDTH / 2, 325);
@@ -1794,6 +2456,7 @@
       this.drawBackground();
       this.level.draw(ctx, this.camera);
       this.player.draw(ctx, this.camera, this.sprites);
+      this.fireballs.forEach((fireball) => fireball.draw(ctx, this.camera));
       this.particles.forEach((particle) => particle.draw(ctx, this.camera));
 
       if (this.transition > 0 && this.transitionKind === "death") {
