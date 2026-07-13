@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#e65b4f" />
+  <meta name="description" content="Wutborg Kart: et farverigt arkade-racerspil med AI-kørere, items og lokale rekorder." />
+  <title>Wutborg Kart | Wutborg Spillehjørne</title>
+  <link rel="stylesheet" href="css/kart-racer.css?v=20260713-kart1" />
+</head>
+<body>
+  <div class="kart-page">
+    <nav class="kart-nav" aria-label="Wutborg Kart navigation">
+      <a class="kart-brand" href="minispil.html"><span class="kart-brand-mark" aria-hidden="true">K</span><span>Wutborg Kart<small>Familiens spillehjørne</small></span></a>
+      <div class="kart-nav-links"><a href="minispil.html">← Minispil</a><a href="index.html">Forsiden</a><button class="nav-kart-button" id="kart-sound" type="button">Lyd: til</button><button class="nav-kart-button" id="kart-pause-button" type="button">Pause</button></div>
+    </nav>
+
+    <header class="kart-hero">
+      <div><p>Start motoren</p><h1>Wutborg<br /><span>Kart</span></h1></div>
+      <p class="kart-hero-copy">En hurtig, farverig racerrunde med syv rivaler, smarte items og én stor kloversløjfe.</p>
+    </header>
+
+    <main class="race-shell">
+      <canvas id="kart-canvas" width="960" height="600" aria-label="Wutborg Kart racerbane. Brug piletaster eller WASD til at køre, Shift til at bremse og Space til item."></canvas>
+      <section class="race-hud" aria-label="Løbsstatus">
+        <div class="race-hud-top"><div class="hud-cluster"><div class="hud-stat"><small>Plads</small><strong id="kart-position">–</strong></div><div class="hud-stat"><small>Omgang</small><strong id="kart-lap">1/3</strong></div></div><div class="hud-cluster"><div class="hud-stat"><small>Tid</small><strong id="kart-time">0:00.00</strong></div><div class="hud-stat"><small>Fart</small><strong id="kart-speed">0 km/t</strong></div></div></div>
+        <div class="hud-item" id="kart-item">—</div>
+        <div class="kart-countdown" id="kart-countdown" hidden aria-live="assertive"></div>
+      </section>
+
+      <section class="screen" id="kart-menu">
+        <div class="screen-card">
+          <p class="screen-kicker">Quick Race · økonomisk fase</p>
+          <h2>Vælg din kart</h2>
+          <p class="screen-copy">Tre omgange. Syv AI-rivaler. Brug item-bokse til turbo, bananer og grønne skaller.</p>
+          <div class="track-summary"><span class="track-dot" aria-hidden="true"></span><span><strong>Kloversløjfen</strong><small>Én bred begynderbane · 3 omgange</small></span></div>
+          <div class="driver-grid" id="driver-select" aria-label="Vælg kører"></div>
+          <button class="primary-kart-button" id="kart-start" type="button">Start løbet</button>
+          <p class="screen-copy" id="kart-best">Bedste: ingen endnu</p>
+        </div>
+      </section>
+
+      <section class="screen" id="kart-pause" hidden>
+        <div class="screen-card"><p class="screen-kicker">Motoren holder pause</p><h2>Pause</h2><p class="screen-copy">Løbet fortsætter præcis, hvor du slap.</p><button class="primary-kart-button" id="kart-resume" type="button">Fortsæt</button><button class="secondary-kart-button" id="kart-menu-button" type="button">Til menuen</button></div>
+      </section>
+
+      <section class="screen" id="kart-result" hidden>
+        <div class="screen-card"><p class="screen-kicker">Målflag</p><h2 id="kart-result-title">Løb færdigt!</h2><p class="result-score" id="kart-result-copy"></p><button class="primary-kart-button" id="kart-retry" type="button">Kør igen</button><button class="secondary-kart-button" type="button" id="kart-menu-button-result">Vælg kører</button></div>
+      </section>
+      <div class="kart-toast" id="kart-toast" role="status" aria-live="polite"></div>
+    </main>
+
+    <section class="touch-controls" aria-label="Touchkontroller">
+      <button type="button" data-kart-control="left" aria-label="Drej til venstre">← Venstre</button><button type="button" data-kart-control="right" aria-label="Drej til højre">Højre →</button><button class="gas" type="button" data-kart-control="accelerate" aria-label="Giv gas">GAS</button><button type="button" data-kart-control="brake" aria-label="Brems">BREMSE</button><button class="item" type="button" data-kart-control="item" aria-label="Brug item">ITEM</button>
+    </section>
+    <section class="kart-help"><span><strong>Desktop:</strong> Piletaster/WASD · Shift/X bremse · Space/Z item · Esc pause</span><span><strong>Tip:</strong> Bliv på den mørke asfalt for maksimal fart.</span></section>
+    <footer class="kart-footer"><span><strong>Wutborg Kart</strong> · lokal race, lokal rekord</span><span>Flere baner og drift kommer i high-end-fasen</span></footer>
+  </div>
+  <script src="js/highscores.js"></script>
+  <script src="js/kart-racer-data.js?v=20260713-kart1"></script>
+  <script src="js/kart-racer.js?v=20260713-kart1"></script>
+</body>
+</html>

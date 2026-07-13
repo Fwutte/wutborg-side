@@ -7,7 +7,7 @@
   <title>Familiens minispil | Wutborg.dk</title>
   <meta
     name="description"
-    content="Spil Fire på stribe, Snake, Neon Breaker, Tetris, Geometry Dash, Monster Battle Arena, Super Mario Bros. og se den kommende Sangquiz i familien Wutborgs spillehjørne."
+    content="Ni gratis minispil samlet i familien Wutborgs spillehjørne – fra Wutborg Kart og Super Mario Bros. til Snake, Tetris og Sangquiz."
   />
   <style>
     :root {
@@ -38,6 +38,7 @@
       margin: 0;
       min-width: 320px;
       min-height: 100vh;
+      overflow-x: hidden;
       color: var(--ink);
       font-family: Inter, ui-rounded, "Arial Rounded MT Bold", system-ui, sans-serif;
       background:
@@ -64,6 +65,19 @@
     a:focus-visible {
       outline: 4px solid var(--terracotta);
       outline-offset: 4px;
+    }
+
+    .sr-only,
+    .game-search .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
     }
 
     .page {
@@ -188,6 +202,194 @@
 
     .intro strong {
       color: var(--ink);
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 25px;
+    }
+
+    .hero-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      min-height: 47px;
+      padding: 11px 17px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--ink);
+      background: rgba(255, 253, 248, 0.72);
+      text-decoration: none;
+      font-size: 0.82rem;
+      font-weight: 900;
+      box-shadow: 0 8px 24px rgba(77, 52, 37, 0.07);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
+
+    .hero-action.primary {
+      border-color: var(--terracotta);
+      color: #fffaf2;
+      background: var(--terracotta);
+    }
+
+    .hero-action:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(77, 52, 37, 0.12);
+    }
+
+    .hero-action span {
+      font-size: 1rem;
+    }
+
+    .hero-meta {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 27px;
+    }
+
+    .hero-meta span {
+      padding: 13px 12px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      color: var(--muted);
+      background: rgba(255, 253, 248, 0.6);
+      font-size: 0.67rem;
+      font-weight: 800;
+      line-height: 1.35;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .hero-meta strong {
+      display: block;
+      margin-bottom: 2px;
+      color: var(--ink);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.45rem;
+      line-height: 1;
+      letter-spacing: -0.04em;
+      text-transform: none;
+    }
+
+    .game-browser {
+      scroll-margin-top: 18px;
+      margin-bottom: 18px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: rgba(255, 253, 248, 0.72);
+      box-shadow: 0 12px 38px rgba(77, 52, 37, 0.07);
+    }
+
+    .game-browser-top {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 15px;
+    }
+
+    .game-browser h2 {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(1.8rem, 4vw, 2.7rem);
+      letter-spacing: -0.045em;
+    }
+
+    .catalog-status {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 750;
+    }
+
+    .game-search {
+      position: relative;
+      width: min(310px, 100%);
+    }
+
+    .game-search span {
+      position: absolute;
+      top: 50%;
+      left: 14px;
+      color: var(--muted);
+      transform: translateY(-50%);
+      pointer-events: none;
+    }
+
+    .game-search input {
+      width: 100%;
+      min-height: 45px;
+      padding: 10px 14px 10px 39px;
+      border: 1px solid rgba(70, 50, 38, 0.18);
+      border-radius: 14px;
+      color: var(--ink);
+      background: #fff;
+      font: inherit;
+      font-size: 0.84rem;
+      font-weight: 700;
+    }
+
+    .game-search input:focus-visible {
+      outline: 3px solid rgba(184, 95, 69, 0.28);
+      border-color: var(--terracotta);
+    }
+
+    .game-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .game-filter {
+      min-height: 39px;
+      padding: 8px 13px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      background: #fff;
+      font: inherit;
+      font-size: 0.75rem;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .game-filter:hover,
+    .game-filter[aria-pressed="true"] {
+      border-color: var(--terracotta);
+      color: #fffaf2;
+      background: var(--terracotta);
+    }
+
+    .game-filter:focus-visible {
+      outline: 3px solid rgba(184, 95, 69, 0.28);
+      outline-offset: 2px;
+    }
+
+    .game-card[hidden] {
+      display: none;
+    }
+
+    .no-games {
+      margin: 18px 0 0;
+      padding: 25px;
+      border: 1px dashed rgba(70, 50, 38, 0.24);
+      border-radius: 20px;
+      color: var(--muted);
+      text-align: center;
+      background: rgba(255, 253, 248, 0.52);
+    }
+
+    .no-games strong {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--ink);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.4rem;
     }
 
     .games {
@@ -325,6 +527,89 @@
       --card-outline: rgba(23, 63, 93, 0.22);
       --card-glow: rgba(45, 194, 176, 0.17);
     }
+
+    .game-card.kart {
+      grid-column: 1 / -1;
+      min-height: 425px;
+      --card-bg:
+        radial-gradient(circle at 82% 18%, rgba(255, 218, 91, 0.45), transparent 29%),
+        linear-gradient(145deg, #a8e5ff, #edf9d9);
+      --card-ink: #173b59;
+      --card-muted: #527188;
+      --card-accent: #e85d4e;
+      --card-button-ink: #fff;
+      --card-outline: rgba(23, 59, 89, 0.22);
+      --card-glow: rgba(232, 93, 78, 0.19);
+    }
+
+    .game-card.kart::after {
+      content: "NYHED";
+      position: absolute;
+      top: 23px;
+      right: 23px;
+      z-index: 5;
+      padding: 8px 11px;
+      border-radius: 999px;
+      color: #fff;
+      background: #e85d4e;
+      box-shadow: 0 7px 18px rgba(114, 37, 30, 0.2);
+      font-size: 0.65rem;
+      font-weight: 950;
+      letter-spacing: 0.12em;
+    }
+
+    .kart-preview {
+      right: 5%;
+      bottom: 43px;
+      width: min(50%, 540px);
+      height: 286px;
+      overflow: hidden;
+      border: 5px solid #193b59;
+      border-radius: 48% 52% 44% 56%;
+      background:
+        radial-gradient(ellipse at center, #56b756 0 29%, transparent 30%),
+        radial-gradient(ellipse at center, transparent 0 42%, #4d5564 43% 63%, transparent 64%),
+        #78c963;
+      box-shadow: 0 18px 42px rgba(23, 59, 89, 0.22);
+      transform: rotate(-2deg);
+    }
+
+    .kart-preview::before {
+      content: "KLOVERSLØJFEN";
+      position: absolute;
+      top: 20px;
+      left: 25px;
+      color: rgba(255,255,255,0.88);
+      font: 950 0.7rem/1 ui-monospace, monospace;
+      letter-spacing: 0.15em;
+    }
+
+    .kart-car {
+      position: absolute;
+      width: 64px;
+      height: 36px;
+      border: 5px solid #173b59;
+      border-radius: 19px 19px 10px 10px;
+      background: #ef5b4e;
+      box-shadow: 0 8px 0 rgba(23,59,89,0.18);
+    }
+
+    .kart-car::before,
+    .kart-car::after {
+      content: "";
+      position: absolute;
+      top: -9px;
+      width: 13px;
+      height: 43px;
+      border-radius: 7px;
+      background: #1c2d41;
+    }
+
+    .kart-car::before { left: 5px; }
+    .kart-car::after { right: 5px; }
+    .kart-car.one { left: 26%; bottom: 58px; transform: rotate(-19deg); }
+    .kart-car.two { right: 20%; top: 83px; background: #46ad69; transform: rotate(30deg) scale(.8); }
+    .kart-item { position: absolute; right: 25%; bottom: 42px; width: 28px; height: 28px; border: 4px solid #173b59; border-radius: 8px; background: #5dd9f5; transform: rotate(45deg); }
 
     .game-card.sangquiz {
       grid-column: 1 / -1;
@@ -1286,6 +1571,15 @@
     }
 
     @media (max-width: 760px) {
+      .game-browser-top {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .game-search {
+        width: 100%;
+      }
+
       .games {
         grid-template-columns: 1fr;
       }
@@ -1351,6 +1645,34 @@
 
       .hero {
         padding: 62px 6px 42px;
+      }
+
+      .hero-meta {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .hero-meta span {
+        padding: 11px 8px;
+        font-size: 0.58rem;
+      }
+
+      .hero-meta strong {
+        font-size: 1.2rem;
+      }
+
+      .game-browser {
+        padding: 15px;
+        border-radius: 19px;
+      }
+
+      .game-filters {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .game-card.kart::after {
+        top: 17px;
+        right: 17px;
       }
 
       .game-card {
@@ -1472,6 +1794,7 @@
 
       <div class="nav-links">
         <a href="index.html">← Forsiden</a>
+        <a href="#spil">Alle spil</a>
         <a href="kalender.html">Kalender</a>
         <a href="mailto:hej@wutborg.dk">Kontakt</a>
       </div>
@@ -1479,18 +1802,49 @@
 
     <main>
       <header class="hero">
-        <div>
+        <div class="hero-copy">
           <p class="kicker"><span aria-hidden="true">♥</span> Vælg et spil</p>
           <h1>Små spil.<br /><span>Stor hygge.</span></h1>
+          <div class="hero-actions">
+            <a class="hero-action primary" href="kart-racer.html"><span aria-hidden="true">🏁</span> Prøv Wutborg Kart</a>
+            <a class="hero-action" href="#spil">Se alle ni spil <span aria-hidden="true">↓</span></a>
+          </div>
         </div>
-        <p class="intro">
-          Velkommen til familiens spillehjørne. Her kan I dyste, slå rekorder
-          og tage en runde mere, når nogen siger <strong>“bedst af tre”</strong>.
-        </p>
+        <div>
+          <p class="intro">
+            Velkommen til familiens spillehjørne. Her kan I dyste, slå rekorder
+            og tage en runde mere, når nogen siger <strong>“bedst af tre”</strong>.
+          </p>
+          <div class="hero-meta" aria-label="Om spillearkivet">
+            <span><strong>9</strong> spil klar</span>
+            <span><strong>1–2</strong> spillere</span>
+            <span><strong>0</strong> login</span>
+          </div>
+        </div>
       </header>
 
-      <section class="games" aria-label="Tilgængelige minispil">
-        <a class="game-card connect" href="fire-paa-stribe.html">
+      <section class="game-browser" id="spil" aria-labelledby="game-browser-title">
+        <div class="game-browser-top">
+          <div>
+            <h2 id="game-browser-title">Find næste runde</h2>
+            <p class="catalog-status" id="catalog-status" aria-live="polite">Viser alle 9 spil</p>
+          </div>
+          <label class="game-search">
+            <span aria-hidden="true">⌕</span>
+            <span class="sr-only">Søg efter et spil</span>
+            <input id="game-search" type="search" placeholder="Søg fx kart, quiz eller Tetris" autocomplete="off" />
+          </label>
+        </div>
+        <div class="game-filters" aria-label="Filtrér spil">
+          <button class="game-filter" type="button" data-game-filter="all" aria-pressed="true">Alle spil</button>
+          <button class="game-filter" type="button" data-game-filter="solo" aria-pressed="false">En spiller</button>
+          <button class="game-filter" type="button" data-game-filter="together" aria-pressed="false">Spil sammen</button>
+          <button class="game-filter" type="button" data-game-filter="quiz" aria-pressed="false">Quiz</button>
+        </div>
+      </section>
+
+      <section class="games" aria-label="Tilgængelige minispil" id="game-grid">
+        <a class="game-card connect" href="fire-paa-stribe.html" data-game-mode="together" data-game-search="fire på stribe fire paa stribe brætspil to spillere sammen">
           <span class="card-content">
             <span class="game-number">Spil 01 · To spillere</span>
             <h2>Fire på stribe</h2>
@@ -1507,7 +1861,7 @@
           </span>
         </a>
 
-        <a class="game-card snake" href="snake.html">
+        <a class="game-card snake" href="snake.html" data-game-mode="solo" data-game-search="snake slange arcade highscore en spiller">
           <span class="card-content">
             <span class="game-number">Spil 02 · En spiller</span>
             <h2>Snake</h2>
@@ -1521,7 +1875,7 @@
           </span>
         </a>
 
-        <a class="game-card breaker" href="brick-breaker.html">
+        <a class="game-card breaker" href="brick-breaker.html" data-game-mode="solo" data-game-search="neon breaker brick arkade power-ups en spiller">
           <span class="card-content">
             <span class="game-number">Spil 03 · En spiller</span>
             <h2>Neon Breaker</h2>
@@ -1549,7 +1903,7 @@
           </span>
         </a>
 
-        <a class="game-card tetris" href="tetris.html">
+        <a class="game-card tetris" href="tetris.html" data-game-mode="solo" data-game-search="tetris blokke brikker puzzle en spiller">
           <span class="card-content">
             <span class="game-number">Spil 04 · En spiller</span>
             <h2>Tetris</h2>
@@ -1568,7 +1922,7 @@
           </span>
         </a>
 
-        <a class="game-card geometry" href="geometry-dash.html">
+        <a class="game-card geometry" href="geometry-dash.html" data-game-mode="solo" data-game-search="geometry dash rytme hop neon en spiller">
           <span class="card-content">
             <span class="game-number">Spil 05 · En spiller</span>
             <h2>Geometry Dash</h2>
@@ -1585,7 +1939,7 @@
           </span>
         </a>
 
-        <a class="game-card pokemon" href="pokemon-battle.html">
+        <a class="game-card pokemon" href="pokemon-battle.html" data-game-mode="solo" data-game-search="monster battle arena pokemon kamp en spiller">
           <span class="card-content">
             <span class="game-number">Spil 06 · En spiller</span>
             <h2>Monster <span>Battle Arena</span></h2>
@@ -1608,7 +1962,7 @@
           </span>
         </a>
 
-        <a class="game-card skybound" href="pips-skybound.html">
+        <a class="game-card skybound" href="pips-skybound.html" data-game-mode="solo" data-game-search="super mario bros platform eventyr en spiller">
           <span class="card-content">
             <span class="game-number">Spil 07 · En spiller</span>
             <h2>Super <span>Mario Bros.</span></h2>
@@ -1625,9 +1979,19 @@
           </span>
         </a>
 
-        <a class="game-card sangquiz" href="sangquiz.html">
+        <a class="game-card kart" href="kart-racer.html" data-game-mode="solo" data-game-search="wutborg kart mario kart racer bil race en spiller nyhed">
           <span class="card-content">
-            <span class="game-number">Spil 08 · Musikquiz</span>
+            <span class="game-number">Spil 08 · En spiller</span>
+            <h2>Wutborg <span>Kart</span></h2>
+            <p>Kør tre omgange mod syv rivaler, snup itembokse og sæt en ny lokal rekord på Kloversløjfen.</p>
+          </span>
+          <span class="play">Start motoren</span>
+          <span class="preview kart-preview" aria-hidden="true"><i class="kart-car one"></i><i class="kart-car two"></i><i class="kart-item"></i></span>
+        </a>
+
+        <a class="game-card sangquiz" href="sangquiz.html" data-game-mode="quiz together" data-game-search="sangquiz musik quiz hold årstal sammen">
+          <span class="card-content">
+            <span class="game-number">Spil 09 · Musikquiz</span>
             <h2>Sangquiz</h2>
             <p>Gæt årstallet, byg holdenes tidslinjer, og styr pointene fra én skærm.</p>
           </span>
@@ -1646,6 +2010,11 @@
         </a>
       </section>
 
+      <p class="no-games" id="no-games" hidden>
+        <strong>Ingen spil matchede</strong>
+        Prøv et andet søgeord eller vælg “Alle spil”.
+      </p>
+
       <aside class="family-note">
         <span>
           <strong>Et spil ad gangen.</strong>
@@ -1660,6 +2029,8 @@
           <span class="note-symbol">G</span>
           <span class="note-symbol">M</span>
           <span class="note-symbol">M</span>
+          <span class="note-symbol">K</span>
+          <span class="note-symbol">Q</span>
         </span>
       </aside>
 
@@ -1682,6 +2053,48 @@
   </div>
   <script src="js/highscores.js"></script>
   <script>
+    const gameCards = [...document.querySelectorAll(".game-card")];
+    const gameSearch = document.querySelector("#game-search");
+    const gameFilters = [...document.querySelectorAll("[data-game-filter]")];
+    const catalogStatus = document.querySelector("#catalog-status");
+    const noGames = document.querySelector("#no-games");
+    let activeGameFilter = "all";
+
+    const normalizeGameSearch = (value) => value
+      .toLocaleLowerCase("da-DK")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+
+    const updateGameCatalog = () => {
+      const query = normalizeGameSearch(gameSearch.value.trim());
+      let visibleGames = 0;
+
+      gameCards.forEach((card) => {
+        const modes = card.dataset.gameMode.split(" ");
+        const matchesFilter = activeGameFilter === "all" || modes.includes(activeGameFilter);
+        const matchesSearch = !query || normalizeGameSearch(card.dataset.gameSearch).includes(query);
+        card.hidden = !(matchesFilter && matchesSearch);
+        if (!card.hidden) visibleGames += 1;
+      });
+
+      const filterLabel = gameFilters.find((button) => button.dataset.gameFilter === activeGameFilter)?.textContent;
+      catalogStatus.textContent = query
+        ? `${visibleGames} ${visibleGames === 1 ? "spil matcher" : "spil matcher"} “${gameSearch.value.trim()}”`
+        : activeGameFilter === "all"
+          ? `Viser alle ${visibleGames} spil`
+          : `${visibleGames} spil · ${filterLabel}`;
+      noGames.hidden = visibleGames !== 0;
+    };
+
+    gameFilters.forEach((button) => {
+      button.addEventListener("click", () => {
+        activeGameFilter = button.dataset.gameFilter;
+        gameFilters.forEach((filter) => filter.setAttribute("aria-pressed", String(filter === button)));
+        updateGameCatalog();
+      });
+    });
+    gameSearch.addEventListener("input", updateGameCatalog);
+
     const localRecordGames = [
       ["fire-paa-stribe", "Fire på stribe", "fire-paa-stribe.html"],
       ["snake", "Snake", "snake.html"],
@@ -1690,6 +2103,7 @@
       ["geometry-dash", "Geometry Dash", "geometry-dash.html"],
       ["monster-battle-arena", "Monster Battle Arena", "pokemon-battle.html"],
       ["pips-skybound", "Super Mario Bros.", "pips-skybound.html"],
+      ["wutborg-kart", "Wutborg Kart", "kart-racer.html"],
       ["sangquiz", "Sangquiz", "sangquiz.html"]
     ];
     const localRecordGrid = document.querySelector("#local-record-grid");
