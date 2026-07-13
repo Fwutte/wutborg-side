@@ -2130,7 +2130,7 @@
       margin-bottom: 12px;
     }
 
-    .host-panel summary {
+    .host-panel > summary {
       display: inline-grid;
       place-items: center;
       width: 44px;
@@ -2143,7 +2143,7 @@
       list-style: none;
     }
 
-    .host-panel summary::-webkit-details-marker {
+    .host-panel > summary::-webkit-details-marker {
       display: none;
     }
 
@@ -2176,16 +2176,61 @@
     }
 
     .host-spotify {
-      display: grid;
-      gap: 10px;
+      display: block;
       padding-top: 10px;
       border-top: 1px solid var(--line);
     }
 
-    .host-spotify h3,
+    .host-spotify > summary {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 4px 10px;
+      align-items: center;
+      min-height: 44px;
+      padding: 9px 11px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.38);
+      cursor: pointer;
+      list-style: none;
+    }
+
+    .host-spotify > summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .host-spotify > summary::after {
+      content: "+";
+      grid-column: 2;
+      grid-row: 1 / span 2;
+      font-size: 1.3rem;
+      font-weight: 950;
+      line-height: 1;
+    }
+
+    .host-spotify[open] > summary::after {
+      content: "−";
+    }
+
+    .host-spotify-title {
+      font-weight: 950;
+    }
+
     .host-spotify .spotify-status {
+      overflow: hidden;
+      min-height: 0;
       margin: 0;
       color: var(--ink);
+      font-size: 0.76rem;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .host-spotify-body {
+      display: grid;
+      gap: 10px;
+      padding-top: 10px;
     }
 
     .host-spotify .field-label {
@@ -2211,7 +2256,7 @@
       display: none;
     }
 
-    body[data-sangquiz-mode="phone"] .host-panel summary {
+    body[data-sangquiz-mode="phone"] .host-panel > summary {
       display: none;
     }
 
@@ -4112,7 +4157,7 @@
       accent-color: var(--brass);
     }
 
-    .host-panel summary {
+    .host-panel > summary {
       border-color: rgba(246, 239, 226, 0.28);
       color: var(--paper);
       background: transparent;
@@ -4948,25 +4993,29 @@
                   <button id="reset-game-button" class="danger-button" type="button">Nulstil</button>
                 </div>
                 <button id="sound-toggle-button" type="button" aria-pressed="false">Lyde fra</button>
-                <section class="host-spotify" aria-label="Spotify-indstillinger under spillet">
-                  <h3>Spotify-afspiller</h3>
-                  <p id="spotify-game-mode-status" class="spotify-status" aria-live="polite">Manuel DJ klar</p>
-                  <div class="spotify-fields">
-                    <label class="field-label" for="spotify-game-client-id">
-                      Client ID
-                      <input id="spotify-game-client-id" type="text" inputmode="text" autocomplete="off" />
-                    </label>
-                    <label class="field-label" for="spotify-game-redirect-uri">
-                      Redirect URI
-                      <input id="spotify-game-redirect-uri" type="text" readonly />
-                    </label>
+                <details class="host-spotify">
+                  <summary>
+                    <span class="host-spotify-title">Spotify-afspiller</span>
+                    <span id="spotify-game-mode-status" class="spotify-status" aria-live="polite">Manuel DJ klar</span>
+                  </summary>
+                  <div class="host-spotify-body">
+                    <div class="spotify-fields">
+                      <label class="field-label" for="spotify-game-client-id">
+                        Client ID
+                        <input id="spotify-game-client-id" type="text" inputmode="text" autocomplete="off" />
+                      </label>
+                      <label class="field-label" for="spotify-game-redirect-uri">
+                        Redirect URI
+                        <input id="spotify-game-redirect-uri" type="text" readonly />
+                      </label>
+                    </div>
+                    <div class="host-spotify-actions">
+                      <button id="spotify-game-login-button" type="button">Log ind med Spotify</button>
+                      <button id="spotify-game-connect-button" type="button">Forbind afspiller</button>
+                      <button id="spotify-game-forget-button" type="button">Log ud og glem Spotify</button>
+                    </div>
                   </div>
-                  <div class="host-spotify-actions">
-                    <button id="spotify-game-login-button" type="button">Log ind med Spotify</button>
-                    <button id="spotify-game-connect-button" type="button">Forbind afspiller</button>
-                    <button id="spotify-game-forget-button" type="button">Log ud og glem Spotify</button>
-                  </div>
-                </section>
+                </details>
               </div>
             </details>
             <div class="panel-heading">
