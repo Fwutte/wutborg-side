@@ -3,7 +3,16 @@ import { GLTFLoader } from "./vendor/three/addons/loaders/GLTFLoader.js";
 import { clone as cloneSkeleton } from "./vendor/three/addons/utils/SkeletonUtils.js";
 
 const logic = window.WutborgBattle3DLogic;
-const CHARACTER_URL = new URL("../assets/borgstorm-3d/kaykit-adventurers/Knight.glb", import.meta.url).href;
+const CHARACTER_FILES = {
+  soldier: "Knight.glb",
+  shield: "Knight.glb",
+  archer: "Rogue_Hooded.glb",
+  giant: "Barbarian.glb",
+  enemy: "Rogue.glb",
+  boss: "Barbarian.glb",
+};
+const CHARACTER_URLS = Object.fromEntries(Object.entries(CHARACTER_FILES).map(([type, file]) => [type, new URL(`../assets/borgstorm-3d/kaykit-adventurers/${file}`, import.meta.url).href]));
+const CHARACTER_URL = CHARACTER_URLS.soldier;
 const ACTIONS = {
   idle: "Idle",
   run: "Running_A",
@@ -35,6 +44,7 @@ export class BattleScene3D {
     this.gateZ = -12.2;
     this.gateStartZ = -12.2;
     this.visualRunState = "ready";
+    this.worldScroll = 0;
     this.lastGateKey = "";
     this.lastGateIndex = -1;
     this.lastLevelId = -1;
@@ -51,14 +61,20 @@ export class BattleScene3D {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: !compact, alpha: false, powerPreference: "high-performance" });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, compact ? 1.2 : 1.65));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = compact ? 1.08 : 1.14;
     this.renderer.shadowMap.enabled = !compact;
     this.renderer.shadowMap.type = THREE.PCFShadowMap;
-    this.scene.add(new THREE.HemisphereLight(0xe8f7ff, 0x385847, 2.1));
+    this.hemisphere = new THREE.HemisphereLight(0xe8f7ff, 0x385847, 2.25);
+    this.scene.add(this.hemisphere);
     this.sun = new THREE.DirectionalLight(0xfff4cf, 2.5);
     this.sun.position.set(-7, 10, 6);
     this.sun.castShadow = !compact;
     this.sun.shadow.mapSize.set(compact ? 512 : 1024, compact ? 512 : 1024);
     this.scene.add(this.sun);
+    this.fillLight = new THREE.DirectionalLight(0x8fc9ff, 0.72);
+    this.fillLight.position.set(7, 5, 9);
+    this.scene.add(this.fillLight);
 
     this.buildArena();
     this.buildGates();
@@ -78,6 +94,34 @@ export class BattleScene3D {
     this.wallMaterial = new THREE.MeshStandardMaterial({ color: 0x7895a0, roughness: 0.84 });
     this.accentMaterial = new THREE.MeshStandardMaterial({ color: 0xe79a51, roughness: 0.72 });
     this.propMaterial = new THREE.MeshStandardMaterial({ color: 0x4e8b57, roughness: 0.9 });
+    this.pavingMaterial = new THREE.MeshStandardMaterial({ color: 0xb9ad92, roughness: 1 });
+    this.hillMaterial = new THREE.MeshStandardMaterial({ color: 0x557b68, roughness: 1, flatShading: true });
+    this.flagMaterial = new THREE.MeshStandardMaterial({ color: 0xe79a51, roughness: 0.72, side: THREE.DoubleSide });
+
+    this.skyMaterial = new THREE.ShaderMaterial({
+      uniforms: {
+        topColor: { value: new THREE.Color(0x5aa8ce) },
+        bottomColor: { value: new THREE.Color(0xd7edf0) },
+      },
+      vertexShader: "varying vec2 vUv; void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}",
+      fragmentShader: "varying vec2 vUv;uniform vec3 topColor;uniform vec3 bottomColor;void main(){float t=smoothstep(0.02,1.0,vUv.y);gl_FragColor=vec4(mix(bottomColor,topColor,t),1.0);}",
+      depthWrite: false,
+      fog: false,
+    });
+    this.sky = new THREE.Mesh(new THREE.PlaneGeometry(72, 38), this.skyMaterial);
+    this.sky.position.set(0, 10.5, -36);
+    this.sky.renderOrder = -20;
+    this.scene.add(this.sky);
+
+    this.hills = [];
+    [-16, -10, -5, 2, 9, 15].forEach((x, index) => {
+      const height = 5.4 + (index % 3) * 1.35;
+      const hill = new THREE.Mesh(new THREE.ConeGeometry(5.8 + (index % 2), height, 7), this.hillMaterial);
+      hill.position.set(x, height * 0.38 - 0.3, -27 - (index % 2) * 2.3);
+      hill.rotation.y = index * 0.72;
+      this.scene.add(hill);
+      this.hills.push(hill);
+    });
 
     const grass = new THREE.Mesh(new THREE.PlaneGeometry(46, 48), this.groundMaterial);
     grass.rotation.x = -Math.PI / 2;
@@ -90,8 +134,35 @@ export class BattleScene3D {
     road.receiveShadow = true;
     this.scene.add(road);
 
+    this.roadMarks = [];
+    for (let index = 0; index < 17; index += 1) {
+      const mark = new THREE.Mesh(new THREE.BoxGeometry(9.65, 0.045, 0.12), this.pavingMaterial);
+      const baseZ = -23 + index * 2.05;
+      mark.position.set(0, 0.005, baseZ);
+      mark.receiveShadow = true;
+      this.scene.add(mark);
+      this.roadMarks.push({ mesh: mark, baseZ });
+    }
+    for (const x of [-5.24, 5.24]) {
+      const roadEdge = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.16, 48), this.pavingMaterial);
+      roadEdge.position.set(x, 0.04, -9);
+      roadEdge.receiveShadow = true;
+      this.scene.add(roadEdge);
+    }
+
+    this.laneGlows = [-1, 1].map((side) => {
+      const material = new THREE.MeshBasicMaterial({ color: 0x56c9ff, transparent: true, opacity: 0.055, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending });
+      const mesh = new THREE.Mesh(new THREE.PlaneGeometry(4.55, 22), material);
+      mesh.rotation.x = -Math.PI / 2;
+      mesh.position.set(side * 2.55, 0.025, -5.2);
+      mesh.renderOrder = 1;
+      this.scene.add(mesh);
+      return { side, mesh, material };
+    });
+
     this.arenaWalls = [];
     this.themeProps = [];
+    this.trackProps = [];
     for (const side of [-1, 1]) {
       const wall = new THREE.Mesh(new THREE.BoxGeometry(1.15, 1.2, 31), this.wallMaterial);
       wall.position.set(side * 6.05, 0.55, -8);
@@ -118,6 +189,20 @@ export class BattleScene3D {
         this.scene.add(prop);
         this.themeProps.push({ root: prop, trunk, crown });
       }
+      for (let index = 0; index < 7; index += 1) {
+        const root = new THREE.Group();
+        const base = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.32, 0.36, 8), this.wallMaterial);
+        base.position.y = 0.18;
+        const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.05, 1.8, 7), this.pavingMaterial);
+        pole.position.y = 1.18;
+        const flag = new THREE.Mesh(new THREE.PlaneGeometry(0.82, 0.48, 4, 2), this.flagMaterial);
+        flag.position.set(-side * 0.4, 1.78, 0);
+        root.add(base, pole, flag);
+        const baseZ = -19 + index * 5.1 + (side > 0 ? 2.4 : 0);
+        root.position.set(side * 5.72, 0, baseZ);
+        this.scene.add(root);
+        this.trackProps.push({ root, flag, side, baseZ, phase: index * 0.83 + side });
+      }
     }
 
     this.fortress = new THREE.Group();
@@ -125,6 +210,14 @@ export class BattleScene3D {
     keep.position.set(0, 2.35, -19.5);
     keep.castShadow = true;
     this.fortress.add(keep);
+    const opening = new THREE.Mesh(new THREE.BoxGeometry(2.35, 3.35, 0.26), new THREE.MeshStandardMaterial({ color: 0x182537, roughness: 1 }));
+    opening.position.set(0, 1.62, -18.22);
+    this.fortress.add(opening);
+    for (let x = -3.65; x <= 3.65; x += 1.45) {
+      const battlement = new THREE.Mesh(new THREE.BoxGeometry(0.78, 0.72, 2.65), this.wallMaterial);
+      battlement.position.set(x, 5.02, -19.5);
+      this.fortress.add(battlement);
+    }
     for (const x of [-3.7, 3.7]) {
       const tower = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.35, 6.2, 8), this.wallMaterial);
       tower.position.set(x, 3.05, -18.8);
@@ -134,15 +227,39 @@ export class BattleScene3D {
       roof.position.set(x, 7.2, -18.8);
       this.fortress.add(roof);
     }
+    const banner = new THREE.Mesh(new THREE.PlaneGeometry(1.35, 2.1), this.flagMaterial);
+    banner.position.set(0, 4.05, -18.18);
+    this.fortress.add(banner);
     this.scene.add(this.fortress);
+  }
+
+  makeBlobShadow(width, depth, opacity = 0.3) {
+    const canvas = document.createElement("canvas");
+    canvas.width = 128;
+    canvas.height = 128;
+    const ctx = canvas.getContext("2d");
+    const gradient = ctx.createRadialGradient(64, 64, 4, 64, 64, 61);
+    gradient.addColorStop(0, `rgba(10,24,35,${opacity})`);
+    gradient.addColorStop(0.58, `rgba(10,24,35,${opacity * 0.52})`);
+    gradient.addColorStop(1, "rgba(10,24,35,0)");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 128, 128);
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true, depthWrite: false, opacity: 1 });
+    const shadow = new THREE.Mesh(new THREE.PlaneGeometry(width, depth), material);
+    shadow.rotation.x = -Math.PI / 2;
+    shadow.position.y = 0.018;
+    shadow.renderOrder = 2;
+    return shadow;
   }
 
   makeLabel() {
     const texture = new THREE.CanvasTexture(document.createElement("canvas"));
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.minFilter = THREE.LinearFilter;
-    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false }));
-    sprite.scale.set(2.1, 1.12, 1);
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false, toneMapped: false }));
+    sprite.scale.set(this.quality.compact ? 2.48 : 2.25, this.quality.compact ? 1.31 : 1.2, 1);
     return { sprite, texture };
   }
 
@@ -151,22 +268,40 @@ export class BattleScene3D {
     canvas.width = 512;
     canvas.height = 270;
     const ctx = canvas.getContext("2d");
-    const palette = choice.type === "tower" ? ["#8f3f43", "#f3b86b"] : choice.type === "hazard" ? ["#4a4354", "#d9c3a0"] : choice.type === "recruit" ? ["#356e9c", "#bde5ff"] : ["#327e55", "#d9f1a6"];
+    const palette = choice.type === "tower" ? ["#7d2831", "#ffbd63"] : choice.type === "hazard" ? ["#383344", "#ead5b2"] : choice.type === "recruit" ? ["#236b9d", "#bdeaff"] : ["#23734c", "#ddf4a0"];
+    const category = choice.type === "tower" ? (choice.boss ? "BOSS" : "FJENDER") : choice.type === "hazard" ? "FARE" : choice.type === "recruit" ? "FORSTÆRKNING" : "BONUS";
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "rgba(20,36,55,.9)";
+    ctx.shadowColor = "rgba(7,17,28,.55)";
+    ctx.shadowBlur = 22;
+    ctx.shadowOffsetY = 12;
+    const panel = ctx.createLinearGradient(0, 26, 0, 244);
+    panel.addColorStop(0, palette[0]);
+    panel.addColorStop(1, "#14283b");
+    ctx.fillStyle = panel;
     ctx.roundRect(20, 26, 472, 218, 36);
     ctx.fill();
+    ctx.shadowColor = "transparent";
     ctx.strokeStyle = palette[1];
-    ctx.lineWidth = 12;
+    ctx.lineWidth = 10;
     ctx.stroke();
-    ctx.fillStyle = "#fffaf0";
-    ctx.font = "900 108px Arial";
+    ctx.fillStyle = palette[1];
+    ctx.roundRect(154, 13, 204, 47, 20);
+    ctx.fill();
+    ctx.fillStyle = "#14283b";
+    ctx.font = "900 24px Arial";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(choice.label, 256, 118);
+    ctx.fillText(category, 256, 37);
+    ctx.fillStyle = "#fffaf0";
+    ctx.shadowColor = "rgba(0,0,0,.45)";
+    ctx.shadowBlur = 8;
+    ctx.shadowOffsetY = 5;
+    ctx.font = "900 104px Arial";
+    ctx.fillText(choice.label, 256, 126);
+    ctx.shadowColor = "transparent";
     ctx.fillStyle = palette[1];
-    ctx.font = "800 34px Arial";
-    ctx.fillText(choice.hint.toUpperCase(), 256, 187);
+    ctx.font = "900 32px Arial";
+    ctx.fillText(choice.hint.toUpperCase(), 256, 199);
     gate.label.texture.needsUpdate = true;
   }
 
@@ -181,8 +316,9 @@ export class BattleScene3D {
   clearGateShape(gate) {
     const geometries = new Set();
     const materials = new Set();
+    gate.previewActors?.forEach((actor) => actor.mixer.stopAllAction());
     gate.shape.traverse((object) => {
-      if (object.geometry) geometries.add(object.geometry);
+      if (object.geometry && !object.userData.sharedCharacterAsset) geometries.add(object.geometry);
       if (Array.isArray(object.material)) object.material.forEach((material) => materials.add(material));
       else if (object.material) materials.add(object.material);
     });
@@ -190,6 +326,7 @@ export class BattleScene3D {
     geometries.forEach((geometry) => geometry.dispose());
     materials.forEach((material) => material.dispose());
     gate.materials = [];
+    gate.previewActors = [];
   }
 
   buildGateShape(gate, choice) {
@@ -216,36 +353,57 @@ export class BattleScene3D {
 
     if (choice.type === "tower") {
       const enemyCount = Math.min(30, Math.max(1, Math.round(choice.value)));
-      const columns = enemyCount <= 6 ? enemyCount : Math.min(6, Math.ceil(Math.sqrt(enemyCount * 1.45)));
-      const bodyGeometry = new THREE.BoxGeometry(0.27, 0.42, 0.19);
-      const headGeometry = new THREE.SphereGeometry(0.15, 8, 6);
-      const helmetGeometry = new THREE.ConeGeometry(0.18, 0.2, 5);
-      const bodies = new THREE.InstancedMesh(bodyGeometry, main, enemyCount);
-      const heads = new THREE.InstancedMesh(headGeometry, accent, enemyCount);
-      const helmets = new THREE.InstancedMesh(helmetGeometry, dark, enemyCount);
-      const dummy = new THREE.Object3D();
-      const scale = choice.boss ? 1.35 : enemyCount <= 6 ? 1.3 : 1;
-      for (let index = 0; index < enemyCount; index += 1) {
-        const row = Math.floor(index / columns);
-        const rowCount = Math.min(columns, enemyCount - row * columns);
-        const column = index % columns;
-        const x = (column - (rowCount - 1) / 2) * 0.46 * scale;
-        const z = row * 0.34;
-        dummy.position.set(x, 0.34 * scale, z);
-        dummy.scale.setScalar(scale);
-        dummy.updateMatrix();
-        bodies.setMatrixAt(index, dummy.matrix);
-        dummy.position.y = 0.67 * scale;
-        dummy.updateMatrix();
-        heads.setMatrixAt(index, dummy.matrix);
-        dummy.position.y = 0.83 * scale;
-        dummy.updateMatrix();
-        helmets.setMatrixAt(index, dummy.matrix);
-      }
-      for (const mesh of [bodies, heads, helmets]) {
-        mesh.instanceMatrix.needsUpdate = true;
-        mesh.castShadow = !this.quality.compact;
-        gate.shape.add(mesh);
+      if (this.characterAssets) {
+        main.dispose();
+        accent.dispose();
+        dark.dispose();
+        gate.materials = [];
+        const renderCount = choice.boss ? 1 : Math.min(enemyCount, this.quality.compact ? 6 : 10);
+        const columns = renderCount <= 5 ? renderCount : Math.min(5, Math.ceil(Math.sqrt(renderCount * 1.5)));
+        for (let index = 0; index < renderCount; index += 1) {
+          const actor = this.makeActor(choice.boss ? "boss" : "enemy", true);
+          const row = Math.floor(index / columns);
+          const rowCount = Math.min(columns, renderCount - row * columns);
+          const column = index % columns;
+          actor.root.position.set((column - (rowCount - 1) / 2) * (choice.boss ? 0 : 0.52), 0, row * 0.5);
+          actor.root.rotation.y = 0;
+          actor.root.scale.setScalar(choice.boss ? 0.82 : 0.48);
+          actor.root.traverse((object) => { if (object.isMesh) gate.materials.push(object.material); });
+          gate.shape.add(actor.root);
+          gate.previewActors.push(actor);
+        }
+      } else {
+        const columns = enemyCount <= 6 ? enemyCount : Math.min(6, Math.ceil(Math.sqrt(enemyCount * 1.45)));
+        const bodyGeometry = new THREE.BoxGeometry(0.27, 0.42, 0.19);
+        const headGeometry = new THREE.SphereGeometry(0.15, 8, 6);
+        const helmetGeometry = new THREE.ConeGeometry(0.18, 0.2, 5);
+        const bodies = new THREE.InstancedMesh(bodyGeometry, main, enemyCount);
+        const heads = new THREE.InstancedMesh(headGeometry, accent, enemyCount);
+        const helmets = new THREE.InstancedMesh(helmetGeometry, dark, enemyCount);
+        const dummy = new THREE.Object3D();
+        const scale = choice.boss ? 1.35 : enemyCount <= 6 ? 1.3 : 1;
+        for (let index = 0; index < enemyCount; index += 1) {
+          const row = Math.floor(index / columns);
+          const rowCount = Math.min(columns, enemyCount - row * columns);
+          const column = index % columns;
+          const x = (column - (rowCount - 1) / 2) * 0.46 * scale;
+          const z = row * 0.34;
+          dummy.position.set(x, 0.34 * scale, z);
+          dummy.scale.setScalar(scale);
+          dummy.updateMatrix();
+          bodies.setMatrixAt(index, dummy.matrix);
+          dummy.position.y = 0.67 * scale;
+          dummy.updateMatrix();
+          heads.setMatrixAt(index, dummy.matrix);
+          dummy.position.y = 0.83 * scale;
+          dummy.updateMatrix();
+          helmets.setMatrixAt(index, dummy.matrix);
+        }
+        for (const mesh of [bodies, heads, helmets]) {
+          mesh.instanceMatrix.needsUpdate = true;
+          mesh.castShadow = !this.quality.compact;
+          gate.shape.add(mesh);
+        }
       }
     } else if (choice.type === "hazard" && choice.hazardType === "boulder") {
       add(new THREE.TorusGeometry(1.05, 0.3, 7, 16), main, 0, 1.34, 0);
@@ -320,14 +478,20 @@ export class BattleScene3D {
       const label = this.makeLabel();
       label.sprite.position.set(0, 3.75, 0.15);
       group.add(label.sprite);
+      const shadow = this.makeBlobShadow(4, 2.25, 0.34);
+      shadow.position.z = 0.4;
+      group.add(shadow);
       this.scene.add(group);
-      return { side, group, shape, label, materials: [] };
+      return { side, group, shape, label, shadow, materials: [], previewActors: [] };
     });
   }
 
   buildArmy() {
     this.army = new THREE.Group();
     this.scene.add(this.army);
+    this.armyShadow = this.makeBlobShadow(4.4, 3.25, 0.34);
+    this.armyShadow.position.z = 1.1;
+    this.army.add(this.armyShadow);
     const body = new THREE.BoxGeometry(0.22, 0.32, 0.16);
     const head = new THREE.SphereGeometry(0.12, 8, 6);
     const helmet = new THREE.ConeGeometry(0.15, 0.18, 5);
@@ -380,33 +544,48 @@ export class BattleScene3D {
   async loadCharacterAsset() {
     this.canvas.dataset.battle3dAssets = "loading";
     try {
-      const gltf = await new GLTFLoader().loadAsync(CHARACTER_URL);
-      this.characterAsset = { scene: gltf.scene, animations: gltf.animations, clips: new Map(gltf.animations.map((clip) => [clip.name, clip])) };
+      const loader = new GLTFLoader();
+      const uniqueTypes = ["soldier", "archer", "giant", "enemy"];
+      const loaded = await Promise.all(uniqueTypes.map(async (type) => {
+        const gltf = await loader.loadAsync(CHARACTER_URLS[type]);
+        return [type, { scene: gltf.scene, animations: gltf.animations, clips: new Map(gltf.animations.map((clip) => [clip.name, clip])) }];
+      }));
+      this.characterAssets = Object.fromEntries(loaded);
+      this.characterAssets.shield = this.characterAssets.soldier;
+      this.characterAssets.boss = this.characterAssets.giant;
+      this.characterAsset = this.characterAssets.soldier;
       this.createRiggedActors();
+      for (const mesh of [this.bodyMesh, this.headMesh, this.helmetMesh]) mesh.visible = false;
+      this.lastGateKey = "";
       this.canvas.dataset.battle3dAssets = "ready";
+      this.canvas.dataset.battle3dCharacterSet = "knight,rogue-hooded,barbarian,rogue";
       this.canvas.dispatchEvent(new CustomEvent("battle3dassetsready"));
     } catch (error) {
+      for (const mesh of [this.bodyMesh, this.headMesh, this.helmetMesh]) mesh.visible = true;
       this.canvas.dataset.battle3dAssets = "fallback";
       console.warn("KayKit-figuren kunne ikke indlæses; bruger low-poly formation.", error);
     }
   }
 
   makeActor(type, enemy = false) {
-    const root = cloneSkeleton(this.characterAsset.scene);
+    const assetKey = enemy ? (type === "boss" ? "boss" : "enemy") : type;
+    const asset = this.characterAssets?.[assetKey] || this.characterAsset;
+    const root = cloneSkeleton(asset.scene);
     const tint = new THREE.Color(UNIT_COLORS[enemy ? "enemy" : type] || UNIT_COLORS.soldier);
     root.traverse((object) => {
       if (!object.isMesh) return;
       object.castShadow = !this.quality.compact;
       object.receiveShadow = true;
       object.frustumCulled = false;
+      object.userData.sharedCharacterAsset = true;
       object.material = object.material.clone();
       if (object.material.color) object.material.color.lerp(tint, enemy ? 0.42 : 0.2);
     });
-    const scale = type === "giant" ? 0.62 : 0.46;
+    const scale = type === "giant" || type === "boss" ? 0.68 : 0.46;
     root.scale.setScalar(scale);
     root.rotation.y = Math.PI;
     const mixer = new THREE.AnimationMixer(root);
-    const actor = { root, mixer, type, enemy, action: null, actionName: "" };
+    const actor = { root, mixer, clips: asset.clips, assetKey, type, enemy, action: null, actionName: "" };
     this.setActorAction(actor, enemy ? "idle" : "run");
     return actor;
   }
@@ -425,7 +604,7 @@ export class BattleScene3D {
 
   setActorAction(actor, actionName, once = false, restart = false) {
     if (!this.characterAsset || (actor.actionName === actionName && !restart)) return;
-    const clip = this.characterAsset.clips.get(ACTIONS[actionName]);
+    const clip = actor.clips.get(ACTIONS[actionName]);
     if (!clip) return;
     const next = actor.mixer.clipAction(clip);
     next.reset();
@@ -448,10 +627,15 @@ export class BattleScene3D {
     while (types.length < this.quality.actorCount) types.push("soldier");
     this.actors.forEach((actor, index) => {
       const type = types[index];
-      actor.type = type;
-      const tint = new THREE.Color(UNIT_COLORS[type]);
-      actor.root.scale.setScalar(type === "giant" ? 0.62 : 0.46);
-      actor.root.traverse((object) => { if (object.isMesh && object.material.color) object.material.color.lerp(tint, 0.28); });
+      if (actor.assetKey === type || (type === "shield" && actor.assetKey === "shield")) return;
+      const replacement = this.makeActor(type);
+      replacement.root.position.copy(actor.root.position);
+      replacement.root.visible = actor.root.visible;
+      actor.mixer.stopAllAction();
+      actor.root.traverse((object) => { if (object.isMesh) object.material.dispose(); });
+      this.riggedArmy.remove(actor.root);
+      this.riggedArmy.add(replacement.root);
+      this.actors[index] = replacement;
     });
   }
 
@@ -479,6 +663,7 @@ export class BattleScene3D {
     this.headMesh.instanceMatrix.needsUpdate = true;
     this.helmetMesh.instanceMatrix.needsUpdate = true;
 
+    this.updateActorTypes(run);
     this.actors.forEach((actor, index) => {
       const actorColumns = this.quality.compact ? 3 : 4;
       actor.root.position.set((index % actorColumns - (actorColumns - 1) / 2) * 0.62, 0, Math.floor(index / actorColumns) * 0.62 - 0.55);
@@ -486,7 +671,6 @@ export class BattleScene3D {
       const action = run.state === "marching" ? (run.currentGate?.choices[run.selectedSide]?.type === "hazard" ? "block" : "attack") : run.state === "won" ? "cheer" : run.state === "lost" ? "death" : "run";
       this.setActorAction(actor, action, ["attack", "hit", "death"].includes(action));
     });
-    this.updateActorTypes(run);
     this.drawArmyMarker(run.army);
   }
 
@@ -526,6 +710,7 @@ export class BattleScene3D {
     this.gateZ = -12.2;
     this.gateStartZ = -12.2;
     this.visualRunState = "ready";
+    this.worldScroll = 0;
     this.lastGateKey = "";
     this.lastGateIndex = -1;
     this.cameraShake = 0;
@@ -544,12 +729,19 @@ export class BattleScene3D {
     this.lastLevelId = run.level.id;
     const theme = THEMES[run.level.region.id] || THEMES.meadow;
     this.scene.background = new THREE.Color(theme.sky);
-    this.scene.fog = new THREE.Fog(theme.fog, 13, 34);
+    this.scene.fog = new THREE.Fog(theme.fog, 15, 43);
     this.groundMaterial.color.setHex(theme.ground);
     this.roadMaterial.color.setHex(theme.road);
     this.wallMaterial.color.setHex(theme.wall);
     this.accentMaterial.color.setHex(theme.accent);
     this.propMaterial.color.setHex(theme.prop);
+    this.flagMaterial.color.setHex(theme.accent);
+    this.pavingMaterial.color.copy(new THREE.Color(theme.road).offsetHSL(0, -0.04, -0.11));
+    this.hillMaterial.color.copy(new THREE.Color(theme.prop).lerp(new THREE.Color(theme.sky), 0.28));
+    this.skyMaterial.uniforms.topColor.value.copy(new THREE.Color(theme.sky).offsetHSL(0.015, 0.08, -0.09));
+    this.skyMaterial.uniforms.bottomColor.value.copy(new THREE.Color(theme.fog).offsetHSL(0, -0.08, 0.14));
+    this.hemisphere.color.copy(new THREE.Color(theme.sky).offsetHSL(0, -0.04, 0.18));
+    this.hemisphere.groundColor.copy(new THREE.Color(theme.ground).offsetHSL(0, -0.08, -0.12));
     this.fortress.visible = run.level.boss || run.level.id >= 16;
     this.themeProps.forEach(({ root, crown }, index) => {
       const region = run.level.region.id;
@@ -579,17 +771,45 @@ export class BattleScene3D {
       sceneGate.group.position.x = sceneGate.side * 3 * (selected ? 1 - transition * 0.28 : 1);
       sceneGate.group.position.z = this.gateZ;
       sceneGate.materials.forEach((material) => {
-        material.emissive.setHex(selected ? 0x6b4517 : 0x000000);
-        material.emissiveIntensity = selected ? 0.32 : 0;
+        material.emissive?.setHex(selected ? 0x6b4517 : 0x000000);
+        if ("emissiveIntensity" in material) material.emissiveIntensity = selected ? 0.32 : 0;
         material.transparent = opacity < 0.999;
         material.opacity = opacity;
         material.depthWrite = opacity > 0.42;
       });
       sceneGate.label.sprite.material.opacity = opacity;
+      sceneGate.shadow.material.opacity = opacity * (selected ? 0.86 : 0.62);
       const pulse = selected ? Math.sin(this.time * 10) * 0.018 * (1 - transition) : 0;
       sceneGate.group.scale.setScalar(selected ? 1.045 + pulse - transition * 0.075 : 1 - transition * 0.08);
     });
     this.canvas.dataset.battleTransition = run.state === "marching" ? (run.marchTime / 0.92).toFixed(2) : "0.00";
+  }
+
+  updateEnvironment(run, dt) {
+    const moving = run.state === "choosing" || run.state === "marching";
+    const speed = !moving ? 0 : run.state === "marching" ? 5.2 : this.reducedMotion ? 0.75 : 1.6;
+    this.worldScroll = (this.worldScroll + dt * speed) % 34.85;
+    const wrapZ = (baseZ) => ((baseZ + this.worldScroll + 24) % 34.85) - 24;
+    this.roadMarks.forEach(({ mesh, baseZ }) => { mesh.position.z = wrapZ(baseZ); });
+    this.trackProps.forEach(({ root, flag, side, baseZ, phase }) => {
+      root.position.z = wrapZ(baseZ);
+      flag.rotation.z = side * (0.06 + Math.sin(this.time * 2.8 + phase) * (this.reducedMotion ? 0.025 : 0.1));
+      flag.position.x = -side * (0.4 + Math.sin(this.time * 3.3 + phase) * 0.035);
+    });
+
+    const choices = run.currentGate?.choices || [];
+    this.laneGlows.forEach((lane, index) => {
+      const choice = choices[index];
+      const color = choice ? this.gatePalette(choice).accent : 0x56c9ff;
+      lane.material.color.setHex(color);
+      const laneX = lane.side * 2.55;
+      const proximity = 1 - logic.clamp(Math.abs(this.formationX - laneX) / 4.1, 0, 1);
+      const selected = run.selectedSide === index;
+      const transition = run.state === "marching" ? logic.clamp(run.marchTime / 0.92, 0, 1) : 0;
+      const targetOpacity = run.state === "choosing" ? 0.045 + proximity * 0.12 : selected ? 0.18 * (1 - transition) : 0.018;
+      lane.material.opacity += (targetOpacity - lane.material.opacity) * Math.min(1, dt * 8);
+      lane.mesh.position.z = -5.2 + Math.sin(this.time * 1.4 + index) * 0.08;
+    });
   }
 
   updateEncounter(run) {
@@ -637,6 +857,7 @@ export class BattleScene3D {
   updateMixers(dt) {
     this.actors.forEach((actor) => actor.mixer.update(dt));
     this.enemyActors.forEach((actor) => actor.mixer.update(dt));
+    this.gates.forEach((gate) => gate.previewActors.forEach((actor) => actor.mixer.update(dt)));
   }
 
   draw(run, dt) {
@@ -678,6 +899,7 @@ export class BattleScene3D {
     this.canvas.dataset.battleArmyZ = this.formationZ.toFixed(2);
     this.arrangeArmy(run);
     this.updateEncounter(run);
+    this.updateEnvironment(run, dt);
     this.updateParticles(dt, run);
     this.updateMixers(dt);
 
