@@ -8,6 +8,7 @@ const logicSource = fs.readFileSync(path.join(root, "js", "battle-gates-3d-logic
 const sceneSource = fs.readFileSync(path.join(root, "js", "battle-gates-3d.js"), "utf8");
 const gameSource = fs.readFileSync(path.join(root, "js", "battle-gates.js"), "utf8");
 const htmlSource = fs.readFileSync(path.join(root, "battle-gates.html"), "utf8");
+const cssSource = fs.readFileSync(path.join(root, "css", "battle-gates.css"), "utf8");
 const threeModuleSource = fs.readFileSync(path.join(root, "js", "vendor", "three", "three.module.js"), "utf8");
 const threeCorePath = path.join(root, "js", "vendor", "three", "three.core.js");
 const characterPath = path.join(root, "assets", "borgstorm-3d", "kaykit-adventurers", "Knight.glb");
@@ -33,6 +34,11 @@ assert.ok(!sceneSource.includes("https://"), "Del 1 skal køre uden eksterne run
 assert.match(gameSource, /await import\("\.\/battle-gates-3d\.js\?v=20260714-borg6"\)/, "Hovedspillet skal indlæse 3D uden at blokere Start-knappen");
 assert.match(htmlSource, /<script src="js\/battle-gates\.js\?v=20260714-borg6"><\/script>/, "Hovedspillet skal starte som et robust klassisk script");
 assert.doesNotMatch(htmlSource, /<script type="module"/, "Et 3D-modul må ikke kunne blokere hele spillets opstart");
+assert.match(htmlSource, /viewport-fit=cover/, "Mobilvisningen skal bruge hele skærmen omkring safe areas");
+assert.match(htmlSource, /battle-gates\.css\?v=20260714-borg7/, "Mobil-CSS skal have en frisk cacheversion");
+assert.match(cssSource, /height:100dvh/, "Mobilspillet skal fylde telefonens dynamiske viewport");
+assert.match(cssSource, /\.battle-hero,\.battle-help,\.battle-footer \{ display:none; \}/, "Sekundært sideindhold skal skjules i mobilspillet");
+assert.match(cssSource, /\.battle-canvas \{ width:100%; height:100%; aspect-ratio:auto; \}/, "Arenaen skal udfylde den ledige mobilhøjde");
 assert.match(threeModuleSource, /from '\.\/three\.core\.js'/, "Three.js-modulet skal importere sin kerne");
 assert.ok(fs.statSync(threeCorePath).size > 1_000_000, "Den komplette lokale Three.js-kerne skal være med");
 
