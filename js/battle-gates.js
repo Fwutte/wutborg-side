@@ -6,6 +6,7 @@
   const { LEVELS, UNIT_TYPES, resolveChoice } = data;
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
   const STORAGE_KEY = "wutborg.borgstorm.progress.v2";
+  const MARCH_DURATION = 0.92;
 
   class BattleRun {
     constructor(level = LEVELS[0], upgrades = {}) {
@@ -52,7 +53,7 @@
       if (["choosing", "marching"].includes(this.state)) this.elapsed += dt;
       if (this.state !== "marching") return null;
       this.marchTime += dt;
-      if (this.marchTime < 0.72) return null;
+      if (this.marchTime < MARCH_DURATION) return null;
       return this.resolve();
     }
 
@@ -164,7 +165,7 @@
       if(run.state==="ready"){this.gateKey="";this.gateTravel=0;}
       else if(gateKey!==this.gateKey){this.gateKey=gateKey;this.gateTravel=0;}
       if(run.state==="choosing")this.gateTravel=Math.min(1,this.gateTravel+dt*.29);
-      if(run.state==="marching")this.gateTravel=Math.min(1.42,this.gateTravel+dt*1.9);
+      if(run.state==="marching")this.gateTravel=Math.min(1.12,this.gateTravel+dt*.42);
       this.canvas.dataset.battleGateTravel=this.gateTravel.toFixed(2);
       this.canvas.dataset.battleEnemyPreviews=(run.currentGate?.choices||[]).map(choice=>choice.type==="tower"?String(Math.min(30,Math.max(1,Math.round(choice.value)))):"0").join(",");
       this.resize();
@@ -207,13 +208,16 @@
       const gate = run.currentGate; if (!gate) return;
       const choice = gate.choices[side];
       const selected = run.selectedSide === side;
-      if(run.selectedSide!==null&&!selected)return;
+      const transition=run.state==="marching"?clamp(run.marchTime/MARCH_DURATION,0,1):0;
+      const opacity=run.selectedSide===null?1:selected?1-clamp((transition-.64)/.36,0,1):1-clamp(transition/.24,0,1);
+      if(opacity<=.015)return;
       const x = side === 0 ? 286 : 674; const y = 214; const width = 202; const height = 238;
       const palettes = { tower:["#dc8148","#753c3f"], bonus:[choice.operation === "add" || choice.operation === "multiply" ? "#48a370" : "#b34a58","#245445"], recruit:[choice.unit ? UNIT_TYPES[choice.unit].color : "#4f91c4","#244c67"], hazard:["#66616a","#352f3c"] };
       const palette = palettes[choice.type];
       ctx.save();
-      const travelScale=.62+this.gateTravel*.48;const travelY=132+this.gateTravel*113;
-      ctx.translate(x,travelY);ctx.scale(travelScale,travelScale);ctx.translate(-x,-y);
+      ctx.globalAlpha=opacity;
+      const travelScale=.62+this.gateTravel*.48;const travelY=132+this.gateTravel*113;const travelX=x+(480-x)*transition*.22;
+      ctx.translate(travelX,travelY);ctx.scale(travelScale,travelScale);ctx.translate(-x,-y);
       if (selected) { const pulse=1+Math.sin(this.time*14)*.035; ctx.translate(x,y);ctx.scale(pulse,pulse);ctx.translate(-x,-y); }
       this.drawGateSilhouette(ctx,choice,x,y,palette,selected);
       ctx.fillStyle="rgba(31,36,49,.76)";this.roundRect(ctx,x-67,y+91,134,82,17);ctx.fill();
@@ -257,7 +261,7 @@
     }
 
     drawArmy(ctx, run) {
-      const visible=Math.min(40,Math.max(4,Math.ceil(run.army/2))); const lane=run.selectedSide===null?0:run.selectedSide===0?-1:1; const progress=run.state==="marching"?clamp(run.marchTime/.72,0,1):0; const baseY=455; const baseX=480+lane*progress*150;
+      const visible=Math.min(40,Math.max(4,Math.ceil(run.army/2))); const lane=run.selectedSide===null?0:run.selectedSide===0?-1:1; const progress=run.state==="marching"?clamp(run.marchTime/MARCH_DURATION,0,1):0; const baseY=455; const baseX=480+lane*progress*96;
       const specials=[]; Object.entries(run.units).forEach(([type,count])=>{if(type!=="soldier")for(let index=0;index<Math.min(8,count);index+=1)specials.push(type);});
       for(let index=0;index<visible;index+=1){const type=specials[index%specials.length]||"soldier";const column=index%7;const row=Math.floor(index/7);const x=baseX+(column-3)*15+Math.sin(this.time*6+index)*1.7;const y=baseY+row*14+Math.cos(this.time*6+index)*1.2;ctx.fillStyle=UNIT_TYPES[type].color;ctx.beginPath();ctx.arc(x,y,type==="giant"?9:7,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#173a78";ctx.lineWidth=2;ctx.stroke();ctx.fillStyle="#173a78";ctx.fillRect(x-2,y-13,4,8);}
       ctx.fillStyle="#163e73";this.roundRect(ctx,baseX-39,baseY+76,78,31,15);ctx.fill();ctx.fillStyle="#fff";ctx.font="900 18px Inter,system-ui,sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(String(run.army),baseX,baseY+92);
@@ -282,7 +286,7 @@
       this.bind();this.populateLevels();this.updateUpgradeUI();this.refresh();this.initializeRenderer();requestAnimationFrame(time=>this.loop(time));
     }
 
-    async initializeRenderer(){try{const{BattleScene3D}=await import("./battle-gates-3d.js?v=20260714-borg9");this.renderer=new BattleScene3D(this.canvas,side=>this.choose(side));this.is3D=true;this.canvas.dataset.battleRenderer="3d";delete this.canvas.dataset.battle3dError;}catch(error){console.warn("Borgstorm 3D kunne ikke starte; bruger 2D-fallback.",error);this.renderer=new ArenaRenderer(this.canvas);this.is3D=false;this.canvas.dataset.battleRenderer="2d";this.canvas.dataset.battle3dError=error?.message||"Ukendt WebGL-fejl";}}
+    async initializeRenderer(){try{const{BattleScene3D}=await import("./battle-gates-3d.js?v=20260714-borg10");this.renderer=new BattleScene3D(this.canvas,side=>this.choose(side));this.is3D=true;this.canvas.dataset.battleRenderer="3d";delete this.canvas.dataset.battle3dError;}catch(error){console.warn("Borgstorm 3D kunne ikke starte; bruger 2D-fallback.",error);this.renderer=new ArenaRenderer(this.canvas);this.is3D=false;this.canvas.dataset.battleRenderer="2d";this.canvas.dataset.battle3dError=error?.message||"Ukendt WebGL-fejl";}}
 
     loadProgress(){try{const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||"{}");return{unlockedLevel:clamp(Number(saved.unlockedLevel)||1,1,LEVELS.length),stars:saved.stars&&typeof saved.stars==="object"?saved.stars:{},coins:Math.max(0,Number(saved.coins)||0),upgrades:{reinforcement:clamp(Number(saved.upgrades?.reinforcement)||0,0,5),armor:clamp(Number(saved.upgrades?.armor)||0,0,5),banner:clamp(Number(saved.upgrades?.banner)||0,0,5)}};}catch{return{unlockedLevel:1,stars:{},coins:0,upgrades:{reinforcement:0,armor:0,banner:0}};}}
     saveProgress(){localStorage.setItem(STORAGE_KEY,JSON.stringify(this.progress));}

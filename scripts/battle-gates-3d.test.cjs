@@ -31,11 +31,14 @@ for (const token of ["PerspectiveCamera", "WebGLRenderer", "InstancedMesh", "GLT
 }
 assert.ok(!sceneSource.includes("https://"), "Del 1 skal køre uden eksterne runtime-assets");
 
-assert.match(gameSource, /await import\("\.\/battle-gates-3d\.js\?v=20260714-borg9"\)/, "Hovedspillet skal indlæse 3D uden at blokere Start-knappen");
+assert.match(gameSource, /await import\("\.\/battle-gates-3d\.js\?v=20260714-borg10"\)/, "Hovedspillet skal indlæse 3D uden at blokere Start-knappen");
 assert.match(gameSource, /drawGateSilhouette/, "2D-reserven skal også tegne indholdsspecifikke porte");
 assert.match(gameSource, /this\.gateTravel\+dt\*\.29/, "2D-reservens mål skal bevæge sig mod spilleren");
 assert.match(gameSource, /enemyCount=Math\.min\(30,Math\.max\(1,Math\.round\(choice\.value\)\)\)/, "2D-reserven skal vise små fjendeantal én til én");
-assert.match(htmlSource, /<script src="js\/battle-gates\.js\?v=20260714-borg9"><\/script>/, "Hovedspillet skal starte som et robust klassisk script");
+assert.match(htmlSource, /<script src="js\/battle-gates\.js\?v=20260714-borg10"><\/script>/, "Hovedspillet skal starte som et robust klassisk script");
+assert.match(sceneSource, /this\.gateStartZ \+ \(-2\.15 - this\.gateStartZ\) \* eased/, "Det valgte mål skal bremse ved sammenstødspunktet");
+assert.match(sceneSource, /transition - 0\.64/, "Den valgte port skal fade kontrolleret ud");
+assert.doesNotMatch(sceneSource, /this\.makeActor\("soldier", true\)/, "Portens fjendeformation må ikke få en ekstra overlappende 3D-fjende");
 assert.doesNotMatch(htmlSource, /<script type="module"/, "Et 3D-modul må ikke kunne blokere hele spillets opstart");
 assert.match(htmlSource, /viewport-fit=cover/, "Mobilvisningen skal bruge hele skærmen omkring safe areas");
 assert.match(htmlSource, /battle-gates\.css\?v=20260714-borg7/, "Mobil-CSS skal have en frisk cacheversion");

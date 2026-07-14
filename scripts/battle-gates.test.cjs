@@ -42,6 +42,11 @@ assert.equal(api.data.resolveChoice(21, { type: "bonus", operation: "multiply", 
 assert.equal(api.data.resolveChoice(20, { type: "hazard", value: 8, hint: "Pigge" }, { shields: 8 }).army > 12, true, "Skjolde skal beskytte mod forhindringer");
 
 const firstLevel = api.data.LEVELS[0];
+const timedRun = new api.BattleRun(firstLevel);
+timedRun.start();
+timedRun.choose(firstLevel.safeRoute[0]);
+assert.equal(timedRun.update(0.72), null, "Portovergangen skal have tid til en glat animation");
+assert.ok(timedRun.update(0.21), "Porten skal afgøres efter den fulde overgang");
 const run = new api.BattleRun(firstLevel, { reinforcement: 2, armor: 1, banner: 1 });
 run.start();
 assert.equal(run.army, firstLevel.startingArmy + 6, "Forstærkningsopgraderingen skal give tre soldater per niveau");

@@ -33,6 +33,8 @@ export class BattleScene3D {
     this.formationX = 0;
     this.formationZ = 2.7;
     this.gateZ = -12.2;
+    this.gateStartZ = -12.2;
+    this.visualRunState = "ready";
     this.lastGateKey = "";
     this.lastGateIndex = -1;
     this.lastLevelId = -1;
@@ -419,12 +421,6 @@ export class BattleScene3D {
       this.riggedArmy.add(actor.root);
       this.actors.push(actor);
     }
-    for (let index = 0; index < this.quality.enemyCount; index += 1) {
-      const actor = this.makeActor("soldier", true);
-      actor.root.visible = false;
-      this.encounter.add(actor.root);
-      this.enemyActors.push(actor);
-    }
   }
 
   setActorAction(actor, actionName, once = false, restart = false) {
@@ -528,6 +524,8 @@ export class BattleScene3D {
     this.formationX = 0;
     this.formationZ = 2.7;
     this.gateZ = -12.2;
+    this.gateStartZ = -12.2;
+    this.visualRunState = "ready";
     this.lastGateKey = "";
     this.lastGateIndex = -1;
     this.cameraShake = 0;
@@ -575,28 +573,28 @@ export class BattleScene3D {
     }
     this.gates.forEach((sceneGate, side) => {
       const selected = run.selectedSide === side;
-      sceneGate.group.visible = run.selectedSide === null || selected;
+      const transition = run.state === "marching" ? logic.clamp(run.marchTime / 0.92, 0, 1) : 0;
+      const opacity = run.selectedSide === null ? 1 : selected ? 1 - logic.clamp((transition - 0.64) / 0.36, 0, 1) : 1 - logic.clamp(transition / 0.24, 0, 1);
+      sceneGate.group.visible = opacity > 0.015;
+      sceneGate.group.position.x = sceneGate.side * 3 * (selected ? 1 - transition * 0.28 : 1);
       sceneGate.group.position.z = this.gateZ;
       sceneGate.materials.forEach((material) => {
         material.emissive.setHex(selected ? 0x6b4517 : 0x000000);
         material.emissiveIntensity = selected ? 0.32 : 0;
+        material.transparent = opacity < 0.999;
+        material.opacity = opacity;
+        material.depthWrite = opacity > 0.42;
       });
-      sceneGate.group.scale.setScalar(selected ? 1.06 + Math.sin(this.time * 10) * 0.018 : 1);
+      sceneGate.label.sprite.material.opacity = opacity;
+      const pulse = selected ? Math.sin(this.time * 10) * 0.018 * (1 - transition) : 0;
+      sceneGate.group.scale.setScalar(selected ? 1.045 + pulse - transition * 0.075 : 1 - transition * 0.08);
     });
+    this.canvas.dataset.battleTransition = run.state === "marching" ? (run.marchTime / 0.92).toFixed(2) : "0.00";
   }
 
   updateEncounter(run) {
-    const choice = run.selectedSide === null ? null : run.currentGate?.choices[run.selectedSide];
-    const laneX = run.selectedSide === 0 ? -3 : 3;
-    this.encounter.position.set(laneX, 0, -4.25);
-    this.hazards.visible = Boolean(choice?.type === "hazard");
-    this.enemyActors.forEach((actor, index) => {
-      const visible = Boolean(choice?.type === "tower" && index < Math.min(this.quality.enemyCount, Math.ceil(choice.value / 8)));
-      actor.root.visible = visible;
-      actor.root.position.set((index % 3 - 1) * 0.58, 0, Math.floor(index / 3) * 0.62);
-      actor.root.scale.setScalar(choice?.boss ? 0.68 : 0.46);
-      this.setActorAction(actor, run.state === "marching" ? "attack" : "idle", run.state === "marching");
-    });
+    this.hazards.visible = false;
+    this.enemyActors.forEach((actor) => { actor.root.visible = false; });
   }
 
   emit(outcome) {
@@ -648,8 +646,10 @@ export class BattleScene3D {
       this.lastGateIndex = run.gateIndex;
       this.formationZ = 2.7;
       this.gateZ = -12.2;
+      this.gateStartZ = -12.2;
       this.targetX *= 0.35;
     }
+    if (run.state === "marching" && this.visualRunState !== "marching") this.gateStartZ = this.gateZ;
     this.updateGateVisuals(run);
     if (run.state === "choosing") {
       this.targetX = logic.clamp(this.targetX + this.steering * dt * 4.2, -3.45, 3.45);
@@ -662,10 +662,12 @@ export class BattleScene3D {
         this.onGateChoice(side);
       }
     } else if (run.state === "marching") {
-      const laneX = run.selectedSide === 0 ? -3 : 3;
+      const laneX = run.selectedSide === 0 ? -1.95 : 1.95;
+      const transition = logic.clamp(run.marchTime / 0.92, 0, 1);
+      const eased = 1 - Math.pow(1 - transition, 3);
       this.formationX += (laneX - this.formationX) * Math.min(1, dt * 12);
       this.formationZ += (2.4 - this.formationZ) * Math.min(1, dt * 12);
-      this.gateZ += dt * 10.5;
+      this.gateZ = this.gateStartZ + (-2.15 - this.gateStartZ) * eased;
     } else if (run.state === "ready") {
       this.formationZ = 2.7;
       this.gateZ = -12.2;
@@ -681,10 +683,11 @@ export class BattleScene3D {
 
     const shake = this.cameraShake > 0 ? (Math.random() - 0.5) * this.cameraShake : 0;
     this.cameraShake = Math.max(0, this.cameraShake - dt * 1.7);
-    this.camera.position.x += (this.formationX * 0.16 + shake - this.camera.position.x) * Math.min(1, dt * 4.2);
+    this.camera.position.x += (this.formationX * 0.38 + shake - this.camera.position.x) * Math.min(1, dt * 4.2);
     this.camera.position.y = 7.5 + Math.abs(shake) * 0.35;
-    this.camera.lookAt(this.formationX * 0.13, 0.55, -6.6);
+    this.camera.lookAt(this.formationX * 0.22, 0.55, -6.6);
     this.renderer.render(this.scene, this.camera);
+    this.visualRunState = run.state;
   }
 
   destroy() {
