@@ -32,6 +32,7 @@ export class BattleScene3D {
     this.targetX = 0;
     this.formationX = 0;
     this.formationZ = 2.7;
+    this.gateZ = -12.2;
     this.lastGateKey = "";
     this.lastGateIndex = -1;
     this.lastLevelId = -1;
@@ -212,14 +213,37 @@ export class BattleScene3D {
     const box = (width, height, x, y, gateMaterial = main, rz = 0, depth = 0.48) => add(new THREE.BoxGeometry(width, height, depth), gateMaterial, x, y, 0, rz);
 
     if (choice.type === "tower") {
-      box(0.62, 2.5, -1.02, 1.25);
-      box(0.62, 2.5, 1.02, 1.25);
-      box(2.66, 0.58, 0, 2.27);
-      box(1.38, 1.72, 0, 0.84, dark, 0, 0.52);
-      [-1.08, -0.54, 0, 0.54, 1.08].forEach((x) => box(0.4, 0.48, x, 2.76, accent));
-      if (choice.boss) {
-        add(new THREE.CylinderGeometry(0.43, 0.5, 2.78, 8), main, -1.32, 1.38, -0.03);
-        add(new THREE.CylinderGeometry(0.43, 0.5, 2.78, 8), main, 1.32, 1.38, -0.03);
+      const enemyCount = Math.min(30, Math.max(1, Math.round(choice.value)));
+      const columns = enemyCount <= 6 ? enemyCount : Math.min(6, Math.ceil(Math.sqrt(enemyCount * 1.45)));
+      const bodyGeometry = new THREE.BoxGeometry(0.27, 0.42, 0.19);
+      const headGeometry = new THREE.SphereGeometry(0.15, 8, 6);
+      const helmetGeometry = new THREE.ConeGeometry(0.18, 0.2, 5);
+      const bodies = new THREE.InstancedMesh(bodyGeometry, main, enemyCount);
+      const heads = new THREE.InstancedMesh(headGeometry, accent, enemyCount);
+      const helmets = new THREE.InstancedMesh(helmetGeometry, dark, enemyCount);
+      const dummy = new THREE.Object3D();
+      const scale = choice.boss ? 1.35 : enemyCount <= 6 ? 1.3 : 1;
+      for (let index = 0; index < enemyCount; index += 1) {
+        const row = Math.floor(index / columns);
+        const rowCount = Math.min(columns, enemyCount - row * columns);
+        const column = index % columns;
+        const x = (column - (rowCount - 1) / 2) * 0.46 * scale;
+        const z = row * 0.34;
+        dummy.position.set(x, 0.34 * scale, z);
+        dummy.scale.setScalar(scale);
+        dummy.updateMatrix();
+        bodies.setMatrixAt(index, dummy.matrix);
+        dummy.position.y = 0.67 * scale;
+        dummy.updateMatrix();
+        heads.setMatrixAt(index, dummy.matrix);
+        dummy.position.y = 0.83 * scale;
+        dummy.updateMatrix();
+        helmets.setMatrixAt(index, dummy.matrix);
+      }
+      for (const mesh of [bodies, heads, helmets]) {
+        mesh.instanceMatrix.needsUpdate = true;
+        mesh.castShadow = !this.quality.compact;
+        gate.shape.add(mesh);
       }
     } else if (choice.type === "hazard" && choice.hazardType === "boulder") {
       add(new THREE.TorusGeometry(1.05, 0.3, 7, 16), main, 0, 1.34, 0);
@@ -288,7 +312,7 @@ export class BattleScene3D {
   buildGates() {
     this.gates = [-1, 1].map((side) => {
       const group = new THREE.Group();
-      group.position.set(side * 3, 0, -5.2);
+      group.position.set(side * 3, 0, this.gateZ);
       const shape = new THREE.Group();
       group.add(shape);
       const label = this.makeLabel();
@@ -503,6 +527,7 @@ export class BattleScene3D {
     this.targetX = 0;
     this.formationX = 0;
     this.formationZ = 2.7;
+    this.gateZ = -12.2;
     this.lastGateKey = "";
     this.lastGateIndex = -1;
     this.cameraShake = 0;
@@ -539,6 +564,7 @@ export class BattleScene3D {
   updateGateVisuals(run) {
     const gate = run.currentGate;
     if (!gate) return;
+    this.canvas.dataset.battleEnemyPreviews = gate.choices.map((choice) => choice.type === "tower" ? String(Math.min(30, Math.max(1, Math.round(choice.value)))) : "0").join(",");
     const key = `${run.level.id}-${run.gateIndex}`;
     if (key !== this.lastGateKey) {
       this.lastGateKey = key;
@@ -549,6 +575,8 @@ export class BattleScene3D {
     }
     this.gates.forEach((sceneGate, side) => {
       const selected = run.selectedSide === side;
+      sceneGate.group.visible = run.selectedSide === null || selected;
+      sceneGate.group.position.z = this.gateZ;
       sceneGate.materials.forEach((material) => {
         material.emissive.setHex(selected ? 0x6b4517 : 0x000000);
         material.emissiveIntensity = selected ? 0.32 : 0;
@@ -616,30 +644,36 @@ export class BattleScene3D {
   draw(run, dt) {
     this.time += dt;
     this.applyTheme(run);
-    this.updateGateVisuals(run);
     if (run.gateIndex !== this.lastGateIndex && run.state === "choosing") {
       this.lastGateIndex = run.gateIndex;
       this.formationZ = 2.7;
+      this.gateZ = -12.2;
       this.targetX *= 0.35;
     }
+    this.updateGateVisuals(run);
     if (run.state === "choosing") {
       this.targetX = logic.clamp(this.targetX + this.steering * dt * 4.2, -3.45, 3.45);
       this.formationX += (this.targetX - this.formationX) * Math.min(1, dt * 8);
-      this.formationZ -= dt * (this.reducedMotion ? 2.1 : 1.58);
-      if (this.formationZ < -4.75) {
+      this.formationZ += (2.7 - this.formationZ) * Math.min(1, dt * 8);
+      this.gateZ += dt * (this.reducedMotion ? 2.35 : 1.78);
+      if (this.gateZ > -4.05) {
         const side = logic.laneForPosition(this.formationX);
-        this.formationZ = 2.7;
+        this.gateZ = -4.05;
         this.onGateChoice(side);
       }
     } else if (run.state === "marching") {
       const laneX = run.selectedSide === 0 ? -3 : 3;
       this.formationX += (laneX - this.formationX) * Math.min(1, dt * 12);
-      this.formationZ -= dt * 9.5;
+      this.formationZ += (2.4 - this.formationZ) * Math.min(1, dt * 12);
+      this.gateZ += dt * 10.5;
     } else if (run.state === "ready") {
       this.formationZ = 2.7;
+      this.gateZ = -12.2;
       this.formationX += (0 - this.formationX) * Math.min(1, dt * 7);
     }
     this.army.position.set(this.formationX, 0, this.formationZ);
+    this.canvas.dataset.battleGateZ = this.gateZ.toFixed(2);
+    this.canvas.dataset.battleArmyZ = this.formationZ.toFixed(2);
     this.arrangeArmy(run);
     this.updateEncounter(run);
     this.updateParticles(dt, run);

@@ -26,14 +26,16 @@ assert.equal(logic.visibleUnits(1), 8, "En lille hær skal stadig have en synlig
 assert.equal(logic.visibleUnits(200), 42, "3D-rendereren må højst oprette 42 prototypefigurer");
 assert.equal(logic.clamp(7, -3, 3), 3, "Styring må ikke forlade arenaen");
 
-for (const token of ["PerspectiveCamera", "WebGLRenderer", "InstancedMesh", "GLTFLoader", "cloneSkeleton", "AnimationMixer", "pointerdown", "setSteering", "onGateChoice(side)", "buildGateShape", "TorusGeometry", "hazardType", "choice.operation", "choice.unit", "meadow", "forest", "volcano", "frost", "royal"]) {
+for (const token of ["PerspectiveCamera", "WebGLRenderer", "InstancedMesh", "GLTFLoader", "cloneSkeleton", "AnimationMixer", "pointerdown", "setSteering", "onGateChoice(side)", "buildGateShape", "TorusGeometry", "hazardType", "choice.operation", "choice.unit", "this.gateZ += dt", "Math.min(30, Math.max(1, Math.round(choice.value)))", "enemyCount <= 6 ? enemyCount", "new THREE.InstancedMesh(bodyGeometry", "meadow", "forest", "volcano", "frost", "royal"]) {
   assert.ok(sceneSource.includes(token), `3D-scenen skal indeholde ${token}`);
 }
 assert.ok(!sceneSource.includes("https://"), "Del 1 skal køre uden eksterne runtime-assets");
 
-assert.match(gameSource, /await import\("\.\/battle-gates-3d\.js\?v=20260714-borg8"\)/, "Hovedspillet skal indlæse 3D uden at blokere Start-knappen");
+assert.match(gameSource, /await import\("\.\/battle-gates-3d\.js\?v=20260714-borg9"\)/, "Hovedspillet skal indlæse 3D uden at blokere Start-knappen");
 assert.match(gameSource, /drawGateSilhouette/, "2D-reserven skal også tegne indholdsspecifikke porte");
-assert.match(htmlSource, /<script src="js\/battle-gates\.js\?v=20260714-borg8"><\/script>/, "Hovedspillet skal starte som et robust klassisk script");
+assert.match(gameSource, /this\.gateTravel\+dt\*\.29/, "2D-reservens mål skal bevæge sig mod spilleren");
+assert.match(gameSource, /enemyCount=Math\.min\(30,Math\.max\(1,Math\.round\(choice\.value\)\)\)/, "2D-reserven skal vise små fjendeantal én til én");
+assert.match(htmlSource, /<script src="js\/battle-gates\.js\?v=20260714-borg9"><\/script>/, "Hovedspillet skal starte som et robust klassisk script");
 assert.doesNotMatch(htmlSource, /<script type="module"/, "Et 3D-modul må ikke kunne blokere hele spillets opstart");
 assert.match(htmlSource, /viewport-fit=cover/, "Mobilvisningen skal bruge hele skærmen omkring safe areas");
 assert.match(htmlSource, /battle-gates\.css\?v=20260714-borg7/, "Mobil-CSS skal have en frisk cacheversion");
