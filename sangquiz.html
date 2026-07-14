@@ -760,7 +760,7 @@
 
     .category-options {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 10px;
     }
 
@@ -4724,7 +4724,7 @@
                   <h3>Sangkategori</h3>
                   <div class="category-options" aria-label="Vælg sangkategori">
                     <button type="button" data-song-category="mixed" aria-pressed="true">
-                      Blandet
+                      Blandet standard
                       <small>Dansk og internationalt</small>
                     </button>
                     <button type="button" data-song-category="danish" aria-pressed="false">
@@ -4734,6 +4734,18 @@
                     <button type="button" data-song-category="international" aria-pressed="false">
                       Internationalt
                       <small>Kun internationale kunstnere</small>
+                    </button>
+                    <button type="button" data-song-category="christmas" aria-pressed="false">
+                      Julesange
+                      <small>Dansk og internationalt</small>
+                    </button>
+                    <button type="button" data-song-category="eurovision" aria-pressed="false">
+                      Grand Prix
+                      <small>Dansk Melodi Grand Prix og Eurovision</small>
+                    </button>
+                    <button type="button" data-song-category="screen" aria-pressed="false">
+                      Film og tv-serier
+                      <small>Bonuspoint for filmen eller serien</small>
                     </button>
                   </div>
                   <p id="category-status" class="hint-text">Sangpulje vælges</p>
@@ -4952,12 +4964,13 @@
                   </div>
                   <strong id="reveal-year" class="answer-year">0000</strong>
                 </div>
+                <p id="reveal-source" class="answer-artist" hidden></p>
                 <p id="placement-result" class="placement-result">Placering</p>
                 <label class="bonus-toggle" for="bonus-guess">
                   <input id="bonus-guess" type="checkbox" />
                   <span>
-                    <strong>Titel og kunstner gættet</strong>
-                    <small>+1 bonuspoint oven i rundens øvrige point.</small>
+                    <strong id="bonus-label-title">Titel og kunstner gættet</strong>
+                    <small id="bonus-label-help">+1 bonuspoint oven i rundens øvrige point.</small>
                   </span>
                 </label>
                 <div class="score-actions">
@@ -5090,6 +5103,7 @@
   </div>
   <script src="js/highscores.js"></script>
   <script src="js/sangquiz-data.js"></script>
-  <script src="js/sangquiz.js?v=20260713-game-controls"></script>
+  <script src="js/sangquiz-special-data.js?v=20260714-special-editions"></script>
+  <script src="js/sangquiz.js?v=20260714-special-editions"></script>
 </body>
 </html>

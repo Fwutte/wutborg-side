@@ -26,10 +26,14 @@
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
   const byYear = (a, b) => a.year - b.year || a.title.localeCompare(b.title, "da");
   const CATEGORY_LABELS = {
-    mixed: "Blandet",
+    mixed: "Blandet standard",
     danish: "Dansk",
     international: "Internationalt",
+    christmas: "Julesange",
+    eurovision: "Grand Prix",
+    screen: "Film og tv-serier",
   };
+  const SPECIAL_EDITIONS = new Set(["christmas", "eurovision", "screen"]);
 
   const els = {};
   let selectedCategory = normalizeCategory(readTextStorage(CATEGORY_KEY, "mixed"));
@@ -115,8 +119,11 @@
       "reveal-title",
       "reveal-artist",
       "reveal-year",
+      "reveal-source",
       "placement-result",
       "bonus-guess",
+      "bonus-label-title",
+      "bonus-label-help",
       "scoreboard",
       "game-actions",
       "host-panel",
@@ -655,6 +662,15 @@
     els.revealTitle.textContent = song.title;
     els.revealArtist.textContent = song.artist;
     els.revealYear.textContent = String(song.year);
+    const isScreenEdition = state.songCategory === "screen";
+    els.revealSource.hidden = !isScreenEdition || !song.sourceTitle;
+    els.revealSource.textContent = song.sourceTitle
+      ? `Fra ${song.sourceType === "tv-serie" ? "tv-serien" : "filmen"}: ${song.sourceTitle}`
+      : "";
+    els.bonusLabelTitle.textContent = isScreenEdition ? "Film eller tv-serie gættet" : "Titel og kunstner gættet";
+    els.bonusLabelHelp.textContent = isScreenEdition
+      ? "+1 bonuspoint for værkets navn – ikke for titel og kunstner."
+      : "+1 bonuspoint oven i rundens øvrige point.";
     els.placementResult.textContent = result.correct
       ? `Korrekt placering: ${formatSlot(timeline, state.selectedSlot)}`
       : `Ikke korrekt. Rigtig placering: ${formatSlot(timeline, getCorrectSlot(timeline, song.year))}`;
@@ -896,7 +912,7 @@
       button.setAttribute("aria-pressed", pressed ? "true" : "false");
     });
     if (els.categoryStatus) {
-      els.categoryStatus.textContent = `${getSongPool(category).length} sange i ${CATEGORY_LABELS[category].toLowerCase()} pulje`;
+      els.categoryStatus.textContent = `${getSongPool(category).length} sange i puljen · ${CATEGORY_LABELS[category]}`;
     }
   }
 
@@ -906,8 +922,12 @@
 
   function getSongPool(category) {
     const normalized = normalizeCategory(category);
-    if (normalized === "mixed") return ALL_SONGS;
-    return ALL_SONGS.filter((song) => song.category === normalized);
+    if (SPECIAL_EDITIONS.has(normalized)) {
+      return ALL_SONGS.filter((song) => song.edition === normalized);
+    }
+    const standardSongs = ALL_SONGS.filter((song) => !song.edition || song.edition === "standard");
+    if (normalized === "mixed") return standardSongs;
+    return standardSongs.filter((song) => song.category === normalized);
   }
 
   function normalizeCategory(category) {
