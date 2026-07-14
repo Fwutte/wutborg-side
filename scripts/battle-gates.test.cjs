@@ -5,8 +5,7 @@ const vm = require("node:vm");
 
 const root = path.resolve(__dirname, "..");
 const dataSource = fs.readFileSync(path.join(root, "js", "battle-gates-data.js"), "utf8");
-const gameSource = fs.readFileSync(path.join(root, "js", "battle-gates.js"), "utf8")
-  .replace(/^import \{ BattleScene3D \} from "\.\/battle-gates-3d\.js\?v=[^"]+";\r?\n/, "");
+const gameSource = fs.readFileSync(path.join(root, "js", "battle-gates.js"), "utf8");
 const browserWindow = { addEventListener() {} };
 const sandbox = { window: browserWindow, console, Math };
 

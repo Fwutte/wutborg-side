@@ -49,7 +49,7 @@ export class BattleScene3D {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, compact ? 1.2 : 1.65));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.shadowMap.enabled = !compact;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.scene.add(new THREE.HemisphereLight(0xe8f7ff, 0x385847, 2.1));
     this.sun = new THREE.DirectionalLight(0xfff4cf, 2.5);
     this.sun.position.set(-7, 10, 6);
