@@ -52,7 +52,7 @@ export class BattleScene3D {
     this.cameraShake = 0;
     this.reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
     const compact = matchMedia("(max-width: 720px)").matches || (navigator.deviceMemory && navigator.deviceMemory <= 4);
-    this.quality = { compact, actorCount: compact ? 6 : 12, enemyCount: compact ? 3 : 6, particles: compact ? 48 : 96 };
+    this.quality = { compact, actorCount: compact ? 18 : 24, enemyCount: compact ? 16 : 24, particles: compact ? 48 : 96 };
 
     this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(45, 16 / 10, 0.1, 80);
@@ -331,6 +331,7 @@ export class BattleScene3D {
 
   buildGateShape(gate, choice) {
     this.clearGateShape(gate);
+    gate.group.userData.displayedEnemyCount = 0;
     const palette = this.gatePalette(choice);
     const material = (color, roughness = 0.72) => {
       const value = new THREE.MeshStandardMaterial({ color, roughness });
@@ -358,8 +359,8 @@ export class BattleScene3D {
         accent.dispose();
         dark.dispose();
         gate.materials = [];
-        const renderCount = choice.boss ? 1 : Math.min(enemyCount, this.quality.compact ? 6 : 10);
-        const columns = renderCount <= 5 ? renderCount : Math.min(5, Math.ceil(Math.sqrt(renderCount * 1.5)));
+        const renderCount = choice.boss ? 1 : Math.min(enemyCount, this.quality.enemyCount);
+        const columns = renderCount <= 5 ? renderCount : Math.min(6, Math.ceil(Math.sqrt(renderCount * 1.5)));
         for (let index = 0; index < renderCount; index += 1) {
           const actor = this.makeActor(choice.boss ? "boss" : "enemy", true);
           const row = Math.floor(index / columns);
@@ -372,6 +373,7 @@ export class BattleScene3D {
           gate.shape.add(actor.root);
           gate.previewActors.push(actor);
         }
+        gate.group.userData.displayedEnemyCount = renderCount;
       } else {
         const columns = enemyCount <= 6 ? enemyCount : Math.min(6, Math.ceil(Math.sqrt(enemyCount * 1.45)));
         const bodyGeometry = new THREE.BoxGeometry(0.27, 0.42, 0.19);
@@ -665,8 +667,8 @@ export class BattleScene3D {
 
     this.updateActorTypes(run);
     this.actors.forEach((actor, index) => {
-      const actorColumns = this.quality.compact ? 3 : 4;
-      actor.root.position.set((index % actorColumns - (actorColumns - 1) / 2) * 0.62, 0, Math.floor(index / actorColumns) * 0.62 - 0.55);
+      const actorColumns = Math.min(this.quality.compact ? 5 : 6, logic.formationColumns(Math.min(run.army, this.quality.actorCount)));
+      actor.root.position.set((index % actorColumns - (actorColumns - 1) / 2) * 0.58, 0, 0.45 - Math.floor(index / actorColumns) * 0.56);
       actor.root.visible = index < Math.min(run.army, this.quality.actorCount);
       const action = run.state === "marching" ? (run.currentGate?.choices[run.selectedSide]?.type === "hazard" ? "block" : "attack") : run.state === "won" ? "cheer" : run.state === "lost" ? "death" : "run";
       this.setActorAction(actor, action, ["attack", "hit", "death"].includes(action));
@@ -895,6 +897,8 @@ export class BattleScene3D {
       this.formationX += (0 - this.formationX) * Math.min(1, dt * 7);
     }
     this.army.position.set(this.formationX, 0, this.formationZ);
+    this.canvas.dataset.battleDisplayedArmy = String(Math.min(run.army, this.quality.actorCount));
+    this.canvas.dataset.battleDisplayedEnemies = this.gates.map((gate) => gate.group.userData.displayedEnemyCount || 0).join(",");
     this.canvas.dataset.battleGateZ = this.gateZ.toFixed(2);
     this.canvas.dataset.battleArmyZ = this.formationZ.toFixed(2);
     this.arrangeArmy(run);
