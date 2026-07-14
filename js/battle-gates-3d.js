@@ -167,28 +167,135 @@ export class BattleScene3D {
     gate.label.texture.needsUpdate = true;
   }
 
+  gatePalette(choice) {
+    if (choice.type === "tower") return { main: choice.boss ? 0x9a5238 : 0x8f4a45, accent: choice.boss ? 0xf2c14d : 0xd98a55, dark: 0x3a2930 };
+    if (choice.type === "hazard") return { main: choice.hazardType === "fire" ? 0x8d3940 : 0x59535d, accent: choice.hazardType === "fire" ? 0xff9b42 : 0xd9c3a0, dark: 0x292733 };
+    if (choice.type === "recruit") return { main: UNIT_COLORS[choice.unit] || 0x4589bd, accent: 0xc6edff, dark: 0x243d59 };
+    const positive = choice.operation === "add" || choice.operation === "multiply";
+    return { main: positive ? 0x3d9b68 : 0xad4858, accent: positive ? 0xd9f1a6 : 0xffc3ad, dark: positive ? 0x204f40 : 0x572d3b };
+  }
+
+  clearGateShape(gate) {
+    const geometries = new Set();
+    const materials = new Set();
+    gate.shape.traverse((object) => {
+      if (object.geometry) geometries.add(object.geometry);
+      if (Array.isArray(object.material)) object.material.forEach((material) => materials.add(material));
+      else if (object.material) materials.add(object.material);
+    });
+    gate.shape.clear();
+    geometries.forEach((geometry) => geometry.dispose());
+    materials.forEach((material) => material.dispose());
+    gate.materials = [];
+  }
+
+  buildGateShape(gate, choice) {
+    this.clearGateShape(gate);
+    const palette = this.gatePalette(choice);
+    const material = (color, roughness = 0.72) => {
+      const value = new THREE.MeshStandardMaterial({ color, roughness });
+      gate.materials.push(value);
+      return value;
+    };
+    const main = material(palette.main);
+    const accent = material(palette.accent, 0.62);
+    const dark = material(palette.dark, 0.86);
+    const add = (geometry, gateMaterial, x, y, z = 0, rz = 0, scale = null) => {
+      const mesh = new THREE.Mesh(geometry, gateMaterial);
+      mesh.position.set(x, y, z);
+      mesh.rotation.z = rz;
+      if (scale) mesh.scale.set(...scale);
+      mesh.castShadow = !this.quality.compact;
+      gate.shape.add(mesh);
+      return mesh;
+    };
+    const box = (width, height, x, y, gateMaterial = main, rz = 0, depth = 0.48) => add(new THREE.BoxGeometry(width, height, depth), gateMaterial, x, y, 0, rz);
+
+    if (choice.type === "tower") {
+      box(0.62, 2.5, -1.02, 1.25);
+      box(0.62, 2.5, 1.02, 1.25);
+      box(2.66, 0.58, 0, 2.27);
+      box(1.38, 1.72, 0, 0.84, dark, 0, 0.52);
+      [-1.08, -0.54, 0, 0.54, 1.08].forEach((x) => box(0.4, 0.48, x, 2.76, accent));
+      if (choice.boss) {
+        add(new THREE.CylinderGeometry(0.43, 0.5, 2.78, 8), main, -1.32, 1.38, -0.03);
+        add(new THREE.CylinderGeometry(0.43, 0.5, 2.78, 8), main, 1.32, 1.38, -0.03);
+      }
+    } else if (choice.type === "hazard" && choice.hazardType === "boulder") {
+      add(new THREE.TorusGeometry(1.05, 0.3, 7, 16), main, 0, 1.34, 0);
+      [[-1.13, 0.55, 0.52], [1.13, 0.55, 0.52], [0, 2.55, 0.58]].forEach(([x, y, size]) => add(new THREE.DodecahedronGeometry(size), accent, x, y, 0.05));
+      box(1.42, 1.58, 0, 1.16, dark, 0, 0.34);
+    } else if (choice.type === "hazard" && choice.hazardType === "fire") {
+      box(0.5, 2.35, -1.05, 1.18, main, -0.08);
+      box(0.5, 2.35, 1.05, 1.18, main, 0.08);
+      box(2.35, 0.42, 0, 2.22, main);
+      [-1.05, -0.35, 0.35, 1.05].forEach((x, index) => {
+        add(new THREE.ConeGeometry(0.3, 0.88 + (index % 2) * 0.25, 6), accent, x, 2.76, 0.05);
+        add(new THREE.ConeGeometry(0.15, 0.52, 6), material(0xffe06a, 0.55), x, 2.68, 0.18);
+      });
+    } else if (choice.type === "hazard") {
+      box(0.45, 2.45, -1.08, 1.22, main, -0.12);
+      box(0.45, 2.45, 1.08, 1.22, main, 0.12);
+      box(2.4, 0.4, 0, 2.28, main);
+      [-0.9, -0.45, 0, 0.45, 0.9].forEach((x) => {
+        add(new THREE.ConeGeometry(0.23, 0.78, 5), accent, x, 0.39, 0.12);
+        const upper = add(new THREE.ConeGeometry(0.21, 0.66, 5), accent, x, 1.9, 0.12);
+        upper.rotation.z = Math.PI;
+      });
+    } else if (choice.type === "recruit" && choice.unit === "shield") {
+      add(new THREE.TorusGeometry(1.08, 0.3, 8, 18), main, 0, 1.35, 0);
+      const crest = add(new THREE.SphereGeometry(0.74, 12, 8), accent, 0, 2.05, -0.04, 0, [1, 0.72, 0.22]);
+      crest.rotation.x = -0.1;
+      box(1.35, 1.55, 0, 1.08, dark, 0, 0.35);
+    } else if (choice.type === "recruit" && choice.unit === "archer") {
+      for (const x of [-1, 1]) {
+        add(new THREE.CylinderGeometry(0.12, 0.12, 2.38, 8), main, x, 1.18, 0);
+        add(new THREE.ConeGeometry(0.31, 0.72, 5), accent, x, 2.69, 0);
+      }
+      box(2.3, 0.35, 0, 2.18, main);
+      box(1.45, 1.7, 0, 1.05, dark, 0, 0.34);
+    } else if (choice.type === "recruit") {
+      box(0.9, 2.75, -1.05, 1.37, main);
+      box(0.9, 2.75, 1.05, 1.37, main);
+      box(2.92, 0.68, 0, 2.5, accent);
+      box(1.22, 1.72, 0, 0.92, dark, 0, 0.52);
+    } else if (choice.operation === "multiply") {
+      box(0.46, 2.35, -1.02, 1.15, main, -0.12);
+      box(0.46, 2.35, 1.02, 1.15, main, 0.12);
+      box(0.3, 1.3, -0.28, 2.58, accent, 0.68, 0.32);
+      box(0.3, 1.3, 0.28, 2.58, accent, -0.68, 0.32);
+    } else if (choice.operation === "divide") {
+      box(0.46, 2.45, -1.15, 1.22, main);
+      box(0.46, 2.45, 1.15, 1.22, main);
+      box(2.65, 0.42, 0, 2.3, main);
+      box(0.3, 1.95, 0, 1.15, accent);
+      add(new THREE.SphereGeometry(0.22, 10, 8), accent, 0, 2.76, 0.05);
+      add(new THREE.SphereGeometry(0.22, 10, 8), accent, 0, 0.22, 0.05);
+    } else if (choice.operation === "subtract") {
+      box(0.48, 2.48, -0.92, 1.23, main, -0.17);
+      box(0.48, 2.48, 0.92, 1.23, main, 0.17);
+      box(2.05, 0.48, 0, 2.02, main);
+      box(1.18, 0.24, 0, 2.72, accent, 0, 0.32);
+    } else {
+      box(0.5, 2.4, -1.05, 1.2, main);
+      box(0.5, 2.4, 1.05, 1.2, main);
+      box(2.55, 0.44, 0, 2.25, main);
+      box(0.3, 1.22, 0, 2.73, accent, 0, 0.32);
+      box(1.22, 0.3, 0, 2.73, accent, 0, 0.32);
+    }
+  }
+
   buildGates() {
     this.gates = [-1, 1].map((side) => {
       const group = new THREE.Group();
       group.position.set(side * 3, 0, -5.2);
-      const material = new THREE.MeshStandardMaterial({ color: 0x5e92a0, roughness: 0.76 });
-      const arch = new THREE.Mesh(new THREE.BoxGeometry(2.6, 2.55, 0.44), material);
-      arch.position.y = 1.25;
-      arch.castShadow = !this.quality.compact;
-      group.add(arch);
-      const opening = new THREE.Mesh(new THREE.BoxGeometry(1.52, 1.65, 0.5), new THREE.MeshStandardMaterial({ color: 0x203d52, emissive: 0x102433, emissiveIntensity: 0.35 }));
-      opening.position.set(0, 0.72, 0.05);
-      group.add(opening);
-      const crown = new THREE.Mesh(new THREE.ConeGeometry(1.8, 0.82, 4), material);
-      crown.position.y = 2.9;
-      crown.rotation.y = Math.PI / 4;
-      crown.castShadow = !this.quality.compact;
-      group.add(crown);
+      const shape = new THREE.Group();
+      group.add(shape);
       const label = this.makeLabel();
       label.sprite.position.set(0, 3.75, 0.15);
       group.add(label.sprite);
       this.scene.add(group);
-      return { side, group, arch, label };
+      return { side, group, shape, label, materials: [] };
     });
   }
 
@@ -435,11 +542,17 @@ export class BattleScene3D {
     const key = `${run.level.id}-${run.gateIndex}`;
     if (key !== this.lastGateKey) {
       this.lastGateKey = key;
-      this.gates.forEach((sceneGate, side) => this.drawLabel(sceneGate, gate.choices[side]));
+      this.gates.forEach((sceneGate, side) => {
+        this.drawLabel(sceneGate, gate.choices[side]);
+        this.buildGateShape(sceneGate, gate.choices[side]);
+      });
     }
     this.gates.forEach((sceneGate, side) => {
       const selected = run.selectedSide === side;
-      sceneGate.arch.material.color.set(selected ? 0xf4bc63 : 0x5e92a0);
+      sceneGate.materials.forEach((material) => {
+        material.emissive.setHex(selected ? 0x6b4517 : 0x000000);
+        material.emissiveIntensity = selected ? 0.32 : 0;
+      });
       sceneGate.group.scale.setScalar(selected ? 1.06 + Math.sin(this.time * 10) * 0.018 : 1);
     });
   }

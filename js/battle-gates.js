@@ -203,18 +203,47 @@
       const palette = palettes[choice.type];
       ctx.save();
       if (selected) { const pulse=1+Math.sin(this.time*14)*.035; ctx.translate(x,y);ctx.scale(pulse,pulse);ctx.translate(-x,-y); }
-      ctx.fillStyle=palette[0];ctx.strokeStyle=selected?"#fff3a2":palette[1];ctx.lineWidth=selected?9:5;this.roundRect(ctx,x-width/2,y,width,height,20);ctx.fill();ctx.stroke();
-      if (choice.type === "tower") {
-        ctx.fillStyle="rgba(74,45,44,.42)";for(let row=0;row<5;row+=1)ctx.fillRect(x-76,y+28+row*32,152,4);
-        ctx.fillStyle=choice.boss?"#f6cf56":"#fbead6";ctx.fillRect(x-6,y+13,12,42);
-      } else if (choice.type === "hazard") {
-        ctx.fillStyle="#d8c5ac";for(let index=0;index<6;index+=1){ctx.beginPath();ctx.moveTo(x-72+index*28,y+72);ctx.lineTo(x-60+index*28,y+27);ctx.lineTo(x-48+index*28,y+72);ctx.fill();}
-      } else {
-        ctx.strokeStyle="rgba(255,255,255,.65)";ctx.lineWidth=8;ctx.beginPath();ctx.arc(x,y+62,43,Math.PI,0);ctx.stroke();
-      }
+      this.drawGateSilhouette(ctx,choice,x,y,palette,selected);
       ctx.fillStyle="rgba(31,36,49,.76)";this.roundRect(ctx,x-67,y+91,134,82,17);ctx.fill();
       ctx.fillStyle="#fff8e2";ctx.font="900 53px Inter,system-ui,sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(choice.label,x,y+133);
       ctx.font="800 14px Inter,system-ui,sans-serif";ctx.fillStyle="rgba(255,250,232,.9)";ctx.fillText(choice.hint.toUpperCase(),x,y+199);ctx.restore();
+    }
+
+    drawGateSilhouette(ctx,choice,x,y,palette,selected) {
+      const edge=selected?"#fff3a2":palette[1];
+      ctx.fillStyle=palette[0];ctx.strokeStyle=edge;ctx.lineWidth=selected?9:5;ctx.lineJoin="round";
+      const block=(left,top,width,height,radius=7)=>{this.roundRect(ctx,left,top,width,height,radius);ctx.fill();ctx.stroke();};
+      const triangle=(ax,ay,bx,by,cx,cy,color=palette[1])=>{ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);ctx.lineTo(cx,cy);ctx.closePath();ctx.fill();ctx.strokeStyle=edge;ctx.stroke();ctx.fillStyle=palette[0];};
+      if(choice.type==="tower"){
+        block(x-96,y+21,42,162);block(x+54,y+21,42,162);block(x-96,y+21,192,42);
+        for(let index=0;index<5;index+=1)block(x-94+index*38,y,30,35,3);
+        ctx.fillStyle="rgba(52,35,39,.78)";block(x-45,y+55,90,128,22);
+        if(choice.boss){ctx.fillStyle=palette[1];ctx.beginPath();ctx.arc(x,y+32,18,0,Math.PI*2);ctx.fill();}
+      }else if(choice.type==="hazard"&&choice.hazardType==="boulder"){
+        ctx.lineWidth=30;ctx.beginPath();ctx.arc(x,y+94,76,Math.PI,0);ctx.stroke();
+        ctx.lineWidth=selected?9:5;[[-74,66,31],[74,66,31],[0,12,37]].forEach(([dx,dy,r])=>{ctx.fillStyle=palette[1];ctx.beginPath();ctx.arc(x+dx,y+dy,r,0,Math.PI*2);ctx.fill();ctx.stroke();});
+      }else if(choice.type==="hazard"&&choice.hazardType==="fire"){
+        block(x-93,y+25,38,158);block(x+55,y+25,38,158);block(x-93,y+25,186,30);
+        [-68,-23,23,68].forEach((dx,index)=>triangle(x+dx-18,y+42,x+dx,y-9-(index%2)*13,x+dx+18,y+42,"#ffac42"));
+      }else if(choice.type==="hazard"){
+        block(x-96,y+20,34,163);block(x+62,y+20,34,163);block(x-96,y+20,192,28);
+        for(let index=0;index<6;index+=1){const dx=-76+index*30;triangle(x+dx-14,y+79,x+dx,y+25,x+dx+14,y+79,"#d8c5ac");triangle(x+dx-13,y+20,x+dx,y+69,x+dx+13,y+20,"#d8c5ac");}
+      }else if(choice.type==="recruit"&&choice.unit==="shield"){
+        ctx.lineWidth=30;ctx.beginPath();ctx.arc(x,y+94,76,Math.PI,0);ctx.stroke();ctx.lineWidth=selected?9:5;
+        ctx.fillStyle=palette[1];ctx.beginPath();ctx.moveTo(x,y+13);ctx.quadraticCurveTo(x+53,y+31,x+46,y+74);ctx.quadraticCurveTo(x,y+112,x-46,y+74);ctx.quadraticCurveTo(x-53,y+31,x,y+13);ctx.fill();ctx.stroke();
+      }else if(choice.type==="recruit"&&choice.unit==="archer"){
+        [-73,73].forEach((dx)=>{ctx.fillStyle=palette[0];block(x+dx-10,y+25,20,158,5);triangle(x+dx-25,y+27,x+dx,y-18,x+dx+25,y+27,palette[1]);});block(x-85,y+55,170,24);
+      }else if(choice.type==="recruit"){
+        block(x-102,y+8,62,175);block(x+40,y+8,62,175);block(x-102,y+8,204,48);
+      }else if(choice.operation==="multiply"){
+        block(x-96,y+25,37,158);block(x+59,y+25,37,158);ctx.lineWidth=22;ctx.beginPath();ctx.moveTo(x-43,y-3);ctx.lineTo(x+43,y+73);ctx.moveTo(x+43,y-3);ctx.lineTo(x-43,y+73);ctx.stroke();
+      }else if(choice.operation==="divide"){
+        block(x-101,y+20,34,163);block(x+67,y+20,34,163);block(x-101,y+20,202,28);block(x-13,y+40,26,143,4);ctx.fillStyle=palette[1];ctx.beginPath();ctx.arc(x,y+4,12,0,Math.PI*2);ctx.arc(x,y+82,12,0,Math.PI*2);ctx.fill();
+      }else if(choice.operation==="subtract"){
+        ctx.beginPath();ctx.moveTo(x-100,y+183);ctx.lineTo(x-72,y+16);ctx.lineTo(x-38,y+22);ctx.lineTo(x-55,y+183);ctx.closePath();ctx.moveTo(x+100,y+183);ctx.lineTo(x+72,y+16);ctx.lineTo(x+38,y+22);ctx.lineTo(x+55,y+183);ctx.closePath();ctx.fill();ctx.stroke();block(x-72,y+24,144,34);block(x-38,y-13,76,18,4);
+      }else{
+        block(x-96,y+20,38,163);block(x+58,y+20,38,163);block(x-96,y+20,192,31);block(x-13,y-15,26,75,4);block(x-49,y+10,98,25,4);
+      }
     }
 
     drawArmy(ctx, run) {
@@ -243,7 +272,7 @@
       this.bind();this.populateLevels();this.updateUpgradeUI();this.refresh();this.initializeRenderer();requestAnimationFrame(time=>this.loop(time));
     }
 
-    async initializeRenderer(){try{const{BattleScene3D}=await import("./battle-gates-3d.js?v=20260714-borg6");this.renderer=new BattleScene3D(this.canvas,side=>this.choose(side));this.is3D=true;this.canvas.dataset.battleRenderer="3d";delete this.canvas.dataset.battle3dError;}catch(error){console.warn("Borgstorm 3D kunne ikke starte; bruger 2D-fallback.",error);this.renderer=new ArenaRenderer(this.canvas);this.is3D=false;this.canvas.dataset.battleRenderer="2d";this.canvas.dataset.battle3dError=error?.message||"Ukendt WebGL-fejl";}}
+    async initializeRenderer(){try{const{BattleScene3D}=await import("./battle-gates-3d.js?v=20260714-borg8");this.renderer=new BattleScene3D(this.canvas,side=>this.choose(side));this.is3D=true;this.canvas.dataset.battleRenderer="3d";delete this.canvas.dataset.battle3dError;}catch(error){console.warn("Borgstorm 3D kunne ikke starte; bruger 2D-fallback.",error);this.renderer=new ArenaRenderer(this.canvas);this.is3D=false;this.canvas.dataset.battleRenderer="2d";this.canvas.dataset.battle3dError=error?.message||"Ukendt WebGL-fejl";}}
 
     loadProgress(){try{const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||"{}");return{unlockedLevel:clamp(Number(saved.unlockedLevel)||1,1,LEVELS.length),stars:saved.stars&&typeof saved.stars==="object"?saved.stars:{},coins:Math.max(0,Number(saved.coins)||0),upgrades:{reinforcement:clamp(Number(saved.upgrades?.reinforcement)||0,0,5),armor:clamp(Number(saved.upgrades?.armor)||0,0,5),banner:clamp(Number(saved.upgrades?.banner)||0,0,5)}};}catch{return{unlockedLevel:1,stars:{},coins:0,upgrades:{reinforcement:0,armor:0,banner:0}};}}
     saveProgress(){localStorage.setItem(STORAGE_KEY,JSON.stringify(this.progress));}
