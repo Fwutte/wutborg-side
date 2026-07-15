@@ -2,7 +2,7 @@
 <html lang="da">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#050817" />
   <title>Neon Breaker | Wutborg Arcade</title>
   <meta
@@ -350,6 +350,94 @@
       font-weight: 900;
     }
 
+    .mobile-controls {
+      display: none;
+      align-items: center;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      padding: 10px 12px;
+      border-top: 1px solid var(--border);
+      background: rgba(3, 8, 22, 0.94);
+    }
+
+    .mobile-track-wrap {
+      min-width: 0;
+    }
+
+    .mobile-track-wrap > span {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--muted);
+      font-size: 0.62rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .mobile-paddle-track {
+      position: relative;
+      height: 44px;
+      overflow: hidden;
+      border: 2px solid rgba(85, 246, 231, 0.36);
+      border-radius: 15px;
+      outline: none;
+      touch-action: none;
+      background:
+        linear-gradient(90deg, rgba(85, 246, 231, 0.08), rgba(155, 120, 255, 0.12)),
+        #050a18;
+      box-shadow: inset 0 0 22px rgba(0, 0, 0, 0.52);
+    }
+
+    .mobile-paddle-track:focus-visible {
+      border-color: var(--yellow);
+      box-shadow: 0 0 0 3px rgba(255, 228, 94, 0.2);
+    }
+
+    .mobile-paddle-track::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 10px;
+      right: 10px;
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.16);
+      transform: translateY(-50%);
+    }
+
+    .mobile-paddle-thumb {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 74px;
+      height: 16px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--cyan), #fff, var(--purple));
+      box-shadow: 0 0 18px rgba(85, 246, 231, 0.55);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    .mobile-launch-button {
+      min-width: 92px;
+      min-height: 48px;
+      padding: 0 13px;
+      border: 0;
+      border-radius: 14px;
+      color: #071329;
+      background: linear-gradient(145deg, var(--yellow), #ff9e4a);
+      box-shadow: 0 5px 0 #9d4b25;
+      font-size: 0.72rem;
+      font-weight: 950;
+      text-transform: uppercase;
+      touch-action: manipulation;
+    }
+
+    .mobile-launch-button:active {
+      transform: translateY(3px);
+      box-shadow: 0 2px 0 #9d4b25;
+    }
+
     .power-legend {
       display: grid;
       grid-template-columns: repeat(9, minmax(82px, 1fr));
@@ -396,21 +484,111 @@
     }
 
     @media (max-width: 620px) {
-      .page { width: min(100% - 12px, 520px); padding-top: 6px; }
-      .nav { border-radius: 15px; }
-      .game-card { border-radius: 20px; }
-      .title-block { justify-content: space-between; }
+      body { min-height: 100dvh; }
+      .page { width: 100%; padding: 0 0 max(8px, env(safe-area-inset-bottom)); }
+      .nav {
+        min-height: 44px;
+        margin: 0;
+        padding: max(7px, env(safe-area-inset-top)) 10px 7px;
+        border-width: 0 0 1px;
+        border-radius: 0;
+      }
+      .game-card { border-inline: 0; border-radius: 0; }
+      .game-header { padding: 7px 8px; }
+      .title-block { display: none; }
       .game-number { font-size: 0.58rem; }
-      .hud-item { padding: 7px 9px; }
+      .hud { gap: 5px; }
+      .hud-item { padding: 6px 8px; text-align: center; }
+      .hud-item strong { font-size: 0.92rem; }
       .overlay { padding: 10px; }
       .overlay-card { border-radius: 19px; }
+      .overlay-title { font-size: clamp(2.2rem, 14vw, 3.5rem); }
       .overlay-text { margin-top: 13px; font-size: 0.84rem; }
       .overlay-actions { margin-top: 16px; }
       .button { min-height: 42px; padding-inline: 15px; }
       .controls-panel { grid-template-columns: 1fr; max-height: 145px; overflow: auto; }
-      .game-footer { align-items: flex-start; flex-direction: column; gap: 8px; }
-      .power-legend { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .mobile-controls { display: grid; }
+      .game-footer { min-height: 49px; padding: 7px 10px; }
+      .status { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .small-button { padding: 7px 10px; }
+      .power-legend {
+        display: flex;
+        gap: 6px;
+        margin: 7px 7px 0;
+        padding-bottom: 5px;
+        overflow-x: auto;
+        scrollbar-width: none;
+        scroll-snap-type: x proximity;
+      }
+      .power-legend::-webkit-scrollbar { display: none; }
+      .power-chip { flex: 0 0 auto; scroll-snap-align: start; }
       canvas { cursor: default; }
+    }
+
+    @media (pointer: coarse) and (min-width: 621px) {
+      .mobile-controls { display: grid; }
+    }
+
+    @media (orientation: landscape) and (max-height: 600px) and (max-width: 950px) {
+      html, body { height: 100%; overflow: hidden; }
+      .page { width: 100%; height: 100dvh; padding: 0; }
+      .nav, .power-legend { display: none; }
+      main { height: 100%; }
+      .game-card {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 220px;
+        grid-template-rows: auto minmax(0, 1fr) auto;
+        width: 100%;
+        height: 100dvh;
+        border: 0;
+        border-radius: 0;
+      }
+      .stage {
+        grid-column: 1;
+        grid-row: 1 / 4;
+        display: grid;
+        place-items: center;
+        height: 100dvh;
+      }
+      canvas {
+        width: min(100%, calc(100dvh * 48 / 31));
+        max-height: 100dvh;
+      }
+      .game-header {
+        grid-column: 2;
+        grid-row: 1;
+        padding: 7px;
+        border-left: 1px solid var(--border);
+      }
+      .title-block { display: none; }
+      .hud { gap: 4px; }
+      .hud-item { min-width: 0; padding: 5px 3px; text-align: center; }
+      .mobile-controls {
+        grid-column: 2;
+        grid-row: 2;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 10px;
+        border-left: 1px solid var(--border);
+      }
+      .mobile-track-wrap { width: 100%; }
+      .mobile-paddle-track { height: 62px; }
+      .mobile-launch-button { width: 100%; }
+      .game-footer {
+        grid-column: 2;
+        grid-row: 3;
+        align-items: stretch;
+        flex-direction: column;
+        padding: 8px;
+        border-left: 1px solid var(--border);
+      }
+      .status { text-align: center; }
+      .footer-controls { justify-content: center; }
+      .overlay { padding: 8px; }
+      .overlay-card { max-height: calc(100dvh - 16px); overflow: auto; padding: 18px; }
+      .overlay-title { font-size: 2.5rem; }
+      .overlay-text { margin-top: 9px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -470,6 +648,16 @@
           </div>
         </div>
 
+        <div class="mobile-controls" aria-label="Mobilstyring">
+          <div class="mobile-track-wrap">
+            <span>Træk for at styre</span>
+            <div class="mobile-paddle-track" role="slider" aria-label="Paddle-position" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" tabindex="0">
+              <i class="mobile-paddle-thumb" aria-hidden="true"></i>
+            </div>
+          </div>
+          <button class="mobile-launch-button" type="button">Start / slip</button>
+        </div>
+
         <footer class="game-footer">
           <p class="status" role="status" aria-live="polite">Klar til at bryde neonmuren?</p>
           <div class="footer-controls">
@@ -489,7 +677,12 @@
         <span class="power-chip" style="--power-color:#ffe45e"><i>L</i>Laser</span>
         <span class="power-chip" style="--power-color:#4dff9a"><i>C</i>Catch</span>
         <span class="power-chip" style="--power-color:#ffffff"><i>T</i>Through</span>
+        <span class="power-chip" style="--power-color:#ff934f"><i>F</i>Fireball</span>
+        <span class="power-chip" style="--power-color:#d7e1f3"><i>Z</i>Zap metal</span>
+        <span class="power-chip" style="--power-color:#65bfff"><i>»</i>Bane-warp</span>
+        <span class="power-chip" style="--power-color:#ff4e63"><i>☠</i>Mist liv</span>
         <span class="power-chip" style="--power-color:#ff5b45"><i>E</i>Eksplosionsblok</span>
+        <span class="power-chip" style="--power-color:#ff7ac8"><i>?</i>Skjult blok</span>
         <span class="power-chip" style="--power-color:#b8c7dc"><i>◆</i>Metalblok</span>
       </div>
     </main>
@@ -521,12 +714,15 @@
         this.keys = { left: false, right: false };
         this.pointerActive = false;
         this.statusTimer = 0;
+        this.audioContext = null;
 
         this.brickTypes = {
           "1": { hits: 1, score: 100 },
           "2": { hits: 2, score: 150, colors: ["#ff9e4a", "#ffe45e"] },
           "3": { hits: 3, score: 220, colors: ["#ff4fa3", "#c18bff", "#6eb8ff"] },
           E: { hits: 1, score: 260, explosive: true, color: "#ff5b45" },
+          P: { hits: 1, score: 180, hidden: true, color: "#ff7ac8" },
+          Y: { hits: Infinity, score: 0, solid: true, armored: true, color: "#ffe45e" },
           M: { hits: Infinity, score: 0, solid: true, color: "#b8c7dc" }
         };
 
@@ -596,7 +792,7 @@
             "00111111111100"
           ],
           [
-            "11110000111100",
+            "1111P00P111100",
             "01111000111110",
             "00111100111100",
             "00011111111000",
@@ -634,7 +830,7 @@
             "EEEE000000EEEE"
           ],
           [
-            "E000000000000E",
+            "EP0000000000PE",
             "1E0000000000E1",
             "11E0000000E111",
             "111E000000E111",
@@ -656,9 +852,9 @@
           [
             "3E3E3E3E3E3E3E",
             "E2E2E2E2E2E2E2",
-            "21M11111111M12",
+            "21Y11111111Y12",
             "12M222EE222M21",
-            "21M30000003M12",
+            "21Y30000003Y12",
             "12M11111111M21",
             "E2E2E2E2E2E2E2",
             "3E3E3E3E3E3E3E"
@@ -666,15 +862,19 @@
         ];
 
         this.powerDefinitions = {
-          wide: { label: "W", color: "#55f6e7", name: "Større paddle" },
-          small: { label: "S", color: "#ff6e8d", name: "Mindre paddle" },
-          life: { label: "+", color: "#8dff80", name: "Ekstra liv" },
-          slow: { label: "↓", color: "#6eb8ff", name: "Langsommere bold" },
-          fast: { label: "↑", color: "#ff9e4a", name: "Hurtigere bold" },
-          multi: { label: "M", color: "#c18bff", name: "Multi-ball" },
-          laser: { label: "L", color: "#ffe45e", name: "Laser" },
-          catch: { label: "C", color: "#4dff9a", name: "Catch" },
-          through: { label: "T", color: "#ffffff", name: "Through-ball" }
+          wide: { label: "W", color: "#65bfff", name: "Større paddle", tone: "good" },
+          small: { label: "S", color: "#ff536a", name: "Mindre paddle", tone: "bad" },
+          life: { label: "+", color: "#65bfff", name: "Ekstra liv", tone: "good" },
+          slow: { label: "↓", color: "#65bfff", name: "Langsommere bold", tone: "good" },
+          fast: { label: "↑", color: "#ff536a", name: "Hurtigere bold", tone: "bad" },
+          multi: { label: "M", color: "#65bfff", name: "Multi-ball", tone: "good" },
+          laser: { label: "L", color: "#65bfff", name: "Automatisk laser", tone: "good" },
+          catch: { label: "C", color: "#65bfff", name: "Grab paddle", tone: "good" },
+          through: { label: "T", color: "#65bfff", name: "Through-ball", tone: "good" },
+          fire: { label: "F", color: "#65bfff", name: "Fireball", tone: "good" },
+          zap: { label: "Z", color: "#c5cad7", name: "Zap metal", tone: "neutral" },
+          warp: { label: "»", color: "#65bfff", name: "Bane-warp", tone: "good" },
+          death: { label: "☠", color: "#ff536a", name: "Mist et liv", tone: "bad" }
         };
 
         this.bindElements();
@@ -697,6 +897,9 @@
         this.controlsPanel = document.querySelector(".controls-panel");
         this.pauseButton = document.querySelector(".pause-button");
         this.restartButton = document.querySelector(".restart-button");
+        this.mobilePaddleTrack = document.querySelector(".mobile-paddle-track");
+        this.mobilePaddleThumb = document.querySelector(".mobile-paddle-thumb");
+        this.mobileLaunchButton = document.querySelector(".mobile-launch-button");
       }
 
       bindEvents() {
@@ -740,6 +943,34 @@
           this.canvas.setPointerCapture?.(event.pointerId);
           this.launchServe();
         });
+
+        const moveFromMobileTrack = (event) => {
+          const rect = this.mobilePaddleTrack.getBoundingClientRect();
+          const ratio = this.clamp((event.clientX - rect.left) / rect.width, 0, 1);
+          this.pointerActive = true;
+          this.paddle.x = this.clamp(
+            ratio * this.width - this.paddle.width / 2,
+            0,
+            this.width - this.paddle.width
+          );
+          this.updateMobilePaddleIndicator();
+        };
+
+        this.mobilePaddleTrack.addEventListener("pointerdown", (event) => {
+          moveFromMobileTrack(event);
+          this.mobilePaddleTrack.setPointerCapture?.(event.pointerId);
+        });
+        this.mobilePaddleTrack.addEventListener("pointermove", (event) => {
+          if (event.buttons || event.pressure > 0) moveFromMobileTrack(event);
+        });
+        this.mobilePaddleTrack.addEventListener("keydown", (event) => {
+          if (!["ArrowLeft", "ArrowRight"].includes(event.code)) return;
+          event.preventDefault();
+          const direction = event.code === "ArrowLeft" ? -1 : 1;
+          this.paddle.x = this.clamp(this.paddle.x + direction * 38, 0, this.width - this.paddle.width);
+          this.updateMobilePaddleIndicator();
+        });
+        this.mobileLaunchButton.addEventListener("click", () => this.launchServe());
       }
 
       resetWorld() {
@@ -761,9 +992,12 @@
         this.powerUps = [];
         this.bullets = [];
         this.particles = [];
+        this.fireUntil = 0;
+        this.updateMobilePaddleIndicator();
       }
 
       startGame() {
+        this.ensureAudio();
         this.score = 0;
         this.lives = 3;
         this.levelIndex = 0;
@@ -812,7 +1046,9 @@
               maxHits: type.solid ? Infinity : type.hits,
               scoreValue: type.score,
               solid: Boolean(type.solid),
+              armored: Boolean(type.armored),
               explosive: Boolean(type.explosive),
+              hidden: Boolean(type.hidden),
               active: true,
               pulse: Math.random() * Math.PI * 2
             });
@@ -858,6 +1094,7 @@
         });
         this.state = "playing";
         this.setStatus(`Level ${this.levelIndex + 1} er i gang`);
+        this.playSound("launch");
         return true;
       }
 
@@ -923,6 +1160,16 @@
           this.paddle.x += direction * this.paddle.speed * delta;
         }
         this.paddle.x = this.clamp(this.paddle.x, 0, this.width - this.paddle.width);
+        this.updateMobilePaddleIndicator();
+      }
+
+      updateMobilePaddleIndicator() {
+        if (!this.mobilePaddleThumb || !this.mobilePaddleTrack || !this.paddle) return;
+        const center = (this.paddle.x + this.paddle.width / 2) / this.width;
+        const width = this.clamp((this.paddle.width / this.width) * 100, 18, 46);
+        this.mobilePaddleThumb.style.left = `${center * 100}%`;
+        this.mobilePaddleThumb.style.width = `${width}%`;
+        this.mobilePaddleTrack.setAttribute("aria-valuenow", String(Math.round(center * 100)));
       }
 
       updateEffects(delta) {
@@ -936,6 +1183,7 @@
 
         if (this.paddle.catchUntil && now > this.paddle.catchUntil) this.paddle.catchUntil = 0;
         if (this.throughUntil && now > this.throughUntil) this.throughUntil = 0;
+        if (this.fireUntil && now > this.fireUntil) this.fireUntil = 0;
         if (this.paddle.laserUntil && now > this.paddle.laserUntil) {
           this.paddle.laserUntil = 0;
           this.paddle.laserCooldown = 0;
@@ -1020,15 +1268,19 @@
         ball.vy = -Math.abs(speed * Math.cos(angle));
         this.ensurePlayableAngle(ball, impact || Math.sign(ball.vx) || 1);
         this.spawnParticles(ball.x, paddle.y, "#55f6e7", 8);
+        this.playSound("paddle");
       }
 
       collideWithBricks(ball, previousX, previousY) {
         const throughActive = this.isThroughActive();
+        const fireActive = this.isFireActive();
         for (const brick of this.bricks) {
           if (!brick.active || !this.circleHitsRect(ball, brick)) continue;
 
-          const result = this.hitBrick(brick, 0.2);
-          if (!throughActive || result.solid) {
+          const result = throughActive || fireActive
+            ? this.hitBrickWithPoweredBall(brick, fireActive)
+            : this.hitBrick(brick, 0.2);
+          if (!throughActive) {
             this.reflectBallFromBrick(ball, brick, previousX, previousY);
             this.ensurePlayableAngle(ball);
           }
@@ -1038,10 +1290,25 @@
         }
       }
 
+      hitBrickWithPoweredBall(brick, explode) {
+        if (brick.solid) {
+          brick.active = false;
+          this.score += 300 * (this.levelIndex + 1);
+          this.spawnParticles(brick.x + brick.width / 2, brick.y + brick.height / 2, brick.color, 14);
+        } else {
+          brick.hits = 1;
+          this.hitBrick(brick, 0.2);
+        }
+        if (explode && !brick.explosive) this.detonateBrick(brick);
+        this.updateHud();
+        return { destroyed: true, solid: false };
+      }
+
       hitBrick(brick, dropChance) {
         if (brick.solid) {
           this.spawnParticles(brick.x + brick.width / 2, brick.y + brick.height / 2, "#d7e1f3", 7);
           this.shake = Math.min(8, this.shake + 1.3);
+          this.playSound("metal");
           return { destroyed: false, solid: true };
         }
 
@@ -1054,6 +1321,7 @@
           this.shake = Math.min(8, this.shake + 2.2);
           if (Math.random() < dropChance) this.dropPowerUp(brick);
           if (brick.explosive) this.detonateBrick(brick);
+          else this.playSound("brick");
         } else {
           const damageIndex = this.clamp(brick.maxHits - brick.hits, 0, brick.colors.length - 1);
           brick.color = brick.colors[damageIndex];
@@ -1067,6 +1335,7 @@
       }
 
       detonateBrick(origin, visited = new Set()) {
+        const rootExplosion = visited.size === 0;
         if (visited.has(origin)) return;
         visited.add(origin);
         const originX = origin.x + origin.width / 2;
@@ -1089,6 +1358,7 @@
 
         this.flash = Math.max(this.flash, 0.7);
         this.shake = Math.min(12, this.shake + 4.5);
+        if (rootExplosion) this.playSound("explosion");
       }
 
       reflectBallFromBrick(ball, brick, previousX, previousY) {
@@ -1116,6 +1386,10 @@
 
       isThroughActive() {
         return performance.now() < this.throughUntil;
+      }
+
+      isFireActive() {
+        return performance.now() < this.fireUntil;
       }
 
       circleHitsRect(ball, rect) {
@@ -1156,6 +1430,7 @@
         this.paddle.x = this.width / 2 - this.paddle.width / 2;
         this.createServeBall();
         this.flash = 1;
+        this.playSound("lose");
         this.setStatus(`Du mistede et liv · ${this.lives} tilbage · Klik for at fortsætte`);
       }
 
@@ -1165,6 +1440,7 @@
         this.levelTimer = 1.35;
         this.score += 1000 * (this.levelIndex + 1);
         this.updateHud();
+        this.playSound("level");
         this.setStatus(`Level ${this.levelIndex + 1} klaret!`);
       }
 
@@ -1192,7 +1468,8 @@
           type,
           x: brick.x + brick.width / 2,
           y: brick.y + brick.height / 2,
-          size: 25,
+          width: 44,
+          height: 24,
           vy: 150,
           rotation: 0
         });
@@ -1204,15 +1481,15 @@
           powerUp.rotation += delta * 2.4;
 
           const caught =
-            powerUp.y + powerUp.size / 2 >= this.paddle.y &&
-            powerUp.y - powerUp.size / 2 <= this.paddle.y + this.paddle.height &&
-            powerUp.x + powerUp.size / 2 >= this.paddle.x &&
-            powerUp.x - powerUp.size / 2 <= this.paddle.x + this.paddle.width;
+            powerUp.y + powerUp.height / 2 >= this.paddle.y &&
+            powerUp.y - powerUp.height / 2 <= this.paddle.y + this.paddle.height &&
+            powerUp.x + powerUp.width / 2 >= this.paddle.x &&
+            powerUp.x - powerUp.width / 2 <= this.paddle.x + this.paddle.width;
 
           if (caught) {
             this.applyPowerUp(powerUp.type);
             this.powerUps.splice(this.powerUps.indexOf(powerUp), 1);
-          } else if (powerUp.y - powerUp.size > this.height) {
+          } else if (powerUp.y - powerUp.height > this.height) {
             this.powerUps.splice(this.powerUps.indexOf(powerUp), 1);
           }
         }
@@ -1253,6 +1530,17 @@
           this.paddle.catchUntil = now + 14000;
         } else if (type === "through") {
           this.throughUntil = now + 9000;
+        } else if (type === "fire") {
+          this.fireUntil = now + 10000;
+        } else if (type === "zap") {
+          this.zapSolidBricks();
+        } else if (type === "warp") {
+          this.bricks.forEach((brick) => {
+            if (!brick.solid) brick.active = false;
+          });
+          this.checkLevelComplete();
+        } else if (type === "death") {
+          this.loseLife();
         }
 
         this.spawnParticles(
@@ -1261,7 +1549,24 @@
           definition.color,
           18
         );
+        this.playSound(definition.tone === "bad" ? "badPower" : "power");
         this.setStatus(`Power-up: ${definition.name}`, 2.3);
+      }
+
+      zapSolidBricks() {
+        for (const brick of this.bricks) {
+          if (!brick.active || !brick.solid) continue;
+          brick.solid = false;
+          brick.armored = false;
+          brick.hidden = false;
+          brick.hits = 1;
+          brick.maxHits = 1;
+          brick.scoreValue = 180;
+          brick.color = "#ff9e4a";
+          brick.colors = [brick.color];
+          this.spawnParticles(brick.x + brick.width / 2, brick.y + brick.height / 2, "#d7e1f3", 6);
+        }
+        this.checkLevelComplete();
       }
 
       addMultiBall() {
@@ -1294,6 +1599,7 @@
           { x: this.paddle.x + 17, y, vy: -640 },
           { x: this.paddle.x + this.paddle.width - 17, y, vy: -640 }
         );
+        this.playSound("laser");
       }
 
       updateBullets(delta) {
@@ -1331,6 +1637,8 @@
         this.paddle.laserUntil = 0;
         this.paddle.laserCooldown = 0;
         this.throughUntil = 0;
+        this.fireUntil = 0;
+        this.updateMobilePaddleIndicator();
       }
 
       spawnParticles(x, y, color, count) {
@@ -1494,6 +1802,15 @@
         for (const brick of this.bricks) {
           if (!brick.active) continue;
           const glow = 10 + Math.sin(now + brick.pulse) * 3;
+          if (brick.hidden) {
+            const shimmer = 0.025 + Math.max(0, Math.sin(now * 0.55 + brick.pulse)) * 0.035;
+            ctx.save();
+            ctx.globalAlpha = shimmer;
+            ctx.fillStyle = brick.color;
+            ctx.fillRect(brick.x, brick.y, brick.width, brick.height);
+            ctx.restore();
+            continue;
+          }
           ctx.save();
           ctx.shadowColor = brick.color;
           ctx.shadowBlur = glow;
@@ -1532,6 +1849,12 @@
               ctx.moveTo(brick.x + stripe, brick.y + brick.height);
               ctx.lineTo(brick.x + stripe + brick.height, brick.y);
               ctx.stroke();
+            }
+            if (brick.armored) {
+              ctx.fillStyle = "rgba(94, 61, 10, 0.7)";
+              ctx.beginPath();
+              ctx.arc(brick.x + brick.width / 2, brick.y + brick.height / 2, 4, 0, Math.PI * 2);
+              ctx.fill();
             }
           } else if (brick.maxHits > 1 && brick.hits > 1) {
             ctx.fillStyle = "rgba(2,7,19,0.42)";
@@ -1592,6 +1915,7 @@
 
       drawBalls(ctx) {
         const throughActive = this.isThroughActive();
+        const fireActive = this.isFireActive();
         for (const ball of this.balls) {
           ball.trail.forEach((point, index) => {
             const alpha = (1 - index / ball.trail.length) * 0.2;
@@ -1602,8 +1926,8 @@
           });
 
           ctx.save();
-          ctx.shadowColor = throughActive ? "#ffffff" : "#55f6e7";
-          ctx.shadowBlur = throughActive ? 28 : 22;
+          ctx.shadowColor = fireActive ? "#ff5b32" : throughActive ? "#ffffff" : "#55f6e7";
+          ctx.shadowBlur = fireActive ? 34 : throughActive ? 28 : 22;
           const ballGradient = ctx.createRadialGradient(
             ball.x - 3,
             ball.y - 4,
@@ -1613,8 +1937,8 @@
             ball.radius
           );
           ballGradient.addColorStop(0, "#ffffff");
-          ballGradient.addColorStop(0.45, throughActive ? "#ffe45e" : "#aafff7");
-          ballGradient.addColorStop(1, throughActive ? "#ff4fa3" : "#36b8e8");
+          ballGradient.addColorStop(0.45, fireActive ? "#ffe45e" : throughActive ? "#ffe45e" : "#aafff7");
+          ballGradient.addColorStop(1, fireActive ? "#ff3d20" : throughActive ? "#ff4fa3" : "#36b8e8");
           ctx.fillStyle = ballGradient;
           ctx.beginPath();
           ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
@@ -1633,11 +1957,14 @@
           ctx.shadowBlur = 18;
           ctx.fillStyle = definition.color;
           ctx.beginPath();
-          ctx.roundRect(-powerUp.size / 2, -powerUp.size / 2, powerUp.size, powerUp.size, 7);
+          ctx.roundRect(-powerUp.width / 2, -powerUp.height / 2, powerUp.width, powerUp.height, powerUp.height / 2);
           ctx.fill();
+          ctx.strokeStyle = definition.tone === "bad" ? "#ffd0d6" : definition.tone === "neutral" ? "#ffffff" : "#dff8ff";
+          ctx.lineWidth = 2;
+          ctx.stroke();
           ctx.shadowBlur = 0;
           ctx.fillStyle = "#071329";
-          ctx.font = "950 15px system-ui";
+          ctx.font = "950 14px system-ui";
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
           ctx.fillText(definition.label, 0, 0.5);
@@ -1683,6 +2010,48 @@
         ctx.textBaseline = "middle";
         ctx.fillText(text, this.width / 2, this.height / 2 + 1);
         ctx.restore();
+      }
+
+      ensureAudio() {
+        if (this.audioContext) {
+          if (this.audioContext.state === "suspended") this.audioContext.resume();
+          return this.audioContext;
+        }
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return null;
+        this.audioContext = new AudioContext();
+        return this.audioContext;
+      }
+
+      tone(frequency, duration, type = "square", volume = 0.035, delay = 0) {
+        const audio = this.ensureAudio();
+        if (!audio) return;
+        const start = audio.currentTime + delay;
+        const oscillator = audio.createOscillator();
+        const gain = audio.createGain();
+        oscillator.type = type;
+        oscillator.frequency.setValueAtTime(frequency, start);
+        gain.gain.setValueAtTime(volume, start);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
+        oscillator.connect(gain).connect(audio.destination);
+        oscillator.start(start);
+        oscillator.stop(start + duration);
+      }
+
+      playSound(name) {
+        const sounds = {
+          launch: () => { this.tone(280, 0.08); this.tone(520, 0.1, "square", 0.025, 0.05); },
+          paddle: () => this.tone(190, 0.055, "triangle", 0.028),
+          brick: () => this.tone(430, 0.045, "square", 0.022),
+          metal: () => { this.tone(125, 0.07, "square", 0.03); this.tone(170, 0.05, "triangle", 0.02, 0.025); },
+          explosion: () => { this.tone(95, 0.22, "sawtooth", 0.045); this.tone(58, 0.3, "square", 0.025, 0.04); },
+          laser: () => { this.tone(920, 0.065, "sawtooth", 0.022); this.tone(620, 0.08, "square", 0.016, 0.025); },
+          power: () => [523, 659, 784].forEach((note, index) => this.tone(note, 0.13, "triangle", 0.03, index * 0.055)),
+          badPower: () => { this.tone(230, 0.14, "sawtooth", 0.035); this.tone(130, 0.2, "square", 0.025, 0.07); },
+          lose: () => [260, 195, 130].forEach((note, index) => this.tone(note, 0.2, "triangle", 0.032, index * 0.09)),
+          level: () => [523, 659, 784, 1047].forEach((note, index) => this.tone(note, 0.2, "triangle", 0.03, index * 0.07)),
+        };
+        sounds[name]?.();
       }
 
       clamp(value, minimum, maximum) {

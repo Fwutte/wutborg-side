@@ -15,11 +15,13 @@ levels.forEach((level, levelIndex) => {
   assert.ok(level.length >= 6, `Bane ${levelIndex + 1} skal have mindst seks rÃ¦kker`);
   level.forEach((row) => {
     assert.equal(row.length, 14, `Alle rÃ¦kker pÃ¥ bane ${levelIndex + 1} skal have 14 kolonner`);
-    assert.match(row, /^[0123ME]+$/, `Bane ${levelIndex + 1} indeholder et ukendt bloktegn`);
+    assert.match(row, /^[0123MEPY]+$/, `Bane ${levelIndex + 1} indeholder et ukendt bloktegn`);
   });
   assert.ok(level.some((row) => /[123E]/.test(row)), `Bane ${levelIndex + 1} skal have blokke, der kan ryddes`);
 });
 assert.ok(levels.slice(4).every((level) => level.some((row) => row.includes("E"))), "Alle ti nye baner skal bruge eksplosionsblokke");
+assert.ok(levels.some((level) => level.some((row) => row.includes("P"))), "Kampagnen skal have skjulte pink blokke");
+assert.ok(levels.some((level) => level.some((row) => row.includes("Y"))), "Kampagnen skal have gule panserblokke");
 
 const classStart = source.indexOf("class NeonBreaker");
 const classEnd = source.indexOf("window.NeonBreaker = NeonBreaker;");
@@ -40,6 +42,7 @@ laserGame.width = 960;
 laserGame.basePaddleWidth = 126;
 laserGame.throughUntil = 0;
 laserGame.bullets = [];
+laserGame.playSound = () => {};
 laserGame.paddle = {
   x: 200,
   y: 570,
@@ -75,6 +78,7 @@ explosionGame.score = 0;
 explosionGame.flash = 0;
 explosionGame.shake = 0;
 explosionGame.spawnParticles = () => {};
+explosionGame.playSound = () => {};
 const origin = { x: 0, y: 0, width: 60, height: 22, active: false, explosive: true, scoreValue: 260 };
 const neighbour = { x: 65, y: 0, width: 60, height: 22, active: true, explosive: false, solid: false, scoreValue: 100 };
 const metal = { x: 0, y: 27, width: 60, height: 22, active: true, explosive: false, solid: true, scoreValue: 0 };
@@ -85,7 +89,43 @@ assert.equal(neighbour.active, false, "Eksplosionsblokke skal rydde naboblokke")
 assert.equal(metal.active, false, "Eksplosioner skal kunne fjerne ellers uknuselige blokke som i DX-Ball");
 assert.equal(distant.active, true, "Eksplosionen mÃ¥ ikke rydde fjerne blokke");
 
+const zapGame = Object.create(NeonBreaker.prototype);
+zapGame.state = "playing";
+zapGame.bricks = [{ active: true, solid: true, armored: true, hits: Infinity, color: "#ffe45e", x: 0, y: 0, width: 60, height: 22 }];
+zapGame.spawnParticles = () => {};
+zapGame.checkLevelComplete = () => {};
+zapGame.zapSolidBricks();
+assert.equal(zapGame.bricks[0].solid, false, "Zap skal gÃ¸re metalblokke Ã¸delÃ¦ggelige");
+assert.equal(zapGame.bricks[0].hits, 1, "En zappet blok skal kunne fjernes med Ã©t trÃ¦f");
+
+now = 3000;
+const fireGame = Object.create(NeonBreaker.prototype);
+fireGame.fireUntil = 8000;
+assert.equal(fireGame.isFireActive(), true, "Fireball-effekten skal vÃ¦re aktiv i sin tidsperiode");
+
+const poweredGame = Object.create(NeonBreaker.prototype);
+poweredGame.levelIndex = 0;
+poweredGame.score = 0;
+poweredGame.flash = 0;
+poweredGame.shake = 0;
+poweredGame.spawnParticles = () => {};
+poweredGame.updateHud = () => {};
+poweredGame.playSound = () => {};
+const poweredMetal = { x: 0, y: 0, width: 60, height: 22, active: true, solid: true, explosive: false, color: "#ffe45e", scoreValue: 0 };
+const poweredNeighbour = { x: 65, y: 0, width: 60, height: 22, active: true, solid: false, explosive: false, color: "#55f6e7", scoreValue: 100 };
+poweredGame.bricks = [poweredMetal, poweredNeighbour];
+poweredGame.hitBrickWithPoweredBall(poweredMetal, true);
+assert.equal(poweredMetal.active, false, "Fireball og Through skal kunne fjerne panserblokke");
+assert.equal(poweredNeighbour.active, false, "Fireball skal eksplodere naboblokke");
+
 assert.doesNotMatch(source, /tryFireLaser|KeyF/, "Laseren skal ikke lÃ¦ngere krÃ¦ve manuel affyring");
 assert.match(source, /laserCooldown \+= 1/, "Den automatiske laser skal bruge en prÃ¦cis et-sekunds kadence");
+assert.match(source, /class="mobile-paddle-track"/, "Mobilversionen skal have en separat touch-skinne");
+assert.match(source, /viewport-fit=cover/, "Mobilversionen skal respektere telefonens safe areas");
+assert.match(source, /height:\s*100dvh/, "Landskabstilstanden skal kunne fylde hele telefonskÃ¦rmen");
+assert.match(source, /fire:\s*\{[^}]*Fireball/, "DX-Ball-power-ups skal omfatte Fireball");
+assert.match(source, /zap:\s*\{[^}]*Zap metal/, "DX-Ball-power-ups skal omfatte Zap");
+assert.match(source, /warp:\s*\{[^}]*Bane-warp/, "DX-Ball-power-ups skal omfatte bane-warp");
+assert.match(source, /playSound\(name\)/, "Spillet skal have DX-Ball-lignende lydfeedback");
 
 console.log("Neon Breaker-test: 14 baner, DX-Ball-blokke, progression og automatisk laser bestÃ¥et");
