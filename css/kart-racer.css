@@ -85,3 +85,65 @@ button:focus-visible, a:focus-visible { outline: 4px solid #ffb638; outline-offs
 @media (max-width: 720px) { .kart-page { width:min(100% - 16px,1220px); padding-top:8px; }.kart-nav { border-radius:17px; }.kart-nav-links a:not(:first-child) { display:none; }.kart-hero { display:block; padding:27px 5px 15px; }.kart-hero-copy { margin-top:14px; }.race-shell { border-width:3px; border-radius:19px; }.race-hud-top { padding:8px; }.hud-cluster { gap:4px; }.hud-stat { min-width:58px; padding:5px 6px; border-width:1px; }.hud-stat small { font-size:.48rem; }.hud-stat strong { font-size:.78rem; }.hud-item { right:8px; bottom:8px; min-width:104px; padding:6px 8px; border-width:1px; font-size:.65rem; }.driver-grid { grid-template-columns:repeat(4,minmax(0,1fr)); gap:5px; }.driver-choice { min-height:70px; }.driver-choice strong { font-size:.63rem; }.driver-choice small { font-size:.52rem; }.touch-controls { display:grid; }.kart-help { display:block; }.kart-help span + span { display:block; margin-top:5px; }.kart-footer { flex-direction:column; } }
 @media (max-width: 430px) { .screen { padding:9px; }.screen-card { padding:18px 12px; border-radius:18px; }.track-summary { margin:12px 0; }.driver-choice > span { width:25px; }.driver-choice { padding:6px 2px; }.kart-nav-links a { padding:8px; }.kart-brand small { display:none; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration:.01ms!important; transition-duration:.01ms!important; } }
+
+/* Grand Prix-opgradering */
+.track-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin:17px 0 10px; }
+.track-choice { position:relative; min-height:72px; overflow:hidden; padding:9px 7px; border:2px solid #d7e1ec; border-radius:14px; color:#35516d; background:linear-gradient(150deg,var(--track-sky),var(--track-grass)); text-align:left; }
+.track-choice::before { content:""; position:absolute; width:68px; height:38px; right:-9px; bottom:-12px; border:12px solid var(--track-road); border-radius:50%; opacity:.9; transform:rotate(-10deg); }
+.track-choice strong,.track-choice small { position:relative; z-index:1; display:block; text-shadow:0 1px rgba(255,255,255,.65); }
+.track-choice strong { font-size:.72rem; }.track-choice small { margin-top:4px; font-size:.58rem; }
+.track-choice:hover,.track-choice.selected { border-color:#e65b4f; transform:translateY(-2px); box-shadow:0 6px 0 rgba(230,91,79,.2); }
+.driver-choice .driver-sprite { width:36px; height:45px; margin:-5px auto 1px; border:0; border-radius:0; background:transparent center/contain no-repeat; filter:drop-shadow(0 3px 2px rgba(23,35,59,.22)); }
+.driver-choice.selected .driver-sprite { transform:scale(1.12); }
+.hud-stat.position strong { color:#ffe564; font-size:1.25rem; }
+.coin-stat strong { color:#ffd84f; }
+.hud-item.roulette { color:#fff56c; animation:item-pulse .14s steps(2) infinite; }
+@keyframes item-pulse { 50% { transform:scale(1.06) rotate(1deg); } }
+.touch-controls { grid-template-columns:1.7fr repeat(3,1fr); align-items:stretch; }
+.touch-steer { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+.touch-controls > *,.touch-steer,.touch-controls button { min-width:0; }
+.touch-controls button { width:100%; }
+.touch-controls .drift { color:#fff; background:#7657c8; }
+
+@media (max-width:720px) {
+  html,body { min-height:100%; overflow-x:hidden; overscroll-behavior:none; }
+  .kart-page { width:100vw; max-width:100vw; min-height:100dvh; padding:0 0 max(10px,env(safe-area-inset-bottom)); }
+  .kart-nav { min-height:54px; padding:max(6px,env(safe-area-inset-top)) 8px 6px; border-radius:0; border-width:0 0 1px; }
+  .kart-brand-mark { width:36px; height:36px; border-radius:11px; }
+  .kart-nav-links { gap:0; }.kart-nav-links a,.nav-kart-button { padding:7px 8px; font-size:.69rem; }
+  .kart-hero { display:none; }
+  .race-shell { width:100vw; max-width:100vw; border-width:0 0 3px; border-radius:0; }
+  #kart-canvas { touch-action:none; }
+  .race-hud-top { gap:4px; }.hud-cluster { gap:3px; }
+  .hud-stat { min-width:0; padding:4px 5px; border-radius:9px; }
+  .hud-stat small { font-size:.43rem; }.hud-stat strong { font-size:.7rem; }.hud-stat.position strong { font-size:.86rem; }
+  .hud-item { max-width:120px; min-width:88px; }
+  .touch-controls { display:grid; width:100vw; max-width:100vw; grid-template-columns:2fr 1fr 1fr; margin:0; padding:10px max(9px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(9px,env(safe-area-inset-left)); background:rgba(19,42,66,.94); }
+  .touch-controls .gas { grid-column:1 / -1; min-height:52px; }
+  .touch-controls button { min-height:62px; border-color:rgba(255,255,255,.22); box-shadow:0 5px 0 rgba(0,0,0,.24); font-size:.72rem; touch-action:none; user-select:none; }
+  .touch-steer button { font-size:1.1rem; }
+  .kart-help,.kart-footer { display:none; }
+  .screen { padding:7px; }.screen-card { max-height:calc(100% - 4px); padding:15px 12px; }
+  .screen-card h2 { font-size:1.7rem; }.screen-copy { margin:7px auto 10px; font-size:.72rem; }
+  .track-grid { margin:9px 0 7px; }.track-choice { min-height:58px; padding:6px; }
+  .track-summary { margin:7px 0; padding:7px; }.track-dot { width:34px; height:34px; }
+  .driver-grid { margin:8px 0 10px; }.driver-choice { min-height:62px; }.driver-choice .driver-sprite { height:36px; }
+}
+
+@media (max-height:600px) and (orientation:landscape) {
+  body { overflow:hidden; background:#14263d; }
+  .kart-page { height:100dvh; padding:0; }
+  .kart-nav { display:none; }
+  .kart-hero { display:none; }
+  .race-shell { width:calc(100% - 228px); height:100dvh; border:0; }
+  #kart-canvas { width:100%; height:100%; aspect-ratio:auto; }
+  .touch-controls { position:fixed; z-index:10; inset:0 0 0 auto; width:228px; height:100dvh; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; gap:9px; margin:0; padding:max(9px,env(safe-area-inset-top)) max(9px,env(safe-area-inset-right)) max(9px,env(safe-area-inset-bottom)) 9px; }
+  .touch-controls { display:grid; }
+  .touch-steer { grid-column:1 / -1; }
+  .touch-controls .gas { grid-column:2; grid-row:2 / 4; }
+  .touch-controls .drift { grid-column:1; grid-row:2; }
+  .touch-controls .item { grid-column:1; grid-row:3; }
+  .race-hud-top { flex-direction:column; align-items:flex-start; }.hud-cluster-right { display:none; }
+  .hud-item { right:7px; bottom:7px; }
+  .screen-card { width:min(520px,100%); }
+}

@@ -8,6 +8,7 @@
   const STORAGE_KEY = "wutborg.kart.progress.v1";
   const FIXED_STEP = 1 / 60;
   const MAX_STEPS = 15;
+  const ASSET_ROOT = "assets/kart/kenney-racing";
 
   const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
   const pointFrom = (x, y, angle, amount) => ({ x: x + Math.cos(angle) * amount, y: y + Math.sin(angle) * amount });
@@ -30,7 +31,14 @@
       this.spinTimer = 0;
       this.boostTimer = 0;
       this.invincibleTimer = 0;
+      this.starTimer = 0;
+      this.driftTimer = 0;
+      this.driftDirection = 0;
+      this.drifting = false;
+      this.coins = 0;
       this.item = null;
+      this.pendingItem = null;
+      this.itemRoulette = 0;
       this.finished = false;
       this.finishTime = 0;
       this.lap = 0;
@@ -56,28 +64,51 @@
     }
 
     applySpin(duration = 0.8) {
-      if (this.invincibleTimer > 0) return false;
+      if (this.invincibleTimer > 0 || this.starTimer > 0) return false;
       this.spinTimer = Math.max(this.spinTimer, duration);
       this.speed *= 0.28;
       return true;
+    }
+
+    releaseDrift() {
+      if (!this.drifting) return 0;
+      const charge = this.driftTimer;
+      const boost = charge >= 1.85 ? 1.2 : charge >= 1.05 ? 0.78 : charge >= 0.5 ? 0.42 : 0;
+      this.boostTimer = Math.max(this.boostTimer, boost);
+      this.drifting = false;
+      this.driftTimer = 0;
+      this.driftDirection = 0;
+      return boost;
     }
 
     update(dt, input, track) {
       this.spinTimer = Math.max(0, this.spinTimer - dt);
       this.boostTimer = Math.max(0, this.boostTimer - dt);
       this.invincibleTimer = Math.max(0, this.invincibleTimer - dt);
+      this.starTimer = Math.max(0, this.starTimer - dt);
       const forward = input.accelerate ? 1 : input.brake ? -0.72 : 0;
-      const topSpeed = this.driver.maxSpeed + (this.boostTimer > 0 ? 120 : 0);
+      const topSpeed = this.driver.maxSpeed + this.coins * 2.8 + (this.boostTimer > 0 ? 125 : 0) + (this.starTimer > 0 ? 72 : 0);
+      const wantsDrift = input.drift && input.accelerate && Math.abs(input.steer) > 0.2 && Math.abs(this.speed) > 135;
 
       if (this.spinTimer > 0) {
+        this.releaseDrift();
         this.heading += 8.6 * dt;
         this.speed *= Math.pow(0.04, dt);
       } else {
+        if (wantsDrift) {
+          if (!this.drifting) this.driftDirection = Math.sign(input.steer) || 1;
+          this.drifting = true;
+          this.driftTimer = Math.min(2.5, this.driftTimer + dt);
+        } else {
+          this.releaseDrift();
+        }
         const acceleration = forward > 0 ? this.driver.acceleration : forward < 0 ? 185 : 0;
         this.speed += forward * acceleration * dt;
         if (!forward) this.speed *= Math.pow(0.12, dt);
         const steerStrength = this.driver.handling * (0.2 + Math.min(Math.abs(this.speed) / Math.max(1, topSpeed), 1));
-        this.heading += input.steer * steerStrength * dt * (this.speed >= 0 ? 1 : -0.65);
+        const driftSteer = this.drifting ? 1.28 : 1;
+        this.heading += input.steer * steerStrength * driftSteer * dt * (this.speed >= 0 ? 1 : -0.65);
+        if (this.drifting) this.speed *= Math.pow(0.92, dt);
       }
 
       this.speed = clamp(this.speed, -90, topSpeed);
@@ -86,7 +117,7 @@
       this.y += Math.sin(this.heading) * this.speed * dt;
 
       if (!track.isRoad(this.x, this.y)) {
-        this.speed *= Math.pow(0.09, dt);
+        this.speed *= Math.pow(this.starTimer > 0 ? 0.72 : 0.09, dt);
         const dx = this.x - track.cx;
         const dy = this.y - track.cy;
         const outer = (dx * dx) / (track.outerRx * track.outerRx) + (dy * dy) / (track.outerRy * track.outerRy);
@@ -115,6 +146,7 @@
         steer: clamp(delta * 1.85, -1, 1),
         accelerate: Math.abs(delta) < 2.25,
         brake: Math.abs(delta) >= 2.25,
+        drift: Math.abs(delta) > 0.34 && Math.abs(delta) < 1.35 && kart.speed > 165,
         itemPressed: kart.item && Math.random() < 0.0035,
       };
     }
@@ -134,8 +166,10 @@
       this.traps = [];
       this.shells = [];
       this.itemBoxes = [];
+      this.coins = [];
       this.lastRankings = [];
       this.result = null;
+      this.startBoostCharge = 0;
     }
 
     start(playerDriverId) {
@@ -145,31 +179,43 @@
       this.karts.forEach((kart, index) => kart.reset(this.track, index));
       this.player = this.karts[0];
       this.itemBoxes = this.track.itemBoxes.map((box) => ({ ...box, cooldown: 0 }));
+      this.coins = this.track.coins.map((coin) => ({ ...coin, cooldown: 0 }));
       this.traps = [];
       this.shells = [];
       this.countdown = 3.5;
       this.elapsed = 0;
       this.state = "countdown";
       this.result = null;
+      this.startBoostCharge = 0;
       this.updateRankings();
     }
 
     update(dt, playerInput) {
       if (this.state === "ready" || this.state === "finished") return;
       if (this.state === "countdown") {
+        if (playerInput.accelerate && this.countdown <= 1.2) this.startBoostCharge += dt;
         this.countdown -= dt;
         if (this.countdown <= 0) {
           this.countdown = 0;
           this.state = "racing";
+          if (this.startBoostCharge >= 0.22) this.player.boostTimer = 1.25;
         }
         return;
       }
 
       this.elapsed += dt;
       this.itemBoxes.forEach((box) => { box.cooldown = Math.max(0, box.cooldown - dt); });
+      this.coins.forEach((coin) => { coin.cooldown = Math.max(0, coin.cooldown - dt); });
       this.karts.forEach((kart) => {
         const input = kart.isAI ? this.ai.inputFor(kart, this.track) : playerInput;
         kart.update(dt, input, this.track);
+        if (kart.itemRoulette > 0) {
+          kart.itemRoulette = Math.max(0, kart.itemRoulette - dt);
+          if (kart.itemRoulette === 0) {
+            kart.item = kart.pendingItem;
+            kart.pendingItem = null;
+          }
+        }
         if (input.itemPressed) this.useItem(kart);
       });
       this.resolveKartCollisions();
@@ -220,6 +266,8 @@
           right.y += ny * overlap * rightPush;
           left.speed *= 0.92;
           right.speed *= 0.92;
+          if (left.starTimer > 0) right.applySpin(0.9);
+          if (right.starTimer > 0) left.applySpin(0.9);
         }
       }
     }
@@ -227,9 +275,18 @@
     updateObjects(dt) {
       this.karts.forEach((kart) => {
         this.itemBoxes.forEach((box) => {
-          if (box.cooldown > 0 || kart.item || distance(kart, box) > 31) return;
+          if (box.cooldown > 0 || kart.item || kart.itemRoulette > 0 || distance(kart, box) > 31) return;
           box.cooldown = 5.5;
-          kart.item = this.itemForRank(kart.rank || 8);
+          kart.pendingItem = this.itemForRank(kart.rank || 8);
+          kart.itemRoulette = 0.9;
+        });
+        this.coins.forEach((coin) => {
+          if (coin.cooldown > 0 || distance(kart, coin) > 27) return;
+          coin.cooldown = 7;
+          kart.coins = Math.min(10, kart.coins + 1);
+        });
+        this.track.boostPads.forEach((pad) => {
+          if (distance(kart, pad) < 42) kart.boostTimer = Math.max(kart.boostTimer, 0.62);
         });
       });
 
@@ -242,6 +299,14 @@
 
       this.shells.forEach((shell) => {
         shell.life -= dt;
+        if (shell.homing) {
+          const candidates = this.lastRankings.filter((kart) => kart !== shell.owner && !kart.finished);
+          const target = candidates.sort((left, right) => distance(shell, left) - distance(shell, right))[0];
+          if (target) {
+            const desired = Math.atan2(target.y - shell.y, target.x - shell.x);
+            shell.heading += clamp(angleDelta(shell.heading, desired), -2.6 * dt, 2.6 * dt);
+          }
+        }
         shell.x += Math.cos(shell.heading) * shell.speed * dt;
         shell.y += Math.sin(shell.heading) * shell.speed * dt;
         if (!this.track.isRoad(shell.x, shell.y)) shell.heading += Math.PI / 2;
@@ -255,9 +320,10 @@
 
     itemForRank(rank) {
       const roll = Math.random();
-      if (rank >= 6) return roll < 0.48 ? "mushroom" : roll < 0.8 ? "shell" : "banana";
-      if (rank >= 4) return roll < 0.35 ? "mushroom" : roll < 0.65 ? "shell" : "banana";
-      return roll < 0.22 ? "mushroom" : roll < 0.56 ? "banana" : "shell";
+      if (rank >= 7) return roll < 0.3 ? "star" : roll < 0.55 ? "lightning" : roll < 0.82 ? "mushroom" : "redShell";
+      if (rank >= 5) return roll < 0.32 ? "mushroom" : roll < 0.58 ? "redShell" : roll < 0.78 ? "star" : "shell";
+      if (rank >= 3) return roll < 0.28 ? "mushroom" : roll < 0.53 ? "redShell" : roll < 0.76 ? "shell" : "banana";
+      return roll < 0.18 ? "mushroom" : roll < 0.5 ? "banana" : roll < 0.82 ? "shell" : "redShell";
     }
 
     useItem(kart) {
@@ -265,13 +331,24 @@
       const item = kart.item;
       kart.item = null;
       if (item === "mushroom") kart.boostTimer = Math.max(kart.boostTimer, 1.05);
+      if (item === "star") {
+        kart.starTimer = Math.max(kart.starTimer, 5.2);
+        kart.boostTimer = Math.max(kart.boostTimer, 5.2);
+      }
+      if (item === "lightning") {
+        this.karts.filter((target) => target !== kart).forEach((target) => target.applySpin(1.25));
+      }
       if (item === "banana") {
         const behind = pointFrom(kart.x, kart.y, kart.heading + Math.PI, 31);
         this.traps.push({ ...behind, owner: kart, life: 12 });
       }
       if (item === "shell") {
         const ahead = pointFrom(kart.x, kart.y, kart.heading, 31);
-        this.shells.push({ ...ahead, owner: kart, heading: kart.heading, speed: 470, life: 5 });
+        this.shells.push({ ...ahead, owner: kart, heading: kart.heading, speed: 470, life: 5, color: "#54c96b", homing: false });
+      }
+      if (item === "redShell") {
+        const ahead = pointFrom(kart.x, kart.y, kart.heading, 31);
+        this.shells.push({ ...ahead, owner: kart, heading: kart.heading, speed: 420, life: 7, color: "#ef514f", homing: true });
       }
       return true;
     }
@@ -287,7 +364,7 @@
 
   class InputManager {
     constructor() {
-      this.controls = { left: false, right: false, accelerate: false, brake: false, item: false };
+      this.controls = { left: false, right: false, accelerate: false, brake: false, drift: false, item: false };
       this.itemPressed = false;
       if (typeof document === "undefined") return;
       window.addEventListener("keydown", (event) => this.handleKey(event, true));
@@ -298,7 +375,7 @@
       const mapping = {
         ArrowLeft: "left", KeyA: "left", ArrowRight: "right", KeyD: "right",
         ArrowUp: "accelerate", KeyW: "accelerate", ArrowDown: "brake", KeyS: "brake",
-        ShiftLeft: "brake", ShiftRight: "brake", KeyX: "brake", Space: "item", KeyZ: "item",
+        ShiftLeft: "drift", ShiftRight: "drift", KeyX: "drift", Space: "item", KeyZ: "item",
       };
       const key = mapping[event.code];
       if (!key) return;
@@ -317,6 +394,7 @@
         steer: (this.controls.right ? 1 : 0) - (this.controls.left ? 1 : 0),
         accelerate: this.controls.accelerate,
         brake: this.controls.brake,
+        drift: this.controls.drift,
         itemPressed: this.itemPressed,
       };
       this.itemPressed = false;
@@ -355,6 +433,18 @@
     constructor(canvas) {
       this.canvas = canvas;
       this.ctx = canvas.getContext("2d");
+      this.images = new Map();
+      DRIVERS.forEach((driver) => this.loadImage(`car:${driver.id}`, `${ASSET_ROOT}/cars/${driver.sprite}`));
+      ["arrow_yellow.png", "barrier_red.png", "barrier_white.png", "cone_straight.png", "oil.png", "tree_large.png", "tree_small.png", "tribune_full.png", "tires_red.png", "tires_white.png"]
+        .forEach((name) => this.loadImage(`object:${name}`, `${ASSET_ROOT}/objects/${name}`));
+    }
+
+    loadImage(key, source) {
+      const image = new Image();
+      image.decoding = "async";
+      image.src = source;
+      this.images.set(key, image);
+      return image;
     }
 
     draw(race) {
@@ -392,6 +482,18 @@
       ctx.fill();
 
       ctx.save();
+      ctx.setLineDash([30, 30]);
+      ctx.lineWidth = 13;
+      ctx.strokeStyle = "#f5f1dc";
+      ctx.beginPath();
+      ctx.ellipse(track.cx, track.cy, track.outerRx - 8, track.outerRy - 8, 0, 0, TAU);
+      ctx.stroke();
+      ctx.lineDashOffset = 30;
+      ctx.strokeStyle = track.palette.barrier;
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.save();
       ctx.setLineDash([18, 18]);
       ctx.lineWidth = 4;
       ctx.strokeStyle = "rgba(255,255,255,0.42)";
@@ -400,11 +502,45 @@
       ctx.stroke();
       ctx.restore();
 
+      track.decorations.forEach((decoration) => this.drawDecoration(ctx, decoration));
+      track.boostPads.forEach((pad) => this.drawBoostPad(ctx, pad, track));
       this.drawStartLine(ctx, track);
       race.itemBoxes.forEach((box) => this.drawItemBox(ctx, box));
+      race.coins.forEach((coin) => this.drawCoin(ctx, coin));
       race.traps.forEach((trap) => this.drawTrap(ctx, trap));
       race.shells.forEach((shell) => this.drawShell(ctx, shell));
-      [...race.karts].sort((a, b) => a.y - b.y).forEach((kart) => this.drawKart(ctx, kart));
+      [...race.karts].sort((a, b) => a.y - b.y).forEach((kart) => this.drawKart(ctx, kart, kart === race.player));
+      ctx.restore();
+    }
+
+    drawDecoration(ctx, decoration) {
+      const image = this.images.get(`object:${decoration.asset}`);
+      if (!image?.complete || !image.naturalWidth) return;
+      const width = image.naturalWidth * decoration.scale;
+      const height = image.naturalHeight * decoration.scale;
+      ctx.drawImage(image, decoration.x - width / 2, decoration.y - height / 2, width, height);
+    }
+
+    drawBoostPad(ctx, pad, track) {
+      ctx.save();
+      ctx.translate(pad.x, pad.y);
+      ctx.rotate(track.tangentAt(pad.angle));
+      ctx.fillStyle = "#29c9f1";
+      ctx.strokeStyle = "#eaffff";
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.roundRect(-38, -30, 76, 60, 10);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#fff56c";
+      [-16, 10].forEach((offset) => {
+        ctx.beginPath();
+        ctx.moveTo(offset - 9, -17);
+        ctx.lineTo(offset + 12, 0);
+        ctx.lineTo(offset - 9, 17);
+        ctx.closePath();
+        ctx.fill();
+      });
       ctx.restore();
     }
 
@@ -421,14 +557,40 @@
       const active = box.cooldown <= 0;
       ctx.save();
       ctx.translate(box.x, box.y);
-      ctx.rotate(Math.PI / 4);
-      ctx.fillStyle = active ? "#58d9f6" : "rgba(88,217,246,0.25)";
-      ctx.fillRect(-14, -14, 28, 28);
+      ctx.rotate((Date.now() / 520) % TAU);
+      ctx.shadowColor = active ? "#baf8ff" : "transparent";
+      ctx.shadowBlur = active ? 18 : 0;
+      ctx.fillStyle = active ? "rgba(74,214,246,.92)" : "rgba(88,217,246,0.2)";
+      ctx.fillRect(-18, -18, 36, 36);
       if (active) {
         ctx.strokeStyle = "#fff";
         ctx.lineWidth = 3;
-        ctx.strokeRect(-10, -10, 20, 20);
+        ctx.strokeRect(-15, -15, 30, 30);
+        ctx.rotate(-((Date.now() / 520) % TAU));
+        ctx.fillStyle = "#fff";
+        ctx.font = "900 24px system-ui";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("?", 0, 1);
       }
+      ctx.restore();
+    }
+
+    drawCoin(ctx, coin) {
+      if (coin.cooldown > 0) return;
+      const pulse = 0.82 + Math.sin(Date.now() / 130 + coin.angle * 4) * 0.18;
+      ctx.save();
+      ctx.translate(coin.x, coin.y);
+      ctx.scale(pulse, 1);
+      ctx.fillStyle = "#ffd746";
+      ctx.strokeStyle = "#fff3a5";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(0, 0, 15, 0, TAU);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#d98b23";
+      ctx.fillRect(-3, -9, 6, 18);
       ctx.restore();
     }
 
@@ -442,7 +604,7 @@
     }
 
     drawShell(ctx, shell) {
-      ctx.fillStyle = "#54c96b";
+      ctx.fillStyle = shell.color || "#54c96b";
       ctx.beginPath();
       ctx.arc(shell.x, shell.y, 12, 0, TAU);
       ctx.fill();
@@ -451,28 +613,59 @@
       ctx.stroke();
     }
 
-    drawKart(ctx, kart) {
+    drawKart(ctx, kart, isPlayer = false) {
       ctx.save();
       ctx.translate(kart.x, kart.y);
-      ctx.rotate(kart.heading);
-      ctx.fillStyle = "rgba(25,36,53,0.24)";
-      ctx.fillRect(-17, -10, 37, 25);
-      ctx.fillStyle = kart.spinTimer > 0 ? "#fff" : kart.driver.color;
-      ctx.fillRect(-18, -13, 36, 26);
-      ctx.fillStyle = kart.driver.accent;
-      ctx.fillRect(-2, -9, 16, 18);
-      ctx.fillStyle = "#202b3b";
-      ctx.fillRect(10, -16, 7, 32);
-      ctx.fillRect(-17, -16, 7, 32);
+      if (kart.starTimer > 0) {
+        ctx.shadowColor = ["#ff6b6b", "#ffe45c", "#63e6be", "#74c0fc"][Math.floor(Date.now() / 90) % 4];
+        ctx.shadowBlur = 24;
+      }
+      if (isPlayer) {
+        ctx.strokeStyle = "rgba(255,255,255,.9)";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(0, 0, 27, 0, TAU);
+        ctx.stroke();
+      }
+      ctx.rotate(kart.heading + Math.PI / 2);
+      ctx.fillStyle = "rgba(25,36,53,0.28)";
+      ctx.beginPath();
+      ctx.ellipse(3, 3, 20, 32, 0, 0, TAU);
+      ctx.fill();
+      const image = this.images.get(`car:${kart.driver.id}`);
+      if (image?.complete && image.naturalWidth) {
+        ctx.globalAlpha = kart.spinTimer > 0 ? 0.72 : 1;
+        ctx.drawImage(image, -20, -36, 40, 74);
+      } else {
+        ctx.fillStyle = kart.driver.color;
+        ctx.roundRect(-18, -31, 36, 62, 12);
+        ctx.fill();
+      }
+      if (kart.drifting) {
+        const spark = kart.driftTimer >= 1.85 ? "#f38cff" : kart.driftTimer >= 1.05 ? "#ffb347" : "#5ddcff";
+        ctx.fillStyle = spark;
+        ctx.beginPath();
+        ctx.arc(-18, 25, 6, 0, TAU);
+        ctx.arc(18, 25, 6, 0, TAU);
+        ctx.fill();
+      }
       if (kart.boostTimer > 0) {
         ctx.fillStyle = "#ffdc56";
-        ctx.fillRect(-29, -6, 13, 12);
+        ctx.beginPath();
+        ctx.moveTo(-10, 32);
+        ctx.lineTo(0, 54 + Math.sin(Date.now() / 45) * 7);
+        ctx.lineTo(10, 32);
+        ctx.closePath();
+        ctx.fill();
       }
       ctx.restore();
       ctx.fillStyle = "#fff";
-      ctx.font = "700 14px system-ui";
+      ctx.strokeStyle = "rgba(18,34,52,.72)";
+      ctx.lineWidth = 4;
+      ctx.font = `${isPlayer ? 900 : 700} 14px system-ui`;
       ctx.textAlign = "center";
-      ctx.fillText(kart.driver.name, kart.x, kart.y - 27);
+      ctx.strokeText(kart.driver.name, kart.x, kart.y - 39);
+      ctx.fillText(kart.driver.name, kart.x, kart.y - 39);
     }
   }
 
@@ -485,10 +678,14 @@
       this.input = new InputManager();
       this.audio = new AudioManager();
       this.selectedDriver = DRIVERS[0].id;
+      this.selectedTrackId = TRACKS[0].id;
       this.paused = false;
       this.lastTime = 0;
       this.accumulator = 0;
       this.resultSaved = false;
+      this.lastCountdownNumber = null;
+      this.lastPlayerCoins = 0;
+      this.wasPlayerDrifting = false;
       this.progress = this.readProgress();
       this.els = {
         menu: document.getElementById("kart-menu"),
@@ -502,17 +699,23 @@
         pauseButton: document.getElementById("kart-pause-button"),
         soundButton: document.getElementById("kart-sound"),
         drivers: document.getElementById("driver-select"),
+        tracks: document.getElementById("track-select"),
+        trackName: document.getElementById("track-name"),
+        trackSubtitle: document.getElementById("track-subtitle"),
+        trackDot: document.getElementById("track-dot"),
         countdown: document.getElementById("kart-countdown"),
         position: document.getElementById("kart-position"),
         lap: document.getElementById("kart-lap"),
         time: document.getElementById("kart-time"),
         speed: document.getElementById("kart-speed"),
+        coins: document.getElementById("kart-coins"),
         item: document.getElementById("kart-item"),
         resultTitle: document.getElementById("kart-result-title"),
         resultCopy: document.getElementById("kart-result-copy"),
         best: document.getElementById("kart-best"),
         toast: document.getElementById("kart-toast"),
       };
+      this.populateTracks();
       this.populateDrivers();
       this.bindUI();
       this.updateUI();
@@ -539,7 +742,7 @@
         button.type = "button";
         button.className = "driver-choice";
         button.dataset.driver = driver.id;
-        button.innerHTML = `<span style="--driver:${driver.color};--accent:${driver.accent}"></span><strong>${driver.name}</strong><small>${driver.className}</small>`;
+        button.innerHTML = `<span class="driver-sprite" style="background-image:url('${ASSET_ROOT}/cars/${driver.sprite}')"></span><strong>${driver.name}</strong><small>${driver.className}</small>`;
         button.addEventListener("click", () => {
           this.selectedDriver = driver.id;
           this.populateDrivers();
@@ -547,6 +750,39 @@
         if (driver.id === this.selectedDriver) button.classList.add("selected");
         this.els.drivers.append(button);
       });
+    }
+
+    populateTracks() {
+      this.els.tracks.innerHTML = "";
+      TRACKS.forEach((track) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "track-choice";
+        button.dataset.track = track.id;
+        button.style.setProperty("--track-sky", track.palette.sky);
+        button.style.setProperty("--track-grass", track.palette.grass);
+        button.style.setProperty("--track-road", track.palette.road);
+        button.innerHTML = `<strong>${track.name}</strong><small>${track.difficulty}</small>`;
+        if (track.id === this.selectedTrackId) button.classList.add("selected");
+        button.addEventListener("click", () => {
+          this.selectedTrackId = track.id;
+          this.track = track;
+          this.race = new Race(track);
+          this.populateTracks();
+          this.updateTrackSummary();
+          this.updateUI();
+        });
+        this.els.tracks.append(button);
+      });
+      this.updateTrackSummary();
+    }
+
+    updateTrackSummary() {
+      this.els.trackName.textContent = this.track.name;
+      this.els.trackSubtitle.textContent = `${this.track.subtitle} · ${this.track.difficulty}`;
+      this.els.trackDot.style.background = this.track.palette.grass;
+      this.els.trackDot.style.borderColor = this.track.palette.road;
+      this.els.trackDot.style.boxShadow = `inset 0 0 0 5px ${this.track.palette.roadEdge}`;
     }
 
     bindUI() {
@@ -575,13 +811,19 @@
     }
 
     startRace() {
+      this.track = TRACKS.find((track) => track.id === this.selectedTrackId) || TRACKS[0];
+      this.race = new Race(this.track);
       this.race.start(this.selectedDriver);
       this.paused = false;
       this.resultSaved = false;
+      this.lastCountdownNumber = null;
+      this.lastPlayerCoins = 0;
+      this.wasPlayerDrifting = false;
       this.input.reset();
       this.els.menu.hidden = true;
       this.els.result.hidden = true;
       this.els.pause.hidden = true;
+      document.body.classList.add("kart-racing");
       this.audio.tone(440, 0.11, "triangle", 0.035);
       this.showToast("Klar til start!");
     }
@@ -590,6 +832,7 @@
       this.input.reset();
       this.paused = false;
       this.race.state = "ready";
+      document.body.classList.remove("kart-racing");
       this.els.menu.hidden = false;
       this.els.result.hidden = true;
       this.els.pause.hidden = true;
@@ -606,16 +849,34 @@
     update(dt) {
       if (this.paused) return;
       const before = this.race.state;
-      this.race.update(dt, this.input.read());
-      if (before === "countdown" && this.race.state === "racing") this.audio.tone(660, 0.13, "square", 0.04);
+      const input = this.input.read();
+      const heldItem = this.race.player?.item;
+      this.race.update(dt, input);
+      const player = this.race.player;
+      if (this.race.state === "countdown") {
+        const number = Math.max(1, Math.ceil(this.race.countdown));
+        if (number !== this.lastCountdownNumber) {
+          this.lastCountdownNumber = number;
+          this.audio.tone(330 + (3 - Math.min(3, number)) * 45, 0.08, "square", 0.025);
+        }
+      }
+      if (before === "countdown" && this.race.state === "racing") this.audio.tone(player?.boostTimer > 0 ? 880 : 660, 0.13, "square", 0.04);
+      if (input.itemPressed && heldItem) this.audio.tone(heldItem === "lightning" ? 150 : 720, 0.12, "sawtooth", 0.035);
+      if (player?.coins > this.lastPlayerCoins) this.audio.tone(1040, 0.07, "sine", 0.028);
+      if (this.wasPlayerDrifting && player && !player.drifting && player.boostTimer > 0) this.audio.tone(820, 0.1, "triangle", 0.035);
+      this.lastPlayerCoins = player?.coins || 0;
+      this.wasPlayerDrifting = Boolean(player?.drifting);
       if (this.race.state === "finished" && !this.resultSaved) this.showResult();
     }
 
     async showResult() {
       this.resultSaved = true;
       const result = this.race.result;
-      this.progress.bestTime = Math.min(this.progress.bestTime || Infinity, result.time);
-      this.progress.bestScore = Math.max(this.progress.bestScore || 0, result.score);
+      this.progress.tracks ||= {};
+      const record = this.progress.tracks[this.track.id] || {};
+      record.bestTime = Math.min(record.bestTime || Infinity, result.time);
+      record.bestScore = Math.max(record.bestScore || 0, result.score);
+      this.progress.tracks[this.track.id] = record;
       this.progress.completed = true;
       this.saveProgress();
       this.els.resultTitle.textContent = result.position === 1 ? "Du vandt!" : `Du blev nummer ${result.position}`;
@@ -641,8 +902,14 @@
       this.els.lap.textContent = player ? `${Math.min(player.lap + 1, this.race.lapTarget)}/${this.race.lapTarget}` : `1/${this.race.lapTarget}`;
       this.els.time.textContent = formatTime(this.race.elapsed);
       this.els.speed.textContent = player ? `${Math.round(Math.abs(player.speed) * 0.72)} km/t` : "0 km/t";
-      this.els.item.textContent = player?.item ? `${ITEM_TYPES[player.item].icon} ${ITEM_TYPES[player.item].name}` : "—";
-      this.els.best.textContent = this.progress.bestTime ? `Bedste: ${formatTime(this.progress.bestTime)}` : "Bedste: ingen endnu";
+      this.els.coins.textContent = player ? `${player.coins}/10` : "0/10";
+      const roulette = player?.itemRoulette > 0;
+      const rouletteItems = Object.values(ITEM_TYPES);
+      const rouletteItem = rouletteItems[Math.floor(Date.now() / 90) % rouletteItems.length];
+      this.els.item.textContent = roulette ? `${rouletteItem.icon} ?` : player?.item ? `${ITEM_TYPES[player.item].icon} ${ITEM_TYPES[player.item].name}` : "—";
+      this.els.item.classList.toggle("roulette", roulette);
+      const record = this.progress.tracks?.[this.track.id];
+      this.els.best.textContent = record?.bestTime ? `Bedste på ${this.track.name}: ${formatTime(record.bestTime)}` : `Bedste på ${this.track.name}: ingen endnu`;
       this.els.pauseButton.disabled = !racing;
       if (this.race.state === "countdown") {
         const number = Math.ceil(this.race.countdown);
