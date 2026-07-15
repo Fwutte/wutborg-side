@@ -87,14 +87,14 @@
   };
 
   const DRIVERS = [
-    { id: "mario", name: "Mario", color: "#e94343", accent: "#ffe263", sprite: "car_red_1.png", className: "Mellem", maxSpeed: 360, acceleration: 220, handling: 2.7, weight: 1 },
-    { id: "luigi", name: "Luigi", color: "#36a84c", accent: "#e7f6a4", sprite: "car_green_2.png", className: "Mellem", maxSpeed: 358, acceleration: 224, handling: 2.75, weight: 1 },
-    { id: "peach", name: "Peach", color: "#f080a8", accent: "#fff2b4", sprite: "car_red_4.png", className: "Let", maxSpeed: 342, acceleration: 248, handling: 3.05, weight: 0.82 },
-    { id: "toad", name: "Toad", color: "#f3f3ed", accent: "#e84c4c", sprite: "car_blue_3.png", className: "Let", maxSpeed: 338, acceleration: 254, handling: 3.12, weight: 0.78 },
-    { id: "yoshi", name: "Yoshi", color: "#54c973", accent: "#ecfff0", sprite: "car_green_5.png", className: "Let", maxSpeed: 346, acceleration: 240, handling: 2.98, weight: 0.85 },
-    { id: "bowser", name: "Bowser", color: "#d9a52c", accent: "#57352d", sprite: "car_yellow_5.png", className: "Tung", maxSpeed: 382, acceleration: 196, handling: 2.38, weight: 1.32 },
-    { id: "daisy", name: "Daisy", color: "#f5a139", accent: "#fff3a0", sprite: "car_yellow_2.png", className: "Mellem", maxSpeed: 354, acceleration: 230, handling: 2.82, weight: 0.95 },
-    { id: "wario", name: "Wario", color: "#9158c8", accent: "#f6dc49", sprite: "car_black_4.png", className: "Tung", maxSpeed: 376, acceleration: 204, handling: 2.45, weight: 1.25 },
+    { id: "mario", name: "Mario", color: "#e94343", accent: "#ffe263", sprite: "car_red_1.png", rearSprite: "raceCarRed_NE.png", className: "Mellem", maxSpeed: 360, acceleration: 220, handling: 2.7, weight: 1 },
+    { id: "luigi", name: "Luigi", color: "#36a84c", accent: "#e7f6a4", sprite: "car_green_2.png", rearSprite: "raceCarGreen_NE.png", className: "Mellem", maxSpeed: 358, acceleration: 224, handling: 2.75, weight: 1 },
+    { id: "peach", name: "Peach", color: "#f080a8", accent: "#fff2b4", sprite: "car_red_4.png", rearSprite: "raceCarRed_NE.png", className: "Let", maxSpeed: 342, acceleration: 248, handling: 3.05, weight: 0.82 },
+    { id: "toad", name: "Toad", color: "#f3f3ed", accent: "#e84c4c", sprite: "car_blue_3.png", rearSprite: "raceCarWhite_NE.png", className: "Let", maxSpeed: 338, acceleration: 254, handling: 3.12, weight: 0.78 },
+    { id: "yoshi", name: "Yoshi", color: "#54c973", accent: "#ecfff0", sprite: "car_green_5.png", rearSprite: "raceCarGreen_NE.png", className: "Let", maxSpeed: 346, acceleration: 240, handling: 2.98, weight: 0.85 },
+    { id: "bowser", name: "Bowser", color: "#d9a52c", accent: "#57352d", sprite: "car_yellow_5.png", rearSprite: "raceCarOrange_NE.png", className: "Tung", maxSpeed: 382, acceleration: 196, handling: 2.38, weight: 1.32 },
+    { id: "daisy", name: "Daisy", color: "#f5a139", accent: "#fff3a0", sprite: "car_yellow_2.png", rearSprite: "raceCarOrange_NE.png", className: "Mellem", maxSpeed: 354, acceleration: 230, handling: 2.82, weight: 0.95 },
+    { id: "wario", name: "Wario", color: "#9158c8", accent: "#f6dc49", sprite: "car_black_4.png", rearSprite: "raceCarWhite_NE.png", className: "Tung", maxSpeed: 376, acceleration: 204, handling: 2.45, weight: 1.25 },
   ];
 
   const ITEM_TYPES = {

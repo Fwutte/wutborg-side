@@ -54,8 +54,8 @@
       }
       const row = Math.floor(index / 2);
       const lane = index % 2 === 0 ? -1 : 1;
-      const forward = -row * 48;
-      const lateral = lane * 31;
+      const forward = -row * 70;
+      const lateral = lane * 38;
       this.heading = track.heading;
       this.x = track.start.x + Math.cos(this.heading) * forward - Math.sin(this.heading) * lateral;
       this.y = track.start.y + Math.sin(this.heading) * forward + Math.cos(this.heading) * lateral;
@@ -176,7 +176,11 @@
       const playerDriver = this.drivers.find((driver) => driver.id === playerDriverId) || this.drivers[0];
       const orderedDrivers = [playerDriver, ...this.drivers.filter((driver) => driver.id !== playerDriver.id)].slice(0, 8);
       this.karts = orderedDrivers.map((driver, index) => new Kart(driver, index, index !== 0));
-      this.karts.forEach((kart, index) => kart.reset(this.track, index));
+      this.karts.forEach((kart, index) => {
+        const gridSlot = index === 0 ? 7 : index - 1;
+        kart.reset(this.track, gridSlot);
+        kart.progress = -gridSlot / 100;
+      });
       this.player = this.karts[0];
       this.itemBoxes = this.track.itemBoxes.map((box) => ({ ...box, cooldown: 0 }));
       this.coins = this.track.coins.map((coin) => ({ ...coin, cooldown: 0 }));
@@ -672,7 +676,12 @@
   class KartGame {
     constructor() {
       this.canvas = document.getElementById("kart-canvas");
-      this.renderer = new Renderer(this.canvas);
+      try {
+        this.renderer = window.WutborgKart3DRenderer ? new window.WutborgKart3DRenderer(this.canvas) : new Renderer(this.canvas);
+      } catch (error) {
+        console.warn("3D-visningen kunne ikke startes; bruger 2D-reserven.", error);
+        this.renderer = new Renderer(this.canvas);
+      }
       this.track = TRACKS[0];
       this.race = new Race(this.track);
       this.input = new InputManager();
@@ -698,6 +707,7 @@
         resultMenuButton: document.getElementById("kart-menu-button-result"),
         pauseButton: document.getElementById("kart-pause-button"),
         soundButton: document.getElementById("kart-sound"),
+        playerSprite: document.getElementById("kart-player-sprite"),
         drivers: document.getElementById("driver-select"),
         tracks: document.getElementById("track-select"),
         trackName: document.getElementById("track-name"),
@@ -898,6 +908,12 @@
     updateUI() {
       const player = this.race.player;
       const racing = this.race.state === "racing" || this.race.state === "countdown";
+      const playerDriver = player?.driver || DRIVERS.find((driver) => driver.id === this.selectedDriver) || DRIVERS[0];
+      const rearSprite = `${ASSET_ROOT.replace("kenney-racing", "kenney-racing-3d/rear")}/${playerDriver.rearSprite}`;
+      if (!this.els.playerSprite.src.endsWith(playerDriver.rearSprite)) this.els.playerSprite.src = rearSprite;
+      const lean = player?.spinTimer > 0 ? Math.sin(Date.now() / 55) * 18 : player?.drifting ? player.driftDirection * 7 : 0;
+      this.els.playerSprite.style.setProperty("--kart-lean", `${lean}deg`);
+      this.els.playerSprite.classList.toggle("boosting", Boolean(player && (player.boostTimer > 0 || player.starTimer > 0)));
       this.els.position.textContent = player ? `${player.rank || 1}.` : "–";
       this.els.lap.textContent = player ? `${Math.min(player.lap + 1, this.race.lapTarget)}/${this.race.lapTarget}` : `1/${this.race.lapTarget}`;
       this.els.time.textContent = formatTime(this.race.elapsed);

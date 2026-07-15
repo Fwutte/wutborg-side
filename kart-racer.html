@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#e65b4f" />
   <meta name="description" content="Wutborg Kart: farverigt arkade-racing med drift, mønter, items, tre baner og otte rivaler." />
   <title>Wutborg Kart | Wutborg Spillehjørne</title>
-  <link rel="stylesheet" href="css/kart-racer.css?v=20260715-kart5" />
+  <link rel="stylesheet" href="css/kart-racer.css?v=20260715-kart16" />
 </head>
 <body>
   <div class="kart-page">
@@ -22,6 +22,7 @@
 
     <main class="race-shell">
       <canvas id="kart-canvas" width="960" height="600" aria-label="Wutborg Kart racerbane. Brug piletaster eller WASD til at køre, Shift til drift og Space til item."></canvas>
+      <img class="player-kart-sprite" id="kart-player-sprite" src="assets/kart/kenney-racing-3d/rear/raceCarRed_NE.png" alt="" aria-hidden="true" />
       <section class="race-hud" aria-label="Løbsstatus">
         <div class="race-hud-top">
           <div class="hud-cluster"><div class="hud-stat position"><small>Plads</small><strong id="kart-position">–</strong></div><div class="hud-stat"><small>Omgang</small><strong id="kart-lap">1/3</strong></div><div class="hud-stat coin-stat"><small>Mønter</small><strong id="kart-coins">0/10</strong></div></div>
@@ -64,7 +65,8 @@
     <footer class="kart-footer"><span><strong>Wutborg Kart</strong> · 3 baner · 8 kørere · lokale rekorder</span><span>Grafik: Kenney Racing Pack · CC0</span></footer>
   </div>
   <script src="js/highscores.js"></script>
-  <script src="js/kart-racer-data.js?v=20260715-kart3"></script>
-  <script src="js/kart-racer.js?v=20260715-kart3"></script>
+  <script src="js/kart-racer-data.js?v=20260715-kart16"></script>
+  <script type="module" src="js/kart-racer-3d.js?v=20260715-kart16"></script>
+  <script src="js/kart-racer.js?v=20260715-kart16"></script>
 </body>
 </html>

@@ -49,6 +49,26 @@ button:focus-visible, a:focus-visible { outline: 4px solid #ffb638; outline-offs
 .race-shell { position:relative; overflow:hidden; border:5px solid #193653; border-radius:28px; background:#15263d; box-shadow:var(--shadow); }
 #kart-canvas { display:block; width:100%; height:auto; aspect-ratio: 8 / 5; background:#aee7ff; image-rendering:pixelated; }
 .race-hud { position:absolute; inset:0; pointer-events:none; color:white; }
+.race-hud { z-index:3; }
+.player-kart-sprite {
+  --kart-lean: 0deg;
+  --kart-scale: 1;
+  position:absolute;
+  z-index:2;
+  left:50%;
+  bottom:8px;
+  display:none;
+  width:clamp(118px,18vw,178px);
+  height:auto;
+  transform:translateX(-50%) rotate(var(--kart-lean)) scale(var(--kart-scale));
+  transform-origin:50% 78%;
+  filter:drop-shadow(0 14px 8px rgba(16,29,42,.42));
+  pointer-events:none;
+  user-select:none;
+  transition:transform .1s linear;
+}
+body.kart-racing .player-kart-sprite { display:block; }
+.player-kart-sprite.boosting { --kart-scale: 1.06; filter:drop-shadow(0 14px 8px rgba(16,29,42,.42)) drop-shadow(0 8px 13px #ffd84a); }
 .race-hud-top { display:flex; justify-content:space-between; gap:12px; padding:16px 17px; text-shadow:0 2px 0 rgba(15,31,48,.65); }
 .hud-cluster { display:flex; gap:8px; }
 .hud-stat { min-width:84px; padding:7px 10px; border:2px solid rgba(255,255,255,.66); border-radius:12px; background:rgba(20,39,62,.74); box-shadow:0 4px 0 rgba(0,0,0,.18); }
@@ -146,4 +166,20 @@ button:focus-visible, a:focus-visible { outline: 4px solid #ffb638; outline-offs
   .race-hud-top { flex-direction:column; align-items:flex-start; }.hud-cluster-right { display:none; }
   .hud-item { right:7px; bottom:7px; }
   .screen-card { width:min(520px,100%); }
+  .player-kart-sprite { width:128px; bottom:2px; }
+}
+
+/* Tredjepersonskameraet kan udnytte hele mobilens højde uden billedforvrængning. */
+#kart-canvas { image-rendering:auto; }
+@media (max-width:720px) and (orientation:portrait) {
+  .race-shell { height:calc(100dvh - 54px - 196px); min-height:390px; }
+  #kart-canvas { width:100%; height:100%; aspect-ratio:auto; }
+  .race-hud-top { padding-top:max(8px,env(safe-area-inset-top)); }
+  .kart-countdown { font-size:clamp(4rem,28vw,7rem); }
+  .hud-cluster-right .hud-stat:first-child { display:none; }
+  .touch-controls { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .touch-steer { grid-column:1 / -1; }
+  .touch-controls .gas { grid-column:1 / -1; }
+  .touch-controls button { min-height:52px; }
+  .player-kart-sprite { width:150px; bottom:10px; }
 }

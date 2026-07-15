@@ -6,6 +6,7 @@ const vm = require("node:vm");
 const root = path.resolve(__dirname, "..");
 const dataSource = fs.readFileSync(path.join(root, "js", "kart-racer-data.js"), "utf8");
 const gameSource = fs.readFileSync(path.join(root, "js", "kart-racer.js"), "utf8");
+const renderer3dSource = fs.readFileSync(path.join(root, "js", "kart-racer-3d.js"), "utf8");
 const htmlSource = fs.readFileSync(path.join(root, "kart-racer.html"), "utf8");
 const cssSource = fs.readFileSync(path.join(root, "css", "kart-racer.css"), "utf8");
 const browserWindow = { addEventListener() {} };
@@ -20,6 +21,7 @@ assert.equal(api.data.TRACKS.length, 3, "Grand Prix-versionen skal have tre bane
 assert.equal(api.data.DRIVERS.length, 8, "Løbet skal have otte kørere");
 assert.deepEqual(Object.keys(api.data.ITEM_TYPES), ["mushroom", "banana", "shell", "redShell", "star", "lightning"]);
 assert.ok(api.data.DRIVERS.every((driver) => driver.sprite.endsWith(".png")), "Alle kørere skal bruge en bilsprite");
+assert.ok(api.data.DRIVERS.every((driver) => driver.rearSprite.endsWith("_NE.png")), "Alle kørere skal have en skrå bagfra-sprite");
 
 api.data.TRACKS.forEach((candidate) => {
   assert.equal(candidate.isRoad(candidate.start.x, candidate.start.y), true, `${candidate.name} skal starte på asfalt`);
@@ -51,6 +53,7 @@ const race = new Race(track, api.data.DRIVERS);
 race.start("mario");
 assert.equal(race.karts.length, 8, "Et løb skal starte med otte karts");
 assert.equal(race.state, "countdown", "Løbet skal starte med countdown");
+assert.equal(race.player.rank, 8, "Spilleren skal starte bagerst med rivalerne synlige foran");
 race.state = "racing";
 const player = race.player;
 track.checkpointAngles.forEach((angle) => {
@@ -94,8 +97,14 @@ assert.equal(typeof aiInput.drift, "boolean");
 assert.ok(circularDistance(0, Math.PI * 2 - 0.02) < 0.03, "Vinkelafstand skal håndtere 0/2π-overgang");
 
 assert.match(htmlSource, /data-kart-control="drift"/, "Mobilstyringen skal have en driftknap");
+assert.match(htmlSource, /id="kart-player-sprite"/, "Spillerens bagfra-kart skal ligge over 3D-banen");
+assert.match(htmlSource, /type="module" src="js\/kart-racer-3d\.js/, "Spillet skal indlæse 3D-rendereren");
 assert.match(htmlSource, /viewport-fit=cover/, "Mobilvisningen skal respektere telefonens safe area");
 assert.match(cssSource, /orientation:landscape/, "Spillet skal have et dedikeret mobilt landskabs-layout");
 assert.match(cssSource, /100dvh/, "Mobilspillet skal passe til den dynamiske skærmhøjde");
+assert.match(renderer3dSource, /PerspectiveCamera/, "3D-visningen skal bruge et perspektivkamera");
+assert.match(renderer3dSource, /landscape \? -6\.7/, "Kameraet skal placeres bag bilen i landskabsformat");
+assert.match(renderer3dSource, /raceCarWhite\.glb/, "3D-visningen skal bruge den lokale CC0-bilmodel");
+assert.ok(fs.existsSync(path.join(root, "assets", "kart", "kenney-racing-3d", "raceCarWhite.glb")), "CC0-bilmodellen skal ligge lokalt");
 
-console.log("Kart-test: 3 baner, drift, mønter, 6 items, grafik og mobil bestået");
+console.log("Kart-test: 3D-kamera bag bilen, 3 baner, drift, items og mobil bestået");
