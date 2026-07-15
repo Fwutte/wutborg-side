@@ -7,7 +7,7 @@
   <title>Neon Breaker | Wutborg Arcade</title>
   <meta
     name="description"
-    content="Spil Neon Breaker, et hurtigt retro-inspireret brick breaker-spil med power-ups og fire levels."
+    content="Spil Neon Breaker, et DX-Ball-inspireret brick breaker-spil med power-ups, eksplosionsblokke og 14 baner."
   />
   <style>
     :root {
@@ -440,7 +440,7 @@
           <div class="hud" aria-label="Spilstatus">
             <div class="hud-item"><span>Score</span><strong class="score">0</strong></div>
             <div class="hud-item"><span>Liv</span><strong class="lives">3</strong></div>
-            <div class="hud-item"><span>Level</span><strong class="level">1 / 4</strong></div>
+            <div class="hud-item"><span>Bane</span><strong class="level">1 / 14</strong></div>
           </div>
         </header>
 
@@ -453,7 +453,7 @@
               <p class="overlay-kicker">Wutborg Arcade præsenterer</p>
               <strong class="overlay-title">Neon<br />Breaker</strong>
               <p class="overlay-text">
-                Ryd alle neonblokke, fang power-ups, og kæmp dig gennem fire stadig hurtigere levels.
+                Ryd alle neonblokke, fang power-ups, og kæmp dig gennem 14 håndbyggede baner.
               </p>
               <div class="overlay-actions">
                 <button class="button primary start-button" type="button">Start Game</button>
@@ -463,7 +463,7 @@
                 <div class="control-tip"><strong>Flyt paddle</strong>Mus, touch eller piletaster / A og D</div>
                 <div class="control-tip"><strong>Start bolden</strong>Klik på banen eller tryk mellemrum</div>
                 <div class="control-tip"><strong>Catch</strong>Fang bolden og slip den igen med klik eller mellemrum</div>
-                <div class="control-tip"><strong>Laser</strong>Klik eller tryk mellemrum for at skyde, mens power-up'en er aktiv</div>
+                <div class="control-tip"><strong>Laser</strong>Skyder automatisk et dobbeltskud hvert sekund, mens power-up'en er aktiv</div>
                 <div class="control-tip"><strong>Pause</strong>Tryk P eller brug knappen under banen</div>
               </div>
             </div>
@@ -479,7 +479,7 @@
         </footer>
       </section>
 
-      <div class="power-legend" aria-label="Power-ups">
+      <div class="power-legend" aria-label="Power-ups og specialblokke">
         <span class="power-chip" style="--power-color:#55f6e7"><i>W</i>Større paddle</span>
         <span class="power-chip" style="--power-color:#ff6e8d"><i>S</i>Mindre paddle</span>
         <span class="power-chip" style="--power-color:#8dff80"><i>+</i>Ekstra liv</span>
@@ -489,6 +489,8 @@
         <span class="power-chip" style="--power-color:#ffe45e"><i>L</i>Laser</span>
         <span class="power-chip" style="--power-color:#4dff9a"><i>C</i>Catch</span>
         <span class="power-chip" style="--power-color:#ffffff"><i>T</i>Through</span>
+        <span class="power-chip" style="--power-color:#ff5b45"><i>E</i>Eksplosionsblok</span>
+        <span class="power-chip" style="--power-color:#b8c7dc"><i>◆</i>Metalblok</span>
       </div>
     </main>
   </div>
@@ -524,6 +526,7 @@
           "1": { hits: 1, score: 100 },
           "2": { hits: 2, score: 150, colors: ["#ff9e4a", "#ffe45e"] },
           "3": { hits: 3, score: 220, colors: ["#ff4fa3", "#c18bff", "#6eb8ff"] },
+          E: { hits: 1, score: 260, explosive: true, color: "#ff5b45" },
           M: { hits: Infinity, score: 0, solid: true, color: "#b8c7dc" }
         };
 
@@ -563,6 +566,102 @@
             "11103300330111",
             "01111111111110",
             "001111MM111100"
+          ],
+          [
+            "00001111110000",
+            "00111222211100",
+            "01122333322110",
+            "112233EE332211",
+            "01122222222110",
+            "00111111111100",
+            "00001111110000"
+          ],
+          [
+            "1E1E1E1E1E1E1E",
+            "E1E1E1E1E1E1E1",
+            "21212121212121",
+            "12121212121212",
+            "E2E2E2E2E2E2E2",
+            "2E2E2E2E2E2E2E",
+            "01111111111110"
+          ],
+          [
+            "MMMM000000MMMM",
+            "M333111111333M",
+            "M300222222003M",
+            "M31111EE11113M",
+            "M11100001111MM",
+            "MEEE111111EEEM",
+            "01111111111110",
+            "00111111111100"
+          ],
+          [
+            "11110000111100",
+            "01111000111110",
+            "00111100111100",
+            "00011111111000",
+            "00112222221100",
+            "01122333322110",
+            "1111EE11EE1111"
+          ],
+          [
+            "00111111111100",
+            "01122222222110",
+            "11220000002211",
+            "11201100110211",
+            "112000EE002211",
+            "01122000022110",
+            "00112222221100",
+            "00001111110000"
+          ],
+          [
+            "MM1111111111MM",
+            "M122222222221M",
+            "M1200MMMM0021M",
+            "M121111111121M",
+            "M100MM00MM001M",
+            "M111EE11EE111M",
+            "01111111111110",
+            "00111111111100"
+          ],
+          [
+            "EEEE000000EEEE",
+            "1111E1111E1111",
+            "22211E11E11222",
+            "333211EE112333",
+            "22211E11E11222",
+            "1111E1111E1111",
+            "EEEE000000EEEE"
+          ],
+          [
+            "E000000000000E",
+            "1E0000000000E1",
+            "11E0000000E111",
+            "111E000000E111",
+            "1111E0000E1111",
+            "11111E00E11111",
+            "222222EE222222",
+            "33333333333333"
+          ],
+          [
+            "MMM33333333MMM",
+            "M311111111113M",
+            "M112222222211M",
+            "M122EEEEEE221M",
+            "M1200MMMM0021M",
+            "M111111111111M",
+            "0MEE333333EEM0",
+            "00111111111100"
+          ],
+          [
+            "3E3E3E3E3E3E3E",
+            "E2E2E2E2E2E2E2",
+            "21M11111111M12",
+            "12M222EE222M21",
+            "21M30000003M12",
+            "12M11111111M21",
+            "E2E2E2E2E2E2E2",
+            "3E3E3E3E3E3E3E"
           ]
         ];
 
@@ -615,8 +714,7 @@
           if (["ArrowLeft", "ArrowRight", "Space"].includes(event.code)) event.preventDefault();
           if (event.code === "ArrowLeft" || event.code === "KeyA") this.keys.left = true;
           if (event.code === "ArrowRight" || event.code === "KeyD") this.keys.right = true;
-          if (event.code === "Space" && !this.launchServe()) this.tryFireLaser();
-          if (event.code === "KeyF") this.tryFireLaser();
+          if (event.code === "Space") this.launchServe();
           if (event.code === "KeyP" || event.code === "Escape") this.togglePause();
         });
 
@@ -640,7 +738,7 @@
         this.canvas.addEventListener("pointerdown", (event) => {
           movePointer(event);
           this.canvas.setPointerCapture?.(event.pointerId);
-          if (!this.launchServe()) this.tryFireLaser();
+          this.launchServe();
         });
       }
 
@@ -714,6 +812,7 @@
               maxHits: type.solid ? Infinity : type.hits,
               scoreValue: type.score,
               solid: Boolean(type.solid),
+              explosive: Boolean(type.explosive),
               active: true,
               pulse: Math.random() * Math.PI * 2
             });
@@ -763,7 +862,7 @@
       }
 
       levelSpeed() {
-        return 390 + this.levelIndex * 62;
+        return Math.min(this.maxBallSpeed, 390 + this.levelIndex * 28);
       }
 
       loop(time) {
@@ -837,8 +936,16 @@
 
         if (this.paddle.catchUntil && now > this.paddle.catchUntil) this.paddle.catchUntil = 0;
         if (this.throughUntil && now > this.throughUntil) this.throughUntil = 0;
-        if (this.paddle.laserCooldown > 0) this.paddle.laserCooldown -= delta;
-        if (this.paddle.laserUntil && now > this.paddle.laserUntil) this.paddle.laserUntil = 0;
+        if (this.paddle.laserUntil && now > this.paddle.laserUntil) {
+          this.paddle.laserUntil = 0;
+          this.paddle.laserCooldown = 0;
+        } else if (this.state === "playing" && this.paddle.laserUntil > now) {
+          this.paddle.laserCooldown -= delta;
+          if (this.paddle.laserCooldown <= 0.000001) {
+            this.fireLaser();
+            this.paddle.laserCooldown += 1;
+          }
+        }
       }
 
       updateBalls(delta) {
@@ -946,6 +1053,7 @@
           this.spawnParticles(brick.x + brick.width / 2, brick.y + brick.height / 2, brick.color, 14);
           this.shake = Math.min(8, this.shake + 2.2);
           if (Math.random() < dropChance) this.dropPowerUp(brick);
+          if (brick.explosive) this.detonateBrick(brick);
         } else {
           const damageIndex = this.clamp(brick.maxHits - brick.hits, 0, brick.colors.length - 1);
           brick.color = brick.colors[damageIndex];
@@ -956,6 +1064,31 @@
 
         this.updateHud();
         return { destroyed, solid: false };
+      }
+
+      detonateBrick(origin, visited = new Set()) {
+        if (visited.has(origin)) return;
+        visited.add(origin);
+        const originX = origin.x + origin.width / 2;
+        const originY = origin.y + origin.height / 2;
+
+        for (const brick of this.bricks) {
+          if (!brick.active || visited.has(brick)) continue;
+          const centerX = brick.x + brick.width / 2;
+          const centerY = brick.y + brick.height / 2;
+          const beside = Math.abs(centerX - originX) <= origin.width + 7;
+          const nearbyRow = Math.abs(centerY - originY) <= origin.height + 7;
+          if (!beside || !nearbyRow) continue;
+
+          brick.active = false;
+          this.score += (brick.solid ? 300 : brick.scoreValue) * (this.levelIndex + 1);
+          this.spawnParticles(centerX, centerY, brick.explosive ? "#ff5b45" : brick.color, 10);
+          if (brick.explosive) this.detonateBrick(brick, visited);
+          else visited.add(brick);
+        }
+
+        this.flash = Math.max(this.flash, 0.7);
+        this.shake = Math.min(12, this.shake + 4.5);
       }
 
       reflectBallFromBrick(ball, brick, previousX, previousY) {
@@ -1113,8 +1246,9 @@
         } else if (type === "multi") {
           this.addMultiBall();
         } else if (type === "laser") {
+          const alreadyActive = now < this.paddle.laserUntil;
           this.paddle.laserUntil = now + 11000;
-          this.paddle.laserCooldown = 0;
+          if (!alreadyActive) this.paddle.laserCooldown = 1;
         } else if (type === "catch") {
           this.paddle.catchUntil = now + 14000;
         } else if (type === "through") {
@@ -1152,15 +1286,6 @@
             });
           }
         }
-      }
-
-      tryFireLaser() {
-        if (this.state !== "playing") return false;
-        if (performance.now() >= this.paddle.laserUntil) return false;
-        if (this.paddle.laserCooldown > 0) return false;
-        this.fireLaser();
-        this.paddle.laserCooldown = 0.24;
-        return true;
       }
 
       fireLaser() {
@@ -1274,7 +1399,7 @@
         this.overlayAction = () => this.startGame();
         this.controlsButton.style.display = "";
         this.pauseButton.textContent = "Pause";
-        this.setStatus(didWin ? "Sejr! Alle fire levels er klaret." : "Game over");
+        this.setStatus(didWin ? `Sejr! Alle ${this.levels.length} baner er klaret.` : "Game over");
         void window.WutborgHighscores?.submit({
           gameKey: "neon-breaker",
           gameTitle: "Neon Breaker",
@@ -1383,7 +1508,20 @@
           shine.addColorStop(1, "rgba(0,0,0,0.3)");
           ctx.fillStyle = shine;
           ctx.fill();
-          if (brick.solid) {
+          if (brick.explosive) {
+            ctx.fillStyle = "#fff4a8";
+            ctx.beginPath();
+            ctx.arc(brick.x + brick.width / 2, brick.y + brick.height / 2, 5.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = "rgba(80, 10, 18, 0.78)";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(brick.x + brick.width / 2 - 12, brick.y + brick.height / 2);
+            ctx.lineTo(brick.x + brick.width / 2 + 12, brick.y + brick.height / 2);
+            ctx.moveTo(brick.x + brick.width / 2, brick.y + 3);
+            ctx.lineTo(brick.x + brick.width / 2, brick.y + brick.height - 3);
+            ctx.stroke();
+          } else if (brick.solid) {
             ctx.strokeStyle = "rgba(255,255,255,0.72)";
             ctx.lineWidth = 2;
             ctx.stroke();
@@ -1552,7 +1690,8 @@
       }
     }
 
-    const game = new NeonBreaker(document.querySelector("canvas"));
+    window.NeonBreaker = NeonBreaker;
+    window.neonBreakerGame = new NeonBreaker(document.querySelector("canvas"));
   </script>
 </body>
 </html>

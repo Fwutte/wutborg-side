@@ -1,8 +1,9 @@
 {
   "private": true,
   "scripts": {
-    "validate": "node scripts/validate.cjs && node scripts/sangquiz-special.test.cjs && node scripts/highscores.test.cjs && node scripts/pips-skybound.test.cjs && node scripts/kart-racer.test.cjs && node scripts/battle-gates.test.cjs && node scripts/battle-gates-3d.test.cjs",
+    "validate": "node scripts/validate.cjs && node scripts/sangquiz-special.test.cjs && node scripts/highscores.test.cjs && node scripts/brick-breaker.test.cjs && node scripts/pips-skybound.test.cjs && node scripts/kart-racer.test.cjs && node scripts/battle-gates.test.cjs && node scripts/battle-gates-3d.test.cjs",
     "test:highscores": "node scripts/highscores.test.cjs",
+    "test:breaker": "node scripts/brick-breaker.test.cjs",
     "test:mario": "node scripts/pips-skybound.test.cjs",
     "test:kart": "node scripts/kart-racer.test.cjs",
     "test:borgstorm": "node scripts/battle-gates.test.cjs",
