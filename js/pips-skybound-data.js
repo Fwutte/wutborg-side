@@ -16,42 +16,42 @@
 
   const WORLDS = [
     {
-      name: "Grønsvamperiget",
+      name: "Yoshiøen",
       palette: { skyTop: "#5c94fc", skyBottom: "#5c94fc", hillFar: "#80d010", hillNear: "#00a800", dirt: "#a9623d", grass: "#00a800" },
       biome: "overworld",
     },
     {
-      name: "Stenrørene",
+      name: "Donutsletten",
       palette: { skyTop: "#3f64b8", skyBottom: "#3f64b8", hillFar: "#6b8fbf", hillNear: "#3f5f91", dirt: "#73554a", grass: "#4ca76e" },
       biome: "underground",
     },
     {
-      name: "Skybroerne",
+      name: "Vaniljekuplen",
       palette: { skyTop: "#5c94fc", skyBottom: "#5c94fc", hillFar: "#d2eaff", hillNear: "#89bff2", dirt: "#7d6b58", grass: "#53a8d8" },
       biome: "athletic",
     },
     {
-      name: "Skumringsskoven",
+      name: "Ostebroen",
       palette: { skyTop: "#253b78", skyBottom: "#253b78", hillFar: "#4b5d9f", hillNear: "#263c77", dirt: "#69483f", grass: "#517b59" },
       biome: "night",
     },
     {
-      name: "Tågetundraen",
+      name: "Illusionsskoven",
       palette: { skyTop: "#6e9bd8", skyBottom: "#6e9bd8", hillFar: "#c7dbef", hillNear: "#8daeca", dirt: "#6d6a71", grass: "#d8e8f2" },
       biome: "snow",
     },
     {
-      name: "Koralhavet",
+      name: "Chokoladeøen",
       palette: { skyTop: "#367cc9", skyBottom: "#367cc9", hillFar: "#6fb6df", hillNear: "#2c6aab", dirt: "#8a644c", grass: "#52b8b0" },
       biome: "water",
     },
     {
-      name: "Måneklipperne",
+      name: "Bowsers dal",
       palette: { skyTop: "#30295d", skyBottom: "#30295d", hillFar: "#725e9c", hillNear: "#45386f", dirt: "#594049", grass: "#966f9e" },
       biome: "night",
     },
     {
-      name: "Ildslottet",
+      name: "Stjernevejen",
       palette: { skyTop: "#21152f", skyBottom: "#21152f", hillFar: "#65384a", hillNear: "#3c2030", dirt: "#623b36", grass: "#cc633d" },
       biome: "castle",
     },
@@ -73,7 +73,7 @@
       entities.push({ type: "coin", x, y: x < 15 ? 7 : 6 });
     }
     set(grid, 10, 6, "S");
-    set(grid, 20, 5, stage % 2 ? "I" : "L");
+    set(grid, 20, 5, stage % 2 ? "T" : "L");
     return {
       id,
       name: "Bonusrum",
@@ -123,7 +123,7 @@
       for (let coin = 0; coin < platformWidth; coin += 1) add("coin", x + coin, platformY - 1);
 
       const blockX = x + 1 + ((seed + x) % Math.max(1, platformWidth - 1));
-      const powerBlocks = ["?", "M", "I", "S", "L"];
+      const powerBlocks = ["?", "M", "I", "T", "S", "L"];
       set(grid, blockX, platformY - 2, powerBlocks[(seed + x + stage) % powerBlocks.length]);
       if ((x + worldIndex) % 4 === 0) set(grid, blockX + 1, platformY - 2, "B");
     }

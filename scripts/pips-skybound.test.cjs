@@ -6,6 +6,8 @@ const vm = require("node:vm");
 const root = path.resolve(__dirname, "..");
 const campaignSource = fs.readFileSync(path.join(root, "js", "pips-skybound-data.js"), "utf8");
 const source = fs.readFileSync(path.join(root, "js", "pips-skybound.js"), "utf8");
+const htmlSource = fs.readFileSync(path.join(root, "pips-skybound.html"), "utf8");
+const cssSource = fs.readFileSync(path.join(root, "css", "pips-skybound.css"), "utf8");
 const browserWindow = {
   addEventListener() {},
 };
@@ -35,7 +37,7 @@ assert.ok(
   "Fixed-step-loopet skal kunne indhente et 250 ms frame"
 );
 
-const allowedSymbols = new Set([".", "X", "?", "M", "I", "S", "L", "B", "R", "^"]);
+const allowedSymbols = new Set([".", "X", "?", "M", "I", "S", "L", "T", "B", "R", "^"]);
 const allowedEntities = new Set([
   "player",
   "coin",
@@ -82,7 +84,7 @@ game.LEVEL_DEFINITIONS.forEach((level, index) => {
 });
 
 const campaignSymbols = game.LEVEL_DEFINITIONS.map((level) => level.map.join("")).join("");
-["M", "I", "S", "L"].forEach((symbol) => {
+["M", "I", "S", "L", "T"].forEach((symbol) => {
   assert.ok(campaignSymbols.includes(symbol), `Kampagnen mangler power-up-blok: ${symbol}`);
 });
 
@@ -115,7 +117,7 @@ const generated = game.createMap(4, 3, (map) => {
 });
 assert.deepEqual(Array.from(generated), ["....", ".P..", "XXXX"]);
 
-const { Camera, Game, TileMap, touchesFinishPole } = game.testHooks;
+const { Camera, Enemy, Game, Player, TileMap, touchesFinishPole } = game.testHooks;
 assert.equal(
   touchesFinishPole({ x: 3700, y: 120, w: 34, h: 44 }, { x: 3720, y: 408, w: 45, h: 120 }),
   true,
@@ -129,11 +131,11 @@ assert.equal(
 const camera = new Camera();
 camera.reset(10);
 assert.equal(camera.x, 9, "Kameraet skal snappe til 3 px-grid ved reset");
-camera.update({ x: 500, w: 34 }, 4000);
+camera.update({ x: 900, w: 34, vx: 300 }, 4000, 1);
 const cameraAfterForwardMove = camera.x;
 assert.equal(cameraAfterForwardMove % 3, 0, "Kameraet skal blive på 3 px-grid");
-camera.update({ x: 100, w: 34 }, 4000);
-assert.equal(camera.x, cameraAfterForwardMove, "Kameraet må ikke scrolle tilbage");
+camera.update({ x: 100, w: 34, vx: -200 }, 4000, 1);
+assert.ok(camera.x < cameraAfterForwardMove, "Mario World-kameraet skal kunne følge spilleren tilbage");
 
 let questionCoins = 0;
 const tileGame = {
@@ -148,7 +150,7 @@ const tileGame = {
 };
 const tileMap = new TileMap(
   {
-    map: ["......", ".MISL?", "XXXXXX"],
+    map: [".......", ".MISLT?", "XXXXXXX"],
   },
   tileGame
 );
@@ -159,13 +161,62 @@ tileMap.hitBlock(3, 1, { powered: false });
 tileMap.hitBlock(4, 1, { powered: false });
 tileMap.hitBlock(5, 1, { powered: false });
 tileMap.hitBlock(5, 1, { powered: false });
-assert.equal(tileGame.level.powerUps.length, 4, "Power-up-blokke må kun udløse ét item hver");
+tileMap.hitBlock(6, 1, { powered: false });
+tileMap.hitBlock(6, 1, { powered: false });
+assert.equal(tileGame.level.powerUps.length, 5, "Power-up-blokke må kun udløse ét item hver");
 assert.equal(questionCoins, 1, "En ?-blok må kun udløse én mønt");
 assert.deepEqual(
   Array.from(tileGame.level.powerUps, (powerUp) => powerUp.type),
-  ["mushroom", "flower", "star", "life"],
+  ["mushroom", "flower", "star", "life", "feather"],
   "Power-up-blokke skal have deres korrekte indhold"
 );
+
+const worldPlayer = new Player(0, 0);
+worldPlayer.grounded = true;
+worldPlayer.grantCape();
+assert.equal(worldPlayer.cape, true, "Kappefjeren skal aktivere Marios kappe");
+worldPlayer.update(1 / 60, {
+  axis: 0,
+  run: false,
+  down: false,
+  jump: false,
+  jumpPressed: false,
+  jumpReleased: false,
+  spinPressed: true,
+}, { worldWidth: 2000, resolveHorizontal: () => false, resolveVertical: () => false }, { play() {} });
+assert.equal(worldPlayer.spinJumping, true, "Spinhop skal kunne startes fra jorden");
+assert.ok(worldPlayer.vy < 0, "Spinhoppet skal sende Mario opad");
+
+const koopaEnemy = new Enemy(0, 0, "koopa");
+const firstKoopaStomp = koopaEnemy.stomp(-50);
+assert.equal(firstKoopaStomp.defeated, false, "Et Koopa-hop skal fÃ¸rst efterlade et skjold");
+assert.equal(koopaEnemy.shell, true, "Koopaen skal trÃ¦kke sig ind i skjoldet");
+assert.equal(koopaEnemy.vx, 0, "Et nyt skjold skal ligge stille");
+koopaEnemy.stomp(-50);
+assert.ok(koopaEnemy.vx > 300, "Skjoldet skal sparkes vÃ¦k fra Mario");
+
+const buzzyEnemy = new Enemy(0, 0, "buzzy");
+buzzyEnemy.stomp(100);
+assert.equal(buzzyEnemy.shell, true, "Buzzy Beetle skal ogsÃ¥ blive til et skjold");
+
+const flyerEnemy = new Enemy(0, 0, "flyer");
+flyerEnemy.stomp(0);
+assert.equal(flyerEnemy.winged, false, "FÃ¸rste hop pÃ¥ en bevinget Koopa skal fjerne vingerne");
+assert.equal(flyerEnemy.airborne, false, "Koopaen skal falde ned efter at have mistet vingerne");
+assert.equal(flyerEnemy.shell, false, "Den bevingede Koopa skal ikke gÃ¥ direkte i skjoldet");
+
+const piranhaEnemy = new Enemy(96, 384, "piranha", { range: 2 });
+piranhaEnemy.awake = true;
+piranhaEnemy.piranhaClock = 3.4;
+piranhaEnemy.update(1 / 60, { worldWidth: 2000 }, 0, { x: piranhaEnemy.x, w: 34 });
+assert.equal(piranhaEnemy.piranhaClock, 3.4, "RÃ¸rplanten skal vente i rÃ¸ret, mens Mario er tÃ¦t pÃ¥");
+assert.equal(piranhaEnemy.hidden, true, "En ventende rÃ¸rplante skal vÃ¦re ufarlig og skjult");
+
+assert.match(htmlSource, /data-control="spin"/, "Telefonstyringen skal have en særskilt spinhopknap");
+assert.match(htmlSource, /viewport-fit=cover/, "Mobilvisningen skal respektere telefonens safe areas");
+assert.match(cssSource, /height:\s*100dvh/, "Mobilspillet skal kunne bruge hele telefonhøjden");
+assert.match(cssSource, /\.touch-actions/, "Telefonstyringen skal have en ergonomisk handlingsgruppe");
+assert.match(cssSource, /max-width:\s*900px[^}]*orientation:\s*landscape/s, "Brede telefoner skal bruge landskabskontroller");
 
 const restartGame = Object.create(Game.prototype);
 restartGame.levelIndex = 1;

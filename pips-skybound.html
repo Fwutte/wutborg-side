@@ -2,22 +2,22 @@
 <html lang="da">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#1b4b72" />
   <meta
     name="description"
-    content="Spil Super Mario Bros. med tre baner, mønter, fjender, bonusblokke og power-ups."
+    content="Spil en Super Mario World-inspireret kampagne med 32 baner, kappefjer, spin-hop og mobilstyring."
   />
-  <title>Super Mario Bros. | Wutborg.dk</title>
-  <link rel="stylesheet" href="css/pips-skybound.css?v=20260711-nes6" />
+  <title>Super Mario World | Wutborg.dk</title>
+  <link rel="stylesheet" href="css/pips-skybound.css?v=20260715-world1" />
 </head>
 <body>
   <div class="page-shell">
-    <nav class="topbar" aria-label="Super Mario Bros. navigation">
+    <nav class="topbar" aria-label="Super Mario World navigation">
       <a class="brand" href="minispil.html">
         <span class="brand-mark" aria-hidden="true">M</span>
         <span>
-          Super Mario Bros.
+          Super Mario World
           <small>Wutborg Arcade</small>
         </span>
       </a>
@@ -30,12 +30,13 @@
 
     <main class="game-frame">
       <header class="game-header">
-        <h1 class="visually-hidden">Super Mario Bros.</h1>
+        <h1 class="visually-hidden">Super Mario World</h1>
         <div class="hud" id="hud" aria-label="Spilstatus">
           <span class="hud-mario">
             <small>Mario</small>
             <strong id="hud-score">000000</strong>
             <span class="hud-life">Liv × <b id="hud-lives">3</b></span>
+            <span class="p-meter" aria-label="Løbemåler">P <b id="hud-run">▱▱▱▱▱▱</b></span>
           </span>
           <span>
             <small>Mønter</small>
@@ -51,13 +52,14 @@
           id="game-canvas"
           width="864"
           height="648"
-          aria-label="Super Mario Bros. spilleplade. Brug piletaster eller WASD og Space for at hoppe."
+          aria-label="Super Mario World-spilleplade. Brug piletaster eller WASD, Space for at hoppe og C for spin-hop."
         ></canvas>
+        <button class="mobile-pause-button" id="mobile-pause-button" type="button" aria-label="Sæt spillet på pause">Ⅱ</button>
 
         <div class="screen screen-menu" id="menu-screen">
           <div class="menu-card">
             <span class="menu-kicker">Wutborg Arcade præsenterer</span>
-            <h2><span>Super</span><br />Mario Bros.</h2>
+            <h2><span>Super Mario</span><br />World</h2>
             <p id="campaign-summary">Otte verdener. Toogtredive baner. Ét stort eventyr.</p>
             <p class="asset-status" id="asset-status" role="status">Indlæser spilverdenen …</p>
             <div class="menu-buttons">
@@ -82,6 +84,8 @@
               <div><kbd>Shift / X</kbd><strong>Løb</strong><span>Hold knappen for fart og lange hop.</span></div>
               <div><kbd>Z</kbd><strong>Ildkugle</strong><span>Når Mario har ildkraft.</span></div>
               <div><kbd>Space</kbd><strong>Hop</strong><span>Hold knappen for et højere hop.</span></div>
+              <div><kbd>C</kbd><strong>Spinhop</strong><span>Et lavere, sikkert hop med kappeangreb.</span></div>
+              <div><span class="instruction-icon">◆</span><strong>Find en kappefjer</strong><span>Hold hop i luften for at svæve langsommere ned.</span></div>
               <div><span class="instruction-icon">●</span><strong>Saml mønter</strong><span>100 mønter giver et ekstra liv.</span></div>
               <div><span class="instruction-icon">✦</span><strong>Find supersvampe</strong><span>Bliv større og modstå ét hit.</span></div>
               <div><span class="instruction-icon">↓</span><strong>Hop på fjender</strong><span>Undgå at ramme dem fra siden.</span></div>
@@ -137,25 +141,25 @@
       <section class="touch-controls" aria-label="Touchkontroller">
         <div class="touch-move">
           <button type="button" data-control="left" aria-label="Gå til venstre">←</button>
+          <button class="down-control" type="button" data-control="down" aria-label="Duk dig eller gå ned i et rør">↓</button>
           <button type="button" data-control="right" aria-label="Gå til højre">→</button>
         </div>
-        <button class="run-control" type="button" data-control="run" aria-label="Løb">Løb</button>
-        <button class="pipe-control" type="button" data-control="down" aria-label="Gå ned i rør">Rør</button>
-        <button class="jump-control" type="button" data-control="jump" aria-label="Hop">
-          <span>↑</span>
-          Hop
-        </button>
+        <div class="touch-actions">
+          <button class="run-control" type="button" data-control="run" aria-label="Løb eller skyd"><span>Y</span><small>Løb</small></button>
+          <button class="spin-control" type="button" data-control="spin" aria-label="Spinhop"><span>A</span><small>Spin</small></button>
+          <button class="jump-control" type="button" data-control="jump" aria-label="Hop"><span>B</span><small>Hop</small></button>
+        </div>
       </section>
 
       <footer class="game-notes">
-        <span><strong>Styring:</strong> Piletaster/WASD · Space hop · Shift/X løb · Z ild · Esc pause</span>
+        <span><strong>Styring:</strong> Piletaster/WASD · Space hop · C spin · Shift/X løb · Z ild · Esc pause</span>
         <span>Sprites: Super Mario Bros. · Sheet-rips: Superjustinbros / Spriters Resource</span>
       </footer>
     </main>
   </div>
 
   <script src="js/highscores.js"></script>
-  <script src="js/pips-skybound-data.js?v=20260713-gameplayfix1"></script>
-  <script src="js/pips-skybound.js?v=20260713-gameplayfix1"></script>
+  <script src="js/pips-skybound-data.js?v=20260715-world1"></script>
+  <script src="js/pips-skybound.js?v=20260715-world1"></script>
 </body>
 </html>
