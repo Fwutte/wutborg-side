@@ -9,8 +9,15 @@ vm.createContext(context);
 vm.runInContext(fs.readFileSync(path.join(root, "js/sangquiz-data.js"), "utf8"), context);
 vm.runInContext(fs.readFileSync(path.join(root, "js/sangquiz-special-data.js"), "utf8"), context);
 
-const songs = context.window.SANGQUIZ_SONGS;
-const batchSize = 8;
+const allSongs = context.window.SANGQUIZ_SONGS;
+const auditTag = String(process.env.SANGQUIZ_AUDIT_TAG || "").trim();
+const songs = auditTag
+  ? allSongs.filter((song) => song.tags?.includes(auditTag))
+  : allSongs;
+const requestedBatchSize = Number(process.env.SANGQUIZ_AUDIT_BATCH_SIZE || 8);
+const batchSize = Number.isInteger(requestedBatchSize) && requestedBatchSize > 0
+  ? Math.min(requestedBatchSize, 8)
+  : 8;
 const wait = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
 function normalize(value) {
@@ -143,9 +150,12 @@ async function auditBatch(batch) {
   });
   console.log(JSON.stringify({
     source: "MusicBrainz first-release-date",
+    filterTag: auditTag || null,
     checked: songs.length,
     summary,
     earlierThanQuiz,
+    review: auditTag ? results.filter((result) => result.status === "review") : undefined,
+    notFound: auditTag ? results.filter((result) => result.status === "not-found") : undefined,
     note: "Senere katalogdatoer er typisk genudgivelser og kræver ikke ændringer i quizzen.",
   }, null, 2));
 })().catch((error) => {

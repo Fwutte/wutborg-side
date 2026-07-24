@@ -32,8 +32,19 @@ assert(songs.every((song) => song.year >= 1930 && song.year <= 2026), "Alle års
 const newCategories = ["70s", "80s", "90s", "00s", "10s", "rock"];
 for (const category of newCategories) {
   const pool = standard.filter((song) => song.tags.includes(category));
-  assert(pool.length >= 40, `${category} skal have mindst 40 standardsange`);
+  assert(pool.length >= 100, `${category} skal have mindst 100 standardsange`);
 }
+
+const categoryExpansion = standard.filter((song) => song.tags.includes("catalog-expansion"));
+assert.equal(categoryExpansion.length, 120, "Kategoriudvidelsen skal indeholde 120 bredt kendte sange");
+assert(
+  categoryExpansion.every((song) => song.spotifyUrl.startsWith("https://open.spotify.com/search/")),
+  "Nye kategorisange skal have robuste Spotify-søgelinks",
+);
+assert(
+  categoryExpansion.every((song) => song.tags.includes(`${String(song.year).slice(2, 3)}0s`)),
+  "Nye kategorisange skal ligge i kategorien for deres første udgivelsesår",
+);
 
 const carpark32 = songs.find((song) => song.title === "32" && song.artist.startsWith("Carpark North"));
 assert(carpark32, "Carpark Norths 32 skal findes");
@@ -45,6 +56,19 @@ const correctedYears = new Map([
   ["Lis Sørensen::Tæt På Ækvator", 1983],
   ["Lars H.U.G.::Mon De Kan Reparere Dig", 1987],
   ["Johnny Deluxe::Elskovspony", 2003],
+  ["Infernal::Keen on Disco", 2004],
+  ["Sebastian::Når Lyset Bryder Frem", 1972],
+  ["The Raveonettes::Aly, Walk With Me", 2007],
+  ["Junior Senior::Rhythm Bandits", 2002],
+  ["Stealers Wheel::Stuck in the Middle with You", 1972],
+  ["Blue Swede::Hooked on a Feeling", 1973],
+  ["The Three Degrees::When Will I See You Again", 1973],
+  ["John Paul Young::Love Is in the Air", 1977],
+  ["The Bangles::Eternal Flame", 1988],
+  ["Backstreet Boys::Everybody (Backstreet's Back)", 1997],
+  ["Sixpence None the Richer::Kiss Me", 1997],
+  ["Lukas Graham::7 Years", 2015],
+  ["Barbara Pravi::Voilà", 2020],
 ]);
 for (const [key, year] of correctedYears) {
   const [artist, title] = key.split("::");

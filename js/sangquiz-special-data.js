@@ -207,7 +207,7 @@
     ["Cha Cha Cha", "Käärijä", 2023, "international"],
     ["Snap", "Rosa Linn", 2022, "international"],
     ["Fuego", "Eleni Foureira", 2018, "international"],
-    ["Voilà", "Barbara Pravi", 2021, "international"],
+    ["Voilà", "Barbara Pravi", 2020, "international"],
   ];
 
   const screenSongs = [
