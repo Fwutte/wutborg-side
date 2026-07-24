@@ -6,6 +6,8 @@
   const TEAM_NAMES_KEY = "wutborg.sangquiz.teams.v1";
   const MODE_KEY = "wutborg.sangquiz.mode.v1";
   const CATEGORY_KEY = "wutborg.sangquiz.category.v1";
+  const HISTORY_KEY = "wutborg.sangquiz.history.v1";
+  const BROKEN_LINKS_KEY = "wutborg.sangquiz.brokenLinks.v1";
   const CLIENT_ID_KEY = "wutborg.sangquiz.spotify.clientId";
   const DEFAULT_CLIENT_ID = "cbb2b24b20c94b12bf0682e5fb88d860";
   const TOKEN_KEY = "wutborg.sangquiz.spotify.token";
@@ -32,8 +34,15 @@
     christmas: "Julesange",
     eurovision: "Grand Prix",
     screen: "Film og tv-serier",
+    "70s": "70'erne",
+    "80s": "80'erne",
+    "90s": "90'erne",
+    "00s": "00'erne",
+    "10s": "10'erne",
+    rock: "Rock",
   };
   const SPECIAL_EDITIONS = new Set(["christmas", "eurovision", "screen"]);
+  const TAG_CATEGORIES = new Set(["70s", "80s", "90s", "00s", "10s", "rock"]);
 
   const els = {};
   let selectedCategory = normalizeCategory(readTextStorage(CATEGORY_KEY, "mixed"));
@@ -45,6 +54,8 @@
   let audioContext = null;
   let splashTimer = 0;
   let feedbackTimer = 0;
+  let equalizerFrame = 0;
+  let playbackChecking = false;
   let spotify = {
     deviceId: "",
     player: null,
@@ -53,6 +64,13 @@
     ready: false,
     status: "Manuel DJ klar",
     resolvedUris: {},
+    validatedUris: {},
+    positions: {},
+    activeSongId: "",
+    positionMs: 0,
+    positionUpdatedAt: 0,
+    durationMs: 0,
+    paused: true,
     manualFallbackSongId: "",
     sessionVersion: 0,
   };
@@ -61,6 +79,7 @@
     bindElements();
     setupTeamNames = loadSetupTeams();
     state = normalizeState(readStorage(STORAGE_KEY, createEmptyState()));
+    spotify.positions = { ...state.playbackPositions };
 
     bindEvents();
     updateRedirectUri();
@@ -112,6 +131,7 @@
       "play-hidden-button",
       "play-hidden-label",
       "pause-button",
+      "restart-button",
       "dj-fallback-link",
       "reveal-button",
       "placement-slots",
@@ -133,7 +153,20 @@
       "finish-title",
       "finish-summary",
       "winner-list",
+      "result-save-panel",
+      "save-result-button",
+      "skip-result-button",
+      "result-save-status",
+      "history-game-count",
+      "history-summary",
+      "finish-history-summary",
+      "broken-link-count",
+      "broken-link-list",
       "new-game-button",
+      "dice-overlay",
+      "dice-summary",
+      "dice-results",
+      "continue-after-dice-button",
       "turn-splash",
       "turn-splash-team",
       "turn-splash-song",
@@ -144,6 +177,7 @@
     els.modeButtons = [...document.querySelectorAll("[data-sangquiz-mode]")];
     els.categoryButtons = [...document.querySelectorAll("[data-song-category]")];
     els.scoreButtons = [...document.querySelectorAll("[data-score-action]")];
+    els.equalizerBars = [...document.querySelectorAll("[data-eq-bar]")];
   }
 
   function bindEvents() {
@@ -155,7 +189,11 @@
     els.newGameButton.addEventListener("click", resetGame);
     els.revealButton.addEventListener("click", revealSong);
     els.playHiddenButton.addEventListener("click", playCurrentSong);
-    els.pauseButton.addEventListener("click", pausePlayback);
+    els.pauseButton.addEventListener("click", () => pausePlayback());
+    els.restartButton.addEventListener("click", () => playCurrentSong({ restart: true }));
+    els.continueAfterDiceButton.addEventListener("click", finishStartingRoll);
+    els.saveResultButton.addEventListener("click", saveGameResult);
+    els.skipResultButton.addEventListener("click", skipGameResult);
     [els.spotifyLoginButton, els.spotifyGameLoginButton].forEach((button) => {
       button.addEventListener("click", startSpotifyLogin);
     });
@@ -227,9 +265,14 @@
       currentSongId: "",
       songCategory: selectedCategory,
       usedSongIds: [],
+      brokenSongIds: [],
       teams: [],
       finishReason: "",
       highscoreSubmitted: false,
+      startingRoll: null,
+      resultId: "",
+      resultSaveDecision: "",
+      playbackPositions: {},
     };
   }
 
@@ -252,6 +295,7 @@
   function normalizeState(value) {
     const next = value && typeof value === "object" ? value : createEmptyState();
     next.usedSongIds = Array.isArray(next.usedSongIds) ? next.usedSongIds : [];
+    next.brokenSongIds = Array.isArray(next.brokenSongIds) ? next.brokenSongIds : [];
     next.teams = Array.isArray(next.teams) ? next.teams : [];
     next.teams = next.teams.map((team, index) => ({
       id: team.id || `team-${index}`,
@@ -266,9 +310,25 @@
     next.selectedSlot = clamp(slotValue, activeTimelineLength ? -1 : 0, activeTimelineLength);
     next.selectedSlot = coerceSelectableSlot(getActiveTimeline(next), next.selectedSlot);
     next.songCategory = normalizeCategory(next.songCategory || selectedCategory);
-    next.phase = next.phase === "reveal" ? "reveal" : next.started ? "guess" : "setup";
     next.finished = Boolean(next.finished);
+    next.phase = next.finished
+      ? "finished"
+      : next.phase === "starting"
+        ? "starting"
+        : next.phase === "reveal"
+          ? "reveal"
+          : next.started
+            ? "guess"
+            : "setup";
     next.highscoreSubmitted = Boolean(next.highscoreSubmitted);
+    next.startingRoll = normalizeStartingRoll(next.startingRoll, next.teams.length);
+    next.resultId = String(next.resultId || "");
+    next.resultSaveDecision = ["saved", "skipped"].includes(next.resultSaveDecision)
+      ? next.resultSaveDecision
+      : "";
+    next.playbackPositions = next.playbackPositions && typeof next.playbackPositions === "object"
+      ? next.playbackPositions
+      : {};
     return next;
   }
 
@@ -304,6 +364,9 @@
     renderRound();
     renderScoreboard();
     renderFinish();
+    renderDiceOverlay();
+    renderHistory();
+    renderBrokenLinks();
     updateModeUi();
     updateSpotifyUi();
     updateSoundUi();
@@ -315,6 +378,7 @@
     if (state.finished) return "Spil afsluttet";
     if (state.started) {
       const team = getActiveTeam();
+      if (state.phase === "starting") return team ? `${team.name} vandt terningeslaget` : "Terningerne afgør starten";
       return team ? `${team.name}: ${teamSongCount(team)} sange spillet` : "Spil i gang";
     }
     return `${pool.length} sange klar · ${CATEGORY_LABELS[selectedCategory]}`;
@@ -394,7 +458,53 @@
     setupTeamNames = collectTeamNames();
     saveSetupTeams();
     state = createGameState(setupTeamNames);
-    drawNextSong();
+    state.phase = "starting";
+    state.startingRoll = rollForStartingTeam(state.teams.length);
+    state.activeTeamIndex = state.startingRoll.winnerIndex;
+    saveGame();
+    render();
+  }
+
+  function rollForStartingTeam(teamCount) {
+    let contenders = Array.from({ length: teamCount }, (_, index) => index);
+    const rounds = [];
+
+    for (let roundIndex = 0; contenders.length > 1 && roundIndex < 100; roundIndex += 1) {
+      const rolls = contenders.map((teamIndex) => ({
+        teamIndex,
+        value: Math.floor(Math.random() * 6) + 1,
+      }));
+      const highest = Math.max(...rolls.map((roll) => roll.value));
+      rounds.push({ rolls, highest });
+      contenders = rolls.filter((roll) => roll.value === highest).map((roll) => roll.teamIndex);
+    }
+
+    const winnerIndex = contenders[0] ?? 0;
+    return { rounds, winnerIndex };
+  }
+
+  function normalizeStartingRoll(value, teamCount) {
+    if (!value || typeof value !== "object") return null;
+    const winnerIndex = clamp(Number(value.winnerIndex) || 0, 0, Math.max(0, teamCount - 1));
+    const rounds = Array.isArray(value.rounds)
+      ? value.rounds.map((round) => ({
+        highest: clamp(Number(round?.highest) || 1, 1, 6),
+        rolls: Array.isArray(round?.rolls)
+          ? round.rolls
+            .map((roll) => ({
+              teamIndex: clamp(Number(roll?.teamIndex) || 0, 0, Math.max(0, teamCount - 1)),
+              value: clamp(Number(roll?.value) || 1, 1, 6),
+            }))
+          : [],
+      }))
+      : [];
+    return { rounds, winnerIndex };
+  }
+
+  function finishStartingRoll() {
+    if (!state.started || state.phase !== "starting") return;
+    state.phase = "guess";
+    if (!drawNextSong()) return;
     saveGame();
     render();
     showTurnSplash(getActiveTeam(), state.round || 1);
@@ -404,11 +514,15 @@
     const saved = normalizeState(readStorage(STORAGE_KEY, createEmptyState()));
     if (!saved.started || saved.finished) return;
     state = saved;
+    spotify.positions = { ...state.playbackPositions };
     render();
   }
 
   function resetGame() {
+    const currentSongId = state.currentSongId;
     setPlaybackActive(false);
+    void pausePlayback(currentSongId, { forgetPosition: true });
+    spotify.positions = {};
     state = createEmptyState();
     safeRemoveStorage(STORAGE_KEY);
     render();
@@ -461,11 +575,10 @@
     if (awardedPoints) playUiSound("point");
 
     state.usedSongIds = [...new Set([...state.usedSongIds, song.id])];
+    void pausePlayback(song.id, { forgetPosition: true });
     state.currentSongId = "";
     state.selectedSlot = -1;
     els.bonusGuess.checked = false;
-
-    pausePlayback();
 
     if (team.score >= WINNING_SCORE) {
       finishGame("score");
@@ -510,12 +623,15 @@
   }
 
   function finishGame(reason) {
+    const currentSongId = state.currentSongId;
     state.finished = true;
     state.phase = "finished";
     state.finishReason = reason;
+    state.resultId = state.resultId || createResultId();
+    state.resultSaveDecision = "";
     state.currentSongId = "";
     setPlaybackActive(false);
-    pausePlayback();
+    void pausePlayback(currentSongId, { forgetPosition: true });
     saveGame();
     render();
     submitHighscore();
@@ -544,8 +660,9 @@
     els.recordLabel.textContent = team ? team.name : "Plade";
     renderCurrentSongCard(song);
     els.revealButton.disabled = !song || state.phase === "reveal" || state.selectedSlot < 0;
-    els.playHiddenButton.disabled = !song;
+    els.playHiddenButton.disabled = !song || playbackChecking;
     els.pauseButton.disabled = !song || (!spotify.deviceId && !playbackActive);
+    els.restartButton.disabled = !song || playbackChecking;
 
     renderPlacementTimeline(timeline);
     renderRevealPanel(song, timeline);
@@ -789,6 +906,225 @@
       item.append(name, score, path);
       els.winnerList.append(item);
     });
+
+    const decision = state.resultSaveDecision || "";
+    els.resultSavePanel.dataset.decision = decision;
+    els.saveResultButton.disabled = decision === "saved";
+    els.skipResultButton.disabled = decision === "saved" || decision === "skipped";
+    els.resultSaveStatus.textContent = decision === "saved"
+      ? "Resultatet er gemt i statistikken."
+      : decision === "skipped"
+        ? "Resultatet blev ikke gemt."
+        : "";
+  }
+
+  function renderDiceOverlay() {
+    if (!els.diceOverlay) return;
+    const visible = state.started && !state.finished && state.phase === "starting" && state.startingRoll;
+    els.diceOverlay.hidden = !visible;
+    if (!visible) return;
+
+    const rounds = state.startingRoll.rounds || [];
+    const winner = state.teams[state.startingRoll.winnerIndex];
+    const rerolls = Math.max(0, rounds.length - 1);
+    els.diceSummary.textContent = winner
+      ? `${winner.name} starter${rerolls ? ` efter ${rerolls} omslag` : ""}. Højeste slag vandt.`
+      : "Højeste slag starter. Ved samme højeste slag slås der om.";
+    els.continueAfterDiceButton.textContent = winner ? `Start med ${winner.name}` : "Start spillet";
+    els.diceResults.replaceChildren();
+
+    rounds.forEach((round, roundIndex) => {
+      const section = document.createElement("section");
+      section.className = "dice-round";
+
+      const heading = document.createElement("strong");
+      heading.textContent = roundIndex === 0 ? "Første slag" : `Omslag ${roundIndex}`;
+
+      const rolls = document.createElement("div");
+      rolls.className = "dice-rolls";
+      round.rolls.forEach((roll, rollIndex) => {
+        const team = state.teams[roll.teamIndex];
+        if (!team) return;
+        const item = document.createElement("div");
+        item.className = "dice-result";
+        item.dataset.highest = roll.value === round.highest ? "true" : "false";
+
+        const name = document.createElement("span");
+        name.textContent = team.name;
+
+        const face = document.createElement("span");
+        face.className = "dice-face";
+        face.textContent = String(roll.value);
+        face.style.setProperty("--active-team-color", getTeamColor(roll.teamIndex));
+        face.style.animationDelay = `${roundIndex * 0.12 + rollIndex * 0.05}s`;
+
+        item.append(name, face);
+        rolls.append(item);
+      });
+
+      section.append(heading, rolls);
+      els.diceResults.append(section);
+    });
+  }
+
+  function createResultId() {
+    if (window.crypto?.randomUUID) return window.crypto.randomUUID();
+    return `game-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  }
+
+  function saveGameResult() {
+    if (!state.finished || state.resultSaveDecision === "saved") return;
+    const history = readGameHistory();
+    const resultId = state.resultId || createResultId();
+    state.resultId = resultId;
+
+    if (!history.some((entry) => entry.id === resultId)) {
+      history.push({
+        id: resultId,
+        playedAt: new Date().toISOString(),
+        category: state.songCategory,
+        rounds: state.round,
+        finishReason: state.finishReason,
+        teams: state.teams.map((team) => ({
+          name: team.name,
+          score: team.score,
+        })),
+      });
+      safeSetStorage(HISTORY_KEY, JSON.stringify(history.slice(-1000)));
+    }
+
+    state.resultSaveDecision = "saved";
+    saveGame();
+    renderFinish();
+    renderHistory();
+  }
+
+  function skipGameResult() {
+    if (!state.finished || state.resultSaveDecision === "saved") return;
+    state.resultSaveDecision = "skipped";
+    saveGame();
+    renderFinish();
+  }
+
+  function readGameHistory() {
+    const history = readStorage(HISTORY_KEY, []);
+    if (!Array.isArray(history)) return [];
+    return history
+      .filter((entry) => entry && Array.isArray(entry.teams) && entry.teams.length >= 2)
+      .map((entry) => ({
+        id: String(entry.id || ""),
+        playedAt: String(entry.playedAt || ""),
+        category: normalizeCategory(entry.category),
+        rounds: Number(entry.rounds) || 0,
+        finishReason: String(entry.finishReason || ""),
+        teams: entry.teams.map((team, index) => ({
+          name: String(team?.name || `Hold ${index + 1}`),
+          score: Number(team?.score) || 0,
+        })),
+      }));
+  }
+
+  function canonicalTeamName(name) {
+    return String(name || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim()
+      .toLocaleLowerCase("da-DK")
+      .replace(/\s+/g, " ");
+  }
+
+  function calculateMatchups(history) {
+    const matchups = new Map();
+
+    history.forEach((game) => {
+      const uniqueTeams = [];
+      const seen = new Set();
+      game.teams.forEach((team) => {
+        const key = canonicalTeamName(team.name);
+        if (!key || seen.has(key)) return;
+        seen.add(key);
+        uniqueTeams.push({ ...team, key });
+      });
+
+      for (let firstIndex = 0; firstIndex < uniqueTeams.length; firstIndex += 1) {
+        for (let secondIndex = firstIndex + 1; secondIndex < uniqueTeams.length; secondIndex += 1) {
+          const pair = [uniqueTeams[firstIndex], uniqueTeams[secondIndex]].sort((a, b) => a.key.localeCompare(b.key, "da"));
+          const matchupKey = `${pair[0].key}::${pair[1].key}`;
+          const matchup = matchups.get(matchupKey) || {
+            key: matchupKey,
+            teamKeys: pair.map((team) => team.key),
+            names: pair.map((team) => team.name),
+            games: 0,
+            wins: { [pair[0].key]: 0, [pair[1].key]: 0 },
+            draws: 0,
+            lastPlayedAt: "",
+          };
+
+          matchup.games += 1;
+          matchup.names = pair.map((team) => team.name);
+          matchup.lastPlayedAt = game.playedAt || matchup.lastPlayedAt;
+          if (pair[0].score === pair[1].score) matchup.draws += 1;
+          else {
+            const winnerKey = pair[0].score > pair[1].score ? pair[0].key : pair[1].key;
+            matchup.wins[winnerKey] = (matchup.wins[winnerKey] || 0) + 1;
+          }
+          matchups.set(matchupKey, matchup);
+        }
+      }
+    });
+
+    return [...matchups.values()].sort((a, b) => {
+      return String(b.lastPlayedAt).localeCompare(String(a.lastPlayedAt)) || b.games - a.games;
+    });
+  }
+
+  function renderHistory() {
+    const history = readGameHistory();
+    if (els.historyGameCount) {
+      els.historyGameCount.textContent = `${history.length} ${history.length === 1 ? "spil" : "spil"}`;
+    }
+    renderHistorySummary(els.historySummary, history);
+    if (els.finishHistorySummary) {
+      const activeKeys = new Set(state.teams.map((team) => canonicalTeamName(team.name)));
+      renderHistorySummary(els.finishHistorySummary, history, activeKeys);
+    }
+  }
+
+  function renderHistorySummary(container, history, activeKeys = null) {
+    if (!container) return;
+    container.replaceChildren();
+    const matchups = calculateMatchups(history).filter((matchup) => {
+      return !activeKeys || matchup.teamKeys.every((key) => activeKeys.has(key));
+    });
+
+    if (!matchups.length) {
+      const empty = document.createElement("p");
+      empty.className = "empty-note";
+      empty.textContent = activeKeys
+        ? "Gem resultatet for at starte denne indbyrdes statistik."
+        : "Ingen gemte spil endnu.";
+      container.append(empty);
+      return;
+    }
+
+    matchups.forEach((matchup) => {
+      const item = document.createElement("article");
+      item.className = "history-matchup";
+
+      const title = document.createElement("strong");
+      title.textContent = `${matchup.names[0]} mod ${matchup.names[1]}`;
+
+      const games = document.createElement("span");
+      games.textContent = `${matchup.games} ${matchup.games === 1 ? "møde" : "møder"}`;
+
+      const detail = document.createElement("small");
+      const firstWins = matchup.wins[matchup.teamKeys[0]] || 0;
+      const secondWins = matchup.wins[matchup.teamKeys[1]] || 0;
+      detail.textContent = `${matchup.names[0]}: ${firstWins} sejre · ${matchup.names[1]}: ${secondWins} sejre · uafgjort: ${matchup.draws}`;
+
+      item.append(title, games, detail);
+      container.append(item);
+    });
   }
 
   function updateModeUi() {
@@ -922,11 +1258,16 @@
 
   function getSongPool(category) {
     const normalized = normalizeCategory(category);
+    const brokenSongIds = new Set(getBrokenLinkRecords().map((record) => record.songId));
+    const availableSongs = ALL_SONGS.filter((song) => !brokenSongIds.has(song.id));
     if (SPECIAL_EDITIONS.has(normalized)) {
-      return ALL_SONGS.filter((song) => song.edition === normalized);
+      return availableSongs.filter((song) => song.edition === normalized);
     }
-    const standardSongs = ALL_SONGS.filter((song) => !song.edition || song.edition === "standard");
+    const standardSongs = availableSongs.filter((song) => !song.edition || song.edition === "standard");
     if (normalized === "mixed") return standardSongs;
+    if (TAG_CATEGORIES.has(normalized)) {
+      return standardSongs.filter((song) => Array.isArray(song.tags) && song.tags.includes(normalized));
+    }
     return standardSongs.filter((song) => song.category === normalized);
   }
 
@@ -976,10 +1317,113 @@
     }
   }
 
+  function getBrokenLinkRecords() {
+    const records = readStorage(BROKEN_LINKS_KEY, []);
+    if (!Array.isArray(records)) return [];
+    return records
+      .filter((record) => record && record.songId)
+      .map((record) => ({
+        songId: String(record.songId),
+        title: String(record.title || ""),
+        artist: String(record.artist || ""),
+        reason: String(record.reason || "Linket kunne ikke afspilles"),
+        markedAt: String(record.markedAt || ""),
+      }));
+  }
+
+  function markBrokenLink(song, reason) {
+    const records = getBrokenLinkRecords().filter((record) => record.songId !== song.id);
+    records.push({
+      songId: song.id,
+      title: song.title,
+      artist: song.artist,
+      reason,
+      markedAt: new Date().toISOString(),
+    });
+    safeSetStorage(BROKEN_LINKS_KEY, JSON.stringify(records));
+    state.brokenSongIds = [...new Set([...state.brokenSongIds, song.id])];
+    state.usedSongIds = [...new Set([...state.usedSongIds, song.id])];
+  }
+
+  function renderBrokenLinks() {
+    if (!els.brokenLinkList || !els.brokenLinkCount) return;
+    const records = getBrokenLinkRecords();
+    els.brokenLinkCount.textContent = String(records.length);
+    els.brokenLinkList.replaceChildren();
+
+    if (!records.length) {
+      const empty = document.createElement("li");
+      empty.textContent = "Ingen defekte links registreret.";
+      els.brokenLinkList.append(empty);
+      return;
+    }
+
+    records
+      .slice()
+      .reverse()
+      .forEach((record) => {
+        const item = document.createElement("li");
+        item.textContent = `${record.title} – ${record.artist}: ${record.reason}`;
+        els.brokenLinkList.append(item);
+      });
+  }
+
+  function skipBrokenSong(song, reason) {
+    setPlaybackActive(false);
+    markBrokenLink(song, reason);
+    delete spotify.positions[song.id];
+    delete state.playbackPositions[song.id];
+    state.currentSongId = "";
+    state.selectedSlot = -1;
+    state.phase = "guess";
+    state.round = Math.max(0, state.round - 1);
+
+    const hasNextSong = drawNextSong();
+    setSpotifyStatus(`Defekt link: ${song.title} blev sprunget over${hasNextSong ? " · ny sang klar" : ""}`);
+    saveGame();
+    render();
+    if (hasNextSong) showTurnSplash(getActiveTeam(), state.round || 1);
+  }
+
   function setPlaybackActive(active) {
     playbackActive = Boolean(active);
     document.body.dataset.playback = playbackActive ? "playing" : "idle";
+    if (playbackActive) startEqualizer();
+    else stopEqualizer();
     if (els.playHiddenButton) updateSpotifyUi();
+  }
+
+  function startEqualizer() {
+    if (!els.equalizerBars?.length || equalizerFrame) return;
+    equalizerFrame = window.requestAnimationFrame(renderEqualizerFrame);
+  }
+
+  function stopEqualizer() {
+    if (equalizerFrame) window.cancelAnimationFrame(equalizerFrame);
+    equalizerFrame = 0;
+    els.equalizerBars?.forEach((bar, index) => {
+      bar.style.setProperty("--eq-scale", String(0.1 + (index % 4) * 0.025));
+    });
+  }
+
+  function renderEqualizerFrame(now) {
+    equalizerFrame = 0;
+    if (!playbackActive || !els.equalizerBars?.length) {
+      stopEqualizer();
+      return;
+    }
+
+    const currentPosition = spotify.positionMs
+      + (spotify.paused ? 0 : Math.max(0, now - spotify.positionUpdatedAt));
+    const seconds = currentPosition / 1000;
+    els.equalizerBars.forEach((bar, index) => {
+      const low = Math.abs(Math.sin(seconds * (3.15 + index * 0.047) + index * 0.82));
+      const mid = Math.abs(Math.sin(seconds * (6.4 + (index % 5) * 0.19) - index * 0.37));
+      const pulse = Math.abs(Math.sin(seconds * 1.9 * Math.PI + (index % 4) * 0.23));
+      const scale = clamp(0.12 + low * 0.38 + mid * 0.26 + pulse * 0.24, 0.12, 1);
+      bar.style.setProperty("--eq-scale", scale.toFixed(3));
+    });
+    equalizerFrame = window.requestAnimationFrame(renderEqualizerFrame);
   }
 
   function showTurnSplash(team, songNumber) {
@@ -1158,7 +1602,9 @@
     [els.spotifyModeStatus, els.spotifyGameModeStatus].forEach((status) => {
       status.textContent = spotify.status;
     });
-    const playLabel = playbackActive
+    const playLabel = playbackChecking
+      ? "Tjekker sanglink…"
+      : playbackActive
       ? "Musik kører"
       : hasToken && spotify.ready
         ? "Afspil via Spotify"
@@ -1167,9 +1613,10 @@
     if (els.playHiddenLabel) els.playHiddenLabel.textContent = playLabel;
     else els.playHiddenButton.textContent = playLabel;
     els.pauseButton.disabled = !getCurrentSong() || (!spotify.deviceId && !playbackActive);
+    els.restartButton.disabled = !getCurrentSong() || playbackChecking;
     updateManualFallbackLink(
       song,
-      Boolean(song && (!hasToken || spotify.manualFallbackSongId === song.id)),
+      Boolean(song && spotify.manualFallbackSongId === song.id),
     );
   }
 
@@ -1320,6 +1767,13 @@
     spotify.connecting = false;
     spotify.ready = false;
     spotify.resolvedUris = {};
+    spotify.validatedUris = {};
+    spotify.positions = {};
+    spotify.activeSongId = "";
+    spotify.positionMs = 0;
+    spotify.positionUpdatedAt = 0;
+    spotify.durationMs = 0;
+    spotify.paused = true;
     spotify.manualFallbackSongId = getCurrentSong()?.id || "";
 
     if (player) {
@@ -1408,6 +1862,12 @@
           updateSpotifyUi();
         });
 
+        player.addListener("player_state_changed", (playbackState) => {
+          if (spotify.player !== player || !playbackState) return;
+          syncSpotifyPlaybackState(playbackState);
+          updateSpotifyUi();
+        });
+
         player.addListener("autoplay_failed", () => {
           if (spotify.player !== player) return;
           setSpotifyStatus("iPad blokerede autoplay. Tryk Afspil igen.");
@@ -1457,53 +1917,93 @@
     return spotify.sdkPromise;
   }
 
-  async function playCurrentSong() {
+  async function playCurrentSong(options = {}) {
+    if (playbackChecking) return;
     activateSpotifyElement();
 
     const song = getCurrentSong();
     if (!song) return;
+    const restart = Boolean(options?.restart);
+    playbackChecking = true;
+    updateSpotifyUi();
 
-    const savedToken = readToken();
-    if (!savedToken?.access_token && !savedToken?.refresh_token) {
-      const fallbackOpened = openDjFallback(song);
-      setPlaybackActive(fallbackOpened);
-      setSpotifyStatus(getFallbackStatus(fallbackOpened));
-      updateSpotifyUi();
-      return;
-    }
+    try {
+      const savedToken = readToken();
+      if (!savedToken?.access_token && !savedToken?.refresh_token) {
+        const linkCheck = await validateManualSongLink(song);
+        if (linkCheck.checked && !linkCheck.valid) {
+          skipBrokenSong(song, linkCheck.reason);
+          return;
+        }
 
-    const token = await getAccessToken();
-    if (!token) {
-      const fallbackOpened = openDjFallback(song);
-      setPlaybackActive(fallbackOpened);
-      setSpotifyStatus(getFallbackStatus(fallbackOpened));
-      updateSpotifyUi();
-      return;
-    }
-
-    if (!spotify.ready || !spotify.deviceId) {
-      await connectSpotifyPlayer();
-      if (!spotify.deviceId) {
+        if (restart) {
+          spotify.positions[song.id] = 0;
+          state.playbackPositions[song.id] = 0;
+        }
+        spotify.activeSongId = song.id;
+        spotify.positionMs = spotify.positions[song.id] || 0;
+        spotify.positionUpdatedAt = performanceNow();
+        spotify.paused = false;
         const fallbackOpened = openDjFallback(song);
         setPlaybackActive(fallbackOpened);
         setSpotifyStatus(getFallbackStatus(fallbackOpened));
-        updateSpotifyUi();
         return;
       }
-    }
 
-    let uri = spotify.resolvedUris[song.id] || song.spotifyUri || "";
-    let ok = uri ? await startSpotifyUri(token, uri) : false;
-    if (!ok) {
-      uri = await resolveSongUri(token, song);
-      ok = Boolean(uri) && (await startSpotifyUri(token, uri));
-    }
+      const token = await getAccessToken();
+      if (!token) {
+        const fallbackOpened = openDjFallback(song);
+        setPlaybackActive(fallbackOpened);
+        setSpotifyStatus(getFallbackStatus(fallbackOpened));
+        return;
+      }
 
-    const fallbackOpened = ok ? false : openDjFallback(song);
-    if (ok) spotify.manualFallbackSongId = "";
-    setPlaybackActive(ok || fallbackOpened);
-    setSpotifyStatus(ok ? "Afspiller sang" : getFallbackStatus(fallbackOpened));
-    updateSpotifyUi();
+      if (!spotify.ready || !spotify.deviceId) {
+        await connectSpotifyPlayer();
+        if (!spotify.deviceId) {
+          const fallbackOpened = openDjFallback(song);
+          setPlaybackActive(fallbackOpened);
+          setSpotifyStatus(getFallbackStatus(fallbackOpened));
+          return;
+        }
+      }
+
+      const uri = await getPlayableSpotifyUri(token, song);
+      if (!uri) {
+        skipBrokenSong(song, "Spotify-linket kunne ikke finde en afspillelig sang");
+        return;
+      }
+
+      const savedPosition = Number(spotify.positions[song.id] ?? state.playbackPositions[song.id]) || 0;
+      const positionMs = restart ? 0 : clamp(savedPosition, 0, Math.max(0, spotify.durationMs - 1000));
+      const playbackResult = await startSpotifyUri(token, uri, positionMs);
+      if (!playbackResult.ok) {
+        if (playbackResult.linkBroken) {
+          skipBrokenSong(song, `Spotify afviste sanglinket (${playbackResult.status})`);
+          return;
+        }
+        const fallbackOpened = openDjFallback(song);
+        setPlaybackActive(fallbackOpened);
+        setSpotifyStatus(getFallbackStatus(fallbackOpened));
+        return;
+      }
+
+      spotify.manualFallbackSongId = "";
+      spotify.activeSongId = song.id;
+      spotify.positionMs = positionMs;
+      spotify.positionUpdatedAt = performanceNow();
+      spotify.paused = false;
+      spotify.positions[song.id] = positionMs;
+      state.playbackPositions[song.id] = positionMs;
+      setPlaybackActive(true);
+      setSpotifyStatus(positionMs > 0 && !restart ? "Fortsætter fra pausen" : "Afspiller sang");
+    } catch (error) {
+      setPlaybackActive(false);
+      setSpotifyStatus(`Sangen kunne ikke kontrolleres: ${error.message}`);
+    } finally {
+      playbackChecking = false;
+      updateSpotifyUi();
+    }
   }
 
   function openDjFallback(song) {
@@ -1533,7 +2033,130 @@
     return `https://open.spotify.com/search/${encodeURIComponent(`${song.title} ${song.artist}`)}`;
   }
 
-  async function startSpotifyUri(token, uri) {
+  function performanceNow() {
+    return window.performance?.now ? window.performance.now() : Date.now();
+  }
+
+  async function validateManualSongLink(song) {
+    let url;
+    try {
+      url = new URL(getSpotifyUrl(song));
+    } catch {
+      return { checked: true, valid: false, reason: "Sanglinket er ugyldigt" };
+    }
+
+    if (url.hostname !== "open.spotify.com") {
+      return { checked: true, valid: false, reason: "Sanglinket peger ikke på Spotify" };
+    }
+
+    if (url.pathname.startsWith("/search/")) {
+      return {
+        checked: true,
+        valid: url.pathname.length > "/search/".length,
+        reason: "Spotify-søgningen mangler titel og kunstner",
+      };
+    }
+
+    if (!url.pathname.startsWith("/track/")) {
+      return { checked: true, valid: false, reason: "Sanglinket er ikke et Spotify-track" };
+    }
+
+    const controller = typeof AbortController === "function" ? new AbortController() : null;
+    const timeout = window.setTimeout(() => controller?.abort(), 6000);
+    try {
+      const response = await fetch(`https://open.spotify.com/oembed?url=${encodeURIComponent(url.toString())}`, {
+        signal: controller?.signal,
+      });
+      return {
+        checked: true,
+        valid: response.ok,
+        reason: `Spotify-linket svarede med status ${response.status}`,
+      };
+    } catch {
+      return {
+        checked: false,
+        valid: true,
+        reason: "Linkkontrollen kunne ikke få netværksforbindelse",
+      };
+    } finally {
+      window.clearTimeout(timeout);
+    }
+  }
+
+  function spotifyTrackId(uri) {
+    const match = String(uri || "").match(/(?:spotify:track:|open\.spotify\.com\/track\/)([A-Za-z0-9]+)/);
+    return match?.[1] || "";
+  }
+
+  async function getPlayableSpotifyUri(token, song) {
+    const cached = spotify.validatedUris[song.id];
+    if (cached) return cached;
+
+    const candidates = [...new Set([
+      spotify.resolvedUris[song.id],
+      song.spotifyUri,
+      spotifyTrackId(song.spotifyUrl) ? `spotify:track:${spotifyTrackId(song.spotifyUrl)}` : "",
+    ].filter(Boolean))];
+
+    for (const candidate of candidates) {
+      const validated = await validateSpotifyTrack(token, candidate, song);
+      if (validated) {
+        spotify.resolvedUris[song.id] = validated;
+        spotify.validatedUris[song.id] = validated;
+        return validated;
+      }
+    }
+
+    const resolved = await resolveSongUri(token, song);
+    if (!resolved) return "";
+    const validated = await validateSpotifyTrack(token, resolved, song);
+    if (!validated) return "";
+    spotify.resolvedUris[song.id] = validated;
+    spotify.validatedUris[song.id] = validated;
+    return validated;
+  }
+
+  async function validateSpotifyTrack(token, uri, song) {
+    const trackId = spotifyTrackId(uri);
+    if (!trackId) return "";
+    const response = await fetch(
+      `https://api.spotify.com/v1/tracks/${encodeURIComponent(trackId)}?market=from_token`,
+      { headers: { authorization: `Bearer ${token}` } },
+    );
+    if (!response.ok) {
+      if (response.status === 404) return "";
+      throw new Error(`Spotify-linkkontrol svarede med status ${response.status}`);
+    }
+    const track = await response.json();
+    if (!track?.uri || track.is_playable === false || track.restrictions?.reason) return "";
+    if (scoreSpotifyTrack(song, track) < 55) return "";
+    spotify.durationMs = Number(track.duration_ms) || spotify.durationMs;
+    return track.uri;
+  }
+
+  function normalizeTrackText(value) {
+    return String(value || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLocaleLowerCase("da-DK")
+      .replace(/\b(feat|featuring|version|remaster(?:ed)?)\b.*$/u, "")
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
+  }
+
+  function scoreSpotifyTrack(song, track) {
+    const wantedTitle = normalizeTrackText(song.title);
+    const trackTitle = normalizeTrackText(track.name);
+    const wantedArtist = normalizeTrackText(song.artist).split(" feat ")[0];
+    const trackArtists = normalizeTrackText((track.artists || []).map((artist) => artist.name).join(" "));
+    let score = wantedTitle === trackTitle ? 70 : 0;
+    if (wantedTitle && (wantedTitle.includes(trackTitle) || trackTitle.includes(wantedTitle))) score += 24;
+    const artistWords = wantedArtist.split(" ").filter((word) => word.length > 2);
+    score += artistWords.filter((word) => trackArtists.includes(word)).length * 16;
+    return score;
+  }
+
+  async function startSpotifyUri(token, uri, positionMs = 0) {
     const response = await fetch(
       `https://api.spotify.com/v1/me/player/play?device_id=${encodeURIComponent(spotify.deviceId)}`,
       {
@@ -1542,38 +2165,99 @@
           authorization: `Bearer ${token}`,
           "content-type": "application/json",
         },
-        body: JSON.stringify({ uris: [uri] }),
+        body: JSON.stringify({ uris: [uri], position_ms: Math.max(0, Math.round(positionMs)) }),
       },
     );
 
-    if (response.ok || response.status === 204) return true;
+    if (response.ok || response.status === 204) return { ok: true, status: response.status, linkBroken: false };
     if (response.status === 403) setSpotifyStatus("Spotify Premium kræves til browserafspilning");
-    return false;
+    return {
+      ok: false,
+      status: response.status,
+      linkBroken: response.status === 400 || response.status === 404,
+    };
   }
 
   async function resolveSongUri(token, song) {
     const query = encodeURIComponent(`track:${song.title} artist:${song.artist.split(" feat. ")[0]}`);
-    const response = await fetch(`https://api.spotify.com/v1/search?type=track&limit=1&q=${query}`, {
+    const response = await fetch(`https://api.spotify.com/v1/search?type=track&limit=5&q=${query}`, {
       headers: { authorization: `Bearer ${token}` },
     });
 
-    if (!response.ok) return "";
+    if (!response.ok) {
+      if (response.status === 400 || response.status === 404) return "";
+      throw new Error(`Spotify-søgning svarede med status ${response.status}`);
+    }
     const data = await response.json();
-    const uri = data.tracks?.items?.[0]?.uri || "";
-    if (uri) spotify.resolvedUris[song.id] = uri;
-    return uri;
+    const candidates = (data.tracks?.items || [])
+      .map((track) => ({ track, score: scoreSpotifyTrack(song, track) }))
+      .sort((first, second) => second.score - first.score);
+    return candidates[0]?.score >= 55 ? candidates[0].track.uri : "";
   }
 
-  async function pausePlayback() {
-    setPlaybackActive(false);
-    if (!spotify.deviceId) return;
-    const token = await getAccessToken();
-    if (!token) return;
+  function syncSpotifyPlaybackState(playbackState, fallbackSongId = "") {
+    const uri = playbackState.track_window?.current_track?.uri || "";
+    const matchedSong = ALL_SONGS.find((song) => {
+      return song.spotifyUri === uri
+        || spotify.resolvedUris[song.id] === uri
+        || spotify.validatedUris[song.id] === uri;
+    });
+    const songId = matchedSong?.id || fallbackSongId || spotify.activeSongId || getCurrentSong()?.id || "";
+    const position = Math.max(0, Number(playbackState.position) || 0);
+    spotify.activeSongId = songId;
+    spotify.positionMs = position;
+    spotify.positionUpdatedAt = performanceNow();
+    spotify.durationMs = Number(playbackState.duration) || spotify.durationMs;
+    spotify.paused = Boolean(playbackState.paused);
+    if (songId) {
+      spotify.positions[songId] = position;
+      state.playbackPositions[songId] = position;
+    }
+    setPlaybackActive(!spotify.paused && Boolean(songId));
+  }
 
-    await fetch(`https://api.spotify.com/v1/me/player/pause?device_id=${encodeURIComponent(spotify.deviceId)}`, {
-      method: "PUT",
-      headers: { authorization: `Bearer ${token}` },
-    }).catch(() => {});
+  async function pausePlayback(songId = "", options = {}) {
+    const targetSongId = typeof songId === "string"
+      ? songId
+      : getCurrentSong()?.id || spotify.activeSongId || "";
+    const forgetPosition = Boolean(options?.forgetPosition);
+
+    if (spotify.player?.getCurrentState) {
+      try {
+        const playbackState = await spotify.player.getCurrentState();
+        if (playbackState) syncSpotifyPlaybackState(playbackState, targetSongId);
+      } catch {
+        /* Web API-pause nedenfor er fallback. */
+      }
+    }
+
+    setPlaybackActive(false);
+    spotify.paused = true;
+    spotify.positionUpdatedAt = performanceNow();
+
+    if (targetSongId && !forgetPosition) {
+      state.playbackPositions[targetSongId] = spotify.positions[targetSongId] || spotify.positionMs || 0;
+      saveGame();
+    }
+
+    if (spotify.player?.pause) {
+      await spotify.player.pause().catch(() => {});
+    } else if (spotify.deviceId) {
+      const token = await getAccessToken();
+      if (token) {
+        await fetch(`https://api.spotify.com/v1/me/player/pause?device_id=${encodeURIComponent(spotify.deviceId)}`, {
+          method: "PUT",
+          headers: { authorization: `Bearer ${token}` },
+        }).catch(() => {});
+      }
+    }
+
+    if (targetSongId && forgetPosition) {
+      delete spotify.positions[targetSongId];
+      delete state.playbackPositions[targetSongId];
+      saveGame();
+    }
+    updateSpotifyUi();
   }
 
   function randomString(length) {
