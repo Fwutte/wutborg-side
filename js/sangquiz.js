@@ -1246,6 +1246,14 @@
     els.categoryButtons.forEach((button) => {
       const pressed = button.dataset.songCategory === category;
       button.setAttribute("aria-pressed", pressed ? "true" : "false");
+      let count = button.querySelector(".category-count");
+      if (!count) {
+        count = document.createElement("span");
+        count.className = "category-count";
+        count.setAttribute("aria-hidden", "true");
+        button.append(count);
+      }
+      count.textContent = `${getSongPool(button.dataset.songCategory).length} sange`;
     });
     if (els.categoryStatus) {
       els.categoryStatus.textContent = `${getSongPool(category).length} sange i puljen · ${CATEGORY_LABELS[category]}`;

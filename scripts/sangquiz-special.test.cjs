@@ -5,6 +5,8 @@ const vm = require("vm");
 
 const root = path.resolve(__dirname, "..");
 const context = { window: {} };
+const html = fs.readFileSync(path.join(root, "sangquiz.html"), "utf8");
+const gameSource = fs.readFileSync(path.join(root, "js/sangquiz.js"), "utf8");
 vm.createContext(context);
 vm.runInContext(fs.readFileSync(path.join(root, "js/sangquiz-data.js"), "utf8"), context);
 vm.runInContext(fs.readFileSync(path.join(root, "js/sangquiz-special-data.js"), "utf8"), context);
@@ -45,6 +47,8 @@ assert(
   categoryExpansion.every((song) => song.tags.includes(`${String(song.year).slice(2, 3)}0s`)),
   "Nye kategorisange skal ligge i kategorien for deres første udgivelsesår",
 );
+assert(html.includes("sangquiz-data.js?v=20260724-categories100"), "Siden skal cache-bryde det udvidede sangkatalog");
+assert(gameSource.includes('count.className = "category-count"'), "Alle kategoriknapper skal vise puljens størrelse");
 
 const carpark32 = songs.find((song) => song.title === "32" && song.artist.startsWith("Carpark North"));
 assert(carpark32, "Carpark Norths 32 skal findes");
