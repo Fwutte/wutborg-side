@@ -48,7 +48,8 @@ assert(
   "Nye kategorisange skal ligge i kategorien for deres første udgivelsesår",
 );
 assert(html.includes("sangquiz-data.js?v=20260724-categories100"), "Siden skal cache-bryde det udvidede sangkatalog");
-assert(gameSource.includes('count.className = "category-count"'), "Alle kategoriknapper skal vise puljens størrelse");
+assert(html.includes("sangquiz.js?v=20260724-no-card-counts"), "Siden skal cache-bryde kategorikortenes layout");
+assert(!gameSource.includes('count.className = "category-count"'), "Kategorikort må ikke vise sangantal");
 
 const carpark32 = songs.find((song) => song.title === "32" && song.artist.startsWith("Carpark North"));
 assert(carpark32, "Carpark Norths 32 skal findes");
