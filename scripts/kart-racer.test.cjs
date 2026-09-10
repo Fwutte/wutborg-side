@@ -7,7 +7,7 @@ math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/42949
 const context={window:{addEventListener(){}},Math:math,console};
 for(const file of ["js/kart-racer-data.js","js/kart-racer.js"])vm.runInNewContext(fs.readFileSync(path.join(root,file),"utf8"),context);
 const {data,formatTime,testHooks}=context.window.WutborgKart;
-const {Kart,Race,RaceAI,InputManager,readSave,EMPTY}=testHooks;
+const {Kart,Race,RaceAI,InputManager,KartGame,readSave,EMPTY}=testHooks;
 const {TRACKS,DRIVERS,DIFFICULTIES,angleDelta}=data;
 const gas={...EMPTY,accelerate:true};
 let checks=0;
@@ -19,7 +19,7 @@ function march(race,k,from,to,offset=0){const direction=Math.sign(to-from);for(l
 test("three closed, distinct tracks; pickups and grid stay on the road",()=>{
   assert.equal(TRACKS.length,3);assert.equal(DRIVERS.length,8);
   for(const t of TRACKS){
-    assert.equal(t.samples.length,512);assert.ok(t.length>4500);
+    assert.equal(t.samples.length,1024);assert.ok(t.length>10000);
     const a=t.at(0),b=t.at(t.length);assert.ok(Math.hypot(a.x-b.x,a.y-b.y)<.001);
     for(let s=0;s<t.length;s+=47){
       const p=t.at(s),n=t.nearest(p.x,p.y);
@@ -31,6 +31,40 @@ test("three closed, distinct tracks; pickups and grid stay on the road",()=>{
     for(let i=0;i<8;i++){const k=new Kart(DRIVERS[i],i);k.reset(t);assert.ok(t.isRoad(k.x,k.y));}
   }
   assert.equal(new Set(TRACKS.map(t=>Math.round(t.length))).size,3);
+});
+test("expanded roads and hills remain continuous, wide and within their maps",()=>{
+  for(const t of TRACKS){
+    assert.equal(t.revision,3);assert.ok(t.bridge[0]<t.bridge[1]);
+    assert.ok(Math.abs(t.elevationAt(-.01)-t.elevationAt(t.length+.01))<.01);
+    assert.ok(Math.abs(t.slopeAt(-.01)-t.slopeAt(t.length+.01))<.001);
+    let highest=0;
+    for(let s=0;s<t.length;s+=37){
+      const p=t.at(s),bend=Math.abs(angleDelta(p.heading,t.at(s+20).heading));
+      assert.ok(20/Math.max(bend,.00001)>t.halfWidth+75,"both road edges must stay free of offset cusps");
+      assert.ok(Math.abs(p.slope)<.25,"no abrupt hill faces");highest=Math.max(highest,p.elevation);
+      for(const offset of [-t.halfWidth-62,t.halfWidth+62]){
+        const edge=t.at(s,offset),near=t.nearest(edge.x,edge.y);
+        assert.ok(Math.abs(near.distance-Math.abs(offset))<2,"run-off must not intersect another section");
+        assert.ok(edge.x>t.bounds.minX&&edge.x<t.bounds.maxX&&edge.y>t.bounds.minY&&edge.y<t.bounds.maxY);
+      }
+    }
+    assert.ok(highest>180);
+  }
+});
+test("karts and recovery follow the same hill height as the road",()=>{
+  for(const t of TRACKS){
+    const k=new Kart(DRIVERS[0]);k.reset(t);
+    const p=t.at(t.length*t.hills[0][0]);Object.assign(k,{...p,velocityHeading:p.heading,road:t.nearest(p.x,p.y),speed:200});
+    k.update(1/60,gas,t);assert.equal(k.elevation,k.road.elevation);assert.ok(Number.isFinite(k.slope));
+    k.recover(t);assert.equal(k.elevation,t.elevationAt(k.raceDistance));
+  }
+});
+test("new course records are isolated while driver preferences are retained",()=>{
+  const track=TRACKS[0],oldKey=track.id+":normal";
+  const saved=readSave({getItem:()=>JSON.stringify({records:{[oldKey]:{time:45}},settings:{driver:"luna",autoGas:true}})});
+  const key=KartGame.prototype.recordKey.call({track,mode:"single",difficulty:"normal"});
+  assert.notEqual(key,oldKey);assert.equal(saved.records[key],undefined);assert.equal(saved.records[oldKey].time,45);
+  assert.equal(saved.settings.driver,"luna");assert.equal(saved.settings.autoGas,true);
 });
 test("countdown, correct rear grid position and start boost timing",()=>{
   const r=raceFor(),x=r.player.x,y=r.player.y;assert.equal(r.player.rank,8);
@@ -132,7 +166,7 @@ for(const difficulty of Object.keys(DIFFICULTIES))for(const track of TRACKS){
   test(`all eight drivers finish ${track.name} / ${difficulty} without respawning`,()=>{
     seed=73;
     const r=raceFor(track,{difficulty});r.state="racing";r.player.isAI=true;
-    for(let frame=0;frame<60*160&&!r.karts.every(k=>k.finished);frame++){
+    for(let frame=0;frame<60*(track.length*3/180+40)&&!r.karts.every(k=>k.finished);frame++){
       r.state="racing";r.update(1/60);
       assert.ok(r.karts.every(k=>Number.isFinite(k.x)&&Number.isFinite(k.y)));
     }

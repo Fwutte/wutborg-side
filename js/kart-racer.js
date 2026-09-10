@@ -20,7 +20,7 @@
     constructor(driver,index=0,isAI=false){this.driver=driver;this.index=index;this.isAI=isAI;this.radius=19;}
     reset(track,slot=this.index){
       const s=-38-Math.floor(slot/2)*65-(slot%2)*4,p=track.at(s,slot%2?38:-38);
-      Object.assign(this,{x:p.x,y:p.y,heading:p.heading,velocityHeading:p.heading,speed:0,steer:0,visualSteer:0,
+      Object.assign(this,{x:p.x,y:p.y,elevation:p.elevation,slope:p.slope,heading:p.heading,velocityHeading:p.heading,speed:0,steer:0,visualSteer:0,
         spinTimer:0,boostTimer:0,starTimer:0,invincibleTimer:0,driftTimer:0,driftDirection:0,drifting:false,
         coins:0,item:null,pendingItem:null,itemRoulette:0,finished:false,finishTime:0,lap:0,lapTimes:[],lapStarted:0,
         progress:s,raceDistance:s,nextGate:track.length/12,gateCount:0,lastS:p.s,lastX:p.x,lastY:p.y,
@@ -41,7 +41,7 @@
     recover(track){
       const safe=Math.min(this.raceDistance,this.nextGate-12),p=track.at(safe);
       this.raceDistance=safe;this.progress=safe;
-      this.x=p.x;this.y=p.y;this.heading=p.heading;this.velocityHeading=p.heading;
+      this.x=p.x;this.y=p.y;this.elevation=p.elevation;this.slope=p.slope;this.heading=p.heading;this.velocityHeading=p.heading;
       this.lastS=p.s;this.lastX=p.x;this.lastY=p.y;this.road=track.nearest(p.x,p.y);
       this.speed=50;this.invincibleTimer=1.8;this.spinTimer=0;this.cancelDrift();this.recoveries++;this.stuckTime=0;
     }
@@ -75,7 +75,7 @@
       const slip=this.drifting?-this.driftDirection*.25:0,grip=this.drifting?5:14;
       this.velocityHeading+=angleDelta(this.velocityHeading,this.heading+slip)*(1-Math.exp(-grip*dt));
       this.x+=Math.cos(this.velocityHeading)*this.speed*dt;this.y+=Math.sin(this.velocityHeading)*this.speed*dt;
-      this.road=track.nearest(this.x,this.y,this.road?.index);this.offroad=this.road.distance>track.halfWidth;
+      this.road=track.nearest(this.x,this.y,this.road?.index);this.elevation=this.road.elevation;this.slope=this.road.slope;this.offroad=this.road.distance>track.halfWidth;
       if(this.offroad)this.speed*=Math.exp(-(this.starTimer>0?.15:2.1)*dt);
       const wall=track.halfWidth+62;
       if(this.road.distance>wall){
@@ -295,9 +295,9 @@
     draw(race){
       const c=this.canvas,w=c.clientWidth,h=c.clientHeight,dpr=Math.min(window.devicePixelRatio||1,1.5);
       if(c.width!==Math.round(w*dpr)||c.height!==Math.round(h*dpr)){c.width=Math.round(w*dpr);c.height=Math.round(h*dpr);}
-      const ctx=this.ctx,t=race.track,p=race.player,scale=p?Math.min(w/850,h/900):Math.min(w/2600,h/2250);
+      const ctx=this.ctx,t=race.track,p=race.player,scale=p?Math.min(w/850,h/900):Math.min(w/(t.width+200),h/(t.height+200));
       ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle=t.palette.grass;ctx.fillRect(0,0,w,h);
-      ctx.translate(w/2,h*.58);ctx.scale(scale,scale);ctx.translate(-(p?.x||1100),-(p?.y||1000));
+      ctx.translate(w/2,h*.58);ctx.scale(scale,scale);ctx.translate(-(p?.x??t.cx),-(p?.y??t.cy));
       const road=(width,color)=>{ctx.beginPath();t.samples.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineJoin="round";ctx.stroke();};
       road(t.halfWidth*2+26,t.palette.edge);road(t.halfWidth*2,t.palette.road);
       const start=t.at(0);ctx.save();ctx.translate(start.x,start.y);ctx.rotate(start.heading);ctx.fillStyle="white";ctx.fillRect(-8,-t.halfWidth,16,t.halfWidth*2);ctx.restore();
@@ -335,11 +335,12 @@
       try{localStorage.setItem(STORAGE_KEY,JSON.stringify(this.save));}catch{/* Storage is optional. */}
     }
     trackSVG(track){
-      const path=track.samples.filter((_,i)=>i%8===0).map((p,i)=>`${i?"L":"M"}${(p.x/22).toFixed(1)},${(p.y/22).toFixed(1)}`).join(" ")+" Z";
-      return `<svg viewBox="0 0 100 92" aria-hidden="true"><path d="${path}" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/><circle cx="${track.start.x/22}" cy="${track.start.y/22}" r="4" fill="#eff8df"/></svg>`;
+      const scale=Math.min(92/track.width,84/track.height),x=v=>50+(v-track.cx)*scale,y=v=>46+(v-track.cy)*scale;
+      const path=track.samples.filter((_,i)=>i%6===0).map((p,i)=>`${i?"L":"M"}${x(p.x).toFixed(1)},${y(p.y).toFixed(1)}`).join(" ")+" Z";
+      return `<svg viewBox="0 0 100 92" aria-hidden="true"><path d="${path}" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/><circle cx="${x(track.start.x)}" cy="${y(track.start.y)}" r="4" fill="#eff8df"/></svg>`;
     }
     populateMenu(){
-      this.$("track-select").innerHTML=TRACKS.map(t=>`<button type="button" class="track-choice" data-track="${t.id}" aria-pressed="false"><span class="track-number">${t.number}</span>${this.trackSVG(t)}<strong>${t.short}</strong><small>${t.difficulty}</small></button>`).join("");
+      this.$("track-select").innerHTML=TRACKS.map(t=>`<button type="button" class="track-choice" data-track="${t.id}" aria-pressed="false"><span class="track-number">${t.number}</span>${this.trackSVG(t)}<strong>${t.short}</strong><small>${t.difficulty} · ${(t.length*.032/1000).toFixed(2).replace(".",",")} km</small></button>`).join("");
       this.$("driver-select").innerHTML=DRIVERS.map(d=>`<button type="button" class="driver-choice" data-driver="${d.id}" aria-label="${d.name} · ${d.className}" aria-pressed="false" style="--driver:${d.color};--accent:${d.accent}"><span class="driver-helmet"><i></i></span><strong>${d.name}</strong></button>`).join("");
       this.syncMenu();
     }
@@ -360,7 +361,7 @@
       this.$("kart-best").textContent=Number.isFinite(record?.time)?`Din rekord · ${formatTime(record.time)}`:"Din første rekord venter";
       this.$("kart-sound").textContent=this.audio.enabled?"Lyd til":"Lyd fra";this.$("kart-sound").setAttribute("aria-pressed",String(this.audio.enabled));
     }
-    recordKey(){return `${this.track.id}:${this.mode==="time"?"time":this.difficulty}`;}
+    recordKey(){return `${this.track.id}:v${this.track.revision}:${this.mode==="time"?"time":this.difficulty}`;}
     bindUI(){
       this.$("track-select").addEventListener("click",e=>{
         const b=e.target.closest("[data-track]");if(!b)return;
@@ -459,7 +460,7 @@
       this.$("kart-result").hidden=false;this.$(this.cup&&!cupDone?"kart-next":"kart-retry").focus({preventScroll:true});
       this.audio.tone(523,.18);setTimeout(()=>this.audio.tone(659,.18),160);setTimeout(()=>this.audio.tone(784,.4),320);
       if(this.mode!=="time")try{
-        const submission=window.WutborgHighscores?.submit({gameKey:"wutborg-kart",gameTitle:"Wutborg Kart",playerName:this.race.player.driver.name,score:result.score,outcome:result.position===1?"won":"completed",details:{version:2,track:this.track.id,difficulty:this.difficulty,position:result.position,seconds:Math.round(result.time*100)/100}});
+        const submission=window.WutborgHighscores?.submit({gameKey:"wutborg-kart",gameTitle:"Wutborg Kart",playerName:this.race.player.driver.name,score:result.score,outcome:result.position===1?"won":"completed",details:{version:3,track:this.track.id,difficulty:this.difficulty,position:result.position,seconds:Math.round(result.time*100)/100}});
         submission?.catch(()=>{});
       }catch{/* Local results work offline. */}
     }
@@ -501,12 +502,13 @@
     }
     drawMinimap(){
       const canvas=this.$("kart-minimap"),ctx=canvas.getContext("2d"),t=this.track;
+      const scale=Math.min(196/t.width,176/t.height),x=v=>110+(v-t.cx)*scale,y=v=>100+(v-t.cy)*scale;
       ctx.clearRect(0,0,220,200);ctx.lineCap="round";ctx.lineJoin="round";ctx.beginPath();
-      t.samples.forEach((p,i)=>i?ctx.lineTo(p.x/11,p.y/11):ctx.moveTo(p.x/11,p.y/11));ctx.closePath();
+      t.samples.forEach((p,i)=>i?ctx.lineTo(x(p.x),y(p.y)):ctx.moveTo(x(p.x),y(p.y)));ctx.closePath();
       ctx.strokeStyle="rgba(255,255,255,.2)";ctx.lineWidth=13;ctx.stroke();ctx.strokeStyle="#a9bec1";ctx.lineWidth=2;ctx.stroke();
-      ctx.fillStyle="#edffb1";ctx.fillRect(t.start.x/11-3,t.start.y/11-6,6,12);
+      ctx.fillStyle="#edffb1";ctx.fillRect(x(t.start.x)-3,y(t.start.y)-6,6,12);
       for(const k of [...this.race.karts].reverse()){
-        ctx.beginPath();ctx.arc(k.x/11,k.y/11,k===this.race.player?5.5:3.7,0,TAU);ctx.fillStyle=k.driver.color;ctx.fill();
+        ctx.beginPath();ctx.arc(x(k.x),y(k.y),k===this.race.player?5.5:3.7,0,TAU);ctx.fillStyle=k.driver.color;ctx.fill();
         if(k===this.race.player){ctx.strokeStyle="#fff";ctx.lineWidth=2.5;ctx.stroke();}
       }
     }
@@ -520,12 +522,12 @@
       requestAnimationFrame(t=>this.loop(t));
     }
   }
-  window.WutborgKart={data,formatTime,testHooks:{Kart,Race,RaceAI,InputManager,readSave,EMPTY}};
+  window.WutborgKart={data,formatTime,testHooks:{Kart,Race,RaceAI,InputManager,KartGame,readSave,EMPTY}};
   if(typeof document!=="undefined")window.addEventListener("DOMContentLoaded",async()=>{
     let canvas=document.getElementById("kart-canvas");if(!canvas)return;
     let renderer;
     try{
-      const module=await import("./kart-racer-3d.js?v=20260909-kart2");
+      const module=await import("./kart-racer-3d.js?v=20260910-kart3");
       renderer=new module.KartRacer3DRenderer(canvas);
     }catch(error){
       console.warn("3D er ikke tilgængelig. Starter 2D-visningen.",error);

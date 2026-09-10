@@ -19,7 +19,7 @@
     raw.push({ ...raw[0] });
     const distances = [0];
     for (let i = 1; i < raw.length; i++) distances.push(distances[i-1] + Math.hypot(raw[i].x-raw[i-1].x, raw[i].y-raw[i-1].y));
-    const length = distances.at(-1), samples = [], segments = 512;
+    const length = distances.at(-1), samples = [], segments = 1024;
     let cursor = 0;
     for (let i = 0; i < segments; i++) {
       const s = i * length / segments;
@@ -31,11 +31,23 @@
       const a=samples[mod(i-1,segments)],b=samples[(i+1)%segments];
       p.heading=Math.atan2(b.y-a.y,b.x-a.x);
     });
-    const track = { ...config, length, samples, step: length/segments, cx: 1100, cy: 1000, width: 2200, height: 2000 };
+    const xs=samples.map(p=>p.x),ys=samples.map(p=>p.y),padding=config.halfWidth+160;
+    const bounds={minX:Math.min(...xs)-padding,maxX:Math.max(...xs)+padding,minY:Math.min(...ys)-padding,maxY:Math.max(...ys)+padding};
+    const track = { ...config, revision:3, length, samples, bounds, step:length/segments,
+      cx:(bounds.minX+bounds.maxX)/2,cy:(bounds.minY+bounds.maxY)/2,width:bounds.maxX-bounds.minX,height:bounds.maxY-bounds.minY };
+    // Cosine hills join the start/finish seamlessly and keep every gradient driveable.
+    track.elevationAt = function(s) {
+      const t=mod(s,length)/length;
+      return 12+this.hills.reduce((height,[center,radius,rise])=>{
+        const d=Math.abs(mod(t-center+.5,1)-.5)/radius;
+        return height+(d<1?rise*(1+Math.cos(d*Math.PI))/2:0);
+      },0);
+    };
+    track.slopeAt = s => (track.elevationAt(s+8)-track.elevationAt(s-8))/16;
     track.at = function(s, offset = 0) {
       const f = mod(s, length)/this.step, i = Math.floor(f), a = samples[i], b = samples[(i+1)%segments];
       const heading = a.heading+angleDelta(a.heading,b.heading)*(f-i);
-      return { x: lerp(a.x,b.x,f-i)-Math.sin(heading)*offset, y: lerp(a.y,b.y,f-i)+Math.cos(heading)*offset, heading, s: mod(s,length) };
+      return { x: lerp(a.x,b.x,f-i)-Math.sin(heading)*offset, y: lerp(a.y,b.y,f-i)+Math.cos(heading)*offset, heading, s: mod(s,length), elevation:this.elevationAt(s), slope:this.slopeAt(s) };
     };
     track.nearest = function(x, y, hint) {
       let best = null, bestD = Infinity;
@@ -52,14 +64,15 @@
       };
       if (Number.isInteger(hint)) scan(hint,12);
       if (!best || best.distance > this.halfWidth*2) scan(segments/2,segments/2);
+      best.elevation=this.elevationAt(best.s);best.slope=this.slopeAt(best.s);
       return best;
     };
     track.isRoad = (x,y) => track.nearest(x,y).distance <= track.halfWidth;
     track.start = track.at(0);
     track.heading = track.start.heading;
-    track.itemBoxes = [.13,.39,.66,.88].flatMap((t,i) => [-.55,0,.55].map((lane,n) => ({ ...track.at(t*length,lane*track.halfWidth), id: `box-${i}-${n}` })));
-    track.coins = [.07,.24,.49,.74,.94].flatMap((t,i) => [0,1,2,3,4].map(n => ({ ...track.at((t+n*.008)*length,(i%2?1:-1)*track.halfWidth*.42), id: `coin-${i}-${n}` })));
-    track.boostPads = [.30,.58,.81].map(t => track.at(t*length,-track.halfWidth*.35));
+    track.itemBoxes = [.09,.23,.38,.54,.69,.85].flatMap((t,i) => [-.55,0,.55].map((lane,n) => ({ ...track.at(t*length,lane*track.halfWidth), id: `box-${i}-${n}` })));
+    track.coins = [.04,.17,.30,.44,.60,.76,.91].flatMap((t,i) => [0,1,2,3,4].map(n => ({ ...track.at(t*length+n*48,(i%2?1:-1)*track.halfWidth*.42), id: `coin-${i}-${n}` })));
+    track.boostPads = [.14,.32,.48,.64,.80,.94].map((t,i) => track.at(t*length,(i%2?1:-1)*track.halfWidth*.35));
     return track;
   }
   const DRIVERS = [
@@ -81,15 +94,18 @@
     lightning:{ name:"Lyn", icon:"ϟ", color:"#8bdfff", help:"Sæt rivalerne ud af spil" },
   };
   const TRACKS = [
-    makeTrack({ id:"clover-circuit", name:"Kløversløjfen", short:"Kløver", number:"01", theme:"garden", difficulty:"Let", subtitle:"Grønne bakker. Store driftsving.", halfWidth:108,
+    makeTrack({ id:"clover-circuit", name:"Kløversløjfen", short:"Kløver", number:"01", theme:"garden", difficulty:"Let", subtitle:"Stadion · blomsterdal · slotsbakke", halfWidth:118,
+      hills:[[.23,.16,150],[.57,.13,105],[.81,.12,190]],bridge:[.78,.84],landmark:.79,
       palette:{ sky:"#b5e2e9", grass:"#77b98b", grassDark:"#458768", road:"#586879", edge:"#f9edcb", accent:"#ff725a", fog:"#b5dcd8" },
-      points:[[820,290],[1320,290],[1710,450],[1860,850],[1640,1130],[1690,1510],[1280,1730],[870,1580],[610,1310],[300,1070],[360,650],[540,330]] }),
-    makeTrack({ id:"sunset-bay", name:"Solskinsbugten", short:"Bugten", number:"02", theme:"coast", difficulty:"Mellem", subtitle:"Havbrise. Chikaner. Fuld fart.", halfWidth:98,
+      points:[[1300,400],[2100,400],[3000,460],[3700,780],[4060,1390],[3800,1950],[3180,2060],[3170,2650],[3670,3100],[3150,3570],[2340,3550],[1940,2990],[1240,3140],[640,2780],[400,2200],[800,1590],[470,1010],[740,440]] }),
+    makeTrack({ id:"sunset-bay", name:"Solskinsbugten", short:"Bugten", number:"02", theme:"coast", difficulty:"Mellem", subtitle:"Havnepromenade · kystbro · fyrtårn", halfWidth:114,
+      hills:[[.21,.14,100],[.49,.16,220],[.77,.12,145]],bridge:[.44,.54],landmark:.51,
       palette:{ sky:"#f9d0aa", grass:"#e9c789", grassDark:"#be986c", road:"#776d78", edge:"#fff2d5", accent:"#59cdd1", fog:"#f1ceb5" },
-      points:[[680,290],[1190,250],[1710,420],[1890,770],[1740,1040],[1410,920],[1250,1240],[1540,1580],[1120,1760],[580,1610],[300,1240],[540,880],[300,580]] }),
-    makeTrack({ id:"midnight-crown", name:"Midnatskronen", short:"Midnat", number:"03", theme:"night", difficulty:"Svær", subtitle:"Neonlys. Hårnåle. Ingen slinger.", halfWidth:90,
+      points:[[1300,400],[2200,400],[3100,450],[4000,850],[4200,1500],[3650,1930],[3050,1630],[2710,2050],[3100,2700],[3830,3010],[3650,3600],[2850,3850],[2000,3620],[1600,2950],[1050,3350],[430,2900],[400,2200],[950,1750],[550,1150],[600,600]] }),
+    makeTrack({ id:"midnight-crown", name:"Midnatskronen", short:"Midnat", number:"03", theme:"night", difficulty:"Svær", subtitle:"Neonby · stjernetunnel · himmelbro", halfWidth:112,
+      hills:[[.21,.14,210],[.51,.18,320],[.83,.12,180]],bridge:[.46,.55],landmark:.28,tunnel:[.69,.75],
       palette:{ sky:"#141e39", grass:"#2f4260", grassDark:"#223149", road:"#46516d", edge:"#9cefff", accent:"#c98cff", fog:"#233752" },
-      points:[[790,270],[1300,250],[1830,470],[1710,850],[1320,720],[1100,1040],[1680,1290],[1680,1640],[1250,1760],[840,1480],[360,1610],[280,1210],[630,900],[340,620]] }),
+      points:[[1500,450],[2450,400],[3400,650],[4250,1000],[4100,1740],[3480,1850],[2880,1500],[2450,1940],[3000,2400],[4070,2620],[4200,3370],[3500,3920],[2700,3650],[2240,3050],[1640,3370],[1000,3770],[400,3250],[480,2570],[1100,2260],[1270,1700],[650,1460],[450,900],[750,450]] }),
   ];
   const DIFFICULTIES = { relaxed:{ name:"Hyggelig", speed:.79 }, normal:{ name:"Sport", speed:.91 }, expert:{ name:"Ekspert", speed:1.02 } };
   const CUP_POINTS = [15,12,10,8,6,4,2,1];

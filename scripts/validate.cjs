@@ -92,6 +92,7 @@ checkModule("js/pips-skybound.js", "pips skybound game");
 checkModule("js/kart-racer-data.js", "kart racer data");
 checkModule("js/kart-racer.js", "kart racer game");
 checkModule("js/kart-racer-3d.js", "kart racer 3d renderer");
+checkModule("js/kart-racer-world.js", "kart racer landscapes");
 checkModule("js/battle-gates-data.js", "borgstorm data");
 checkModule("js/battle-gates-3d-logic.js", "borgstorm 3d logic");
 checkModule("js/battle-gates-3d.js", "borgstorm 3d scene");

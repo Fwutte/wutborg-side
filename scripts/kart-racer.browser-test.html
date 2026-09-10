@@ -11,14 +11,20 @@ function ready(){
  const D=w.WutborgKartData,doc=w.document;
  w.WutborgHighscores={submit:async()=>({ok:true})};g.persist=()=>{};g.audio.enabled=false;
  const errors=[];w.addEventListener('error',e=>errors.push(e.message));
+ const consoleError=w.console.error.bind(w.console);w.console.error=(...args)=>{errors.push(args.map(String).join(' '));consoleError(...args);};
  try{
   if(scenario==='preview'){
    g.selectedTrackId=D.TRACKS[Number(params.get('track')||0)].id;g.mode='single';g.autoGas=true;g.startRace();
+   if(params.has('at')){
+    const s=Number(params.get('at'))*g.track.length;
+    g.race.karts.forEach((k,i)=>{const p=g.track.at(s-i*70,(i%3-1)*28);Object.assign(k,{x:p.x,y:p.y,elevation:p.elevation,slope:p.slope,heading:p.heading,velocityHeading:p.heading,lastX:p.x,lastY:p.y,lastS:p.s,raceDistance:s-i*70,progress:s-i*70,nextGate:(Math.floor((s-i*70)/(g.track.length/12))+1)*g.track.length/12,gateCount:Math.floor((s-i*70)/(g.track.length/12)),road:g.track.nearest(p.x,p.y),speed:280});});
+    g.race.state='racing';
+   }
    const original=g.input.read.bind(g.input);g.input.read=()=>g.race.ai.inputFor(g.race.player,g.track);
-   let frames=0,sum=0;const originalDraw=g.renderer.draw.bind(g.renderer);
-   g.renderer.draw=(r,dt,o)=>{frames++;sum+=dt;originalDraw(r,dt,o);};
+   let frames=0,firstFrame=0,lastFrame=0,warmup=0;const originalDraw=g.renderer.draw.bind(g.renderer);
+   g.renderer.draw=(r,dt,o)=>{originalDraw(r,dt,o);if(warmup++>30&&!o.paused){lastFrame=w.performance.now();if(!firstFrame)firstFrame=lastFrame;frames++;}};
    const timer=setInterval(()=>{
-    out.textContent=JSON.stringify({track:g.track.name,state:g.race.state,seconds:+g.race.elapsed.toFixed(1),lap:g.race.player.lap,rank:g.race.player.rank,renderFPS:Math.round(frames/Math.max(sum,.01)),drawCalls:g.renderer.renderer?.info.render.calls,triangles:g.renderer.renderer?.info.render.triangles,errors},null,2);
+    out.textContent=JSON.stringify({track:g.track.name,state:g.race.state,seconds:+g.race.elapsed.toFixed(1),lap:g.race.player.lap,rank:g.race.player.rank,renderFPS:Math.round((frames-1)*1000/Math.max(lastFrame-firstFrame,1)),drawCalls:g.renderer.renderer?.info.render.calls,triangles:g.renderer.renderer?.info.render.triangles,errors},null,2);
     if(g.race.elapsed>Number(params.get('stop')||10)&&!g.paused){g.togglePause(true);doc.getElementById('kart-pause').hidden=true;doc.body.classList.remove('kart-paused');clearInterval(timer);}
    },250);return;
   }
@@ -38,8 +44,9 @@ function ready(){
   w.dispatchEvent(new w.Event('blur'));check(g.paused&&!g.input.enabled,'window blur pauses');g.togglePause(false);
   g.mode='cup';g.cup={round:0,points:Object.fromEntries(D.DRIVERS.map(d=>[d.id,0]))};g.startRace();g.audio.enabled=false;
   for(let round=0;round<3;round++){
+   g.renderer.draw(g.race,0,{driver:D.DRIVERS[0]});
    g.race.state='racing';let n=0;
-   while(g.race.state==='racing'&&n++<12000)g.race.update(1/60,g.race.ai.inputFor(g.race.player,g.track));
+   while(g.race.state==='racing'&&n++<60*(g.track.length*3/180+40))g.race.update(1/60,g.race.ai.inputFor(g.race.player,g.track));
    check(g.race.state==='finished','Grand Prix round '+(round+1)+' finishes with actual physics');
    g.showResult();check(!doc.getElementById('kart-result').hidden,'result dialog '+(round+1));
    check(g.cup.points[g.selectedDriver]>0,'cup points recorded');
@@ -53,6 +60,8 @@ function ready(){
   g.showMenu();g.mode='time';g.startRace();g.audio.enabled=false;check(g.race.karts.length===1&&g.race.itemBoxes.length===0,'time trial mode');
   g.togglePause(true);g.showMenu();g.renderer.draw(g.race,.016,{driver:D.DRIVERS[0]});
   check(g.renderer.renderer.info.render.calls<300,'menu draw-call budget');
+  const memory={...g.renderer.renderer.info.memory};g.showMenu();g.renderer.draw(g.race,.016,{driver:D.DRIVERS[0]});
+  check(g.renderer.renderer.info.memory.geometries<=memory.geometries+3&&g.renderer.renderer.info.memory.textures<=memory.textures+3,'rebuilding scenery releases previous GPU resources');
   check(errors.length===0,'no runtime errors');
   out.textContent='PASS · '+checks.length+' integration checks\n'+checks.join('\n');out.dataset.status='passed';
  }catch(e){out.textContent='FAIL '+e.stack+'\n'+checks.join('\n');out.dataset.status='failed';}
