@@ -281,39 +281,361 @@
 
   class BattleGame {
     constructor() {
-      this.canvas=document.getElementById("battle-canvas");this.audio=new AudioManager();this.progress=this.loadProgress();this.selectedLevel=Math.min(this.progress.unlockedLevel,LEVELS.length)-1;this.run=new BattleRun(LEVELS[this.selectedLevel],this.progress.upgrades);this.lastFrame=performance.now();this.savedResult=false;this.paused=false;this.renderer={draw(){},emit(){},reset(){}};this.is3D=false;this.canvas.dataset.battleRenderer="loading";
-      this.els={menu:document.getElementById("battle-menu"),result:document.getElementById("battle-result"),pause:document.getElementById("battle-pause"),start:document.getElementById("battle-start"),retry:document.getElementById("battle-retry"),resume:document.getElementById("battle-resume"),menuButton:document.getElementById("battle-menu-button"),resultMenu:document.getElementById("battle-result-menu"),left:document.getElementById("battle-left"),right:document.getElementById("battle-right"),stage:document.getElementById("battle-stage"),level:document.getElementById("battle-level"),army:document.getElementById("battle-army"),combo:document.getElementById("battle-combo"),message:document.getElementById("battle-message"),best:document.getElementById("battle-best"),resultTitle:document.getElementById("battle-result-title"),resultCopy:document.getElementById("battle-result-copy"),resultStats:document.getElementById("battle-result-stats"),pauseButton:document.getElementById("battle-pause-button"),sound:document.getElementById("battle-sound"),levelGrid:document.getElementById("battle-level-grid"),campaignTitle:document.getElementById("battle-campaign-title"),campaignCopy:document.getElementById("battle-campaign-copy"),campaignProgress:document.getElementById("battle-campaign-progress"),coins:document.getElementById("battle-coins"),unitRoster:document.getElementById("battle-unit-roster")};
-      this.bind();this.populateLevels();this.updateUpgradeUI();this.refresh();this.initializeRenderer();requestAnimationFrame(time=>this.loop(time));
+      this.canvas = document.getElementById("battle-canvas");
+      this.page = document.querySelector(".battle-page");
+      this.audio = new AudioManager();
+      this.progress = this.loadProgress();
+      this.selectedLevel = this.progress.unlockedLevel - 1;
+      this.run = new BattleRun(LEVELS[this.selectedLevel], this.progress.upgrades);
+      this.lastFrame = performance.now();
+      this.savedResult = false;
+      this.paused = false;
+      this.renderer = { draw() {}, emit() {}, reset() {} };
+      this.is3D = false;
+      this.canvas.dataset.battleRenderer = "loading";
+      this.els = {};
+      const ids = {
+        menu: "menu", result: "result", pause: "pause", start: "start", retry: "retry", next: "next",
+        resume: "resume", menuButton: "menu-button", resultMenu: "result-menu", left: "left", right: "right",
+        stage: "stage", level: "level", army: "army", combo: "combo", message: "message", best: "best",
+        resultTitle: "result-title", resultCopy: "result-copy", resultStats: "result-stats", reward: "reward",
+        pauseButton: "pause-button", sound: "sound", levelGrid: "level-grid", campaignTitle: "campaign-title",
+        campaignCopy: "campaign-copy", campaignProgress: "campaign-progress", coins: "coins", unitRoster: "unit-roster",
+        regionName: "region-name", routeProgress: "route-progress", upgradeMessage: "upgrade-message",
+      };
+      Object.entries(ids).forEach(([key, id]) => { this.els[key] = document.getElementById("battle-" + id); });
+      this.bind();
+      this.populateLevels();
+      this.updateUpgradeUI();
+      this.refresh();
+      this.initializeRenderer();
+      requestAnimationFrame(time => this.loop(time));
     }
 
-    async initializeRenderer(){try{const{BattleScene3D}=await import("./battle-gates-3d.js?v=20260714-borg16");this.renderer=new BattleScene3D(this.canvas,side=>this.choose(side));this.is3D=true;this.canvas.dataset.battleRenderer="3d";delete this.canvas.dataset.battle3dError;}catch(error){console.warn("Borgstorm 3D kunne ikke starte; bruger 2D-fallback.",error);this.renderer=new ArenaRenderer(this.canvas);this.is3D=false;this.canvas.dataset.battleRenderer="2d";this.canvas.dataset.battle3dError=error?.message||"Ukendt WebGL-fejl";}}
+    async initializeRenderer() {
+      try {
+        const { BattleScene3D } = await import("./battle-gates-3d.js?v=20260714-borg16");
+        this.renderer = new BattleScene3D(this.canvas, side => this.choose(side));
+        this.is3D = true;
+        this.canvas.dataset.battleRenderer = "3d";
+        delete this.canvas.dataset.battle3dError;
+      } catch (error) {
+        console.warn("Borgstorm 3D kunne ikke starte; bruger 2D-fallback.", error);
+        // A canvas with a WebGL context cannot also provide a 2D context.
+        const fallback = this.canvas.cloneNode();
+        this.canvas.replaceWith(fallback);
+        this.canvas = fallback;
+        this.renderer = new ArenaRenderer(this.canvas);
+        this.is3D = false;
+        this.canvas.dataset.battleRenderer = "2d";
+        this.canvas.dataset.battle3dError = error?.message || "Ukendt WebGL-fejl";
+        this.canvas.addEventListener("pointerdown", event => {
+          const rect = this.canvas.getBoundingClientRect();
+          this.choose(event.clientX < rect.left + rect.width / 2 ? 0 : 1);
+        });
+      }
+    }
 
-    loadProgress(){try{const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||"{}");return{unlockedLevel:clamp(Number(saved.unlockedLevel)||1,1,LEVELS.length),stars:saved.stars&&typeof saved.stars==="object"?saved.stars:{},coins:Math.max(0,Number(saved.coins)||0),upgrades:{reinforcement:clamp(Number(saved.upgrades?.reinforcement)||0,0,5),armor:clamp(Number(saved.upgrades?.armor)||0,0,5),banner:clamp(Number(saved.upgrades?.banner)||0,0,5)}};}catch{return{unlockedLevel:1,stars:{},coins:0,upgrades:{reinforcement:0,armor:0,banner:0}};}}
-    saveProgress(){localStorage.setItem(STORAGE_KEY,JSON.stringify(this.progress));}
+    loadProgress() {
+      const empty = { unlockedLevel: 1, stars: {}, coins: 0, upgrades: { reinforcement: 0, armor: 0, banner: 0 } };
+      const integer = (value, min, max) => Number.isFinite(Number(value)) ? clamp(Math.floor(Number(value)), min, max) : min;
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+        if (!saved || typeof saved !== "object") return empty;
+        return {
+          unlockedLevel: integer(saved.unlockedLevel ?? 1, 1, LEVELS.length),
+          stars: Object.fromEntries(LEVELS.map(level => [level.id, integer(saved.stars?.[level.id] || 0, 0, 3)])),
+          coins: integer(saved.coins || 0, 0, Number.MAX_SAFE_INTEGER),
+          upgrades: Object.fromEntries(Object.keys(empty.upgrades).map(type => [type, integer(saved.upgrades?.[type] || 0, 0, 5)])),
+        };
+      } catch { return empty; }
+    }
 
-    bind(){this.els.start.addEventListener("click",()=>this.start());this.els.retry.addEventListener("click",()=>this.start());this.els.menuButton.addEventListener("click",()=>this.showMenu());this.els.resultMenu.addEventListener("click",()=>this.showMenu());this.els.resume.addEventListener("click",()=>this.togglePause(false));this.els.pauseButton.addEventListener("click",()=>this.togglePause());this.els.sound.addEventListener("click",()=>{const enabled=this.audio.toggle();this.els.sound.textContent=`Lyd: ${enabled?"til":"fra"}`;});this.els.left.addEventListener("click",()=>this.choose(0));this.els.right.addEventListener("click",()=>this.choose(1));document.querySelectorAll("[data-battle-upgrade]").forEach(button=>button.addEventListener("click",()=>this.purchaseUpgrade(button.dataset.battleUpgrade)));window.addEventListener("keydown",event=>{if(event.code==="ArrowLeft"||event.code==="KeyA"){event.preventDefault();if(this.is3D)this.renderer.setSteering(-1);else this.choose(0);}if(event.code==="ArrowRight"||event.code==="KeyD"){event.preventDefault();if(this.is3D)this.renderer.setSteering(1);else this.choose(1);}if(event.code==="Escape")this.togglePause();});window.addEventListener("keyup",event=>{if(this.is3D&&["ArrowLeft","KeyA","ArrowRight","KeyD"].includes(event.code))this.renderer.setSteering(0);});document.addEventListener("visibilitychange",()=>{if(document.hidden&&["choosing","marching"].includes(this.run.state))this.togglePause(true);});}
+    saveProgress() {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(this.progress)); }
+      catch {
+        const message = "Browseren kunne ikke gemme. Du kan fortsætte, men fremgangen gælder kun denne session.";
+        this.els.upgradeMessage.textContent = message;
+        this.els.reward.textContent = message;
+      }
+    }
 
-    populateLevels(){this.els.levelGrid.replaceChildren();LEVELS.forEach((level,index)=>{const button=document.createElement("button");const stars=this.progress.stars[level.id]||0;const locked=level.id>this.progress.unlockedLevel;button.type="button";button.className=`campaign-level${level.boss?" boss":""}${index===this.selectedLevel?" selected":""}`;button.disabled=locked;button.setAttribute("aria-label",locked?`Bane ${level.id} låst`:`Bane ${level.id}: ${level.name}, ${stars} stjerner`);button.innerHTML=`<strong>${level.boss?"♛ ":""}${level.id}</strong><span>${locked?"Låst":level.name}</span><small>${locked?"🔒":"★".repeat(stars)+"☆".repeat(3-stars)}</small>`;button.addEventListener("click",()=>this.selectLevel(index));this.els.levelGrid.append(button);});this.updateCampaignSummary();}
-    selectLevel(index){if(LEVELS[index].id>this.progress.unlockedLevel)return;this.selectedLevel=index;this.run.load(LEVELS[index],this.progress.upgrades);this.renderer.reset?.();this.populateLevels();this.refresh();}
-    updateCampaignSummary(){const level=LEVELS[this.selectedLevel];const totalStars=Object.values(this.progress.stars).reduce((sum,value)=>sum+Number(value||0),0);this.els.campaignTitle.textContent=`Bane ${level.id}: ${level.name}`;this.els.campaignCopy.textContent=`${level.region.name} · ${level.gates.length} porte${level.boss?" · bosskamp":""} · start med ${level.startingArmy+this.progress.upgrades.reinforcement*3} soldater`;this.els.campaignProgress.textContent=`${totalStars}/60 stjerner · ${this.progress.unlockedLevel}/20 baner åbne`;this.els.coins.textContent=`${this.progress.coins} mønter`;this.els.start.textContent=level.boss?"Start bosskampen":"Start banen";}
+    bind() {
+      this.els.start.addEventListener("click", () => this.start());
+      this.els.retry.addEventListener("click", () => this.start());
+      this.els.next.addEventListener("click", () => this.nextLevel());
+      this.els.menuButton.addEventListener("click", () => this.showMenu());
+      this.els.resultMenu.addEventListener("click", () => this.showMenu());
+      this.els.resume.addEventListener("click", () => this.togglePause(false));
+      this.els.pauseButton.addEventListener("click", () => this.togglePause());
+      this.els.sound.addEventListener("click", () => {
+        const enabled = this.audio.toggle();
+        this.els.sound.textContent = "Lyd: " + (enabled ? "til" : "fra");
+        this.els.sound.setAttribute("aria-pressed", String(enabled));
+      });
+      this.els.left.addEventListener("click", () => this.choose(0));
+      this.els.right.addEventListener("click", () => this.choose(1));
+      document.querySelectorAll("[data-battle-upgrade]").forEach(button => {
+        button.addEventListener("click", () => this.purchaseUpgrade(button.dataset.battleUpgrade));
+      });
+      window.addEventListener("keydown", event => {
+        const dialog = !this.els.pause.hidden ? this.els.pause : !this.els.result.hidden ? this.els.result : null;
+        if (dialog && event.code === "Tab") {
+          const buttons = [...dialog.querySelectorAll("button:not([hidden]):not(:disabled)")];
+          const first = buttons[0], last = buttons[buttons.length - 1];
+          if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+          else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+        }
+        if (event.code === "Escape") { event.preventDefault(); this.togglePause(); return; }
+        if (this.paused || !["choosing", "marching"].includes(this.run.state)) return;
+        if (["ArrowLeft", "KeyA", "ArrowRight", "KeyD"].includes(event.code)) {
+          event.preventDefault();
+          const side = ["ArrowLeft", "KeyA"].includes(event.code) ? 0 : 1;
+          if (this.is3D) this.renderer.setSteering(side ? 1 : -1);
+          else if (!event.repeat) this.choose(side);
+        }
+      });
+      window.addEventListener("keyup", event => {
+        if (["ArrowLeft", "KeyA", "ArrowRight", "KeyD"].includes(event.code)) this.renderer.setSteering?.(0);
+      });
+      window.addEventListener("blur", () => {
+        this.renderer.setSteering?.(0);
+        this.togglePause(true);
+      });
+      document.addEventListener("visibilitychange", () => { if (document.hidden) this.togglePause(true); });
+    }
 
-    purchaseUpgrade(type){const rank=this.progress.upgrades[type];const cost=80+rank*60;if(rank>=5){this.setMessage("Denne opgradering er på maksimum.");return;}if(this.progress.coins<cost){this.setMessage(`Du mangler ${cost-this.progress.coins} mønter.`);return;}this.progress.coins-=cost;this.progress.upgrades[type]+=1;this.saveProgress();this.run.load(LEVELS[this.selectedLevel],this.progress.upgrades);this.audio.tone(660,.14,"triangle",.04);this.updateUpgradeUI();this.populateLevels();this.refresh();}
-    updateUpgradeUI(){document.querySelectorAll("[data-battle-upgrade]").forEach(button=>{const type=button.dataset.battleUpgrade;const rank=this.progress.upgrades[type];const cost=80+rank*60;button.querySelector("strong").textContent=`Niveau ${rank}/5`;button.querySelector("small").textContent=rank>=5?"Maksimum":`${cost} mønter`;button.disabled=rank>=5;});}
+    populateLevels() {
+      this.els.levelGrid.replaceChildren();
+      const regions = [...new Set(LEVELS.map(level => level.region.id))];
+      const colors = ["#a7e7d1", "#98cf9b", "#f1a28a", "#a5d4f2", "#f3cb78"];
+      regions.forEach((regionId, regionIndex) => {
+        const levels = LEVELS.filter(level => level.region.id === regionId);
+        const section = document.createElement("section");
+        section.className = "campaign-region";
+        section.style.setProperty("--region", colors[regionIndex]);
+        const stars = levels.reduce((sum, level) => sum + (this.progress.stars[level.id] || 0), 0);
+        section.innerHTML = '<div class="region-heading"><h3>' + (regionIndex + 1) + '. ' + levels[0].region.name + '</h3><span>' + stars + '/12 ★</span></div>';
+        const grid = document.createElement("div");
+        grid.className = "campaign-level-grid";
+        levels.forEach(level => {
+          const button = document.createElement("button");
+          const levelStars = this.progress.stars[level.id] || 0;
+          const locked = level.id > this.progress.unlockedLevel;
+          const selected = level.id === this.selectedLevel + 1;
+          button.type = "button";
+          button.className = "campaign-level" + (level.boss ? " boss" : "") + (selected ? " selected" : "");
+          button.dataset.level = level.id;
+          button.disabled = locked;
+          button.setAttribute("aria-pressed", String(selected));
+          button.setAttribute("aria-label", "Bane " + level.id + ": " + level.name + (locked ? ", låst" : ", " + levelStars + " af 3 stjerner") + (level.boss ? ", bosskamp" : ""));
+          button.title = level.name;
+          button.innerHTML = '<strong>' + (level.boss ? '♛ ' : '') + level.id + '</strong><small>' + (locked ? 'Låst' : '★'.repeat(levelStars) + '☆'.repeat(3 - levelStars)) + '</small>';
+          button.addEventListener("click", () => {
+            this.selectLevel(level.id - 1);
+            this.els.levelGrid.querySelector('[data-level="' + level.id + '"]').focus({ preventScroll: true });
+          });
+          grid.append(button);
+        });
+        section.append(grid);
+        this.els.levelGrid.append(section);
+      });
+      this.updateCampaignSummary();
+    }
 
-    start(){this.run.load(LEVELS[this.selectedLevel],this.progress.upgrades);this.renderer.reset?.();this.run.start();this.savedResult=false;this.paused=false;this.els.menu.hidden=true;this.els.result.hidden=true;this.els.pause.hidden=true;this.audio.tone(392,.13,"square",.035);this.setMessage(this.is3D?"Træk hæren mod en port, eller styr med piletasterne.":"Vælg en port – byg en kombokæde med gode valg.");this.refresh();}
-    showMenu(){this.run.load(LEVELS[this.selectedLevel],this.progress.upgrades);this.renderer.reset?.();this.paused=false;this.els.menu.hidden=false;this.els.result.hidden=true;this.els.pause.hidden=true;this.populateLevels();this.updateUpgradeUI();this.refresh();}
-    choose(side){if(this.paused||!this.run.choose(side))return;this.audio.tone(side===0?294:330,.08,"triangle",.03);this.setMessage(side===0?"Hæren marcherer mod venstre...":"Hæren marcherer mod højre...");this.refresh();}
-    togglePause(forcePause){if(!["choosing","marching"].includes(this.run.state))return;this.paused=forcePause===true?true:!this.paused;this.els.pause.hidden=!this.paused;this.els.pauseButton.textContent=this.paused?"Fortsæt":"Pause";}
-    resolve(outcome){if(!outcome)return;this.renderer.emit(outcome);this.setMessage(`${outcome.message}${outcome.combo>1?` · ${outcome.combo}× combo!`:""}`);this.audio.tone(outcome.delta>=0?588:164,.12,outcome.delta>=0?"triangle":"sawtooth",.045);if(outcome.type==="continue")return;this.showResult(outcome.type==="won");}
+    selectLevel(index) {
+      if (!LEVELS[index] || LEVELS[index].id > this.progress.unlockedLevel) return;
+      this.selectedLevel = index;
+      this.run.load(LEVELS[index], this.progress.upgrades);
+      this.renderer.reset?.();
+      this.populateLevels();
+      this.refresh();
+    }
 
-    async showResult(won){this.els.result.hidden=false;this.els.resultTitle.textContent=won?(this.run.level.boss?"Borgen er besejret!":"Sejr!"):"Hæren blev slået";this.els.resultCopy.textContent=won?`Bane ${this.run.level.id} klaret med ${this.run.army} soldater tilbage.`:`Du nåede port ${this.run.gateIndex+1}. Prøv en anden rute eller opgradér hæren.`;this.els.resultStats.innerHTML=won?`<span><strong>${"★".repeat(this.run.stars)}${"☆".repeat(3-this.run.stars)}</strong><small>Stjerner</small></span><span><strong>${this.run.score.toLocaleString("da-DK")}</strong><small>Point</small></span><span><strong>${this.run.maxCombo}×</strong><small>Bedste combo</small></span>`:`<span><strong>${this.run.army}</strong><small>Soldater</small></span><span><strong>${this.run.gateIndex}/${this.run.level.gates.length}</strong><small>Porte</small></span>`;if(won&&!this.savedResult){this.savedResult=true;const oldStars=this.progress.stars[this.run.level.id]||0;const improvement=Math.max(0,this.run.stars-oldStars);this.progress.stars[this.run.level.id]=Math.max(oldStars,this.run.stars);this.progress.unlockedLevel=Math.max(this.progress.unlockedLevel,Math.min(LEVELS.length,this.run.level.id+1));this.progress.coins+=improvement*60;this.saveProgress();await window.WutborgHighscores?.submit({gameKey:"borgstorm",gameTitle:"Borgstorm",score:this.run.score,outcome:"victory",details:{level:this.run.level.id,soldiers:this.run.army,stars:this.run.stars,combo:this.run.maxCombo}});this.populateLevels();this.updateUpgradeUI();this.audio.tone(784,.35,"triangle",.05);}else if(!won)this.audio.tone(110,.4,"sawtooth",.04);this.refresh();}
+    updateCampaignSummary() {
+      const level = LEVELS[this.selectedLevel];
+      const totalStars = Object.values(this.progress.stars).reduce((sum, value) => sum + value, 0);
+      this.els.campaignTitle.textContent = "Bane " + level.id + ": " + level.name;
+      this.els.regionName.textContent = level.region.name + (level.boss ? " · Bosskamp" : "");
+      this.els.campaignCopy.textContent = level.gates.length + " porte · Start med " + (level.startingArmy + this.progress.upgrades.reinforcement * 3) + " soldater";
+      this.els.campaignProgress.textContent = totalStars + "/60 stjerner · " + this.progress.unlockedLevel + "/20 baner åbne";
+      this.els.coins.textContent = this.progress.coins.toLocaleString("da-DK") + " mønter";
+      this.els.start.textContent = level.boss ? "Start bosskampen →" : "Start bane " + level.id + " →";
+      const best = window.WutborgHighscores?.best("borgstorm");
+      this.els.best.textContent = best ? "Din rekord: " + Number(best.score).toLocaleString("da-DK") + " point" : "Din første rekord venter på slagmarken.";
+    }
 
-    setMessage(message){this.els.message.textContent=message;}
-    choiceKind(choice){if(!choice)return"neutral";if(choice.type==="tower")return"enemy";if(choice.type==="hazard"||choice.operation==="subtract"||choice.operation==="divide")return"danger";if(choice.type==="recruit")return"recruit";return"bonus";}
-    refresh(){const level=this.run.level;const gateNumber=Math.min(this.run.gateIndex+1,level.gates.length);this.els.stage.textContent=`${gateNumber}/${level.gates.length}`;this.els.level.textContent=`${level.id}/20`;this.els.army.textContent=this.run.army;this.els.combo.textContent=`${this.run.combo}×`;const gate=this.run.currentGate;this.els.left.disabled=this.run.state!=="choosing";this.els.right.disabled=this.run.state!=="choosing";this.els.left.dataset.choiceKind=this.choiceKind(gate?.choices[0]);this.els.right.dataset.choiceKind=this.choiceKind(gate?.choices[1]);this.els.left.querySelector("strong").textContent=gate?.choices[0].label||"–";this.els.left.querySelector("small").textContent=gate?.choices[0].hint||"Færdig";this.els.right.querySelector("strong").textContent=gate?.choices[1].label||"–";this.els.right.querySelector("small").textContent=gate?.choices[1].hint||"Færdig";this.els.pauseButton.disabled=!["choosing","marching"].includes(this.run.state);const best=window.WutborgHighscores?.best("borgstorm");this.els.best.textContent=best?`Bedste: ${Number(best.score).toLocaleString("da-DK")} point`:"Bedste: ingen endnu";this.els.unitRoster.innerHTML=Object.entries(this.run.units).filter(([,count])=>count>0).map(([type,count])=>`<span style="--unit:${UNIT_TYPES[type].color}">${UNIT_TYPES[type].icon} ${Math.min(count,this.run.army)}</span>`).join("");}
-    loop(now){const dt=Math.min(.05,(now-this.lastFrame)/1000);this.lastFrame=now;if(!this.paused)this.resolve(this.run.update(dt));this.audio.update(dt,!this.paused&&["choosing","marching"].includes(this.run.state));this.refresh();this.renderer.draw(this.run,dt);requestAnimationFrame(time=>this.loop(time));}
+    purchaseUpgrade(type) {
+      const rank = this.progress.upgrades[type];
+      if (rank === undefined || this.els.menu.hidden) return;
+      const cost = 80 + rank * 60;
+      if (rank >= 5) return;
+      if (this.progress.coins < cost) {
+        this.els.upgradeMessage.textContent = "Du mangler " + (cost - this.progress.coins) + " mønter. Vind flere stjerner på banerne.";
+        return;
+      }
+      this.progress.coins -= cost;
+      this.progress.upgrades[type] += 1;
+      this.els.upgradeMessage.textContent = "Opgraderet til niveau " + this.progress.upgrades[type] + ". Hæren er klar!";
+      this.saveProgress();
+      this.run.load(LEVELS[this.selectedLevel], this.progress.upgrades);
+      this.audio.tone(660, .14, "triangle", .04);
+      this.updateUpgradeUI();
+      this.populateLevels();
+      this.refresh();
+    }
+
+    updateUpgradeUI() {
+      document.querySelectorAll("[data-battle-upgrade]").forEach(button => {
+        const rank = this.progress.upgrades[button.dataset.battleUpgrade];
+        const cost = 80 + rank * 60;
+        button.querySelector("strong").textContent = "Niveau " + rank + "/5";
+        button.querySelector("small").textContent = rank >= 5 ? "Maksimum" : cost + " mønter";
+        button.disabled = rank >= 5;
+      });
+    }
+
+    start() {
+      this.run.load(LEVELS[this.selectedLevel], this.progress.upgrades);
+      this.renderer.reset?.();
+      this.run.start();
+      this.savedResult = false;
+      this.paused = false;
+      this.els.menu.hidden = true;
+      this.els.result.hidden = true;
+      this.els.pause.hidden = true;
+      this.page.dataset.view = "playing";
+      this.refresh();
+      this.renderer.resizeRenderer?.();
+      window.scrollTo(0, 0);
+      this.els.pauseButton.focus({ preventScroll: true });
+      this.audio.tone(392, .13, "square", .035);
+      this.setMessage(this.is3D ? "Træk hæren mod en port, eller styr med piletasterne." : "Tryk på en port, eller brug piletasterne.");
+    }
+
+    nextLevel() {
+      if (this.run.state !== "won" || this.selectedLevel >= LEVELS.length - 1) return;
+      this.selectLevel(this.selectedLevel + 1);
+      this.start();
+    }
+
+    showMenu() {
+      this.run.load(LEVELS[this.selectedLevel], this.progress.upgrades);
+      this.renderer.reset?.();
+      this.paused = false;
+      this.els.menu.hidden = false;
+      this.els.result.hidden = true;
+      this.els.pause.hidden = true;
+      this.populateLevels();
+      this.updateUpgradeUI();
+      this.refresh();
+      this.els.start.focus();
+    }
+
+    choose(side) {
+      if (this.paused || !this.run.choose(side)) return;
+      this.audio.tone(side === 0 ? 294 : 330, .08, "triangle", .03);
+      this.setMessage(side === 0 ? "Hæren marcherer mod venstre…" : "Hæren marcherer mod højre…");
+      this.refresh();
+    }
+
+    togglePause(forcePause) {
+      if (!["choosing", "marching"].includes(this.run.state)) return;
+      const paused = typeof forcePause === "boolean" ? forcePause : !this.paused;
+      if (paused === this.paused) return;
+      this.paused = paused;
+      this.renderer.setSteering?.(0);
+      this.els.pause.hidden = !paused;
+      this.refresh();
+      (paused ? this.els.resume : this.els.pauseButton).focus({ preventScroll: true });
+    }
+
+    resolve(outcome) {
+      if (!outcome) return;
+      this.renderer.emit(outcome);
+      this.setMessage(outcome.message + (outcome.combo > 1 ? " · " + outcome.combo + "× combo!" : ""));
+      this.audio.tone(outcome.delta >= 0 ? 588 : 164, .12, outcome.delta >= 0 ? "triangle" : "sawtooth", .045);
+      if (outcome.type !== "continue") this.showResult(outcome.type === "won");
+      this.refresh();
+    }
+
+    showResult(won) {
+      this.els.result.hidden = false;
+      this.els.resultTitle.textContent = won ? (this.run.level.id === LEVELS.length ? "Guldborgen er din!" : this.run.level.boss ? "Borgen er erobret!" : "Sejr!") : "Hæren blev slået";
+      this.els.resultCopy.textContent = won ? "Bane " + this.run.level.id + " klaret med " + this.run.army + " soldater tilbage." : "Du nåede port " + (this.run.gateIndex + 1) + ". Prøv en anden rute eller opgradér hæren.";
+      this.els.resultStats.innerHTML = won
+        ? '<span><strong>' + '★'.repeat(this.run.stars) + '☆'.repeat(3 - this.run.stars) + '</strong><small>Stjerner</small></span><span><strong>' + this.run.score.toLocaleString("da-DK") + '</strong><small>Point</small></span><span><strong>' + this.run.maxCombo + '×</strong><small>Bedste combo</small></span>'
+        : '<span><strong>' + this.run.gateIndex + '/' + this.run.level.gates.length + '</strong><small>Porte klaret</small></span><span><strong>' + this.run.score.toLocaleString("da-DK") + '</strong><small>Point</small></span>';
+      this.els.next.hidden = !won || this.selectedLevel === LEVELS.length - 1;
+      this.els.reward.textContent = "";
+      if (won && !this.savedResult) {
+        this.savedResult = true;
+        const oldStars = this.progress.stars[this.run.level.id] || 0;
+        const improvement = Math.max(0, this.run.stars - oldStars);
+        this.progress.stars[this.run.level.id] = Math.max(oldStars, this.run.stars);
+        this.progress.unlockedLevel = Math.max(this.progress.unlockedLevel, Math.min(LEVELS.length, this.run.level.id + 1));
+        this.progress.coins += improvement * 60;
+        this.els.reward.textContent = improvement ? "+" + improvement * 60 + " mønter til hæren" : "Slå dit stjernetal for at tjene flere mønter.";
+        this.saveProgress();
+        const submission = window.WutborgHighscores?.submit({ gameKey: "borgstorm", gameTitle: "Borgstorm", score: this.run.score, outcome: "victory", details: { level: this.run.level.id, soldiers: this.run.army, stars: this.run.stars, combo: this.run.maxCombo } });
+        Promise.resolve(submission).catch(error => console.warn("Rekorden kunne ikke gemmes.", error));
+        this.populateLevels();
+        this.updateUpgradeUI();
+        this.audio.tone(784, .35, "triangle", .05);
+      } else if (!won) this.audio.tone(110, .4, "sawtooth", .04);
+      this.refresh();
+      (this.els.next.hidden ? this.els.retry : this.els.next).focus({ preventScroll: true });
+    }
+
+    setMessage(message) { this.els.message.textContent = message; }
+    choiceKind(choice) {
+      if (!choice) return "neutral";
+      if (choice.type === "tower") return "enemy";
+      if (choice.type === "hazard" || choice.operation === "subtract" || choice.operation === "divide") return "danger";
+      return choice.type === "recruit" ? "recruit" : "bonus";
+    }
+
+    refresh() {
+      const level = this.run.level;
+      this.page.dataset.view = !this.els.menu.hidden ? "menu" : this.paused ? "paused" : !this.els.result.hidden ? "result" : "playing";
+      const modal = this.paused || !this.els.result.hidden;
+      document.querySelector(".battle-nav").inert = modal;
+      document.querySelector(".battle-command").inert = modal;
+      this.els.stage.textContent = Math.min(this.run.gateIndex + 1, level.gates.length) + "/" + level.gates.length;
+      this.els.level.textContent = level.id + "/20";
+      this.els.army.textContent = this.run.army;
+      this.els.combo.textContent = this.run.combo + "×";
+      this.els.routeProgress.max = level.gates.length;
+      this.els.routeProgress.value = this.run.gateIndex;
+      this.els.routeProgress.textContent = this.run.gateIndex + " af " + level.gates.length;
+      const gate = this.run.currentGate;
+      [this.els.left, this.els.right].forEach((button, side) => {
+        const choice = gate?.choices[side];
+        button.disabled = this.paused || this.run.state !== "choosing";
+        button.dataset.choiceKind = this.choiceKind(choice);
+        button.querySelector("strong").textContent = choice?.label || "–";
+        button.querySelector("small").textContent = choice?.hint || "Færdig";
+        button.setAttribute("aria-label", (side ? "Højre" : "Venstre") + " port" + (choice ? ": " + choice.hint + " " + choice.label : ""));
+      });
+      this.els.pauseButton.disabled = !["choosing", "marching"].includes(this.run.state);
+      this.els.pauseButton.textContent = this.paused ? "Fortsæt" : "Pause";
+      this.els.unitRoster.innerHTML = Object.entries(this.run.units).filter(([, count]) => count > 0).map(([type, count]) => '<span title="' + UNIT_TYPES[type].name + '" aria-label="' + UNIT_TYPES[type].name + ': ' + Math.min(count, this.run.army) + '" style="--unit:' + UNIT_TYPES[type].color + '"><b aria-hidden="true">' + UNIT_TYPES[type].icon + '</b> ' + Math.min(count, this.run.army) + '</span>').join("");
+    }
+
+    loop(now) {
+      const dt = Math.min(.05, (now - this.lastFrame) / 1000);
+      this.lastFrame = now;
+      if (!this.paused && this.els.menu.hidden && !document.hidden) {
+        this.resolve(this.run.update(dt));
+        this.audio.update(dt, ["choosing", "marching"].includes(this.run.state));
+        this.renderer.draw(this.run, dt);
+      }
+      requestAnimationFrame(time => this.loop(time));
+    }
   }
 
-  window.WutborgBattle={data,BattleRun,ArenaRenderer,AudioManager};
-  if(typeof document!=="undefined")document.addEventListener("DOMContentLoaded",()=>{if(document.getElementById("battle-canvas"))window.wutborgBattleGame=new BattleGame();});
+  window.WutborgBattle = { data, BattleRun, ArenaRenderer, AudioManager, BattleGame };
+  if (typeof document !== "undefined") document.addEventListener("DOMContentLoaded", () => {
+    if (document.getElementById("battle-canvas")) window.wutborgBattleGame = new BattleGame();
+  });
 })();

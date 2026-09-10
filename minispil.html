@@ -3,1893 +3,28 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#f3eadc" />
-  <title>Familiens minispil | Wutborg.dk</title>
-  <meta
-    name="description"
-    content="Ti gratis minispil samlet i familien Wutborgs spillehjørne – fra Borgstorm og Wutborg Kart til Snake, Tetris og Sangquiz."
-  />
-  <style>
-    :root {
-      --cream: #f7f0e5;
-      --cream-light: #fffaf2;
-      --paper: #fffdf8;
-      --ink: #3b312b;
-      --muted: #786a60;
-      --terracotta: #b85f45;
-      --terracotta-dark: #914631;
-      --sage: #75866a;
-      --sage-dark: #53604b;
-      --mustard: #d6a542;
-      --wood: #8b6045;
-      --line: rgba(70, 50, 38, 0.13);
-      --shadow: 0 24px 70px rgba(77, 52, 37, 0.12);
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    html {
-      scroll-behavior: smooth;
-    }
-
-    body {
-      margin: 0;
-      min-width: 320px;
-      min-height: 100vh;
-      overflow-x: hidden;
-      color: var(--ink);
-      font-family: Inter, ui-rounded, "Arial Rounded MT Bold", system-ui, sans-serif;
-      background:
-        radial-gradient(circle at 8% 5%, rgba(214, 165, 66, 0.13), transparent 24rem),
-        radial-gradient(circle at 93% 16%, rgba(117, 134, 106, 0.14), transparent 27rem),
-        var(--cream);
-    }
-
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      z-index: -1;
-      pointer-events: none;
-      opacity: 0.34;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.09'/%3E%3C/svg%3E");
-    }
-
-    a {
-      color: inherit;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    a:focus-visible {
-      outline: 4px solid var(--terracotta);
-      outline-offset: 4px;
-    }
-
-    .sr-only,
-    .game-search .sr-only {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      padding: 0;
-      margin: -1px;
-      overflow: hidden;
-      clip: rect(0, 0, 0, 0);
-      white-space: nowrap;
-      border: 0;
-    }
-
-    .page {
-      width: min(1180px, calc(100% - 40px));
-      margin: 0 auto;
-      padding: 22px 0 44px;
-    }
-
-    .nav {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 24px;
-      min-height: 70px;
-      padding: 10px 12px 10px 16px;
-      border: 1px solid var(--line);
-      border-radius: 20px;
-      background: rgba(255, 253, 248, 0.8);
-      box-shadow: 0 10px 35px rgba(77, 52, 37, 0.07);
-      backdrop-filter: blur(16px);
-    }
-
-    .brand {
-      display: inline-flex;
-      align-items: center;
-      gap: 12px;
-      color: var(--ink);
-      text-decoration: none;
-      font-weight: 900;
-      letter-spacing: -0.035em;
-    }
-
-    .brand-mark {
-      position: relative;
-      display: grid;
-      place-items: center;
-      width: 43px;
-      height: 43px;
-      border-radius: 14px;
-      color: var(--cream-light);
-      background: var(--terracotta);
-      box-shadow: inset 0 -5px 12px rgba(90, 39, 25, 0.16);
-      font-size: 1.15rem;
-    }
-
-    .brand small {
-      display: block;
-      margin-top: 1px;
-      color: var(--muted);
-      font-size: 0.67rem;
-      font-weight: 800;
-      letter-spacing: 0.13em;
-      text-transform: uppercase;
-    }
-
-    .nav-links {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    .nav-links a {
-      padding: 10px 13px;
-      border-radius: 999px;
-      color: var(--muted);
-      text-decoration: none;
-      font-size: 0.85rem;
-      font-weight: 800;
-      transition: color 0.2s ease, background 0.2s ease, transform 0.2s ease;
-    }
-
-    .nav-links a:hover {
-      color: var(--terracotta-dark);
-      background: rgba(184, 95, 69, 0.08);
-      transform: translateY(-2px);
-    }
-
-    .hero {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(320px, 0.78fr);
-      gap: 42px;
-      align-items: end;
-      padding: clamp(70px, 10vw, 118px) clamp(4px, 3vw, 32px) clamp(48px, 7vw, 78px);
-    }
-
-    .kicker {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      margin: 0 0 19px;
-      padding: 9px 13px;
-      border: 1px solid rgba(184, 95, 69, 0.18);
-      border-radius: 999px;
-      color: var(--terracotta-dark);
-      background: rgba(184, 95, 69, 0.08);
-      font-size: 0.73rem;
-      font-weight: 900;
-      letter-spacing: 0.11em;
-      text-transform: uppercase;
-    }
-
-    h1 {
-      margin: 0;
-      font-family: Georgia, "Times New Roman", serif;
-      font-size: clamp(3.6rem, 8vw, 7.1rem);
-      line-height: 0.88;
-      letter-spacing: -0.065em;
-      text-wrap: balance;
-    }
-
-    h1 span {
-      color: var(--terracotta);
-      font-style: italic;
-    }
-
-    .intro {
-      margin: 0;
-      color: var(--muted);
-      font-size: clamp(1rem, 1.6vw, 1.15rem);
-      line-height: 1.75;
-    }
-
-    .intro strong {
-      color: var(--ink);
-    }
-
-    .hero-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 25px;
-    }
-
-    .hero-action {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 9px;
-      min-height: 47px;
-      padding: 11px 17px;
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      color: var(--ink);
-      background: rgba(255, 253, 248, 0.72);
-      text-decoration: none;
-      font-size: 0.82rem;
-      font-weight: 900;
-      box-shadow: 0 8px 24px rgba(77, 52, 37, 0.07);
-      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-    }
-
-    .hero-action.primary {
-      border-color: var(--terracotta);
-      color: #fffaf2;
-      background: var(--terracotta);
-    }
-
-    .hero-action:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 30px rgba(77, 52, 37, 0.12);
-    }
-
-    .hero-action span {
-      font-size: 1rem;
-    }
-
-    .hero-meta {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 8px;
-      margin-top: 27px;
-    }
-
-    .hero-meta span {
-      padding: 13px 12px;
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      color: var(--muted);
-      background: rgba(255, 253, 248, 0.6);
-      font-size: 0.67rem;
-      font-weight: 800;
-      line-height: 1.35;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-
-    .hero-meta strong {
-      display: block;
-      margin-bottom: 2px;
-      color: var(--ink);
-      font-family: Georgia, "Times New Roman", serif;
-      font-size: 1.45rem;
-      line-height: 1;
-      letter-spacing: -0.04em;
-      text-transform: none;
-    }
-
-    .game-browser {
-      scroll-margin-top: 18px;
-      margin-bottom: 18px;
-      padding: 18px;
-      border: 1px solid var(--line);
-      border-radius: 24px;
-      background: rgba(255, 253, 248, 0.72);
-      box-shadow: 0 12px 38px rgba(77, 52, 37, 0.07);
-    }
-
-    .game-browser-top {
-      display: flex;
-      align-items: end;
-      justify-content: space-between;
-      gap: 18px;
-      margin-bottom: 15px;
-    }
-
-    .game-browser h2 {
-      margin: 0;
-      font-family: Georgia, "Times New Roman", serif;
-      font-size: clamp(1.8rem, 4vw, 2.7rem);
-      letter-spacing: -0.045em;
-    }
-
-    .catalog-status {
-      margin: 5px 0 0;
-      color: var(--muted);
-      font-size: 0.78rem;
-      font-weight: 750;
-    }
-
-    .game-search {
-      position: relative;
-      width: min(310px, 100%);
-    }
-
-    .game-search span {
-      position: absolute;
-      top: 50%;
-      left: 14px;
-      color: var(--muted);
-      transform: translateY(-50%);
-      pointer-events: none;
-    }
-
-    .game-search input {
-      width: 100%;
-      min-height: 45px;
-      padding: 10px 14px 10px 39px;
-      border: 1px solid rgba(70, 50, 38, 0.18);
-      border-radius: 14px;
-      color: var(--ink);
-      background: #fff;
-      font: inherit;
-      font-size: 0.84rem;
-      font-weight: 700;
-    }
-
-    .game-search input:focus-visible {
-      outline: 3px solid rgba(184, 95, 69, 0.28);
-      border-color: var(--terracotta);
-    }
-
-    .game-filters {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 7px;
-    }
-
-    .game-filter {
-      min-height: 39px;
-      padding: 8px 13px;
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      color: var(--muted);
-      background: #fff;
-      font: inherit;
-      font-size: 0.75rem;
-      font-weight: 900;
-      cursor: pointer;
-    }
-
-    .game-filter:hover,
-    .game-filter[aria-pressed="true"] {
-      border-color: var(--terracotta);
-      color: #fffaf2;
-      background: var(--terracotta);
-    }
-
-    .game-filter:focus-visible {
-      outline: 3px solid rgba(184, 95, 69, 0.28);
-      outline-offset: 2px;
-    }
-
-    .game-card[hidden] {
-      display: none;
-    }
-
-    .no-games {
-      margin: 18px 0 0;
-      padding: 25px;
-      border: 1px dashed rgba(70, 50, 38, 0.24);
-      border-radius: 20px;
-      color: var(--muted);
-      text-align: center;
-      background: rgba(255, 253, 248, 0.52);
-    }
-
-    .no-games strong {
-      display: block;
-      margin-bottom: 4px;
-      color: var(--ink);
-      font-family: Georgia, "Times New Roman", serif;
-      font-size: 1.4rem;
-    }
-
-    .games {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 18px;
-    }
-
-    .game-card {
-      --card-bg: rgba(255, 253, 248, 0.82);
-      --card-ink: var(--ink);
-      --card-muted: var(--muted);
-      --card-accent: var(--terracotta);
-      --card-button-ink: #fffaf2;
-      --card-outline: var(--line);
-      position: relative;
-      display: flex;
-      min-height: 470px;
-      overflow: hidden;
-      padding: 29px;
-      border: 2px solid var(--card-outline);
-      border-radius: 28px;
-      color: var(--card-ink);
-      text-decoration: none;
-      background: var(--card-bg);
-      box-shadow: 0 17px 48px rgba(77, 52, 37, 0.08);
-      isolation: isolate;
-      transition: transform 0.25s ease, box-shadow 0.25s ease;
-    }
-
-    .game-card::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      z-index: -1;
-      opacity: 0.9;
-      background:
-        radial-gradient(circle at 88% 18%, var(--card-glow), transparent 37%),
-        linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
-      background-size: auto, 22px 22px, 22px 22px;
-      mask-image: linear-gradient(to bottom, #000, rgba(0,0,0,0.55));
-    }
-
-    .game-card:hover {
-      transform: translateY(-7px);
-      box-shadow: var(--shadow);
-    }
-
-    .game-card.connect {
-      --card-bg: linear-gradient(145deg, #fffdf8, #f0e9ff);
-      --card-ink: #2a2250;
-      --card-muted: #655c82;
-      --card-accent: #7145d6;
-      --card-button-ink: #fff;
-      --card-outline: rgba(113, 69, 214, 0.22);
-      --card-glow: rgba(113, 69, 214, 0.2);
-    }
-
-    .game-card.snake {
-      --card-bg:
-        radial-gradient(circle at 88% 15%, rgba(125, 204, 90, 0.13), transparent 38%),
-        linear-gradient(145deg, #0c160b, #050b06);
-      --card-ink: #ecf7e8;
-      --card-muted: #87a27a;
-      --card-accent: #7dcc5a;
-      --card-button-ink: #0a1609;
-      --card-outline: rgba(125, 204, 90, 0.23);
-      --card-glow: rgba(125, 204, 90, 0.12);
-    }
-
-    .game-card.breaker {
-      --card-bg:
-        radial-gradient(circle at 90% 10%, rgba(255, 79, 163, 0.12), transparent 32%),
-        linear-gradient(145deg, #101b3a, #030714);
-      --card-ink: #f8fbff;
-      --card-muted: #91a2c8;
-      --card-accent: #55f6e7;
-      --card-button-ink: #061229;
-      --card-outline: rgba(85, 246, 231, 0.22);
-      --card-glow: rgba(85, 246, 231, 0.12);
-    }
-
-    .game-card.tetris {
-      --card-bg:
-        radial-gradient(circle at 88% 12%, rgba(255, 79, 154, 0.17), transparent 34%),
-        linear-gradient(145deg, #2e176f, #10092e);
-      --card-ink: #f8f6ff;
-      --card-muted: #bdb5dc;
-      --card-accent: #43e4e8;
-      --card-button-ink: #19103f;
-      --card-outline: rgba(169, 137, 255, 0.3);
-      --card-glow: rgba(117, 73, 232, 0.2);
-    }
-
-    .game-card.geometry {
-      --card-bg:
-        radial-gradient(circle at 84% 13%, rgba(255, 216, 78, 0.18), transparent 34%),
-        radial-gradient(circle at 20% 86%, rgba(67, 228, 232, 0.16), transparent 38%),
-        linear-gradient(145deg, #182039, #050711);
-      --card-accent: #ffd84e;
-      --card-accent-2: #43e4e8;
-      --card-text: #f8fbff;
-      --card-muted: #bcc9df;
-      --card-outline: rgba(255, 216, 78, 0.28);
-      --card-glow: rgba(67, 228, 232, 0.16);
-    }
-
-    .game-card.pokemon {
-      grid-column: 1 / -1;
-      min-height: 425px;
-      --card-bg:
-        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px),
-        linear-gradient(145deg, #162d39, #09171f);
-      --card-ink: #fff;
-      --card-muted: #b7c7cd;
-      --card-accent: #efbd4d;
-      --card-button-ink: #14212a;
-      --card-outline: rgba(239, 189, 77, 0.3);
-      --card-glow: rgba(78, 135, 217, 0.18);
-      background-size: 22px 22px, 22px 22px, auto;
-    }
-
-    .game-card.skybound {
-      grid-column: 1 / -1;
-      min-height: 425px;
-      --card-bg:
-        radial-gradient(circle at 84% 12%, rgba(255, 212, 93, 0.34), transparent 31%),
-        linear-gradient(145deg, #f7ffed, #d9f4ff);
-      --card-ink: #173f5d;
-      --card-muted: #527184;
-      --card-accent: #f26850;
-      --card-button-ink: #fff;
-      --card-outline: rgba(23, 63, 93, 0.22);
-      --card-glow: rgba(45, 194, 176, 0.17);
-    }
-
-    .game-card.kart {
-      grid-column: 1 / -1;
-      min-height: 425px;
-      --card-bg:
-        radial-gradient(circle at 82% 18%, rgba(255, 218, 91, 0.45), transparent 29%),
-        linear-gradient(145deg, #a8e5ff, #edf9d9);
-      --card-ink: #173b59;
-      --card-muted: #527188;
-      --card-accent: #e85d4e;
-      --card-button-ink: #fff;
-      --card-outline: rgba(23, 59, 89, 0.22);
-      --card-glow: rgba(232, 93, 78, 0.19);
-    }
-
-    .game-card.kart::after {
-      content: "NYHED";
-      position: absolute;
-      top: 23px;
-      right: 23px;
-      z-index: 5;
-      padding: 8px 11px;
-      border-radius: 999px;
-      color: #fff;
-      background: #e85d4e;
-      box-shadow: 0 7px 18px rgba(114, 37, 30, 0.2);
-      font-size: 0.65rem;
-      font-weight: 950;
-      letter-spacing: 0.12em;
-    }
-
-    .kart-preview {
-      right: 5%;
-      bottom: 43px;
-      width: min(50%, 540px);
-      height: 286px;
-      overflow: hidden;
-      border: 5px solid #193b59;
-      border-radius: 48% 52% 44% 56%;
-      background:
-        radial-gradient(ellipse at center, #56b756 0 29%, transparent 30%),
-        radial-gradient(ellipse at center, transparent 0 42%, #4d5564 43% 63%, transparent 64%),
-        #78c963;
-      box-shadow: 0 18px 42px rgba(23, 59, 89, 0.22);
-      transform: rotate(-2deg);
-    }
-
-    .kart-preview::before {
-      content: "KLOVERSLØJFEN";
-      position: absolute;
-      top: 20px;
-      left: 25px;
-      color: rgba(255,255,255,0.88);
-      font: 950 0.7rem/1 ui-monospace, monospace;
-      letter-spacing: 0.15em;
-    }
-
-    .kart-car {
-      position: absolute;
-      width: 64px;
-      height: 36px;
-      border: 5px solid #173b59;
-      border-radius: 19px 19px 10px 10px;
-      background: #ef5b4e;
-      box-shadow: 0 8px 0 rgba(23,59,89,0.18);
-    }
-
-    .kart-car::before,
-    .kart-car::after {
-      content: "";
-      position: absolute;
-      top: -9px;
-      width: 13px;
-      height: 43px;
-      border-radius: 7px;
-      background: #1c2d41;
-    }
-
-    .kart-car::before { left: 5px; }
-    .kart-car::after { right: 5px; }
-    .kart-car.one { left: 26%; bottom: 58px; transform: rotate(-19deg); }
-    .kart-car.two { right: 20%; top: 83px; background: #46ad69; transform: rotate(30deg) scale(.8); }
-    .kart-item { position: absolute; right: 25%; bottom: 42px; width: 28px; height: 28px; border: 4px solid #173b59; border-radius: 8px; background: #5dd9f5; transform: rotate(45deg); }
-
-    .game-card.battle {
-      --card-bg:
-        radial-gradient(circle at 78% 16%, rgba(234, 153, 73, 0.38), transparent 27%),
-        linear-gradient(145deg, #d8f0f1, #e9dfca);
-      --card-ink: #1d4055;
-      --card-muted: #5e7381;
-      --card-accent: #d3534c;
-      --card-button-ink: #fff;
-      --card-outline: rgba(29, 64, 85, 0.22);
-      --card-glow: rgba(63, 145, 194, 0.18);
-    }
-
-    .game-card.battle h2 { max-width: 290px; }
-    .battle-preview {
-      right: 6%;
-      bottom: 57px;
-      width: 47%;
-      height: 255px;
-      overflow: hidden;
-      border: 5px solid #29465a;
-      border-radius: 28px 28px 46px 46px;
-      background:
-        linear-gradient(90deg, transparent 0 26%, rgba(87, 86, 88, .85) 27% 73%, transparent 74%),
-        linear-gradient(#b7dfe1 0 34%, #8a6d63 35% 100%);
-      box-shadow: 0 16px 36px rgba(29, 64, 85, 0.2);
-      transform: rotate(2deg);
-    }
-    .battle-preview::before { content:"BORGSTORM"; position:absolute; top:18px; left:20px; color:rgba(255,255,255,.84); font:900 .65rem/1 ui-monospace,monospace; letter-spacing:.14em; }
-    .battle-gate { position:absolute; top:69px; width:38%; height:126px; border:4px solid #743d38; border-radius:13px; background:repeating-linear-gradient(#e2944d 0 19px,#c86d43 20px 23px); box-shadow:inset 0 0 0 5px rgba(255,221,159,.22); }
-    .battle-gate::after { content:attr(data-power); position:absolute; left:50%; top:43px; display:grid; place-items:center; width:58px; height:52px; border-radius:12px; color:#fff9df; background:#304055; font:950 1.5rem/1 Inter,sans-serif; transform:translateX(-50%); }
-    .battle-gate.left { left:9%; }.battle-gate.right { right:9%; }.battle-squad { position:absolute; bottom:21px; left:50%; width:104px; height:54px; transform:translateX(-50%); background:radial-gradient(circle at 10% 70%,#5ad0ed 0 7px,transparent 8px),radial-gradient(circle at 28% 37%,#2e86d8 0 8px,transparent 9px),radial-gradient(circle at 47% 72%,#57bee6 0 8px,transparent 9px),radial-gradient(circle at 68% 36%,#2e86d8 0 8px,transparent 9px),radial-gradient(circle at 87% 70%,#5ad0ed 0 7px,transparent 8px); }
-
-    .game-card.sangquiz {
-      grid-column: 1 / -1;
-      min-height: 425px;
-      --card-bg:
-        radial-gradient(circle at 82% 15%, rgba(255, 80, 132, 0.22), transparent 32%),
-        radial-gradient(circle at 18% 88%, rgba(72, 212, 255, 0.17), transparent 38%),
-        linear-gradient(145deg, #19112d, #080712);
-      --card-ink: #fff8ff;
-      --card-muted: #cbbdd9;
-      --card-accent: #ff5084;
-      --card-button-ink: #fff;
-      --card-outline: rgba(255, 80, 132, 0.28);
-      --card-glow: rgba(72, 212, 255, 0.16);
-    }
-
-    .card-content {
-      position: relative;
-      z-index: 3;
-      align-self: flex-start;
-    }
-
-    .game-number {
-      color: var(--card-accent);
-      font-size: 0.68rem;
-      font-weight: 950;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-    }
-
-    .game-card h2 {
-      max-width: 320px;
-      margin: 11px 0 0;
-      font-family: Georgia, "Times New Roman", serif;
-      font-size: clamp(2.15rem, 4vw, 3.4rem);
-      line-height: 0.96;
-      letter-spacing: -0.05em;
-    }
-
-    .game-card.breaker h2,
-    .game-card.tetris h2,
-    .game-card.geometry h2,
-    .game-card.pokemon h2,
-    .game-card.skybound h2,
-    .game-card.sangquiz h2 {
-      font-family: Inter, ui-rounded, "Arial Rounded MT Bold", system-ui, sans-serif;
-      font-weight: 950;
-      letter-spacing: -0.065em;
-    }
-
-    .game-card.breaker h2 {
-      background: linear-gradient(90deg, #fff, #55f6e7 54%, #ff4fa3);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-    }
-
-    .game-card.tetris h2 {
-      text-shadow: 4px 5px 0 rgba(7, 3, 30, 0.35);
-    }
-
-    .game-card.geometry h2 {
-      max-width: 360px;
-      text-transform: uppercase;
-      text-shadow: 4px 5px 0 rgba(3, 6, 18, 0.38);
-    }
-
-    .game-card.pokemon h2 {
-      max-width: 470px;
-      font-family: Impact, "Arial Black", sans-serif;
-      font-size: clamp(3rem, 5vw, 5.1rem);
-      line-height: 0.82;
-      text-transform: uppercase;
-      text-shadow: 6px 7px 0 rgba(0,0,0,0.25);
-    }
-
-    .game-card.pokemon h2 span {
-      display: block;
-      color: var(--card-accent);
-      font-size: 0.72em;
-    }
-
-    .game-card.pokemon .card-content {
-      max-width: 48%;
-    }
-
-    .game-card.pokemon p {
-      max-width: 430px;
-    }
-
-    .game-card.skybound h2 {
-      max-width: 430px;
-      font-family: Georgia, "Times New Roman", serif;
-      font-size: clamp(3rem, 5.5vw, 5.5rem);
-      line-height: 0.82;
-      font-style: italic;
-    }
-
-    .game-card.skybound h2 span {
-      display: block;
-      color: #2a9b83;
-      font-size: 0.72em;
-    }
-
-    .game-card.skybound .card-content {
-      max-width: 46%;
-    }
-
-    .game-card.skybound p {
-      max-width: 430px;
-    }
-
-    .game-card.sangquiz h2 {
-      max-width: 470px;
-      font-size: clamp(3.1rem, 5.5vw, 5.5rem);
-      line-height: 0.82;
-      text-transform: uppercase;
-      background: linear-gradient(92deg, #fff, #ffb0c9 46%, #48d4ff);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-    }
-
-    .game-card.sangquiz .card-content {
-      max-width: 46%;
-    }
-
-    .game-card.sangquiz p {
-      max-width: 430px;
-    }
-
-    .game-card p {
-      max-width: 320px;
-      margin: 15px 0 0;
-      color: var(--card-muted);
-      font-size: 0.91rem;
-      line-height: 1.58;
-    }
-
-    .game-card.connect p {
-      max-width: 245px;
-    }
-
-    .play {
-      position: absolute;
-      left: 29px;
-      bottom: 27px;
-      z-index: 4;
-      display: inline-flex;
-      align-items: center;
-      gap: 9px;
-      min-height: 45px;
-      padding: 0 17px;
-      border-radius: 999px;
-      color: var(--card-button-ink);
-      background: var(--card-accent);
-      box-shadow: 0 12px 25px color-mix(in srgb, var(--card-accent) 30%, transparent);
-      font-size: 0.84rem;
-      font-weight: 900;
-    }
-
-    .play::after {
-      content: "→";
-      transition: transform 0.2s ease;
-    }
-
-    .game-card:hover .play::after {
-      transform: translateX(4px);
-    }
-
-    .preview {
-      position: absolute;
-      right: -18px;
-      bottom: 72px;
-      z-index: 2;
-      transition: transform 0.3s ease;
-    }
-
-    .game-card:hover .preview {
-      transform: translateY(-7px) rotate(0deg);
-    }
-
-    .connect-preview {
-      display: grid;
-      grid-template-columns: repeat(7, 31px);
-      gap: 6px;
-      padding: 15px;
-      border: 6px solid #7145d6;
-      border-radius: 21px;
-      background: #3d85e8;
-      box-shadow:
-        inset 0 -10px 0 rgba(31, 86, 182, 0.38),
-        0 17px 32px rgba(54, 32, 112, 0.23);
-      transform: rotate(-5deg);
-    }
-
-    .disc {
-      width: 31px;
-      height: 31px;
-      border-radius: 50%;
-      background: #ede8dd;
-      box-shadow: inset 0 4px 7px rgba(49, 53, 68, 0.19);
-    }
-
-    .disc.red {
-      background: #f04456;
-    }
-
-    .disc.yellow {
-      background: #ffd43b;
-    }
-
-    .snake-preview {
-      width: 250px;
-      height: 205px;
-      overflow: hidden;
-      border: 2px solid #315624;
-      border-radius: 16px;
-      background:
-        linear-gradient(rgba(125,204,90,0.075) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(125,204,90,0.075) 1px, transparent 1px),
-        #091208;
-      background-size: 20px 20px;
-      box-shadow: 0 0 34px rgba(125,204,90,0.14), 0 17px 32px rgba(0,0,0,0.3);
-      transform: rotate(3deg);
-    }
-
-    .snake-preview::before {
-      content: "SNAKE  ·  MEDIUM";
-      position: absolute;
-      top: 12px;
-      left: 14px;
-      color: #7dcc5a;
-      font: 900 0.63rem/1 ui-monospace, monospace;
-      letter-spacing: 0.12em;
-    }
-
-    .snake-piece,
-    .snake-food {
-      position: absolute;
-      width: 23px;
-      height: 23px;
-      border-radius: 4px;
-      background: #7dcc5a;
-      box-shadow: 0 0 10px rgba(125,204,90,0.42);
-    }
-
-    .snake-piece:nth-child(1) { left: 44px; top: 119px; }
-    .snake-piece:nth-child(2) { left: 67px; top: 119px; }
-    .snake-piece:nth-child(3) { left: 90px; top: 119px; }
-    .snake-piece:nth-child(4) { left: 113px; top: 119px; }
-    .snake-piece:nth-child(5) { left: 113px; top: 96px; }
-    .snake-piece:nth-child(6) { left: 113px; top: 73px; }
-
-    .snake-food {
-      top: 71px;
-      right: 40px;
-      border-radius: 50%;
-      background: #f04456;
-      box-shadow: 0 0 14px rgba(240,68,86,0.5);
-      animation: pulse 1.4s ease-in-out infinite;
-    }
-
-    .breaker-preview {
-      display: grid;
-      grid-template-columns: repeat(5, 38px);
-      gap: 6px;
-      width: 240px;
-      height: 205px;
-      padding: 43px 14px 14px;
-      border: 2px solid rgba(85,246,231,0.35);
-      border-radius: 16px;
-      background: #030612;
-      box-shadow: 0 0 36px rgba(85,246,231,0.12), 0 17px 32px rgba(0,0,0,0.3);
-      transform: rotate(-3deg);
-    }
-
-    .breaker-preview::before {
-      content: "SCORE 0000   ·   LIV 3";
-      position: absolute;
-      top: 13px;
-      left: 15px;
-      color: #91a2c8;
-      font: 850 0.6rem/1 ui-monospace, monospace;
-      letter-spacing: 0.09em;
-    }
-
-    .breaker-brick {
-      height: 16px;
-      border-radius: 5px;
-      background: var(--brick-color);
-      box-shadow: 0 0 11px color-mix(in srgb, var(--brick-color) 52%, transparent);
-    }
-
-    .breaker-paddle {
-      position: absolute;
-      left: 60px;
-      bottom: 14px;
-      width: 104px;
-      height: 9px;
-      border-radius: 999px;
-      background: #55f6e7;
-      box-shadow: 0 0 14px rgba(85,246,231,0.62);
-    }
-
-    .breaker-ball {
-      position: absolute;
-      right: 40px;
-      bottom: 43px;
-      width: 11px;
-      height: 11px;
-      border-radius: 50%;
-      background: #ffe45e;
-      box-shadow: 0 0 12px rgba(255,228,94,0.72);
-      animation: pulse 1.2s ease-in-out infinite;
-    }
-
-    .tetris-preview {
-      display: grid;
-      grid-template-columns: repeat(5, 35px);
-      grid-template-rows: repeat(5, 35px);
-      gap: 5px;
-      width: 215px;
-      height: 215px;
-      padding: 15px;
-      border: 3px solid #7549e8;
-      border-radius: 18px;
-      background:
-        linear-gradient(rgba(255,255,255,0.07) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.07) 1px, transparent 1px),
-        #090722;
-      background-size: 40px 40px;
-      box-shadow: 0 0 30px rgba(117,73,232,0.32), 0 17px 32px rgba(10,3,35,0.4);
-      transform: rotate(4deg);
-    }
-
-    .tetris-block {
-      border-radius: 8px;
-      background: var(--block-color);
-      box-shadow:
-        inset -5px -6px 8px rgba(43, 25, 74, 0.18),
-        inset 3px 3px 5px rgba(255,255,255,0.25);
-    }
-
-    .tetris-block.one { grid-column: 2; grid-row: 1; }
-    .tetris-block.two { grid-column: 1; grid-row: 2; }
-    .tetris-block.three { grid-column: 2; grid-row: 2; }
-    .tetris-block.four { grid-column: 3; grid-row: 2; }
-    .tetris-block.five { grid-column: 4; grid-row: 3; }
-    .tetris-block.six { grid-column: 4; grid-row: 4; }
-    .tetris-block.seven { grid-column: 4; grid-row: 5; }
-    .tetris-block.eight { grid-column: 5; grid-row: 5; }
-
-    .geometry-preview {
-      width: 250px;
-      height: 205px;
-      overflow: hidden;
-      border: 3px solid rgba(255, 216, 78, 0.5);
-      background:
-        linear-gradient(rgba(67,228,232,0.12) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(67,228,232,0.12) 1px, transparent 1px),
-        linear-gradient(180deg, #121932 0%, #070a16 72%);
-      background-size: 34px 34px, 34px 34px, 100% 100%;
-      box-shadow: 0 0 35px rgba(255,216,78,0.14), 0 17px 32px rgba(0,0,0,0.33);
-      transform: rotate(-2.5deg);
-    }
-
-    .geometry-preview::before {
-      content: "ATTEMPT 01";
-      position: absolute;
-      top: 14px;
-      left: 16px;
-      color: #fff;
-      font-size: 0.72rem;
-      font-weight: 950;
-      letter-spacing: 0.12em;
-      opacity: 0.86;
-    }
-
-    .gd-track {
-      position: absolute;
-      left: -12px;
-      right: -12px;
-      bottom: 31px;
-      height: 13px;
-      background:
-        repeating-linear-gradient(90deg, #ffd84e 0 22px, #43e4e8 22px 44px);
-      box-shadow: 0 0 18px rgba(255,216,78,0.42);
-    }
-
-    .gd-cube {
-      position: absolute;
-      left: 42px;
-      bottom: 54px;
-      width: 48px;
-      height: 48px;
-      border: 4px solid #10131f;
-      background:
-        radial-gradient(circle at 28% 33%, #fff 0 5px, transparent 6px),
-        radial-gradient(circle at 72% 33%, #fff 0 5px, transparent 6px),
-        linear-gradient(135deg, #ffd84e, #f26850);
-      box-shadow: 0 0 18px rgba(255,216,78,0.62), 8px 12px 0 rgba(0,0,0,0.25);
-      transform: rotate(13deg);
-    }
-
-    .gd-cube::after {
-      content: "";
-      position: absolute;
-      left: 12px;
-      right: 12px;
-      bottom: 10px;
-      height: 5px;
-      background: #11182a;
-      border-radius: 999px;
-    }
-
-    .gd-spike {
-      position: absolute;
-      bottom: 44px;
-      width: 0;
-      height: 0;
-      border-left: 17px solid transparent;
-      border-right: 17px solid transparent;
-      border-bottom: 45px solid #f8fbff;
-      filter: drop-shadow(0 0 10px rgba(67,228,232,0.35));
-    }
-
-    .gd-spike.one { right: 78px; }
-    .gd-spike.two { right: 45px; }
-    .gd-spike.three { right: 12px; }
-
-    .gd-orb {
-      position: absolute;
-      top: 63px;
-      right: 83px;
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      border: 4px solid rgba(255,255,255,0.9);
-      background: #43e4e8;
-      box-shadow: 0 0 20px rgba(67,228,232,0.78);
-      animation: pulse 1.35s ease-in-out infinite;
-    }
-
-    .pokemon-preview {
-      right: 4%;
-      bottom: 45px;
-      width: min(49%, 560px);
-      height: 300px;
-      overflow: hidden;
-      border: 4px solid #09141b;
-      border-radius: 22px;
-      background:
-        linear-gradient(rgba(255,255,255,0.12) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.12) 1px, transparent 1px),
-        radial-gradient(ellipse at 50% 105%, #4e8b55 0 35%, transparent 36%),
-        linear-gradient(#7fc8df 0 61%, #83ad66 61%);
-      background-size: 18px 18px, 18px 18px, auto, auto;
-      box-shadow: 0 18px 42px rgba(0,0,0,0.28);
-      transform: rotate(-1.5deg);
-    }
-
-    .pokemon-platform {
-      position: absolute;
-      width: 105px;
-      height: 28px;
-      border-radius: 50%;
-      background: rgba(220, 234, 158, 0.72);
-    }
-
-    .pokemon-platform.one {
-      right: 9%;
-      bottom: 69px;
-      width: 34%;
-    }
-
-    .pokemon-platform.two {
-      left: 6%;
-      bottom: 32px;
-      width: 43%;
-    }
-
-    .pokemon-sprite {
-      position: absolute;
-      width: 42%;
-      height: 64%;
-      object-fit: contain;
-      image-rendering: pixelated;
-      filter: drop-shadow(7px 9px 0 rgba(20,33,42,0.2));
-    }
-
-    .pokemon-sprite.opponent {
-      right: 5%;
-      bottom: 25%;
-    }
-
-    .pokemon-sprite.player {
-      left: 3%;
-      bottom: 5%;
-      width: 48%;
-      height: 72%;
-    }
-
-    .skybound-preview {
-      right: 4%;
-      bottom: 45px;
-      width: min(51%, 575px);
-      height: 300px;
-      overflow: hidden;
-      border: 5px solid #173f5d;
-      border-radius: 23px;
-      background: linear-gradient(#65cbed 0 66%, #dcf7dc 66%);
-      box-shadow: 0 18px 42px rgba(23,63,93,0.22);
-      transform: rotate(1.5deg);
-    }
-
-    .skybound-preview::before {
-      content: "";
-      position: absolute;
-      left: -8%;
-      right: -8%;
-      bottom: 48px;
-      height: 115px;
-      border-radius: 50% 50% 0 0;
-      background:
-        radial-gradient(ellipse at 18% 100%, #82cda0 0 42%, transparent 43%),
-        radial-gradient(ellipse at 60% 100%, #4fad73 0 45%, transparent 46%),
-        radial-gradient(ellipse at 92% 100%, #82cda0 0 38%, transparent 39%);
-    }
-
-    .skybound-preview::after {
-      content: "";
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 61px;
-      border-top: 12px solid #65c767;
-      background:
-        linear-gradient(90deg, rgba(23,63,93,0.13) 2px, transparent 2px),
-        #a9623d;
-      background-size: 46px 100%;
-    }
-
-    .sky-cloud {
-      position: absolute;
-      top: 38px;
-      left: 52px;
-      width: 95px;
-      height: 24px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.82);
-      box-shadow:
-        25px -17px 0 8px rgba(255,255,255,0.82),
-        56px -5px 0 3px rgba(255,255,255,0.82);
-    }
-
-    .sky-platform {
-      position: absolute;
-      right: 31px;
-      bottom: 117px;
-      z-index: 2;
-      width: 150px;
-      height: 28px;
-      border: 4px solid #173f5d;
-      border-radius: 7px;
-      background: #a9623d;
-      box-shadow: inset 0 9px 0 #65c767;
-    }
-
-    .sky-block {
-      position: absolute;
-      right: 89px;
-      bottom: 148px;
-      z-index: 3;
-      display: grid;
-      place-items: center;
-      width: 43px;
-      height: 43px;
-      border: 4px solid #173f5d;
-      border-radius: 8px;
-      color: #173f5d;
-      background: #ffd45d;
-      font: 950 1.45rem/1 system-ui, sans-serif;
-      box-shadow: inset 0 5px 0 rgba(255,255,255,0.4);
-    }
-
-    .sky-coin {
-      position: absolute;
-      right: 98px;
-      bottom: 207px;
-      z-index: 3;
-      width: 22px;
-      height: 31px;
-      border: 4px solid #8e5719;
-      border-radius: 50%;
-      background: #ffd45d;
-      animation: pulse 1.4s ease-in-out infinite;
-    }
-
-    .sky-enemy {
-      position: absolute;
-      right: 202px;
-      bottom: 56px;
-      z-index: 4;
-      width: 47px;
-      height: 35px;
-      border: 5px solid #173f5d;
-      border-radius: 50% 50% 32% 32%;
-      background:
-        radial-gradient(circle at 35% 42%, #fff 0 4px, #173f5d 5px 7px, transparent 8px),
-        radial-gradient(circle at 68% 42%, #fff 0 4px, #173f5d 5px 7px, transparent 8px),
-        #7451a5;
-    }
-
-    .sky-pip {
-      position: absolute;
-      left: 92px;
-      bottom: 53px;
-      z-index: 5;
-      width: 52px;
-      height: 75px;
-      filter: drop-shadow(4px 5px 0 rgba(23,63,93,0.22));
-    }
-
-    .sky-pip::before {
-      content: "";
-      position: absolute;
-      left: 6px;
-      top: 2px;
-      width: 39px;
-      height: 39px;
-      border: 5px solid #173f5d;
-      border-radius: 48% 48% 43% 43%;
-      background:
-        radial-gradient(circle at 67% 44%, #173f5d 0 2px, transparent 3px),
-        radial-gradient(ellipse at 65% 68%, #fff0d7 0 25%, transparent 26%),
-        #f58a4f;
-    }
-
-    .sky-pip::after {
-      content: "";
-      position: absolute;
-      left: 9px;
-      bottom: 0;
-      width: 35px;
-      height: 34px;
-      border: 5px solid #173f5d;
-      border-radius: 9px 9px 13px 13px;
-      background:
-        linear-gradient(#2dc2b0 0 9px, transparent 9px),
-        #f58a4f;
-    }
-
-    .sky-pip i {
-      position: absolute;
-      top: -6px;
-      z-index: -1;
-      width: 21px;
-      height: 26px;
-      border: 5px solid #173f5d;
-      background: #f58a4f;
-      clip-path: polygon(50% 0, 100% 100%, 0 83%);
-    }
-
-    .sky-pip i:first-child {
-      left: 4px;
-      transform: rotate(-15deg);
-    }
-
-    .sky-pip i:last-child {
-      right: 4px;
-      transform: scaleX(-1) rotate(-15deg);
-    }
-
-    .sky-mario {
-      position: absolute;
-      left: 105px;
-      bottom: 55px;
-      z-index: 5;
-      width: 16px;
-      height: 16px;
-      background-image: url("assets/mario/mario-luigi-transparent.png");
-      background-repeat: no-repeat;
-      background-position: -2px -8px;
-      image-rendering: pixelated;
-      filter: drop-shadow(1px 2px 0 rgba(23,63,93,0.28));
-      transform: scale(3.1);
-      transform-origin: bottom center;
-    }
-
-    .sangquiz-preview {
-      right: 4%;
-      bottom: 45px;
-      width: min(51%, 575px);
-      height: 300px;
-      overflow: hidden;
-      border: 4px solid rgba(255, 255, 255, 0.14);
-      border-radius: 24px;
-      background:
-        linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px),
-        linear-gradient(145deg, #271a48, #0d0a1b);
-      background-size: 22px 22px, 22px 22px, auto;
-      box-shadow: 0 18px 42px rgba(0,0,0,0.32);
-      transform: rotate(-1.5deg);
-    }
-
-    .sangquiz-preview::before {
-      content: "SANGQUIZ";
-      position: absolute;
-      top: 20px;
-      left: 24px;
-      color: #ffb0c9;
-      font: 950 0.78rem/1 ui-monospace, monospace;
-      letter-spacing: 0.18em;
-    }
-
-    .sangquiz-record {
-      position: absolute;
-      left: 38px;
-      bottom: 38px;
-      width: 150px;
-      height: 150px;
-      border-radius: 50%;
-      background:
-        radial-gradient(circle, #fff 0 10px, #ff5084 11px 25px, transparent 26px),
-        repeating-radial-gradient(circle, #151021 0 12px, #241a3c 13px 18px);
-      box-shadow: 0 0 35px rgba(255,80,132,0.35);
-    }
-
-    .sangquiz-record::after {
-      content: "";
-      position: absolute;
-      inset: 33px;
-      border: 2px solid rgba(255,255,255,0.16);
-      border-radius: 50%;
-    }
-
-    .sangquiz-list {
-      position: absolute;
-      top: 70px;
-      right: 34px;
-      display: grid;
-      gap: 12px;
-      width: 245px;
-    }
-
-    .sangquiz-track {
-      display: grid;
-      grid-template-columns: 38px 1fr;
-      gap: 11px;
-      align-items: center;
-      min-height: 48px;
-      padding: 8px 11px;
-      border: 1px solid rgba(255,255,255,0.11);
-      border-radius: 14px;
-      background: rgba(255,255,255,0.07);
-    }
-
-    .sangquiz-track i {
-      display: grid;
-      place-items: center;
-      width: 38px;
-      height: 32px;
-      border-radius: 10px;
-      color: #0d0a1b;
-      background: var(--track-color);
-      font-style: normal;
-      font-weight: 950;
-    }
-
-    .sangquiz-track span {
-      display: block;
-      height: 8px;
-      border-radius: 999px;
-      background: linear-gradient(90deg, var(--track-color), rgba(255,255,255,0.16));
-    }
-
-    .sangquiz-wave {
-      position: absolute;
-      left: 206px;
-      bottom: 45px;
-      display: flex;
-      align-items: end;
-      gap: 6px;
-      height: 64px;
-    }
-
-    .sangquiz-wave i {
-      width: 9px;
-      border-radius: 999px;
-      background: #48d4ff;
-      box-shadow: 0 0 12px rgba(72,212,255,0.5);
-    }
-
-    .sangquiz-wave i:nth-child(1) { height: 22px; }
-    .sangquiz-wave i:nth-child(2) { height: 42px; background: #ff5084; }
-    .sangquiz-wave i:nth-child(3) { height: 58px; }
-    .sangquiz-wave i:nth-child(4) { height: 34px; background: #ffb84d; }
-    .sangquiz-wave i:nth-child(5) { height: 50px; }
-
-    .family-note {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 28px;
-      margin-top: 22px;
-      padding: 22px 25px;
-      border: 1px solid var(--line);
-      border-radius: 22px;
-      color: var(--muted);
-      background: rgba(255, 253, 248, 0.69);
-      line-height: 1.55;
-    }
-
-    .family-note strong {
-      color: var(--ink);
-    }
-
-    .local-records {
-      margin-top: 22px;
-      padding: 24px 25px;
-      border: 1px solid var(--line);
-      border-radius: 22px;
-      background: rgba(255, 253, 248, 0.69);
-    }
-
-    .local-records h2 {
-      margin: 0;
-      font-family: Georgia, "Times New Roman", serif;
-      font-size: clamp(1.7rem, 4vw, 2.35rem);
-      letter-spacing: -0.035em;
-    }
-
-    .local-records-copy,
-    .local-records-empty {
-      margin: 7px 0 0;
-      color: var(--muted);
-      font-size: 0.84rem;
-      line-height: 1.55;
-    }
-
-    .local-record-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-      gap: 9px;
-      margin-top: 16px;
-    }
-
-    .local-record-card {
-      display: grid;
-      gap: 3px;
-      padding: 13px 14px;
-      border: 1px solid var(--line);
-      border-radius: 13px;
-      color: var(--ink);
-      background: #fff;
-      text-decoration: none;
-    }
-
-    .local-record-card:hover {
-      border-color: #c8bfb1;
-      transform: translateY(-1px);
-    }
-
-    .local-record-card strong {
-      font-size: 1.22rem;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .local-record-card small {
-      color: var(--muted);
-      font-weight: 700;
-    }
-
-    .note-symbols {
-      display: flex;
-      flex: 0 0 auto;
-      gap: 7px;
-    }
-
-    .note-symbol {
-      display: grid;
-      place-items: center;
-      width: 35px;
-      height: 35px;
-      border-radius: 50%;
-      color: #fff;
-      background: #7145d6;
-      font-weight: 900;
-    }
-
-    .note-symbol:nth-child(2) {
-      color: #0a1609;
-      background: #7dcc5a;
-    }
-
-    .note-symbol:nth-child(3) {
-      color: #061229;
-      background: #55f6e7;
-    }
-
-    .note-symbol:nth-child(4) {
-      background: #7549e8;
-    }
-
-    .note-symbol:nth-child(5) {
-      color: #17121f;
-      background: #ffd84e;
-    }
-
-    .note-symbol:nth-child(6) {
-      color: #14212a;
-      background: #efbd4d;
-    }
-
-    .note-symbol:nth-child(7) {
-      color: #fff;
-      background: #f26850;
-    }
-
-    .footer {
-      display: flex;
-      justify-content: space-between;
-      gap: 20px;
-      padding: 31px 5px 0;
-      color: var(--muted);
-      font-size: 0.8rem;
-    }
-
-    .footer strong {
-      color: var(--ink);
-    }
-
-    @keyframes pulse {
-      50% {
-        transform: scale(1.15);
-      }
-    }
-
-    @media (max-width: 1030px) {
-      .hero {
-        grid-template-columns: 1fr;
-        gap: 22px;
-      }
-
-      .intro {
-        max-width: 650px;
-      }
-
-      .games {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .game-card {
-        min-height: 450px;
-      }
-    }
-
-    @media (max-width: 760px) {
-      .game-browser-top {
-        align-items: stretch;
-        flex-direction: column;
-      }
-
-      .game-search {
-        width: 100%;
-      }
-
-      .games {
-        grid-template-columns: 1fr;
-      }
-
-      .game-card {
-        min-height: 470px;
-      }
-
-      .game-card.pokemon {
-        min-height: 560px;
-      }
-
-      .game-card.pokemon .card-content,
-      .game-card.skybound .card-content,
-      .game-card.sangquiz .card-content,
-      .game-card.battle .card-content {
-        max-width: 100%;
-      }
-
-      .game-card.battle {
-        min-height: 550px;
-      }
-
-      .battle-preview {
-        right: 4%;
-        bottom: 58px;
-        width: 72%;
-        height: 250px;
-      }
-
-      .pokemon-preview {
-        right: 3%;
-        bottom: 58px;
-        width: 70%;
-        height: 285px;
-      }
-
-      .game-card.skybound {
-        min-height: 570px;
-      }
-
-      .skybound-preview {
-        right: 3%;
-        bottom: 58px;
-        width: 72%;
-        height: 285px;
-      }
-
-      .game-card.sangquiz {
-        min-height: 570px;
-      }
-
-      .sangquiz-preview {
-        right: 3%;
-        bottom: 58px;
-        width: 72%;
-        height: 285px;
-      }
-    }
-
-    @media (max-width: 540px) {
-      .page {
-        width: min(100% - 20px, 470px);
-        padding-top: 10px;
-      }
-
-      .nav {
-        border-radius: 17px;
-      }
-
-      .brand small,
-      .nav-links a:not(:first-child) {
-        display: none;
-      }
-
-      .hero {
-        padding: 62px 6px 42px;
-      }
-
-      .hero-meta {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-      }
-
-      .hero-meta span {
-        padding: 11px 8px;
-        font-size: 0.58rem;
-      }
-
-      .hero-meta strong {
-        font-size: 1.2rem;
-      }
-
-      .game-browser {
-        padding: 15px;
-        border-radius: 19px;
-      }
-
-      .game-filters {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .game-card.kart::after {
-        top: 17px;
-        right: 17px;
-      }
-
-      .game-card {
-        min-height: 480px;
-        padding: 24px;
-      }
-
-      .play {
-        left: 24px;
-        bottom: 23px;
-      }
-
-      .preview {
-        right: -34px;
-        bottom: 78px;
-        transform: scale(0.88) rotate(-4deg);
-      }
-
-      .snake-preview {
-        right: -22px;
-        transform: scale(0.9) rotate(5deg);
-      }
-
-      .breaker-preview {
-        right: -24px;
-        transform: scale(0.9) rotate(-4deg);
-      }
-
-      .tetris-preview {
-        right: -25px;
-        transform: scale(0.87) rotate(4deg);
-      }
-
-      .geometry-preview {
-        right: -24px;
-        transform: scale(0.9) rotate(-3deg);
-      }
-
-      .game-card.pokemon {
-        min-height: 590px;
-      }
-
-      .game-card.pokemon h2 {
-        font-size: clamp(2.75rem, 14vw, 4.1rem);
-      }
-
-      .game-card.skybound {
-        min-height: 600px;
-      }
-
-      .game-card.skybound h2 {
-        font-size: clamp(2.8rem, 14vw, 4.3rem);
-      }
-
-      .game-card.battle {
-        min-height: 570px;
-      }
-
-      .battle-preview {
-        right: -4%;
-        bottom: 62px;
-        width: 94%;
-        height: 250px;
-        transform: scale(0.88) rotate(1deg);
-      }
-
-      .game-card.sangquiz {
-        min-height: 600px;
-      }
-
-      .game-card.sangquiz h2 {
-        font-size: clamp(2.75rem, 14vw, 4.1rem);
-      }
-
-      .pokemon-preview {
-        right: -9%;
-        bottom: 64px;
-        width: 96%;
-        height: 300px;
-        transform: scale(0.88) rotate(-1.5deg);
-      }
-
-      .skybound-preview {
-        right: -10%;
-        bottom: 66px;
-        width: 102%;
-        height: 295px;
-        transform: scale(0.87) rotate(1deg);
-      }
-
-      .sangquiz-preview {
-        right: -10%;
-        bottom: 66px;
-        width: 102%;
-        height: 295px;
-        transform: scale(0.87) rotate(-1deg);
-      }
-
-      .family-note,
-      .footer {
-        align-items: flex-start;
-        flex-direction: column;
-      }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      html {
-        scroll-behavior: auto;
-      }
-
-      *,
-      *::before,
-      *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-      }
-    }
-  </style>
+  <meta name="theme-color" content="#101720" />
+  <title>Minispil | Wutborg Spillehjørne</title>
+  <meta name="description" content="Vælg mellem ti gratis minispil i Wutborgs spillehjørne. Før hæren i Borgstorm, kør Wutborg Kart eller saml familien om en sangquiz." />
+  <link rel="stylesheet" href="css/minispil-art.css?v=20260910" />
+  <link rel="stylesheet" href="css/minispil.css?v=20260910" />
 </head>
 <body>
+  <a class="skip-link" href="#spil">Spring til spillene</a>
   <div class="page">
     <nav class="nav" aria-label="Minispil navigation">
-      <a class="brand" href="index.html">
-        <span class="brand-mark" aria-hidden="true">♥</span>
-        <span>
-          Wutborg.dk
-          <small>Familiens spillehjørne</small>
-        </span>
-      </a>
-
-      <div class="nav-links">
-        <a href="index.html">← Forsiden</a>
-        <a href="#spil">Alle spil</a>
-        <a href="kalender.html">Kalender</a>
-        <a href="mailto:hej@wutborg.dk">Kontakt</a>
-      </div>
+      <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">W.</span><span>Wutborg<small>Familiens spillehjørne</small></span></a>
+      <div class="nav-links"><a href="index.html">← Forsiden</a><a href="#spil" aria-current="page">Minispil</a><a href="#local-records-title">Dine rekorder</a></div>
     </nav>
-
     <main>
       <header class="hero">
-        <div class="hero-copy">
-          <p class="kicker"><span aria-hidden="true">♥</span> Vælg et spil</p>
-          <h1>Små spil.<br /><span>Stor hygge.</span></h1>
-          <div class="hero-actions">
-            <a class="hero-action primary" href="kart-racer.html"><span aria-hidden="true">🏁</span> Prøv Wutborg Kart</a>
-            <a class="hero-action" href="#spil">Se alle ti spil <span aria-hidden="true">↓</span></a>
-          </div>
-        </div>
-        <div>
-          <p class="intro">
-            Velkommen til familiens spillehjørne. Her kan I dyste, slå rekorder
-            og tage en runde mere, når nogen siger <strong>“bedst af tre”</strong>.
-          </p>
-          <div class="hero-meta" aria-label="Om spillearkivet">
-            <span><strong>10</strong> spil klar</span>
-            <span><strong>1–2</strong> spillere</span>
-            <span><strong>0</strong> login</span>
-          </div>
-        </div>
+        <div><p class="kicker">En pause med plads til én runde mere</p><h1>Spillehjørnet<span>.</span></h1></div>
+        <p>Ti små spil til store dueller.<br />Vælg din favorit, og spil med det samme.</p>
       </header>
-
       <section class="game-browser" id="spil" aria-labelledby="game-browser-title">
         <div class="game-browser-top">
-          <div>
-            <h2 id="game-browser-title">Find næste runde</h2>
-            <p class="catalog-status" id="catalog-status" aria-live="polite">Viser alle 10 spil</p>
-          </div>
-          <label class="game-search">
-            <span aria-hidden="true">⌕</span>
-            <span class="sr-only">Søg efter et spil</span>
-            <input id="game-search" type="search" placeholder="Søg fx kart, quiz eller Tetris" autocomplete="off" />
-          </label>
+          <div><h2 id="game-browser-title">Find næste runde</h2><p class="catalog-status" id="catalog-status" role="status">Viser alle 10 spil</p></div>
+          <label class="game-search"><span aria-hidden="true">⌕</span><span class="sr-only">Søg efter et spil</span><input id="game-search" type="search" placeholder="Søg efter et spil…" autocomplete="off" /></label>
         </div>
         <div class="game-filters" aria-label="Filtrér spil">
           <button class="game-filter" type="button" data-game-filter="all" aria-pressed="true">Alle spil</button>
@@ -1898,47 +33,64 @@
           <button class="game-filter" type="button" data-game-filter="quiz" aria-pressed="false">Quiz</button>
         </div>
       </section>
-
       <section class="games" aria-label="Tilgængelige minispil" id="game-grid">
-        <a class="game-card connect" href="fire-paa-stribe.html" data-game-mode="together" data-game-search="fire på stribe fire paa stribe brætspil to spillere sammen">
+        <a class="game-card battle" href="battle-gates.html" data-game-mode="solo" data-game-search="borgstorm battle gates hær soldater tårne strategi porte boss kampagne en spiller nyhed">
+          <span class="game-art" aria-hidden="true"><span class="preview battle-preview" aria-hidden="true"><i class="battle-gate left" data-power="8"></i><i class="battle-gate right" data-power="31"></i><i class="battle-squad"></i></span></span>
           <span class="card-content">
-            <span class="game-number">Spil 01 · To spillere</span>
-            <h2>Fire på stribe</h2>
-            <p>Vælg en pil, slip en brik, og vær den første med fire på række.</p>
+            <span class="game-number"><b>Udvalgt spil</b> · Strategi · En spiller</span>
+            <h2>Borgstorm</h2>
+            <span class="card-tagline">20 slag. Én hær. Din vej til Guldborgen.</span>
+            <p>Vælg dine porte, saml specialenheder og før hæren gennem fem riger.</p>
           </span>
-          <span class="play">Start spillet</span>
-          <span class="preview connect-preview" aria-hidden="true">
+          <span class="play">Før hæren frem<span aria-hidden="true">↗</span></span>
+        </a>
+
+        <a class="game-card kart" href="kart-racer.html" data-game-mode="solo" data-game-search="wutborg kart 3d grand prix tidskørsel drift racer bil race en spiller nyhed">
+          <span class="game-art" aria-hidden="true"><span class="preview kart-preview" aria-hidden="true"><i class="kart-car one"></i><i class="kart-car two"></i><i class="kart-item"></i></span></span>
+          <span class="card-content">
+            <span class="game-number">Racer · En spiller</span>
+            <h2>Wutborg Kart</h2>
+
+            <p>Drift gennem bakker, kystbroer og neontunneller mod syv rivaler.</p>
+          </span>
+          <span class="play">Start motoren<span aria-hidden="true">↗</span></span>
+        </a>
+
+        <a class="game-card connect" href="fire-paa-stribe.html" data-game-mode="together" data-game-search="fire på stribe fire paa stribe brætspil to spillere sammen">
+          <span class="game-art" aria-hidden="true"><span class="preview connect-preview" aria-hidden="true">
             <i class="disc"></i><i class="disc"></i><i class="disc"></i><i class="disc"></i><i class="disc"></i><i class="disc"></i><i class="disc"></i>
             <i class="disc"></i><i class="disc"></i><i class="disc"></i><i class="disc"></i><i class="disc"></i><i class="disc"></i><i class="disc"></i>
             <i class="disc"></i><i class="disc"></i><i class="disc"></i><i class="disc"></i><i class="disc"></i><i class="disc"></i><i class="disc"></i>
             <i class="disc"></i><i class="disc"></i><i class="disc"></i><i class="disc yellow"></i><i class="disc"></i><i class="disc"></i><i class="disc"></i>
             <i class="disc"></i><i class="disc"></i><i class="disc red"></i><i class="disc yellow"></i><i class="disc"></i><i class="disc"></i><i class="disc"></i>
             <i class="disc"></i><i class="disc red"></i><i class="disc red"></i><i class="disc yellow"></i><i class="disc yellow"></i><i class="disc"></i><i class="disc"></i>
+          </span></span>
+          <span class="card-content">
+            <span class="game-number">Brætspil · To spillere</span>
+            <h2>Fire på stribe</h2>
+
+            <p>Udfordr én ved siden af dig. Fire på række vinder.</p>
           </span>
+          <span class="play">Tag en dyst<span aria-hidden="true">↗</span></span>
         </a>
 
         <a class="game-card snake" href="snake.html" data-game-mode="solo" data-game-search="snake slange arcade highscore en spiller">
-          <span class="card-content">
-            <span class="game-number">Spil 02 · En spiller</span>
-            <h2>Snake</h2>
-            <p>Vælg realistisk eller arcade-look, sæt sværhedsgraden, og jagt en ny highscore.</p>
-          </span>
-          <span class="play">Start spillet</span>
-          <span class="preview snake-preview" aria-hidden="true">
+          <span class="game-art" aria-hidden="true"><span class="preview snake-preview" aria-hidden="true">
             <i class="snake-piece"></i><i class="snake-piece"></i><i class="snake-piece"></i>
             <i class="snake-piece"></i><i class="snake-piece"></i><i class="snake-piece"></i>
             <i class="snake-food"></i>
+          </span></span>
+          <span class="card-content">
+            <span class="game-number">Arkade · En spiller</span>
+            <h2>Snake</h2>
+
+            <p>Saml æbler, bliv længere og hold hovedet fra halen.</p>
           </span>
+          <span class="play">Spil Snake<span aria-hidden="true">↗</span></span>
         </a>
 
         <a class="game-card breaker" href="brick-breaker.html" data-game-mode="solo" data-game-search="neon breaker brick arkade power-ups en spiller">
-          <span class="card-content">
-            <span class="game-number">Spil 03 · En spiller</span>
-            <h2>Neon Breaker</h2>
-            <p>Ryd 14 DX-Ball-inspirerede neonbaner med eksplosionsblokke, multiball og automatiske lasere.</p>
-          </span>
-          <span class="play">Start spillet</span>
-          <span class="preview breaker-preview" aria-hidden="true">
+          <span class="game-art" aria-hidden="true"><span class="preview breaker-preview" aria-hidden="true">
             <i class="breaker-brick" style="--brick-color:#55f6e7"></i>
             <i class="breaker-brick" style="--brick-color:#55f6e7"></i>
             <i class="breaker-brick" style="--brick-color:#55f6e7"></i>
@@ -1956,17 +108,18 @@
             <i class="breaker-brick" style="--brick-color:#ffe45e"></i>
             <i class="breaker-paddle"></i>
             <i class="breaker-ball"></i>
+          </span></span>
+          <span class="card-content">
+            <span class="game-number">Arkade · En spiller</span>
+            <h2>Neon Breaker</h2>
+
+            <p>Knus neonklodser, grib power-ups og hold bolden i live.</p>
           </span>
+          <span class="play">Spil Neon Breaker<span aria-hidden="true">↗</span></span>
         </a>
 
         <a class="game-card tetris" href="tetris.html" data-game-mode="solo" data-game-search="tetris blokke brikker puzzle en spiller">
-          <span class="card-content">
-            <span class="game-number">Spil 04 · En spiller</span>
-            <h2>Tetris</h2>
-            <p>Byg, ryd og gentag med next-piece preview, stigende levels og farverige neonbrikker.</p>
-          </span>
-          <span class="play">Spil Tetris</span>
-          <span class="preview tetris-preview" aria-hidden="true">
+          <span class="game-art" aria-hidden="true"><span class="preview tetris-preview" aria-hidden="true">
             <i class="tetris-block one" style="--block-color:#43e4e8"></i>
             <i class="tetris-block two" style="--block-color:#43e4e8"></i>
             <i class="tetris-block three" style="--block-color:#43e4e8"></i>
@@ -1975,34 +128,36 @@
             <i class="tetris-block six" style="--block-color:#ff4f9a"></i>
             <i class="tetris-block seven" style="--block-color:#ff4f9a"></i>
             <i class="tetris-block eight" style="--block-color:#ffd84e"></i>
+          </span></span>
+          <span class="card-content">
+            <span class="game-number">Puzzle · En spiller</span>
+            <h2>Tetris</h2>
+
+            <p>Find plads til næste brik og ryd rækker, mens tempoet stiger.</p>
           </span>
+          <span class="play">Spil Tetris<span aria-hidden="true">↗</span></span>
         </a>
 
         <a class="game-card geometry" href="geometry-dash.html" data-game-mode="solo" data-game-search="geometry dash rytme hop neon en spiller">
-          <span class="card-content">
-            <span class="game-number">Spil 05 · En spiller</span>
-            <h2>Geometry Dash</h2>
-            <p>Hop gennem rytmiske neonbaner med spikes, blokke, orbs og highscore-jagt.</p>
-          </span>
-          <span class="play">Spil Geometry Dash</span>
-          <span class="preview geometry-preview" aria-hidden="true">
+          <span class="game-art" aria-hidden="true"><span class="preview geometry-preview" aria-hidden="true">
             <i class="gd-orb"></i>
             <i class="gd-cube"></i>
             <i class="gd-spike one"></i>
             <i class="gd-spike two"></i>
             <i class="gd-spike three"></i>
             <i class="gd-track"></i>
+          </span></span>
+          <span class="card-content">
+            <span class="game-number">Rytme · En spiller</span>
+            <h2>Geometry Dash</h2>
+
+            <p>Find rytmen, hop over piggene og jagt den perfekte runde.</p>
           </span>
+          <span class="play">Find rytmen<span aria-hidden="true">↗</span></span>
         </a>
 
         <a class="game-card pokemon" href="pokemon-battle.html" data-game-mode="solo" data-game-search="monster battle arena pokemon kamp en spiller">
-          <span class="card-content">
-            <span class="game-number">Spil 06 · En spiller</span>
-            <h2>Monster <span>Battle Arena</span></h2>
-            <p>Vælg blandt 151 Pokémon, sæt level og AI, og kæmp med autentiske FireRed-sprites.</p>
-          </span>
-          <span class="play">Start battle</span>
-          <span class="preview pokemon-preview" aria-hidden="true">
+          <span class="game-art" aria-hidden="true"><span class="preview pokemon-preview" aria-hidden="true">
             <i class="pokemon-platform one"></i>
             <i class="pokemon-platform two"></i>
             <img
@@ -2015,54 +170,36 @@
               src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-iii/firered-leafgreen/back/25.png"
               alt=""
             />
+          </span></span>
+          <span class="card-content">
+            <span class="game-number">Strategi · En spiller</span>
+            <h2>Monster Battle Arena</h2>
+
+            <p>Vælg blandt 151 Pokémon og læg din strategi mod computeren.</p>
           </span>
+          <span class="play">Start en kamp<span aria-hidden="true">↗</span></span>
         </a>
 
         <a class="game-card skybound" href="pips-skybound.html" data-game-mode="solo" data-game-search="super mario bros platform eventyr en spiller">
-          <span class="card-content">
-            <span class="game-number">Spil 07 · En spiller</span>
-            <h2>Super <span>Mario Bros.</span></h2>
-            <p>Hop gennem tre håndbyggede baner med mønter, Goombas, checkpoints og supersvampe.</p>
-          </span>
-          <span class="play">Start eventyret</span>
-          <span class="preview skybound-preview" aria-hidden="true">
+          <span class="game-art" aria-hidden="true"><span class="preview skybound-preview" aria-hidden="true">
             <i class="sky-cloud"></i>
             <i class="sky-platform"></i>
             <i class="sky-block">?</i>
             <i class="sky-coin"></i>
             <i class="sky-enemy"></i>
             <span class="sky-mario"></span>
-          </span>
-        </a>
-
-        <a class="game-card kart" href="kart-racer.html" data-game-mode="solo" data-game-search="wutborg kart 3d grand prix tidskørsel drift racer bil race en spiller nyhed">
+          </span></span>
           <span class="card-content">
-            <span class="game-number">Spil 08 · En spiller</span>
-            <h2>Wutborg <span>Kart</span></h2>
-            <p>Store 3D-baner med bakker, kystbroer og neontunnel. Drift mod syv rivaler, vind Grand Prix og jagt din egen rekord.</p>
-          </span>
-          <span class="play">Start motoren</span>
-          <span class="preview kart-preview" aria-hidden="true"><i class="kart-car one"></i><i class="kart-car two"></i><i class="kart-item"></i></span>
-        </a>
+            <span class="game-number">Platform · En spiller</span>
+            <h2>Super Mario Bros.</h2>
 
-        <a class="game-card battle" href="battle-gates.html" data-game-mode="solo" data-game-search="borgstorm battle gates hær soldater tårne strategi porte boss kampagne en spiller nyhed">
-          <span class="card-content">
-            <span class="game-number">Spil 09 · En spiller</span>
-            <h2>Borgstorm</h2>
-            <p>Kæmp gennem 20 baner, rekruttér specialenheder, opgradér hæren og erobr fem store borge.</p>
+            <p>Hop gennem tre baner med mønter, Goombas og supersvampe.</p>
           </span>
-          <span class="play">Før hæren frem</span>
-          <span class="preview battle-preview" aria-hidden="true"><i class="battle-gate left" data-power="8"></i><i class="battle-gate right" data-power="31"></i><i class="battle-squad"></i></span>
+          <span class="play">Start eventyret<span aria-hidden="true">↗</span></span>
         </a>
 
         <a class="game-card sangquiz" href="sangquiz.html" data-game-mode="quiz together" data-game-search="sangquiz musik quiz hold årstal sammen">
-          <span class="card-content">
-            <span class="game-number">Spil 10 · Musikquiz</span>
-            <h2>Sangquiz</h2>
-            <p>Gæt årstallet, byg holdenes tidslinjer, og styr pointene fra én skærm.</p>
-          </span>
-          <span class="play">Start quiz</span>
-          <span class="preview sangquiz-preview" aria-hidden="true">
+          <span class="game-art" aria-hidden="true"><span class="preview sangquiz-preview" aria-hidden="true">
             <i class="sangquiz-record"></i>
             <span class="sangquiz-list">
               <span class="sangquiz-track" style="--track-color:#ff5084"><i>01</i><span></span></span>
@@ -2072,51 +209,25 @@
             <span class="sangquiz-wave">
               <i></i><i></i><i></i><i></i><i></i>
             </span>
+          </span></span>
+          <span class="card-content">
+            <span class="game-number">Musikquiz · Spil sammen</span>
+            <h2>Sangquiz</h2>
+
+            <p>Saml holdene, gæt årstallet og byg jeres musiktidslinje.</p>
           </span>
+          <span class="play">Start quizzen<span aria-hidden="true">↗</span></span>
         </a>
       </section>
-
-      <p class="no-games" id="no-games" hidden>
-        <strong>Ingen spil matchede</strong>
-        Prøv et andet søgeord eller vælg “Alle spil”.
-      </p>
-
-      <aside class="family-note">
-        <span>
-          <strong>Et spil ad gangen.</strong>
-          Hvert minispil har sin egen side, så det er nemt at hoppe ind, spille
-          en runde og finde tilbage til spillehjørnet.
-        </span>
-        <span class="note-symbols" aria-hidden="true">
-          <span class="note-symbol">4</span>
-          <span class="note-symbol">S</span>
-          <span class="note-symbol">●</span>
-          <span class="note-symbol">T</span>
-          <span class="note-symbol">G</span>
-          <span class="note-symbol">M</span>
-          <span class="note-symbol">M</span>
-          <span class="note-symbol">K</span>
-          <span class="note-symbol">B</span>
-          <span class="note-symbol">Q</span>
-        </span>
-      </aside>
-
+      <div class="no-games" id="no-games" hidden><h2>Ingen spil matchede</h2><p>Prøv et andet søgeord eller vis alle spil igen.</p><button id="reset-games" type="button">Vis alle spil</button></div>
       <section class="local-records" aria-labelledby="local-records-title">
-        <h2 id="local-records-title">Dine lokale rekorder</h2>
-        <p class="local-records-copy">
-          Rekorder gemmes kun i denne browser og sendes ikke til Wutborg.dk.
-        </p>
+        <div class="records-heading"><h2 id="local-records-title">Dine lokale rekorder</h2><span>Dit næste mål</span></div>
+        <p class="local-records-copy">Rekorder gemmes i denne browser og sendes ikke til Wutborg.dk.</p>
         <div class="local-record-grid" id="local-record-grid"></div>
-        <p class="local-records-empty" id="local-records-empty">
-          Spil en runde, så dukker din første lokale rekord op her.
-        </p>
+        <p class="local-records-empty" id="local-records-empty">Din første rekord venter. Spil en runde, og se den her.</p>
       </section>
     </main>
-
-    <footer class="footer">
-      <span><strong>Wutborg.dk</strong> · Familie, hygge og high scores</span>
-      <span>Flere spil flytter ind senere</span>
-    </footer>
+    <footer class="footer"><span><strong>Wutborg.</strong> Familie, hygge og high scores</span><a href="index.html">Tilbage til forsiden ↗</a></footer>
   </div>
   <script src="js/highscores.js"></script>
   <script>
@@ -2146,7 +257,7 @@
 
       const filterLabel = gameFilters.find((button) => button.dataset.gameFilter === activeGameFilter)?.textContent;
       catalogStatus.textContent = query
-        ? `${visibleGames} ${visibleGames === 1 ? "spil matcher" : "spil matcher"} “${gameSearch.value.trim()}”`
+        ? `${visibleGames} spil matcher “${gameSearch.value.trim()}”`
         : activeGameFilter === "all"
           ? `Viser alle ${visibleGames} spil`
           : `${visibleGames} spil · ${filterLabel}`;
@@ -2161,6 +272,14 @@
       });
     });
     gameSearch.addEventListener("input", updateGameCatalog);
+    document.querySelector("#reset-games").addEventListener("click", () => {
+      gameSearch.value = "";
+      activeGameFilter = "all";
+      gameFilters.forEach(button => button.setAttribute("aria-pressed", String(button.dataset.gameFilter === "all")));
+      updateGameCatalog();
+      gameSearch.focus();
+    });
+    updateGameCatalog();
 
     const localRecordGames = [
       ["fire-paa-stribe", "Fire på stribe", "fire-paa-stribe.html"],
@@ -2179,7 +298,7 @@
       .map(([key, title, href]) => ({
         title,
         href,
-        entry: window.WutborgHighscores.best(key)
+        entry: window.WutborgHighscores?.best(key)
       }))
       .filter((record) => record.entry);
 
@@ -2198,6 +317,7 @@
     });
 
     document.querySelector("#local-records-empty").hidden = localRecords.length > 0;
+
   </script>
 </body>
 </html>
