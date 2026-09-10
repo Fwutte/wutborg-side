@@ -1,110 +1,144 @@
-const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const path = require("node:path");
-const vm = require("node:vm");
+const assert=require("node:assert/strict");
+const fs=require("node:fs"),path=require("node:path"),vm=require("node:vm");
+const root=path.resolve(__dirname,"..");
+let seed=7;
+const math=Object.create(Math);
+math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+const context={window:{addEventListener(){}},Math:math,console};
+for(const file of ["js/kart-racer-data.js","js/kart-racer.js"])vm.runInNewContext(fs.readFileSync(path.join(root,file),"utf8"),context);
+const {data,formatTime,testHooks}=context.window.WutborgKart;
+const {Kart,Race,RaceAI,InputManager,readSave,EMPTY}=testHooks;
+const {TRACKS,DRIVERS,DIFFICULTIES,angleDelta}=data;
+const gas={...EMPTY,accelerate:true};
+let checks=0;
+function test(name,run){run();checks++;console.log("  OK  "+name);}
+function raceFor(track=TRACKS[0],options={}){const race=new Race(track,DRIVERS,options);race.start("max");return race;}
+function position(race,k,s,offset=0){const p=race.track.at(s,offset);k.x=p.x;k.y=p.y;k.speed=200;race.elapsed+=1/60;race.updateKartProgress(k);}
+function march(race,k,from,to,offset=0){const direction=Math.sign(to-from);for(let s=from+direction*8;direction*(to-s)>=0;s+=direction*8)position(race,k,s,offset);position(race,k,to,offset);}
 
-const root = path.resolve(__dirname, "..");
-const dataSource = fs.readFileSync(path.join(root, "js", "kart-racer-data.js"), "utf8");
-const gameSource = fs.readFileSync(path.join(root, "js", "kart-racer.js"), "utf8");
-const renderer3dSource = fs.readFileSync(path.join(root, "js", "kart-racer-3d.js"), "utf8");
-const htmlSource = fs.readFileSync(path.join(root, "kart-racer.html"), "utf8");
-const cssSource = fs.readFileSync(path.join(root, "css", "kart-racer.css"), "utf8");
-const browserWindow = { addEventListener() {} };
-const sandbox = { window: browserWindow, console, Math };
-
-vm.runInNewContext(dataSource, sandbox);
-vm.runInNewContext(gameSource, sandbox);
-
-const api = browserWindow.WutborgKart;
-assert.ok(api, "Kartspillet skal eksportere et test-API");
-assert.equal(api.data.TRACKS.length, 3, "Grand Prix-versionen skal have tre baner");
-assert.equal(api.data.DRIVERS.length, 8, "Løbet skal have otte kørere");
-assert.deepEqual(Object.keys(api.data.ITEM_TYPES), ["mushroom", "banana", "shell", "redShell", "star", "lightning"]);
-assert.ok(api.data.DRIVERS.every((driver) => driver.sprite.endsWith(".png")), "Alle kørere skal bruge en bilsprite");
-assert.ok(api.data.DRIVERS.every((driver) => driver.rearSprite.endsWith("_NE.png")), "Alle kørere skal have en skrå bagfra-sprite");
-
-api.data.TRACKS.forEach((candidate) => {
-  assert.equal(candidate.isRoad(candidate.start.x, candidate.start.y), true, `${candidate.name} skal starte på asfalt`);
-  assert.equal(candidate.isRoad(candidate.cx, candidate.cy), false, `${candidate.name} må ikke have asfalt i midten`);
-  assert.equal(candidate.waypoints.length, 32, `${candidate.name} skal have en tæt AI-linje`);
-  assert.ok(candidate.itemBoxes.length >= 6, `${candidate.name} skal have itembokse`);
-  assert.ok(candidate.coins.length >= 10, `${candidate.name} skal have mønter`);
-  assert.ok(candidate.boostPads.length >= 2, `${candidate.name} skal have boostfelter`);
+test("three closed, distinct tracks; pickups and grid stay on the road",()=>{
+  assert.equal(TRACKS.length,3);assert.equal(DRIVERS.length,8);
+  for(const t of TRACKS){
+    assert.equal(t.samples.length,512);assert.ok(t.length>4500);
+    const a=t.at(0),b=t.at(t.length);assert.ok(Math.hypot(a.x-b.x,a.y-b.y)<.001);
+    for(let s=0;s<t.length;s+=47){
+      const p=t.at(s),n=t.nearest(p.x,p.y);
+      assert.ok(n.distance<.001);
+      assert.ok(Math.abs(angleDelta(p.heading,n.heading))<.08);
+      assert.ok(t.isRoad(p.x,p.y));
+    }
+    for(const p of [...t.coins,...t.itemBoxes,...t.boostPads])assert.ok(t.isRoad(p.x,p.y));
+    for(let i=0;i<8;i++){const k=new Kart(DRIVERS[i],i);k.reset(t);assert.ok(t.isRoad(k.x,k.y));}
+  }
+  assert.equal(new Set(TRACKS.map(t=>Math.round(t.length))).size,3);
+});
+test("countdown, correct rear grid position and start boost timing",()=>{
+  const r=raceFor(),x=r.player.x,y=r.player.y;assert.equal(r.player.rank,8);
+  for(let i=0;i<120;i++)r.update(1/60,EMPTY);
+  assert.equal(r.state,"countdown");assert.equal(r.elapsed,0);assert.equal(r.player.x,x);assert.equal(r.player.y,y);
+  for(let i=0;i<61;i++)r.update(1/60,gas);
+  assert.equal(r.state,"racing");assert.ok(r.player.boostTimer>1);
+  const early=raceFor();for(let i=0;i<181;i++)early.update(1/60,gas);
+  assert.equal(early.player.boostTimer,0,"holding gas from the beginning must not give a perfect start");
+});
+test("acceleration, braking, reverse and off-road slowdown",()=>{
+  const k=new Kart(DRIVERS[0]);k.reset(TRACKS[0]);
+  for(let i=0;i<60;i++)k.update(1/60,gas,TRACKS[0]);
+  assert.ok(k.speed>150);const before=k.speed;
+  for(let i=0;i<30;i++)k.update(1/60,{...EMPTY,brake:true},TRACKS[0]);
+  assert.ok(k.speed<before-90);
+  for(let i=0;i<120;i++)k.update(1/60,{...EMPTY,brake:true},TRACKS[0]);
+  assert.ok(k.speed<0&&k.speed>=-95);
+  k.reset(TRACKS[0]);const p=TRACKS[0].at(300,TRACKS[0].halfWidth+30);
+  Object.assign(k,{x:p.x,y:p.y,heading:p.heading,velocityHeading:p.heading,speed:300,road:TRACKS[0].nearest(p.x,p.y)});
+  k.update(1/60,gas,TRACKS[0]);assert.ok(k.offroad);assert.ok(k.speed<300);
+});
+test("drift builds charge, releases a turbo and cannot charge at rest",()=>{
+  const k=new Kart(DRIVERS[0]);k.reset(TRACKS[0]);
+  k.speed=250;k.update(1/60,{...gas,steer:1,drift:true},TRACKS[0]);k.update(1/60,{...gas,steer:1,drift:true},TRACKS[0]);
+  assert.ok(k.drifting);k.driftTimer=1.85;k.update(1/60,gas,TRACKS[0]);
+  assert.ok(k.boostTimer>1.3);assert.equal(k.boosts,1);assert.equal(k.drifting,false);
+  k.reset(TRACKS[0]);k.update(1/60,{...EMPTY,steer:1,drift:true},TRACKS[0]);assert.equal(k.drifting,false);
+  k.drifting=true;k.driftTimer=2;k.applySpin();assert.equal(k.boostTimer,0,"a hit must cancel a drift without granting a turbo");
+});
+test("laps count at the finish after all 12 gates, on asphalt and run-off",()=>{
+  for(const offset of [0,TRACKS[0].halfWidth+30]){
+    const r=raceFor(),k=r.player,L=r.track.length;r.state="racing";
+    const start=k.raceDistance;
+    march(r,k,start,L-15,offset);assert.equal(k.lap,0);
+    march(r,k,L-15,L+20,offset);assert.equal(k.lap,1);
+    march(r,k,L+20,3*L+20,offset);assert.equal(k.lap,3);assert.ok(k.finished);
+    assert.equal(k.lapTimes.length,3);
+    const frozen=k.finishTime;r.elapsed+=20;r.updateKartProgress(k);assert.equal(k.finishTime,frozen);
+  }
+});
+test("backwards travel, finish-line oscillation and teleports cannot award laps",()=>{
+  const r=raceFor(),k=r.player,L=r.track.length;r.state="racing";
+  const start=k.raceDistance;
+  march(r,k,start,-L-250);assert.equal(k.lap,0);assert.equal(k.gateCount,0);
+  const tele=raceFor();tele.state="racing";
+  for(let i=1;i<=36;i++)position(tele,tele.player,i*L/12+3);
+  assert.equal(tele.player.lap,0);
+  const line=raceFor();line.state="racing";
+  march(line,line.player,line.player.raceDistance,20);
+  for(let i=0;i<8;i++){march(line,line.player,20,-20);march(line,line.player,-20,20);}
+  assert.equal(line.player.lap,0);
+});
+test("recovery returns to the unpassed gate without granting progress",()=>{
+  const r=raceFor(),k=r.player;k.raceDistance=k.nextGate+700;k.x=9999;k.y=-9000;k.recover(r.track);
+  assert.ok(r.track.isRoad(k.x,k.y));assert.ok(k.raceDistance<k.nextGate);
+  const lap=k.lap;r.updateKartProgress(k);assert.equal(k.lap,lap);assert.ok(k.invincibleTimer>0);
+});
+test("all six items, protection, traps, homing targets and cooldowns",()=>{
+  const r=raceFor();r.state="racing";const p=r.player;
+  for(const item of ["mushroom","banana","shell","redShell","star"]){p.item=item;assert.equal(r.useItem(p),true);assert.equal(p.item,null);}
+  assert.ok(p.boostTimer>0);assert.equal(r.traps.length,1);assert.equal(r.shells.length,2);
+  assert.equal(r.shells[1].homing,true);assert.ok(r.shells[1].target.progress>p.progress);
+  assert.ok(p.starTimer>5);assert.equal(p.applySpin(),false);
+  p.item="lightning";r.useItem(p);assert.ok(r.karts.slice(1).every(k=>k.spinTimer>0));
+  const c=r.coins[0];p.x=c.x;p.y=c.y;p.coins=9;r.updateObjects(1/60);assert.equal(p.coins,10);
+  r.updateObjects(1/60);assert.equal(p.coins,10);assert.ok(c.cooldown>0);
+  const box=r.itemBoxes[0];p.x=box.x;p.y=box.y;p.item=null;r.updateObjects(1/60);assert.ok(p.itemRoulette>0);assert.ok(box.cooldown>0);
+});
+test("overlapping karts separate without NaN or permanent speed loss",()=>{
+  const r=raceFor(),a=r.karts[0],b=r.karts[1];b.x=a.x;b.y=a.y;a.speed=b.speed=200;
+  r.resolveKartCollisions();assert.ok(Math.hypot(a.x-b.x,a.y-b.y)>=a.radius+b.radius);
+  assert.ok(Number.isFinite(a.x)&&Number.isFinite(b.y));assert.equal(a.speed,200);
+});
+test("finished racers stay ranked by finish time and the result freezes",()=>{
+  const r=raceFor();r.state="racing";
+  r.karts[1].finished=true;r.karts[1].finishTime=40;r.karts[1].progress=100;
+  r.player.finished=true;r.player.finishTime=45;r.player.lapTimes=[15,14,16];r.player.progress=9000;r.elapsed=45;
+  r.finish();assert.equal(r.result.position,2);assert.equal(r.result.bestLap,14);
+  r.update(1,gas);assert.equal(r.elapsed,45);
+});
+test("time trial has one driver and no offensive pickups",()=>{
+  const r=raceFor(TRACKS[0],{mode:"time"});assert.equal(r.karts.length,1);assert.equal(r.itemBoxes.length,0);assert.ok(r.coins.length>0);
+});
+test("keyboard/touch state clears and simultaneous pointers remain independent",()=>{
+  const input=new InputManager();input.setControl("left",true,1);input.setControl("drift",true,2);input.setControl("item",true,3);
+  let v=input.read(true);assert.equal(v.steer,-1);assert.ok(v.drift&&v.accelerate&&v.itemPressed);
+  input.setControl("left",false,1);v=input.read();assert.equal(v.steer,0);assert.ok(v.drift);assert.equal(v.itemPressed,false);
+  input.setControl("brake",true,4);assert.equal(input.read(true).accelerate,false);
+  input.reset();assert.equal(input.read().drift,false);assert.equal(input.read().brake,false);
+});
+test("malformed or unavailable storage and time rounding",()=>{
+  for(const value of ["{", "null", "5", '{"records":null,"settings":null}'])assert.ok(readSave({getItem:()=>value}).records);
+  assert.ok(readSave({getItem(){throw Error("blocked");}}).records);
+  assert.equal(formatTime(59.999),"1:00.00");assert.equal(formatTime(-1),"0:00.00");
 });
 
-const track = api.data.TRACKS[0];
-assert.equal(track.isRoad(2, 2), false, "Yderområdet må ikke være kørebane");
-
-const { Kart, Race, RaceAI, circularDistance } = api.testHooks;
-const kart = new Kart(api.data.DRIVERS[0], 0, false);
-kart.reset(track, 0);
-const startingSpeed = kart.speed;
-kart.update(1 / 60, { steer: 0, accelerate: true, brake: false, drift: false, itemPressed: false }, track);
-assert.ok(kart.speed > startingSpeed, "Gas skal accelerere karten");
-assert.ok(Number.isFinite(kart.x) && Number.isFinite(kart.y), "Fysik må holde karten i endelige koordinater");
-
-kart.speed = 220;
-kart.update(0.6, { steer: 1, accelerate: true, brake: false, drift: true, itemPressed: false }, track);
-assert.equal(kart.drifting, true, "Shift/drift skal starte et drift ved fart og styring");
-kart.update(1 / 60, { steer: 0, accelerate: true, brake: false, drift: false, itemPressed: false }, track);
-assert.ok(kart.boostTimer > 0, "Et opladet drift skal udløse mini-turbo");
-
-const race = new Race(track, api.data.DRIVERS);
-race.start("mario");
-assert.equal(race.karts.length, 8, "Et løb skal starte med otte karts");
-assert.equal(race.state, "countdown", "Løbet skal starte med countdown");
-assert.equal(race.player.rank, 8, "Spilleren skal starte bagerst med rivalerne synlige foran");
-race.state = "racing";
-const player = race.player;
-track.checkpointAngles.forEach((angle) => {
-  const point = track.pointAt(angle);
-  player.x = point.x;
-  player.y = point.y;
-  player.speed = 90;
-  race.updateKartProgress(player);
-});
-assert.equal(player.lap, 1, "Checkpoints i korrekt rækkefølge skal give én omgang");
-
-player.item = "mushroom";
-assert.equal(race.useItem(player), true, "Turbo-svamp skal kunne bruges");
-assert.ok(player.boostTimer > 0, "Turbo-svamp skal give boosttid");
-player.item = "banana";
-race.useItem(player);
-assert.equal(race.traps.length, 1, "Banan skal placere en fælde");
-player.item = "shell";
-race.useItem(player);
-assert.equal(race.shells.length, 1, "Grøn skal skal affyre et projektil");
-player.item = "redShell";
-race.useItem(player);
-assert.equal(race.shells.at(-1).homing, true, "Rød skal skal være målsøgende");
-player.item = "star";
-race.useItem(player);
-assert.ok(player.starTimer > 5, "Stjerne skal give midlertidig usårlighed");
-player.item = "lightning";
-race.useItem(player);
-assert.ok(race.karts.slice(1).every((target) => target.spinTimer > 0), "Lyn skal ramme rivalerne");
-
-const coin = race.coins[0];
-player.x = coin.x;
-player.y = coin.y;
-race.updateObjects(1 / 60);
-assert.equal(player.coins, 1, "En mønt skal øge kartens mønttal");
-
-const aiInput = new RaceAI().inputFor(race.karts[1], track);
-assert.ok(aiInput.steer >= -1 && aiInput.steer <= 1, "AI-styring skal være normaliseret");
-assert.equal(typeof aiInput.accelerate, "boolean");
-assert.equal(typeof aiInput.drift, "boolean");
-assert.ok(circularDistance(0, Math.PI * 2 - 0.02) < 0.03, "Vinkelafstand skal håndtere 0/2π-overgang");
-
-assert.match(htmlSource, /data-kart-control="drift"/, "Mobilstyringen skal have en driftknap");
-assert.match(htmlSource, /id="kart-player-sprite"/, "Spillerens bagfra-kart skal ligge over 3D-banen");
-assert.match(htmlSource, /type="module" src="js\/kart-racer-3d\.js/, "Spillet skal indlæse 3D-rendereren");
-assert.match(htmlSource, /viewport-fit=cover/, "Mobilvisningen skal respektere telefonens safe area");
-assert.match(cssSource, /orientation:landscape/, "Spillet skal have et dedikeret mobilt landskabs-layout");
-assert.match(cssSource, /100dvh/, "Mobilspillet skal passe til den dynamiske skærmhøjde");
-assert.match(renderer3dSource, /PerspectiveCamera/, "3D-visningen skal bruge et perspektivkamera");
-assert.match(renderer3dSource, /landscape \? -6\.7/, "Kameraet skal placeres bag bilen i landskabsformat");
-assert.match(renderer3dSource, /raceCarWhite\.glb/, "3D-visningen skal bruge den lokale CC0-bilmodel");
-assert.ok(fs.existsSync(path.join(root, "assets", "kart", "kenney-racing-3d", "raceCarWhite.glb")), "CC0-bilmodellen skal ligge lokalt");
-
-console.log("Kart-test: 3D-kamera bag bilen, 3 baner, drift, items og mobil bestået");
+for(const difficulty of Object.keys(DIFFICULTIES))for(const track of TRACKS){
+  test(`all eight drivers finish ${track.name} / ${difficulty} without respawning`,()=>{
+    seed=73;
+    const r=raceFor(track,{difficulty});r.state="racing";r.player.isAI=true;
+    for(let frame=0;frame<60*160&&!r.karts.every(k=>k.finished);frame++){
+      r.state="racing";r.update(1/60);
+      assert.ok(r.karts.every(k=>Number.isFinite(k.x)&&Number.isFinite(k.y)));
+    }
+    assert.ok(r.karts.every(k=>k.finished),JSON.stringify(r.karts.map(k=>({id:k.driver.id,lap:k.lap,gate:k.gateCount}))));
+    assert.ok(r.karts.every(k=>k.recoveries===0),"AI should navigate without emergency recovery");
+    assert.equal(new Set(r.karts.map(k=>k.rank)).size,8);
+  });
+}
+console.log(`Kart: ${checks} behavior checks passed, including 9 complete eight-driver races.`);

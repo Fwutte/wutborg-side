@@ -1,0 +1,61 @@
+<!doctype html><html lang="da"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Kart browser QA</title>
+<style>body{margin:0;background:#142b33;color:#eaffd0;font:12px monospace}iframe{position:fixed;inset:0;border:0;width:100%;height:100%}#report{position:fixed;left:10px;bottom:35px;z-index:100;max-width:92%;background:#122833ed;color:#eaffb7;padding:12px;white-space:pre-wrap;max-height:25vh;overflow:auto;border:1px solid #bdd691}button{font:inherit;padding:8px}</style>
+<iframe id="game" title="Wutborg Kart QA" src="../kart-racer.html"></iframe><output id="report">Initialiserer QA…</output>
+<script>
+const frame=document.getElementById('game'),out=document.getElementById('report'),checks=[];
+const params=new URLSearchParams(location.search),scenario=params.get('scenario')||'integration';
+const fail=message=>{throw Error(message);};
+function check(condition,message){if(!condition)fail(message);checks.push('OK '+message);out.textContent=checks.join('\n');}
+function ready(){
+ const w=frame.contentWindow,g=w.wutborgKartGame;if(!g){setTimeout(ready,100);return;}
+ const D=w.WutborgKartData,doc=w.document;
+ w.WutborgHighscores={submit:async()=>({ok:true})};g.persist=()=>{};g.audio.enabled=false;
+ const errors=[];w.addEventListener('error',e=>errors.push(e.message));
+ try{
+  if(scenario==='preview'){
+   g.selectedTrackId=D.TRACKS[Number(params.get('track')||0)].id;g.mode='single';g.autoGas=true;g.startRace();
+   const original=g.input.read.bind(g.input);g.input.read=()=>g.race.ai.inputFor(g.race.player,g.track);
+   let frames=0,sum=0;const originalDraw=g.renderer.draw.bind(g.renderer);
+   g.renderer.draw=(r,dt,o)=>{frames++;sum+=dt;originalDraw(r,dt,o);};
+   const timer=setInterval(()=>{
+    out.textContent=JSON.stringify({track:g.track.name,state:g.race.state,seconds:+g.race.elapsed.toFixed(1),lap:g.race.player.lap,rank:g.race.player.rank,renderFPS:Math.round(frames/Math.max(sum,.01)),drawCalls:g.renderer.renderer?.info.render.calls,triangles:g.renderer.renderer?.info.render.triangles,errors},null,2);
+    if(g.race.elapsed>Number(params.get('stop')||10)&&!g.paused){g.togglePause(true);doc.getElementById('kart-pause').hidden=true;doc.body.classList.remove('kart-paused');clearInterval(timer);}
+   },250);return;
+  }
+  check(g.renderer.constructor.name==='KartRacer3DRenderer','WebGL renderer initialized');
+  g.autoGas=false;g.mode='single';g.startRace();g.audio.enabled=false;
+  check(g.race.player.rank===8,'player starts eighth');
+  const control=doc.querySelector('[data-kart-control="left"]');
+  g.input.setControl('left',true,11);g.input.setControl('drift',true,12);
+  const v=g.input.read();check(v.steer===-1&&v.drift,'simultaneous mobile inputs');g.input.reset();
+  g.togglePause(true);const before=g.race.countdown;g.update(.5);check(g.race.countdown===before,'pause freezes countdown');
+  check(!g.input.enabled&&doc.getElementById('kart-pause').hidden===false,'pause state and dialog');
+  g.togglePause(false);check(g.input.enabled&&doc.activeElement===g.canvas,'resume restores driving focus');
+  g.race.countdown=0;g.race.state='racing';
+  const event=new w.KeyboardEvent('keydown',{code:'KeyW',bubbles:true});g.canvas.dispatchEvent(event);g.update(1/60);
+  check(g.race.player.speed>0,'keyboard accelerates');g.canvas.dispatchEvent(new w.KeyboardEvent('keyup',{code:'KeyW',bubbles:true}));g.input.reset();
+  g.race.player.item='mushroom';doc.getElementById('kart-item').click();g.update(1/60);check(g.race.player.boostTimer>0,'HUD item button uses turbo');
+  w.dispatchEvent(new w.Event('blur'));check(g.paused&&!g.input.enabled,'window blur pauses');g.togglePause(false);
+  g.mode='cup';g.cup={round:0,points:Object.fromEntries(D.DRIVERS.map(d=>[d.id,0]))};g.startRace();g.audio.enabled=false;
+  for(let round=0;round<3;round++){
+   g.race.state='racing';let n=0;
+   while(g.race.state==='racing'&&n++<12000)g.race.update(1/60,g.race.ai.inputFor(g.race.player,g.track));
+   check(g.race.state==='finished','Grand Prix round '+(round+1)+' finishes with actual physics');
+   g.showResult();check(!doc.getElementById('kart-result').hidden,'result dialog '+(round+1));
+   check(g.cup.points[g.selectedDriver]>0,'cup points recorded');
+   if(round<2){doc.getElementById('kart-next').click();g.audio.enabled=false;check(g.track===D.TRACKS[round+1],'next track loads');}
+  }
+  check(doc.getElementById('kart-next').hidden,'final cup has no next-track button');
+  check(doc.getElementById('result-kicker').textContent.includes('SAMLET'),'overall cup standings shown');
+  if(scenario==='result'){out.hidden=true;g.renderer.draw(g.race,.016,{driver:D.DRIVERS[0]});return;}
+  const total=Object.values(g.cup.points).reduce((a,b)=>a+b,0);check(total===174,'exactly three sets of cup points');
+  doc.getElementById('kart-retry').click();check(g.cup.round===0&&Object.values(g.cup.points).every(x=>x===0),'cup retry resets points');
+  g.showMenu();g.mode='time';g.startRace();g.audio.enabled=false;check(g.race.karts.length===1&&g.race.itemBoxes.length===0,'time trial mode');
+  g.togglePause(true);g.showMenu();g.renderer.draw(g.race,.016,{driver:D.DRIVERS[0]});
+  check(g.renderer.renderer.info.render.calls<300,'menu draw-call budget');
+  check(errors.length===0,'no runtime errors');
+  out.textContent='PASS · '+checks.length+' integration checks\n'+checks.join('\n');out.dataset.status='passed';
+ }catch(e){out.textContent='FAIL '+e.stack+'\n'+checks.join('\n');out.dataset.status='failed';}
+}
+frame.addEventListener('load',ready);
+</script></html>

@@ -1,164 +1,97 @@
 (() => {
   "use strict";
-
-  const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
   const TAU = Math.PI * 2;
-
-  const normalizeAngle = (angle) => {
-    let next = angle % TAU;
-    if (next < 0) next += TAU;
-    return next;
-  };
-
-  const angleDelta = (from, to) => {
-    let delta = normalizeAngle(to) - normalizeAngle(from);
-    if (delta > Math.PI) delta -= TAU;
-    if (delta < -Math.PI) delta += TAU;
-    return delta;
-  };
-
-  const makeOvalTrack = ({
-    id, name, subtitle, difficulty, palette, cx, cy, outerRx, outerRy, innerRx, innerRy,
-    startAngle, itemBoxAngles, boostAngles, coinAngles, decorations = [],
-  }) => {
-    const checkpointAngles = [0, Math.PI / 2, Math.PI, (Math.PI * 3) / 2];
-    const waypointAngles = Array.from({ length: 32 }, (_, index) => (index / 32) * TAU);
-    const radiusX = (outerRx + innerRx) / 2;
-    const radiusY = (outerRy + innerRy) / 2;
-    const pointAt = (angle) => ({ x: cx + Math.cos(angle) * radiusX, y: cy + Math.sin(angle) * radiusY });
-    const tangentAt = (angle) => Math.atan2(Math.cos(angle) * radiusY, -Math.sin(angle) * radiusX);
-    const pointOffsetAt = (angle, lateral = 0) => {
-      const point = pointAt(angle);
-      const heading = tangentAt(angle);
-      return { x: point.x - Math.sin(heading) * lateral, y: point.y + Math.cos(heading) * lateral };
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  const mod = (v, n) => ((v % n) + n) % n;
+  const normalizeAngle = a => mod(a, TAU);
+  const angleDelta = (a, b) => mod(b - a + Math.PI, TAU) - Math.PI;
+  const lerp = (a, b, t) => a + (b - a) * t;
+  // A uniform cubic B-spline rounds the control polygon without tight offset cusps.
+  const spline = (a, b, c, d, t) => ((1-t)**3*a+(3*t**3-6*t*t+4)*b+(-3*t**3+3*t*t+3*t+1)*c+t**3*d)/6;
+  // Arc-length samples are shared by physics, AI, rendering and the minimap.
+  function makeTrack(config) {
+    const raw = [], points = config.points, count = points.length;
+    for (let i = 0; i < count * 80; i++) {
+      const n = Math.floor(i / 80), t = (i % 80) / 80;
+      const p = [-1, 0, 1, 2].map(o => points[mod(n + o, count)]);
+      raw.push({ x: spline(...p.map(v => v[0]), t), y: spline(...p.map(v => v[1]), t) });
+    }
+    raw.push({ ...raw[0] });
+    const distances = [0];
+    for (let i = 1; i < raw.length; i++) distances.push(distances[i-1] + Math.hypot(raw[i].x-raw[i-1].x, raw[i].y-raw[i-1].y));
+    const length = distances.at(-1), samples = [], segments = 512;
+    let cursor = 0;
+    for (let i = 0; i < segments; i++) {
+      const s = i * length / segments;
+      while (distances[cursor+1] < s) cursor++;
+      const t = (s-distances[cursor]) / (distances[cursor+1]-distances[cursor]);
+      samples.push({ x: lerp(raw[cursor].x, raw[cursor+1].x, t), y: lerp(raw[cursor].y, raw[cursor+1].y, t), s });
+    }
+    samples.forEach((p,i) => {
+      const a=samples[mod(i-1,segments)],b=samples[(i+1)%segments];
+      p.heading=Math.atan2(b.y-a.y,b.x-a.x);
+    });
+    const track = { ...config, length, samples, step: length/segments, cx: 1100, cy: 1000, width: 2200, height: 2000 };
+    track.at = function(s, offset = 0) {
+      const f = mod(s, length)/this.step, i = Math.floor(f), a = samples[i], b = samples[(i+1)%segments];
+      const heading = a.heading+angleDelta(a.heading,b.heading)*(f-i);
+      return { x: lerp(a.x,b.x,f-i)-Math.sin(heading)*offset, y: lerp(a.y,b.y,f-i)+Math.cos(heading)*offset, heading, s: mod(s,length) };
     };
-    const start = pointAt(startAngle);
-
-    return {
-      id,
-      name,
-      subtitle,
-      difficulty,
-      width: cx * 2,
-      height: cy * 2,
-      cx,
-      cy,
-      outerRx,
-      outerRy,
-      innerRx,
-      innerRy,
-      radiusX,
-      radiusY,
-      startAngle,
-      start,
-      heading: tangentAt(startAngle),
-      checkpointAngles,
-      waypoints: waypointAngles.map((angle) => ({ ...pointAt(angle), angle })),
-      itemBoxes: itemBoxAngles.map((angle, index) => ({
-        id: `${id}-box-${index + 1}`,
-        ...pointOffsetAt(angle, index % 2 === 0 ? -38 : 38),
-        angle,
-      })),
-      boostPads: boostAngles.map((angle, index) => ({ id: `${id}-boost-${index + 1}`, ...pointOffsetAt(angle), angle })),
-      coins: coinAngles.map((angle, index) => ({
-        id: `${id}-coin-${index + 1}`,
-        ...pointOffsetAt(angle, ((index % 3) - 1) * 42),
-        angle,
-      })),
-      decorations,
-      palette,
-      pointAt,
-      pointOffsetAt,
-      tangentAt,
-      angleAt(x, y) {
-        return normalizeAngle(Math.atan2((y - cy) / radiusY, (x - cx) / radiusX));
-      },
-      isRoad(x, y) {
-        const dx = x - cx;
-        const dy = y - cy;
-        const outer = (dx * dx) / (outerRx * outerRx) + (dy * dy) / (outerRy * outerRy);
-        const inner = (dx * dx) / (innerRx * innerRx) + (dy * dy) / (innerRy * innerRy);
-        return outer <= 1 && inner >= 1;
-      },
-      nearestRoadPoint(x, y) {
-        return pointAt(this.angleAt(x, y));
-      },
+    track.nearest = function(x, y, hint) {
+      let best = null, bestD = Infinity;
+      const scan = (center, radius) => {
+        for (let j = center-radius; j <= center+radius; j++) {
+          const i = mod(j,segments), a = samples[i], b = samples[(i+1)%segments];
+          const dx = b.x-a.x, dy = b.y-a.y, t = clamp(((x-a.x)*dx+(y-a.y)*dy)/(dx*dx+dy*dy),0,1);
+          const px = a.x+dx*t, py = a.y+dy*t, d = (x-px)**2+(y-py)**2;
+          if (d < bestD) {
+            bestD = d;
+            best = { x:px, y:py, s:mod((i+t)*this.step,length), index:i, heading:Math.atan2(dy,dx), lateral:((y-py)*dx-(x-px)*dy)/Math.hypot(dx,dy), distance:Math.sqrt(d) };
+          }
+        }
+      };
+      if (Number.isInteger(hint)) scan(hint,12);
+      if (!best || best.distance > this.halfWidth*2) scan(segments/2,segments/2);
+      return best;
     };
-  };
-
+    track.isRoad = (x,y) => track.nearest(x,y).distance <= track.halfWidth;
+    track.start = track.at(0);
+    track.heading = track.start.heading;
+    track.itemBoxes = [.13,.39,.66,.88].flatMap((t,i) => [-.55,0,.55].map((lane,n) => ({ ...track.at(t*length,lane*track.halfWidth), id: `box-${i}-${n}` })));
+    track.coins = [.07,.24,.49,.74,.94].flatMap((t,i) => [0,1,2,3,4].map(n => ({ ...track.at((t+n*.008)*length,(i%2?1:-1)*track.halfWidth*.42), id: `coin-${i}-${n}` })));
+    track.boostPads = [.30,.58,.81].map(t => track.at(t*length,-track.halfWidth*.35));
+    return track;
+  }
   const DRIVERS = [
-    { id: "mario", name: "Mario", color: "#e94343", accent: "#ffe263", sprite: "car_red_1.png", rearSprite: "raceCarRed_NE.png", className: "Mellem", maxSpeed: 360, acceleration: 220, handling: 2.7, weight: 1 },
-    { id: "luigi", name: "Luigi", color: "#36a84c", accent: "#e7f6a4", sprite: "car_green_2.png", rearSprite: "raceCarGreen_NE.png", className: "Mellem", maxSpeed: 358, acceleration: 224, handling: 2.75, weight: 1 },
-    { id: "peach", name: "Peach", color: "#f080a8", accent: "#fff2b4", sprite: "car_red_4.png", rearSprite: "raceCarRed_NE.png", className: "Let", maxSpeed: 342, acceleration: 248, handling: 3.05, weight: 0.82 },
-    { id: "toad", name: "Toad", color: "#f3f3ed", accent: "#e84c4c", sprite: "car_blue_3.png", rearSprite: "raceCarWhite_NE.png", className: "Let", maxSpeed: 338, acceleration: 254, handling: 3.12, weight: 0.78 },
-    { id: "yoshi", name: "Yoshi", color: "#54c973", accent: "#ecfff0", sprite: "car_green_5.png", rearSprite: "raceCarGreen_NE.png", className: "Let", maxSpeed: 346, acceleration: 240, handling: 2.98, weight: 0.85 },
-    { id: "bowser", name: "Bowser", color: "#d9a52c", accent: "#57352d", sprite: "car_yellow_5.png", rearSprite: "raceCarOrange_NE.png", className: "Tung", maxSpeed: 382, acceleration: 196, handling: 2.38, weight: 1.32 },
-    { id: "daisy", name: "Daisy", color: "#f5a139", accent: "#fff3a0", sprite: "car_yellow_2.png", rearSprite: "raceCarOrange_NE.png", className: "Mellem", maxSpeed: 354, acceleration: 230, handling: 2.82, weight: 0.95 },
-    { id: "wario", name: "Wario", color: "#9158c8", accent: "#f6dc49", sprite: "car_black_4.png", rearSprite: "raceCarWhite_NE.png", className: "Tung", maxSpeed: 376, acceleration: 204, handling: 2.45, weight: 1.25 },
+    { id:"max", name:"Max", color:"#f45140", accent:"#ffdb7c", className:"Allround", maxSpeed:360, acceleration:220, handling:2.5, weight:1 },
+    { id:"luna", name:"Luna", color:"#8d76ef", accent:"#e2d8ff", className:"Smidig", maxSpeed:346, acceleration:245, handling:2.8, weight:.85 },
+    { id:"freja", name:"Freja", color:"#f080a8", accent:"#fff0d6", className:"Lynstart", maxSpeed:342, acceleration:260, handling:2.65, weight:.8 },
+    { id:"otto", name:"Otto", color:"#f0bc41", accent:"#ffedba", className:"Topfart", maxSpeed:383, acceleration:196, handling:2.28, weight:1.3 },
+    { id:"nova", name:"Nova", color:"#46c59b", accent:"#d0ffeb", className:"Smidig", maxSpeed:350, acceleration:240, handling:2.75, weight:.85 },
+    { id:"bjorn", name:"Bjørn", color:"#5494e6", accent:"#d6ecff", className:"Stærk", maxSpeed:378, acceleration:204, handling:2.3, weight:1.4 },
+    { id:"alma", name:"Alma", color:"#f88b43", accent:"#ffe5b8", className:"Allround", maxSpeed:358, acceleration:230, handling:2.55, weight:1 },
+    { id:"storm", name:"Storm", color:"#aabacb", accent:"#f3fcff", className:"Topfart", maxSpeed:380, acceleration:198, handling:2.35, weight:1.2 },
   ];
-
   const ITEM_TYPES = {
-    mushroom: { name: "Turbo-svamp", icon: "🍄", color: "#f2644f" },
-    banana: { name: "Banan", icon: "🍌", color: "#ffe15d" },
-    shell: { name: "Grøn skal", icon: "◆", color: "#53c66d" },
-    redShell: { name: "Rød skal", icon: "◆", color: "#ef514f" },
-    star: { name: "Stjerne", icon: "★", color: "#ffd85c" },
-    lightning: { name: "Lyn", icon: "⚡", color: "#8fd7ff" },
+    mushroom:{ name:"Turbo", icon:"»", color:"#ffbe54", help:"Et ekstra skud fart" },
+    banana:{ name:"Oliespor", icon:"●", color:"#b69cff", help:"Læg en fælde bag dig" },
+    shell:{ name:"Puls", icon:"◆", color:"#73e4b0", help:"Skyd lige frem" },
+    redShell:{ name:"Raket", icon:"➤", color:"#ff786b", help:"Følger en rival foran dig" },
+    star:{ name:"Stjerneskjold", icon:"★", color:"#ffe27a", help:"Fart og beskyttelse i 5 sekunder" },
+    lightning:{ name:"Lyn", icon:"ϟ", color:"#8bdfff", help:"Sæt rivalerne ud af spil" },
   };
-
   const TRACKS = [
-    makeOvalTrack({
-      id: "clover-circuit",
-      name: "Kloversløjfen",
-      subtitle: "Bred parkbane med lange driftsving",
-      difficulty: "Begynder",
-      palette: { grass: "#6fc75b", grassDark: "#3f9f54", road: "#4d5564", roadEdge: "#f4eed2", sky: "#aee7ff", barrier: "#f2674c" },
-      cx: 800, cy: 500, outerRx: 650, outerRy: 385, innerRx: 360, innerRy: 155,
-      startAngle: (Math.PI * 3) / 2,
-      itemBoxAngles: [0.38, 1.12, 2.18, 3.08, 4.1, 5.2],
-      boostAngles: [0.12, 3.35],
-      coinAngles: [0.65, 0.82, 1.62, 1.79, 2.62, 2.79, 3.72, 3.89, 4.72, 4.89, 5.65, 5.82],
-      decorations: [
-        { asset: "tribune_full.png", x: 670, y: 430, scale: 2.4 },
-        { asset: "tree_large.png", x: 125, y: 115, scale: 1.25 }, { asset: "tree_small.png", x: 1440, y: 120, scale: 1.4 },
-        { asset: "tree_large.png", x: 140, y: 850, scale: 1.15 }, { asset: "tree_small.png", x: 1430, y: 835, scale: 1.5 },
-      ],
-    }),
-    makeOvalTrack({
-      id: "sunset-bay",
-      name: "Solnedgangsbugten",
-      subtitle: "Hurtig kystbane med smal asfalt",
-      difficulty: "Øvet",
-      palette: { grass: "#efb75a", grassDark: "#da7850", road: "#424b5d", roadEdge: "#fff0c9", sky: "#ffbf83", barrier: "#4fc1d9" },
-      cx: 800, cy: 500, outerRx: 670, outerRy: 350, innerRx: 390, innerRy: 175,
-      startAngle: Math.PI / 2,
-      itemBoxAngles: [0.25, 0.95, 1.85, 2.65, 3.55, 4.45, 5.35],
-      boostAngles: [1.45, 4.58],
-      coinAngles: [0.5, 0.68, 1.28, 1.46, 2.35, 2.53, 3.18, 3.36, 4.05, 4.23, 5.1, 5.28],
-      decorations: [
-        { asset: "tribune_full.png", x: 660, y: 435, scale: 2.7 },
-        { asset: "tires_white.png", x: 190, y: 475, scale: 2 }, { asset: "tires_red.png", x: 1365, y: 480, scale: 2 },
-        { asset: "tree_small.png", x: 140, y: 120, scale: 1.2 }, { asset: "tree_small.png", x: 1410, y: 855, scale: 1.2 },
-      ],
-    }),
-    makeOvalTrack({
-      id: "midnight-crown",
-      name: "Midnatskronen",
-      subtitle: "Teknisk nattecircuit med høj fart",
-      difficulty: "Ekspert",
-      palette: { grass: "#243a57", grassDark: "#14263e", road: "#3c4152", roadEdge: "#7bd9ff", sky: "#101a31", barrier: "#e85b78" },
-      cx: 800, cy: 500, outerRx: 615, outerRy: 415, innerRx: 355, innerRy: 215,
-      startAngle: (Math.PI * 3) / 2,
-      itemBoxAngles: [0.48, 1.25, 2.05, 2.85, 3.65, 4.45, 5.25],
-      boostAngles: [0.02, 2.95, 5.95],
-      coinAngles: [0.72, 0.9, 1.62, 1.8, 2.55, 2.73, 3.48, 3.66, 4.4, 4.58, 5.25, 5.43],
-      decorations: [
-        { asset: "tribune_full.png", x: 650, y: 430, scale: 2.8 },
-        { asset: "barrier_red.png", x: 205, y: 170, scale: 2.2 }, { asset: "barrier_white.png", x: 1325, y: 805, scale: 2.2 },
-        { asset: "tree_large.png", x: 90, y: 845, scale: 1.25 }, { asset: "tree_large.png", x: 1420, y: 135, scale: 1.25 },
-      ],
-    }),
+    makeTrack({ id:"clover-circuit", name:"Kløversløjfen", short:"Kløver", number:"01", theme:"garden", difficulty:"Let", subtitle:"Grønne bakker. Store driftsving.", halfWidth:108,
+      palette:{ sky:"#b5e2e9", grass:"#77b98b", grassDark:"#458768", road:"#586879", edge:"#f9edcb", accent:"#ff725a", fog:"#b5dcd8" },
+      points:[[820,290],[1320,290],[1710,450],[1860,850],[1640,1130],[1690,1510],[1280,1730],[870,1580],[610,1310],[300,1070],[360,650],[540,330]] }),
+    makeTrack({ id:"sunset-bay", name:"Solskinsbugten", short:"Bugten", number:"02", theme:"coast", difficulty:"Mellem", subtitle:"Havbrise. Chikaner. Fuld fart.", halfWidth:98,
+      palette:{ sky:"#f9d0aa", grass:"#e9c789", grassDark:"#be986c", road:"#776d78", edge:"#fff2d5", accent:"#59cdd1", fog:"#f1ceb5" },
+      points:[[680,290],[1190,250],[1710,420],[1890,770],[1740,1040],[1410,920],[1250,1240],[1540,1580],[1120,1760],[580,1610],[300,1240],[540,880],[300,580]] }),
+    makeTrack({ id:"midnight-crown", name:"Midnatskronen", short:"Midnat", number:"03", theme:"night", difficulty:"Svær", subtitle:"Neonlys. Hårnåle. Ingen slinger.", halfWidth:90,
+      palette:{ sky:"#141e39", grass:"#2f4260", grassDark:"#223149", road:"#46516d", edge:"#9cefff", accent:"#c98cff", fog:"#233752" },
+      points:[[790,270],[1300,250],[1830,470],[1710,850],[1320,720],[1100,1040],[1680,1290],[1680,1640],[1250,1760],[840,1480],[360,1610],[280,1210],[630,900],[340,620]] }),
   ];
-
-  window.WutborgKartData = { DRIVERS, ITEM_TYPES, TRACKS, TAU, clamp, normalizeAngle, angleDelta };
+  const DIFFICULTIES = { relaxed:{ name:"Hyggelig", speed:.79 }, normal:{ name:"Sport", speed:.91 }, expert:{ name:"Ekspert", speed:1.02 } };
+  const CUP_POINTS = [15,12,10,8,6,4,2,1];
+  window.WutborgKartData = { DRIVERS, ITEM_TYPES, TRACKS, DIFFICULTIES, CUP_POINTS, TAU, clamp, mod, lerp, normalizeAngle, angleDelta };
 })();

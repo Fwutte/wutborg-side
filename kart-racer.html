@@ -3,70 +3,87 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#e65b4f" />
-  <meta name="description" content="Wutborg Kart: farverigt arkade-racing med drift, mønter, items, tre baner og otte rivaler." />
-  <title>Wutborg Kart | Wutborg Spillehjørne</title>
-  <link rel="stylesheet" href="css/kart-racer.css?v=20260715-kart16" />
+  <meta name="theme-color" content="#142b33" />
+  <meta name="description" content="Wutborg Kart. Tre håndbyggede 3D-baner, otte kørere og masser af drift. Spil Grand Prix, enkeltløb eller tidskørsel på computer og mobil." />
+  <title>Wutborg Kart · Ud på banen</title>
+  <link rel="stylesheet" href="css/kart-racer.css?v=20260909-kart2" />
+  <script defer src="js/highscores.js"></script>
+  <script defer src="js/kart-racer-data.js?v=20260909-kart2"></script>
+  <script defer src="js/kart-racer.js?v=20260909-kart2"></script>
 </head>
 <body>
-  <div class="kart-page">
-    <nav class="kart-nav" aria-label="Wutborg Kart navigation">
-      <a class="kart-brand" href="minispil.html"><span class="kart-brand-mark" aria-hidden="true">K</span><span>Wutborg Kart<small>Familiens spillehjørne</small></span></a>
-      <div class="kart-nav-links"><a href="minispil.html">← Minispil</a><a href="index.html">Forsiden</a><button class="nav-kart-button" id="kart-sound" type="button">Lyd: til</button><button class="nav-kart-button" id="kart-pause-button" type="button">Pause</button></div>
-    </nav>
+  <nav class="kart-nav" aria-label="Spilnavigation">
+    <a class="kart-brand" href="minispil.html"><span class="brand-icon" aria-hidden="true">w.</span><span>WUTBORG <b>KART</b></span></a>
+    <span class="nav-edition">ARCADE RACING CLUB <i></i> VOL. 02</span>
+    <div class="nav-actions"><a href="minispil.html" class="back-link">← Minispil</a><button id="kart-sound" type="button" aria-pressed="true">Lyd til</button><button id="kart-fullscreen" type="button" aria-label="Skift fuldskærm">⛶</button><button id="kart-pause-button" type="button" disabled>Pause</button></div>
+  </nav>
+  <main class="race-shell" id="race-shell">
+    <canvas id="kart-canvas" width="1280" height="800" tabindex="0" aria-label="Racerbane. Piletaster eller WASD: kør. Shift: drift. Space: item. R: tilbage på banen. Esc: pause."></canvas>
+    <div class="speed-vignette" aria-hidden="true"></div>
+    <div id="kart-loading" class="loading-screen"><span class="loading-wheel"></span><strong>Gør banen klar…</strong><small>WUTBORG KART</small></div>
+    <noscript><div class="loading-screen">Aktivér JavaScript for at spille Wutborg Kart.</div></noscript>
 
-    <header class="kart-hero">
-      <div><p>Grand Prix</p><h1>Wutborg<br /><span>Kart</span></h1></div>
-      <p class="kart-hero-copy">Drift gennem tre circuits, saml mønter og brug seks items mod syv rivaler.</p>
-    </header>
-
-    <main class="race-shell">
-      <canvas id="kart-canvas" width="960" height="600" aria-label="Wutborg Kart racerbane. Brug piletaster eller WASD til at køre, Shift til drift og Space til item."></canvas>
-      <img class="player-kart-sprite" id="kart-player-sprite" src="assets/kart/kenney-racing-3d/rear/raceCarRed_NE.png" alt="" aria-hidden="true" />
-      <section class="race-hud" aria-label="Løbsstatus">
-        <div class="race-hud-top">
-          <div class="hud-cluster"><div class="hud-stat position"><small>Plads</small><strong id="kart-position">–</strong></div><div class="hud-stat"><small>Omgang</small><strong id="kart-lap">1/3</strong></div><div class="hud-stat coin-stat"><small>Mønter</small><strong id="kart-coins">0/10</strong></div></div>
-          <div class="hud-cluster hud-cluster-right"><div class="hud-stat"><small>Tid</small><strong id="kart-time">0:00.00</strong></div><div class="hud-stat"><small>Fart</small><strong id="kart-speed">0 km/t</strong></div></div>
-        </div>
-        <div class="hud-item" id="kart-item">—</div>
-        <div class="kart-countdown" id="kart-countdown" hidden aria-live="assertive"></div>
-      </section>
-
-      <section class="screen" id="kart-menu">
-        <div class="screen-card">
-          <p class="screen-kicker">Wutborg Grand Prix</p>
-          <h2>Vælg bane og kart</h2>
-          <p class="screen-copy">Tre omgange. Syv rivaler. Drift for mini-turbo, og brug items taktisk.</p>
-          <div class="track-grid" id="track-select" aria-label="Vælg bane"></div>
-          <div class="track-summary"><span class="track-dot" id="track-dot" aria-hidden="true"></span><span><strong id="track-name">Kloversløjfen</strong><small id="track-subtitle">Bred parkbane · Begynder</small></span></div>
-          <div class="driver-grid" id="driver-select" aria-label="Vælg kører"></div>
-          <button class="primary-kart-button" id="kart-start" type="button">Start løbet</button>
-          <p class="screen-copy" id="kart-best">Bedste: ingen endnu</p>
-        </div>
-      </section>
-
-      <section class="screen" id="kart-pause" hidden>
-        <div class="screen-card"><p class="screen-kicker">Motoren holder pause</p><h2>Pause</h2><p class="screen-copy">Løbet fortsætter præcis, hvor du slap.</p><button class="primary-kart-button" id="kart-resume" type="button">Fortsæt</button><button class="secondary-kart-button" id="kart-menu-button" type="button">Til menuen</button></div>
-      </section>
-
-      <section class="screen" id="kart-result" hidden>
-        <div class="screen-card"><p class="screen-kicker">Målflag</p><h2 id="kart-result-title">Løb færdigt!</h2><p class="result-score" id="kart-result-copy"></p><button class="primary-kart-button" id="kart-retry" type="button">Kør igen</button><button class="secondary-kart-button" type="button" id="kart-menu-button-result">Vælg bane</button></div>
-      </section>
-      <div class="kart-toast" id="kart-toast" role="status" aria-live="polite"></div>
-    </main>
-
-    <section class="touch-controls" aria-label="Touchkontroller">
-      <div class="touch-steer"><button type="button" data-kart-control="left" aria-label="Drej til venstre">◀</button><button type="button" data-kart-control="right" aria-label="Drej til højre">▶</button></div>
-      <button class="drift" type="button" data-kart-control="drift" aria-label="Drift">DRIFT</button>
-      <button class="item" type="button" data-kart-control="item" aria-label="Brug item">ITEM</button>
-      <button class="gas" type="button" data-kart-control="accelerate" aria-label="Giv gas">GAS</button>
+    <section class="race-hud" aria-label="Løbsstatus">
+      <button id="kart-pause-floating" class="floating-pause" type="button" aria-label="Sæt løbet på pause">Ⅱ</button>
+      <div class="hud-top">
+        <div class="position-block"><strong id="kart-position">8</strong><span id="position-total">/ 8</span></div>
+        <div class="lap-block"><span class="eyebrow">OMGANG</span><strong id="kart-lap">1 / 3</strong><span class="coin-counter"><i aria-hidden="true"></i><b id="kart-coins">00</b><small>/ 10</small></span></div>
+        <div class="time-block"><span class="eyebrow" id="race-label">KLØVERSLØJFEN</span><strong id="kart-time">0:00.00</strong><span class="lap-time">Denne omgang <b id="kart-lap-time">0:00.00</b></span></div>
+      </div>
+      <button type="button" class="hud-item" id="kart-item"><span class="item-icon" id="item-icon">?</span><span><small id="item-hint">PÅ BANEN</small><strong id="item-name">Saml en itemboks</strong></span></button>
+      <div class="minimap"><canvas id="kart-minimap" width="220" height="200" aria-label="Banekort med kørernes placering"></canvas><span>BANEOVERSIGT</span></div>
+      <div class="speedometer" id="speed-ring"><div><strong id="kart-speed">0</strong><span>KM/T</span></div></div>
+      <div id="drift-meter" class="drift-meter" data-level="1"><span id="drift-label">SHIFT · DRIFT</span><div class="drift-track"><i id="drift-fill"></i><b></b><b></b></div></div>
+      <div id="kart-countdown" class="kart-countdown" hidden aria-live="assertive"></div>
+      <div id="kart-wrong-way" class="wrong-way" hidden>↶ Forkert vej <small>Vend om · R hjælper dig tilbage</small></div>
     </section>
-    <section class="kart-help"><span><strong>Desktop:</strong> Piletaster/WASD · Shift/X drift · Space/Z item · Esc pause</span><span><strong>Tip:</strong> Hold drift i svinget, og slip når gnisterne skifter farve.</span></section>
-    <footer class="kart-footer"><span><strong>Wutborg Kart</strong> · 3 baner · 8 kørere · lokale rekorder</span><span>Grafik: Kenney Racing Pack · CC0</span></footer>
-  </div>
-  <script src="js/highscores.js"></script>
-  <script src="js/kart-racer-data.js?v=20260715-kart16"></script>
-  <script type="module" src="js/kart-racer-3d.js?v=20260715-kart16"></script>
-  <script src="js/kart-racer.js?v=20260715-kart16"></script>
+
+    <section id="kart-menu" class="menu-screen" aria-label="Vælg dit løb">
+      <div class="menu-hero">
+        <p class="hero-kicker"><span></span> LILLE KART. STORT KONKURRENCEGEN.</p>
+        <h1>WUTBORG<br /><em>KART<span>↗</span></em></h1>
+        <p class="hero-copy">Find din linje.<br />Gør næste sving til dit.</p>
+        <div class="hero-bottom"><span class="checkered" aria-hidden="true"></span><span>3 BANER <i>/</i> 8 KØRERE <i>/</i> FULD FART</span></div>
+      </div>
+      <div class="setup-panel">
+        <div class="setup-heading"><p class="eyebrow">KLAR, PARAT …</p><h2>Dit næste løb.</h2><span class="round-mark" aria-hidden="true">↗</span></div>
+        <div class="mode-tabs" role="group" aria-label="Spiltype">
+          <button type="button" data-mode="single" aria-pressed="true">Enkeltløb</button><button type="button" data-mode="cup" aria-pressed="false">Grand Prix</button><button type="button" data-mode="time" aria-pressed="false">Tidskørsel</button>
+        </div>
+        <p class="mode-description" id="mode-description">Tre omgange. Syv rivaler. Ét målflag.</p>
+        <div class="section-label"><span>01 <b>VÆLG BANE</b></span><span>ALLE BANER ÅBNE</span></div>
+        <div id="track-select" class="track-grid" role="group" aria-label="Vælg bane"></div>
+        <div class="track-caption"><strong id="track-name">Kløversløjfen</strong><span id="track-subtitle">Grønne bakker. Store driftsving.</span></div>
+        <div class="section-label driver-label"><span>02 <b>VÆLG KØRER</b></span><span><b id="driver-name">Max</b> · <span id="driver-class">Allround</span></span></div>
+        <div id="driver-select" class="driver-grid" role="group" aria-label="Vælg kører"></div>
+        <div class="driver-stats" aria-label="Kørerens egenskaber"><div><span>Fart</span><i><b id="stat-speed"></b></i></div><div><span>Acceleration</span><i><b id="stat-acceleration"></b></i></div><div><span>Styring</span><i><b id="stat-handling"></b></i></div></div>
+        <div class="race-settings"><label for="kart-difficulty">Rivaler</label><select id="kart-difficulty"><option value="relaxed">Hyggelig</option><option value="normal" selected>Sport</option><option value="expert">Ekspert</option></select><label class="switch-label"><input id="kart-autogas" type="checkbox" /><span>Autogas</span></label><label class="switch-label"><input id="kart-assist" type="checkbox" checked /><span>Styrehjælp</span></label></div>
+        <button id="kart-start" type="button" class="primary-kart-button">Ud på banen <span>↗</span></button>
+        <p class="best-record" id="kart-best">Din første rekord venter</p>
+      </div>
+      <div class="menu-controls"><span><kbd>W A S D</kbd> / <kbd>↑ ↓ ← →</kbd> Kør</span><span><kbd>SHIFT</kbd> Drift</span><span><kbd>SPACE</kbd> Item</span><span><kbd>R</kbd> Tilbage på banen</span><span><kbd>ESC</kbd> Pause</span><span>Gamepad understøttet</span></div>
+    </section>
+
+    <section id="kart-pause" class="modal-screen" hidden role="dialog" aria-modal="true" aria-labelledby="pause-title">
+      <div class="modal-card pause-card"><p class="eyebrow">ET ØJEBLIK I PIT</p><h2 id="pause-title">Tag en puster.</h2><p>Løbet venter lige her.</p>
+        <button id="kart-resume" class="primary-kart-button" type="button">Tilbage i løbet <span>↗</span></button>
+        <button id="kart-restart" class="secondary-kart-button" type="button">Genstart løbet</button><button id="kart-menu-button" class="text-button" type="button">Vælg et andet løb</button>
+        <div class="pause-help"><p><kbd>↑ / W</kbd> Gas <kbd>↓ / S</kbd> Brems / bak</p><p><kbd>← → / A D</kbd> Styr <kbd>SHIFT / X</kbd> Drift</p><p><kbd>SPACE / Z</kbd> Item <kbd>R</kbd> Tilbage på banen</p><p>Gamepad: venstre pind styrer · RT gas · LT bremse · RB drift · X item.</p><p>Hold drift i svinget. Slip ved blå, orange eller lilla gnister for mere turbo.</p></div>
+      </div>
+    </section>
+    <section id="kart-result" class="modal-screen" hidden role="dialog" aria-modal="true" aria-labelledby="kart-result-title">
+      <div class="modal-card result-card"><div class="result-header"><span class="result-medal" id="result-medal">1</span><div><p class="eyebrow" id="result-kicker">MÅLFLAG</p><h2 id="kart-result-title">Godt kørt!</h2><p id="kart-result-copy"></p></div></div>
+        <div class="result-times"><div><small>SAMLET TID</small><strong id="result-time"></strong></div><div><small>BEDSTE OMGANG</small><strong id="result-lap"></strong></div></div>
+        <ol class="result-standings" id="result-standings" aria-label="Resultater"></ol>
+        <button id="kart-next" class="primary-kart-button" type="button" hidden>Næste bane <span>↗</span></button><button id="kart-retry" class="primary-kart-button" type="button">Kør igen</button><button id="kart-menu-button-result" class="text-button" type="button">Tilbage til menuen</button>
+      </div>
+    </section>
+    <div class="touch-controls" aria-label="Mobilkontroller">
+      <div class="touch-steer"><button type="button" data-kart-control="left" aria-label="Drej til venstre">‹</button><button type="button" data-kart-control="right" aria-label="Drej til højre">›</button><button type="button" class="touch-brake" data-kart-control="brake" aria-label="Brems eller bak">BREMS</button></div>
+      <div class="touch-actions"><button id="kart-touch-gas" type="button" class="touch-gas" data-kart-control="accelerate" aria-label="Giv gas">GAS</button><button type="button" class="touch-drift" data-kart-control="drift" aria-label="Drift">DRIFT</button><button type="button" class="touch-item" data-kart-control="item" aria-label="Brug item"><span id="touch-item-icon">◆</span> ITEM</button></div>
+    </div>
+    <div id="kart-toast" class="kart-toast" role="status" aria-live="polite"></div>
+  </main>
+  <footer class="kart-footer"><span>BYGGET TIL ÉN OMGANG MERE.</span><span id="renderer-status">3D · WUTBORG ORIGINALS</span><span>REKORDER GEMMES PÅ DENNE ENHED <i></i></span></footer>
 </body>
 </html>
