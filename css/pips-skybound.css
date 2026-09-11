@@ -1632,3 +1632,6 @@ body {
     min-height: 44px;
   }
 }
+
+/* Smooth illustration at the display pixel density. */
+#game-canvas { image-rendering: auto; }

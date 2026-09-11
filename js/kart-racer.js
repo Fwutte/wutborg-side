@@ -535,7 +535,7 @@
     let canvas=document.getElementById("kart-canvas");if(!canvas)return;
     let renderer;
     try{
-      const module=await import("./kart-racer-3d.js?v=20260911-expansion");
+      const module=await import("./kart-racer-3d.js?v=20260911-art");
       renderer=new module.KartRacer3DRenderer(canvas);
     }catch(error){
       console.warn("3D er ikke tilgængelig. Starter 2D-visningen.",error);

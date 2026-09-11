@@ -358,7 +358,7 @@
 
     async initializeRenderer() {
       try {
-        const { BattleScene3D } = await import("./battle-gates-3d.js?v=20260911-expansion");
+        const { BattleScene3D } = await import("./battle-gates-3d.js?v=20260911-art");
         this.renderer = new BattleScene3D(this.canvas, side => this.choose(side));
         this.is3D = true;
         this.canvas.dataset.battleRenderer = "3d";

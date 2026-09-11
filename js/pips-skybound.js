@@ -720,6 +720,7 @@
 
     draw(ctx, camera, sprites) {
       if (this.collected) return;
+      if(window.MarioArt){window.MarioArt.coin(ctx,camera,this);return;}
       const x = this.x - camera.x - 24;
       const y = this.y - camera.y - 24;
       sprites.draw(ctx, "objects", SPRITE_RECTS.coin, x, y, 48, 48);
@@ -764,6 +765,7 @@
 
     draw(ctx, camera, sprites) {
       if (!this.active) return;
+      if(window.MarioArt){window.MarioArt.powerUp(ctx,camera,this);return;}
       const x = this.x - camera.x - 7;
       const y = this.y - camera.y - 7;
       if (this.type === "mushroom") {
@@ -1014,6 +1016,7 @@
       const center = x + this.w / 2;
       const outline = "#17213b";
       const ellipse = (cx, cy, rx, ry, fill, lineWidth = 3) => {
+        if(window.MarioArt){window.MarioArt.oval(ctx,cx,cy,rx,ry,fill,fill,outline,lineWidth*.65);return;}
         ctx.fillStyle = fill;
         ctx.strokeStyle = outline;
         ctx.lineWidth = lineWidth;
@@ -1326,7 +1329,7 @@
         h: Math.min(SPRITE_RECTS.pipe.h, tileHeight * 16),
       };
       if (
-        this.game.sprites.draw(
+        !window.MarioArt && this.game.sprites.draw(
           ctx,
           "tiles",
           pipeRect,
@@ -1381,6 +1384,7 @@
 
     drawTile(ctx, x, y, tx, ty, symbol, palette) {
       const key = this.key(tx, ty);
+      if(symbol === "X" && window.MarioArt){window.MarioArt.terrain(ctx,x,y,tx,ty,this.definition.biome,!this.isSolidTile(this.getTile(tx,ty-1)),palette);return;}
       if (symbol === "X") {
         ctx.fillStyle = palette.dirt;
         ctx.fillRect(x, y, TILE, TILE);
@@ -1430,7 +1434,7 @@
             ? SPRITE_RECTS.usedBlock
             : SPRITE_RECTS.questionBlock;
       const spriteSheet = isBonusBlock && !used ? "tiles" : "objects";
-      if (this.game.sprites.draw(ctx, spriteSheet, spriteRect, x, y, TILE, TILE)) {
+      if (!window.MarioArt && this.game.sprites.draw(ctx, spriteSheet, spriteRect, x, y, TILE, TILE)) {
         return;
       }
       ctx.fillStyle = "#173f5d";
@@ -1599,6 +1603,7 @@
     }
 
     draw(ctx, camera, sprites) {
+      if(window.MarioArt){window.MarioArt.player(ctx,camera,this);return;}
       if (this.invincible > 0 && Math.floor(this.invincible * 12) % 2 === 0) return;
       const x = this.x - camera.x;
       const y = this.y - camera.y;
@@ -1897,10 +1902,13 @@
     }
 
     drawAdventure(ctx,camera){
+      if(window.MarioArt)window.MarioArt.adventure(ctx,camera,this);
+      else {
       for(const p of this.platforms){const x=p.x-camera.x,y=p.y-camera.y;ctx.fillStyle=p.crumble?(p.age>.3?"#e9a066":"#ad845d"):"#54bfa5";ctx.fillRect(x,y,p.w,p.h);ctx.fillStyle="#fff0ac";ctx.fillRect(x,y,p.w,4);ctx.strokeStyle="#4b635d";for(let i=8;i<p.w;i+=20){ctx.beginPath();ctx.moveTo(x+i,y+4);ctx.lineTo(x+i-5,y+14);ctx.stroke();}}
       for(const s of this.springs){const x=s.x-camera.x,y=s.y-camera.y;ctx.fillStyle="#e14f58";ctx.fillRect(x,y-(s.pulse?8:0),s.w,7);ctx.strokeStyle="#d9edee";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x+8,y+7);for(let i=0;i<4;i++)ctx.lineTo(x+(i%2?10:38),y+7+i*3);ctx.stroke();}
       for(const s of this.secrets){const x=s.x-camera.x,y=s.y-camera.y;ctx.fillStyle="#423764";ctx.fillRect(x,y,s.w,s.h);ctx.strokeStyle="#ffd66b";ctx.lineWidth=4;ctx.strokeRect(x,y,s.w,s.h);ctx.fillStyle="#fff0a0";ctx.font="bold 26px monospace";ctx.fillText("★",x+6,y+48);ctx.font="bold 12px monospace";ctx.fillText("HEMMELIG",x-14,y-12);}
       for(const shot of this.enemyShots){const x=shot.x-camera.x,y=shot.y-camera.y;ctx.fillStyle="#ffaf48";ctx.beginPath();ctx.ellipse(x+11,y+9,shot.wave?19:11,9,0,0,Math.PI*2);ctx.fill();ctx.fillStyle="#fff0a0";ctx.fillRect(x+6,y+5,10,6);}
+      }
       const boss=this.enemies.find(e=>e.isBoss&&e.active&&e.awake&&e.squished<=0);
       if(boss){ctx.fillStyle="rgba(25,19,41,.85)";ctx.fillRect(270,32,324,52);ctx.fillStyle="#ffe7bc";ctx.font="bold 15px monospace";ctx.textAlign="center";ctx.fillText(boss.hitsRemaining<=boss.maxHits/2?"SLOTSHERREN · FASE 2":"SLOTSHERREN · FASE 1",432,52);ctx.fillStyle="#e96b68";ctx.fillRect(284,64,296*boss.hitsRemaining/boss.maxHits,8);ctx.textAlign="left";if(boss.warning>0){ctx.fillStyle="#ffe57a";ctx.font="bold 32px monospace";ctx.fillText("!",boss.x-camera.x+25,boss.y-camera.y-16);}}
     }
@@ -2084,6 +2092,8 @@
       this.saveKey = "wutborg-mario-campaign-v2";
       this.canvas = document.getElementById("game-canvas");
       this.ctx = this.canvas.getContext("2d");
+      this.renderScale = Math.min(window.devicePixelRatio || 1, 2);
+      if(window.MarioArt){this.canvas.width=Math.round(VIEW_WIDTH*this.renderScale);this.canvas.height=Math.round(VIEW_HEIGHT*this.renderScale);}
       this.sprites = new SpriteAtlas();
       this.assetsReady = false;
       this.input = new InputManager();
@@ -2616,6 +2626,7 @@
     }
 
     drawBackground() {
+      if(window.MarioArt){window.MarioArt.background(this.ctx,this);return;}
       const ctx = this.ctx;
       const palette = this.level.definition.palette;
       const biome = this.level.definition.biome || "overworld";
@@ -2839,7 +2850,11 @@
 
     render() {
       const ctx = this.ctx;
-      ctx.imageSmoothingEnabled = false;
+      if(window.MarioArt){
+        const scale=Math.min(window.devicePixelRatio||1,2);
+        if(scale!==this.renderScale){this.renderScale=scale;this.canvas.width=Math.round(VIEW_WIDTH*scale);this.canvas.height=Math.round(VIEW_HEIGHT*scale);}
+        ctx.setTransform(this.renderScale,0,0,this.renderScale,0,0);ctx.imageSmoothingEnabled=true;
+      }else ctx.imageSmoothingEnabled=false;
       if (this.state === "ready") {
         this.drawLevelIntro();
         return;

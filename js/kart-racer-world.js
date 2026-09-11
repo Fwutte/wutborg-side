@@ -1,5 +1,6 @@
 import * as THREE from "./vendor/three/three.module.js";
 
+import { surfaceTexture } from "./game-art-3d.js?v=20260911-art";
 export const SCALE=.032;
 export const world=(p,y=0)=>new THREE.Vector3((p.x-2200)*SCALE,(p.elevation||0)*SCALE+y,(p.y-2100)*SCALE);
 export const material=(color,extra={})=>new THREE.MeshStandardMaterial({color,roughness:.72,...extra});
@@ -31,7 +32,7 @@ export function createLandscape(r,track){
     color.multiplyScalar(.96+random()*.08);colors.push(color.r,color.g,color.b);
   }
   terrain.setAttribute("color",new THREE.Float32BufferAttribute(colors,3));terrain.computeVertexNormals();
-  const ground=r.mesh(terrain,material("#ffffff",{vertexColors:true}),scene);ground.castShadow=false;
+  const ground=r.mesh(terrain,material("#ffffff",{vertexColors:true,map:surfaceTexture(frost?"ice":"grass",70,70),roughness:frost?.62:.95}),scene);ground.castShadow=false;
   if(coast){
     const waterMat=material("#229eb5",{metalness:.32,roughness:.24});
     waterMat.onBeforeCompile=shader=>{
@@ -75,9 +76,9 @@ export function createLandscape(r,track){
     }
     if(i%4===0)rocks.push({x:v.x+1.8,y:base+.4,z:v.z-1.5,sx:1.5,sy:.9,sz:1.2,ry:random()*TAU});
   }
-  r.instance(new THREE.CylinderGeometry(.65,1,1,7),material(coast?"#bd9267":"#81624c"),trunks);
-  r.instance(new THREE.IcosahedronGeometry(1,1),material("#ffffff",{roughness:.88}),crowns);
-  r.instance(new THREE.DodecahedronGeometry(.7,0),material(night?"#69849d":"#b1b5a0"),rocks);
+  r.scatter(new THREE.CylinderGeometry(.65,1,1,7),material(coast?"#bd9267":"#81624c"),trunks);
+  r.scatter(new THREE.SphereGeometry(1,r.compact?8:12,r.compact?6:8),material("#ffffff",{roughness:.88}),crowns);
+  r.scatter(new THREE.DodecahedronGeometry(.7,0),material(night?"#69849d":"#b1b5a0"),rocks);
   if(!coast&&!frost&&!volcano)for(let i=0;i<1300;i++){
     const p=track.at(random()*track.length,(i%2?1:-1)*(track.halfWidth+85+random()*155));
     const road=track.nearest(p.x,p.y);if(road.distance<track.halfWidth+78||bridgeAt(road.s))continue;
@@ -120,6 +121,7 @@ export function createLandscape(r,track){
   createBridge(r,track);
   if(track.tunnel)createTunnel(r,track);
   createLandmarks(r,track,terrainHeight,random);
+  dressCourse(r,track,terrainHeight,random);
   const signs=new THREE.Group(),steel=material("#344653");
   for(let s=200;s<track.length;s+=740){
     const bend=window.WutborgKartData.angleDelta(track.at(s).heading,track.at(s+350).heading);
@@ -130,6 +132,63 @@ export function createLandscape(r,track){
     g.position.copy(world(p));g.rotation.y=yaw(p.heading)+Math.PI;signs.add(g);
   }
   scene.add(r.bake(signs));
+}
+function dressCourse(r,track,groundHeight,random){
+  const frost=track.theme==="frost",lava=track.theme==="volcano",night=track.theme==="night",coast=track.theme==="coast";
+  const grass=[],petals=[],leaves=[],cliffs=[],caps=[],crystals=[];
+  const count=r.compact?650:1300;
+  for(let i=0;i<count;i++){
+    const p=track.at(random()*track.length,(i%2?1:-1)*(track.halfWidth+82+random()*245));
+    const road=track.nearest(p.x,p.y);if(road.distance<track.halfWidth+77||road.distance>track.halfWidth+410)continue;
+    const f=road.s/track.length;if(f>track.bridge[0]&&f<track.bridge[1])continue;
+    const v=world(p),base=groundHeight(p);if(coast&&base<-.1)continue;
+    const h=.12+random()*.34;
+    if(frost){
+      if(i%6===0)for(let n=0;n<3;n++)crystals.push({x:v.x+(n-1)*.2,y:base+.3+n*.07,z:v.z,sy:.6+n*.23,sx:.12,sz:.18,rz:(n-1)*.3,ry:i,color:i%2?"#a9edff":"#77b5eb"});
+    }else if(lava){
+      if(i%12===0)cliffs.push({x:v.x,y:base+.45,z:v.z,sx:.6,sy:.7,sz:.6,ry:i});
+    }else{
+      for(let n=0;n<3;n++)grass.push({x:v.x+(n-1)*.07,y:base+h*.45,z:v.z,sx:.035,sy:h,sz:.13,ry:i+n,rz:(n-1)*.35,color:night?"#5b8b96":coast?"#98b783":["#83b969","#599657","#b1ce75"][i%3]});
+      if(i%10===0){
+        for(let n=0;n<5;n++){const a=n/5*TAU;petals.push({x:v.x+Math.cos(a)*.12,y:base+.3,z:v.z+Math.sin(a)*.12,sx:.1,sy:.045,sz:.1,color:i%3?"#fff3cb":"#ffadbf"});}
+        petals.push({x:v.x,y:base+.34,z:v.z,sx:.075,sy:.04,sz:.075,color:"#ffd866"});
+      }
+      if(i%13===0)for(let n=0;n<6;n++){
+        const a=n/6*TAU;leaves.push({x:v.x+Math.cos(a)*.27,y:base+.23,z:v.z+Math.sin(a)*.27,sx:.46,sy:.075,sz:.14,ry:-a,rz:.3,color:night?"#698cb2":"#539469"});
+      }
+    }
+  }
+  if(grass.length)r.instance(new THREE.ConeGeometry(1,1,3),material("#ffffff",{roughness:1}),grass).castShadow=false;
+  if(petals.length)r.instance(new THREE.SphereGeometry(1,6,4),material("#ffffff",{roughness:.75}),petals).castShadow=false;
+  if(leaves.length)r.instance(new THREE.SphereGeometry(1,8,5),material("#ffffff",{roughness:.8}),leaves);
+  if(crystals.length)r.instance(new THREE.ConeGeometry(1,1,5),material("#ffffff",{metalness:.25,roughness:.18,emissive:"#438ca5",emissiveIntensity:.15}),crystals);
+  if(cliffs.length)r.instance(new THREE.DodecahedronGeometry(1),material("#4e3d4a",{map:surfaceTexture("stone"),roughness:.93}),cliffs);
+  // Layered rock outcrops frame the route without entering the drivable corridor.
+  const stone=material(frost?"#91b1c4":lava?"#514250":coast?"#d2c0a0":"#879994",{map:surfaceTexture("stone",2,3),bumpScale:.06});stone.bumpMap=stone.map;
+  const outcrops=[];
+  for(let i=0;i<40;i++){
+    const p=track.at(track.length*i/40,(i%2?1:-1)*(track.halfWidth+420));
+    if(track.nearest(p.x,p.y).distance<track.halfWidth+250)continue;
+    const v=world(p),base=groundHeight(p);if(coast&&base<-.1)continue;
+    for(let n=0;n<3;n++)outcrops.push({x:v.x+n*.8,y:base+1.1+n*.12,z:v.z,sx:2.1-n*.3,sy:2.8+n*.3,sz:2.5,ry:i*.8});
+    if(frost)caps.push({x:v.x+.7,y:base+3.1,z:v.z,sx:2.8,sy:.5,sz:2.7,ry:i*.8});
+  }
+  r.instance(new THREE.DodecahedronGeometry(1,0),stone,outcrops);
+  if(caps.length)r.instance(new THREE.SphereGeometry(1,12,8),material("#f3faff",{roughness:.65}),caps);
+  // Streetlights give the neon course a stronger racing silhouette.
+  if(night){
+    const poles=[],arms=[],lights=[];
+    for(let i=0;i<44;i++){
+      const p=track.at(track.length*i/44,(i%2?1:-1)*(track.halfWidth+83)),v=world(p);
+      poles.push({x:v.x,y:v.y+2.6,z:v.z,sy:5.2});
+      const across=new THREE.Vector3(-Math.sin(p.heading),0,Math.cos(p.heading)).multiplyScalar(i%2?-1:1);
+      arms.push({x:v.x+across.x*.55,y:v.y+5.15,z:v.z+across.z*.55,ry:yaw(p.heading)});
+      lights.push({x:v.x+across.x*1.08,y:v.y+5.12,z:v.z+across.z*1.08,ry:yaw(p.heading)});
+    }
+    r.instance(new THREE.CylinderGeometry(.07,.12,1,6),material("#42526f",{metalness:.7,roughness:.3}),poles);
+    r.instance(new THREE.BoxGeometry(1.3,.1,.13),material("#536681",{metalness:.6}),arms);
+    r.instance(new THREE.BoxGeometry(.5,.075,.8),new THREE.MeshBasicMaterial({color:"#b2f4ff"}),lights).castShadow=false;
+  }
 }
 function createBridge(r,track){
   const deck=[],supports=[],rails=[],[start,end]=track.bridge,night=track.theme==="night";

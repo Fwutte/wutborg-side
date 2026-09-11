@@ -1,18 +1,19 @@
 <!doctype html>
 <html lang="da"><meta charset="utf-8"><title>Game expansion visual tests</title>
-<style>body{margin:0;background:#18272e;color:#eef5db;font:14px system-ui}nav{display:flex;gap:8px;padding:9px}button{padding:8px;cursor:pointer}iframe{display:block;border:0;width:100%;height:calc(100vh - 85px)}output{display:block;padding:5px 12px}</style>
-<nav><button data-scene="mario">Mario · øvre rute</button><button data-scene="boss">Mario · boss</button><button data-scene="siege">Borgstorm · belejring</button><button data-scene="frost">Kart · Frost</button><button id="mobile">Mobil / desktop</button><button id="ability">Pilesalve</button><button id="phase">Borg · sidste fase</button></nav>
+<style>body{margin:0;background:#18272e;color:#eef5db;font:14px system-ui}nav{display:flex;flex-wrap:wrap;gap:8px;padding:9px}button{padding:8px;cursor:pointer}iframe{display:block;border:0;width:100%;height:calc(100vh - 85px)}output{display:block;padding:5px 12px}</style>
+<nav><button data-scene="valley">Mario · grøn dal</button><button data-scene="mario">Mario · øvre rute</button><button data-scene="boss">Mario · boss</button><button data-scene="siege">Borgstorm · belejring</button><button data-scene="frost">Kart · Frost</button><button id="mobile">Mobil / desktop</button><button id="ability">Pilesalve</button><button id="shield">Skjold / turbo</button><button id="phase">Borg · sidste fase</button></nav>
 <output id="status">Vælg en testscene. Scenerne gemmer ikke resultater.</output><iframe id="game" title="Testspil"></iframe>
 <script>
 const frame=document.getElementById('game'),status=document.getElementById('status');let serial=0;
 document.getElementById('mobile').onclick=()=>{frame.style.width=frame.style.width==='390px'?'100%':'390px';frame.contentWindow.focus();frame.contentWindow.wutborgBattleGame?.togglePause(false);};
 document.getElementById('ability').onclick=()=>{const g=frame.contentWindow.wutborgBattleGame;if(g){frame.contentWindow.focus();g.togglePause(false);g.run.ability('volley');}};
+document.getElementById('shield').onclick=()=>{const w=frame.contentWindow,b=w.wutborgBattleGame,k=w.wutborgKartGame;w.focus();if(b){b.togglePause(false);b.run.ability('shield');}if(k?.race?.player){k.togglePause(false);k.race.player.starTimer=5;k.race.player.boostTimer=5;}};
 document.getElementById('phase').onclick=()=>{const g=frame.contentWindow.wutborgBattleGame;if(g?.run.combat){g.run.combat.health=g.run.combat.maxHealth*.28;frame.contentWindow.focus();g.togglePause(false);}};
 document.querySelectorAll('[data-scene]').forEach(button=>button.onclick=()=>{
  const scene=button.dataset.scene,current=++serial;status.textContent='Indlæser '+scene;
  frame.src='../'+(scene==='siege'?'battle-gates.html':scene==='frost'?'kart-racer.html':'pips-skybound.html');
  frame.onload=async()=>{
-  const w=frame.contentWindow;w.addEventListener('error',e=>{status.textContent='FEJL: '+e.message;});
+  const w=frame.contentWindow;const errors=[];w.addEventListener('error',e=>{errors.push(e.message);status.textContent='FEJL: '+e.message;});w.addEventListener('unhandledrejection',e=>{errors.push(String(e.reason));status.textContent='FEJL: '+e.reason;});const originalError=w.console.error.bind(w.console);w.console.error=(...args)=>{errors.push(args.map(String).join(' '));status.textContent='FEJL · '+errors.join(' | ');originalError(...args);};
   for(let i=0;i<100;i++){
    if(current!==serial)return;
    const g=scene==='siege'?w.wutborgBattleGame:scene==='frost'?w.wutborgKartGame:w.pipsSkyboundGame;
@@ -26,11 +27,12 @@ document.querySelectorAll('[data-scene]').forEach(button=>button.onclick=()=>{
      g.selectedTrackId='frost-peaks';g.track=w.WutborgKartData.TRACKS.find(t=>t.id===g.selectedTrackId);g.startRace();g.race.state='racing';
      const p=g.track.at(g.track.length*.29);Object.assign(g.race.player,p,{velocityHeading:p.heading,road:g.track.nearest(p.x,p.y),raceDistance:p.s,lastS:p.s,lastX:p.x,lastY:p.y,nextGate:Math.ceil(p.s/(g.track.length/12))*g.track.length/12});
     }else{
-     g.startNewGame(scene==='boss'?7:18);g.state='playing';g.ui.hideAll();const level=g.level;
-     const x=scene==='boss'?level.enemies.find(e=>e.isBoss).x-220:level.springs[0].x-90;
-     Object.assign(g.player,{x,y:440,vy:0,invincible:30});g.camera.reset(x-200);
+     g.startNewGame(scene==='boss'?7:scene==='valley'?0:18);g.state='playing';g.ui.hideAll();const level=g.level;
+     const x=scene==='boss'?level.enemies.find(e=>e.isBoss).x-220:scene==='valley'?200:level.springs[0].x-90;
+     Object.assign(g.player,{x,y:440,vy:0,invincible:Infinity});g.camera.reset(x-200);
     }
-    frame.contentWindow.focus();status.textContent='KLAR · '+scene;return;
+    frame.contentWindow.focus();status.textContent='KLAR · '+scene;
+    let frames=0,start=w.performance.now();const sample=now=>{if(current!==serial)return;frames++;if(now-start<5000){w.requestAnimationFrame(sample);return;}const renderer=g.renderer?.renderer||g.scene3D?.renderer;status.textContent=errors.length?'FEJL · '+errors.join(' | '):'KLAR · '+scene+' · '+Math.round(frames*1000/(now-start))+' fps'+(renderer?' · '+renderer.info.render.calls+' draw calls':'');status.dataset.errors=JSON.stringify(errors);};w.requestAnimationFrame(sample);return;
    }
    await new Promise(r=>setTimeout(r,100));
   }

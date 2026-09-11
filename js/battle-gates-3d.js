@@ -2,6 +2,9 @@ import * as THREE from "./vendor/three/three.module.js";
 import { GLTFLoader } from "./vendor/three/addons/loaders/GLTFLoader.js";
 import { clone as cloneSkeleton } from "./vendor/three/addons/utils/SkeletonUtils.js";
 
+import { reflectionEnvironment, glowTexture, energyShieldMaterial } from "./game-art-3d.js?v=20260911-art";
+import { dressBattlefield, animateBattlefield } from "./battle-gates-art.js?v=20260911-art";
+
 const logic = window.WutborgBattle3DLogic;
 const CHARACTER_FILES = {
   soldier: "Knight.glb",
@@ -62,15 +65,21 @@ export class BattleScene3D {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, compact ? 1.2 : 1.65));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = compact ? 1.08 : 1.14;
+    this.renderer.toneMappingExposure = 1.02;
+    this.environmentTarget = reflectionEnvironment(this.renderer);
+    this.scene.environment = this.environmentTarget.texture;
+    this.scene.environmentIntensity = .55;
     this.renderer.shadowMap.enabled = !compact;
-    this.renderer.shadowMap.type = THREE.PCFShadowMap;
-    this.hemisphere = new THREE.HemisphereLight(0xe8f7ff, 0x385847, 2.25);
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.hemisphere = new THREE.HemisphereLight(0xe8f7ff, 0x385847, 1.2);
     this.scene.add(this.hemisphere);
     this.sun = new THREE.DirectionalLight(0xfff4cf, 2.5);
     this.sun.position.set(-7, 10, 6);
     this.sun.castShadow = !compact;
-    this.sun.shadow.mapSize.set(compact ? 512 : 1024, compact ? 512 : 1024);
+    this.sun.shadow.mapSize.set(2048, 2048);
+    Object.assign(this.sun.shadow.camera, {left:-15,right:15,top:18,bottom:-18,near:.5,far:60});
+    this.sun.shadow.bias=-.0002;this.sun.shadow.normalBias=.035;
+    this.sun.target.position.set(0,0,-7);this.scene.add(this.sun.target);
     this.scene.add(this.sun);
     this.fillLight = new THREE.DirectionalLight(0x8fc9ff, 0.72);
     this.fillLight.position.set(7, 5, 9);
@@ -82,6 +91,7 @@ export class BattleScene3D {
     this.buildEncounter();
     this.buildVfx();
     this.buildSiege();
+    dressBattlefield(this);
     this.resize = () => this.resizeRenderer();
     window.addEventListener("resize", this.resize);
     this.bindPointer();
@@ -161,6 +171,7 @@ export class BattleScene3D {
       return { side, mesh, material };
     });
 
+    this.terraces = new THREE.Group();this.scene.add(this.terraces);
     this.arenaWalls = [];
     this.themeProps = [];
     this.trackProps = [];
@@ -172,10 +183,10 @@ export class BattleScene3D {
       this.scene.add(wall);
       this.arenaWalls.push(wall);
       for (let index = 0; index < 12; index += 1) {
-        const step = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.28, 1.1), this.accentMaterial);
+        const step = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.28, 1.1), this.pavingMaterial);
         step.position.set(side * 8.2, 0.15 + index * 0.075, 4 - index * 1.7);
         step.rotation.y = side * 0.12;
-        this.scene.add(step);
+        this.terraces.add(step);
       }
       for (let index = 0; index < 10; index += 1) {
         const prop = new THREE.Group();
@@ -532,7 +543,7 @@ export class BattleScene3D {
 
   buildSiege(){
     this.siege=new THREE.Group();this.scene.add(this.siege);this.siegeParts=[];
-    const stone=new THREE.MeshStandardMaterial({color:0x778ca0,roughness:.88}),wood=new THREE.MeshStandardMaterial({color:0x765448,roughness:.8}),gold=new THREE.MeshStandardMaterial({color:0xeac47c,metalness:.55,roughness:.3});
+    const stone=this.wallMaterial,wood=new THREE.MeshStandardMaterial({color:0x765448,roughness:.8}),gold=new THREE.MeshStandardMaterial({color:0xeac47c,metalness:.55,roughness:.3});
     const box=(group,x,y,z,w,h,d,mat=stone)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);m.position.set(x,y,z);m.castShadow=!this.quality.compact;m.receiveShadow=true;group.add(m);return m;};
     for(let section=0;section<2;section++){
       const g=new THREE.Group();this.siege.add(g);this.siegeParts.push(g);
@@ -541,7 +552,7 @@ export class BattleScene3D {
     }
     const banner=box(this.siege,0,4.4,-7.1,1.5,1.1,.08,gold);box(this.siege,0,3.5,-7.2,.08,4,.08,wood);
     this.attackZone=new THREE.Mesh(new THREE.PlaneGeometry(1,8),new THREE.MeshBasicMaterial({color:0xff624e,transparent:true,opacity:.45,depthWrite:false,side:THREE.DoubleSide}));this.attackZone.rotation.x=-Math.PI/2;this.attackZone.position.y=.045;this.scene.add(this.attackZone);
-    this.shieldBubble=new THREE.Mesh(new THREE.SphereGeometry(2.15,24,16,0,Math.PI*2,0,Math.PI/2),new THREE.MeshStandardMaterial({color:0x89e6ff,emissive:0x409ad5,emissiveIntensity:.6,transparent:true,opacity:.26,roughness:.2,side:THREE.DoubleSide,depthWrite:false}));this.scene.add(this.shieldBubble);
+    this.shieldBubble=new THREE.Mesh(new THREE.SphereGeometry(2.15,24,16,0,Math.PI*2,0,Math.PI/2),energyShieldMaterial(0x89e6ff,.4));this.scene.add(this.shieldBubble);
     this.battleArrows=[];
     for(let i=0;i<24;i++){const arrow=new THREE.Group();box(arrow,0,0,0,.025,.025,.7,wood);const head=new THREE.Mesh(new THREE.ConeGeometry(.065,.17,4),gold);head.rotation.x=Math.PI/2;head.position.z=.43;arrow.add(head);this.scene.add(arrow);this.battleArrows.push(arrow);}
     this.rubble=[];for(let i=0;i<24;i++){const block=box(this.siege,(i%8-3.5)*.9,.15,-5.2+Math.floor(i/8)*.6,.45,.3,.45);block.rotation.set(i*.7,i,0);this.rubble.push(block);}
@@ -556,7 +567,7 @@ export class BattleScene3D {
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
     geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
-    this.particlePoints = new THREE.Points(geometry, new THREE.PointsMaterial({ size: this.quality.compact ? 0.13 : 0.17, vertexColors: true, transparent: true, opacity: 0.94, depthWrite: false }));
+    this.particlePoints = new THREE.Points(geometry, new THREE.PointsMaterial({ map: glowTexture(), size: this.quality.compact ? 0.13 : 0.17, vertexColors: true, transparent: true, opacity: 0.94, depthWrite: false }));
     this.particlePoints.frustumCulled = false;
     this.scene.add(this.particlePoints);
   }
@@ -599,7 +610,9 @@ export class BattleScene3D {
       object.frustumCulled = false;
       object.userData.sharedCharacterAsset = true;
       object.material = object.material.clone();
-      if (object.material.color) object.material.color.lerp(tint, enemy ? 0.42 : 0.2);
+      if (object.material.color) object.material.color.lerp(tint, enemy ? 0.22 : 0.08);
+      if (object.material.roughness !== undefined) object.material.roughness = Math.min(object.material.roughness, .68);
+      object.material.envMapIntensity = .7;
     });
     const scale = type === "giant" || type === "boss" ? 0.68 : 0.46;
     root.scale.setScalar(scale);
@@ -845,7 +858,7 @@ export class BattleScene3D {
       this.battleArrows.forEach((arrow,i)=>{const volley=c.volleyFlash>0,attack=c.warning>0||c.impact>0;if(!volley&&!attack)return;const progress=volley?1-c.volleyFlash/.7:c.impact>0?1:1-c.warning/1.05;arrow.visible=true;arrow.position.set((volley?this.formationX:c.targetX*3.45)+(i%6-2.5)*.28,Math.sin(Math.max(0,progress)*Math.PI)*3+.4,volley?this.formationZ-progress*7:-6+progress*8+(Math.floor(i/6)-1)*.22);arrow.rotation.x=volley?-.3:.3;arrow.rotation.y=volley?Math.PI:0;});
       if(c.impact>0&&this.lastImpact!==c.hitCount){this.lastImpact=c.hitCount;this.cameraShake=this.reducedMotion?0:.2;for(let i=0;i<14;i++)this.spawnParticle(this.formationX,.5,this.formationZ,new THREE.Color(run.shieldTime>0?0x8fe4ff:0xffb776),2);}
     }
-    if(this.characterAsset&&this.enemyActors.length===0){for(let i=0;i<this.quality.enemyCount;i++){const actor=this.makeActor(i===0?"giant":"soldier",true);actor.baseScale=actor.root.scale.x;this.encounter.add(actor.root);this.enemyActors.push(actor);}}
+    if(this.characterAsset&&this.enemyActors.length===0){for(let i=0;i<this.quality.enemyCount;i++){const actor=this.makeActor(i===0?"boss":"enemy",true);actor.baseScale=actor.root.scale.x;this.encounter.add(actor.root);this.enemyActors.push(actor);}}
     this.enemyActors.forEach((actor,i)=>{const commander=active&&c.boss&&c.phase===2;actor.root.visible=active&&(commander?i===0:i>0&&i<Math.max(2,Math.ceil(c.health/c.maxHealth*(c.boss?18:12))));if(!actor.root.visible)return;actor.root.scale.setScalar(actor.baseScale*(commander?1.7:1));actor.root.position.set(commander?0:(i%6-2.5)*.55,0,commander?-3.3:-3.5-Math.floor(i/6)*.65);actor.root.rotation.y=0;this.setActorAction(actor,c.warning>0?"attack":"run");});
   }
 
@@ -940,6 +953,7 @@ export class BattleScene3D {
     this.updateEnvironment(run, dt);
     this.updateParticles(dt, run);
     this.updateMixers(dt);
+    animateBattlefield(this, run, dt);
 
     const shake = this.cameraShake > 0 ? (Math.random() - 0.5) * this.cameraShake : 0;
     this.cameraShake = Math.max(0, this.cameraShake - dt * 1.7);
@@ -955,10 +969,16 @@ export class BattleScene3D {
     this.actors.forEach((actor) => actor.mixer.stopAllAction());
     this.enemyActors.forEach((actor) => actor.mixer.stopAllAction());
     this.scene.traverse((object) => {
+      if(object.isInstancedMesh)object.dispose();
       object.geometry?.dispose?.();
       if (Array.isArray(object.material)) object.material.forEach((material) => material.dispose());
       else object.material?.dispose?.();
     });
+    const textures = new Set();
+    this.scene.traverse(o=>{for(const m of Array.isArray(o.material)?o.material:o.material?[o.material]:[])for(const value of Object.values(m))if(value?.isTexture)textures.add(value);});
+    textures.forEach(t=>t.dispose());
+    this.environmentTarget.dispose();
+    this.sun.shadow.dispose();
     this.renderer.dispose();
   }
 }
