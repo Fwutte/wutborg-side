@@ -60,10 +60,12 @@
   const ENEMY_TYPES = ["goomba", "koopa", "buzzy", "flyer"];
 
   function buildBonusRoom(worldIndex, stage, id) {
-    const width = 30;
+    const width = 34 + stage * 3;
     const grid = createGrid(width);
     const entities = [
       { type: "player", x: 2, y: 10 },
+      { type: "spring", x: 5, y: 11 },
+      { type: "platform", x: 13, y: 8, width: 3, range: 3, axis: stage % 2 ? "x" : "y" },
       { type: "finish", x: width - 4, y: 9, exit: true },
     ];
     rect(grid, 0, 11, width, 3, "X");
@@ -76,7 +78,7 @@
     set(grid, 20, 5, stage % 2 ? "T" : "L");
     return {
       id,
-      name: "Bonusrum",
+      name: ["Møntbroen", "Krystalrummet", "Skyhaven"][stage - 1] || "Bonusrum",
       time: 80,
       palette: WORLDS[worldIndex].palette,
       biome: "bonus",
@@ -89,7 +91,7 @@
   function buildLevel(worldIndex, stage) {
     const world = WORLDS[worldIndex];
     const seed = (worldIndex + 2) * 29 + stage * 17;
-    const width = 78 + worldIndex * 3 + stage * 4;
+    const width = 104 + worldIndex * 3 + stage * 4;
     const grid = createGrid(width);
     const entities = [];
     const subareas = [];
@@ -154,9 +156,25 @@
       for (let x = 20; x < width - 12; x += 17) add("swimmer", x, 7 + ((x + seed) % 3));
     }
 
+    // A composed two-route section: safe ground, spring ascent, moving bridge and a secret skyline exit.
+    const section = width - 39;
+    for (let i = entities.length - 1; i >= 0; i--) if (entities[i].x >= section && entities[i].x < section + 25) entities.splice(i, 1);
+    rect(grid, section, 0, 25, HEIGHT, ".");
+    rect(grid, section, 11, 25, 3, "X");
+    add("spring", section + 1, 11);
+    line(grid, section + 4, section + 6, 8, "X");
+    line(grid, section + 9, section + 11, 6, "X");
+    add("platform", section + 14, 7, {width: 3, range: 2, axis: worldIndex % 2 ? "y" : "x", crumble: stage === 3});
+    line(grid, section + 20, section + 23, 5, "X");
+    for (const [x,y] of [[5,7],[10,5],[15,6],[21,4]]) add("coin",section+x,y);
+    if (stage > 1 && worldIndex > 0) {rect(grid,section+12,11,3,3,".");add("platform",section+12,11,{width:3,range:0,crumble:stage===3});}
+    add("goomba",section+18,10);
+    if(stage < 4) add("secret",section+22,3);
+    if(stage >= 2) add("checkpoint",section,10);
+
     if (stage === 4) {
       const bossX = width - 12;
-      add("boss", bossX, 9, { hits: 3 + Math.floor(worldIndex / 3) });
+      add("boss", bossX, 9, { hits: 4 + Math.floor(worldIndex / 3), style: worldIndex % 3 });
       for (let x = bossX - 6; x < bossX - 1; x += 1) set(grid, x, 10, "^");
     }
 
@@ -167,8 +185,8 @@
       world: worldIndex + 1,
       stage,
       name: `${world.name} ${stage}-${stage}`,
-      subtitle: `${world.name}: bane ${stage} af 4.`,
-      time: 165 + worldIndex * 8 + stage * 12,
+      subtitle: `${world.name}: ${["Fjedre og himmelstier", "Broer i bevægelse", "Den smuldrende rute", "Slotsherrens to faser"][stage-1]}.`,
+      time: 210 + worldIndex * 8 + stage * 12,
       palette: world.palette,
       biome: world.biome,
       map: grid.map((row) => row.join("")),

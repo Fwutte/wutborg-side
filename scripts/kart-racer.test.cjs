@@ -16,8 +16,8 @@ function raceFor(track=TRACKS[0],options={}){const race=new Race(track,DRIVERS,o
 function position(race,k,s,offset=0){const p=race.track.at(s,offset);k.x=p.x;k.y=p.y;k.speed=200;race.elapsed+=1/60;race.updateKartProgress(k);}
 function march(race,k,from,to,offset=0){const direction=Math.sign(to-from);for(let s=from+direction*8;direction*(to-s)>=0;s+=direction*8)position(race,k,s,offset);position(race,k,to,offset);}
 
-test("three closed, distinct tracks; pickups and grid stay on the road",()=>{
-  assert.equal(TRACKS.length,3);assert.equal(DRIVERS.length,8);
+test("six closed, distinct tracks; pickups and grid stay on the road",()=>{
+  assert.equal(TRACKS.length,6);assert.equal(DRIVERS.length,8);
   for(const t of TRACKS){
     assert.equal(t.samples.length,1024);assert.ok(t.length>10000);
     const a=t.at(0),b=t.at(t.length);assert.ok(Math.hypot(a.x-b.x,a.y-b.y)<.001);
@@ -30,11 +30,11 @@ test("three closed, distinct tracks; pickups and grid stay on the road",()=>{
     for(const p of [...t.coins,...t.itemBoxes,...t.boostPads])assert.ok(t.isRoad(p.x,p.y));
     for(let i=0;i<8;i++){const k=new Kart(DRIVERS[i],i);k.reset(t);assert.ok(t.isRoad(k.x,k.y));}
   }
-  assert.equal(new Set(TRACKS.map(t=>Math.round(t.length))).size,3);
+  assert.equal(new Set(TRACKS.map(t=>Math.round(t.length))).size,6);
 });
 test("expanded roads and hills remain continuous, wide and within their maps",()=>{
   for(const t of TRACKS){
-    assert.equal(t.revision,3);assert.ok(t.bridge[0]<t.bridge[1]);
+    assert.equal(t.revision,4);assert.ok(t.bridge[0]<t.bridge[1]);
     assert.ok(Math.abs(t.elevationAt(-.01)-t.elevationAt(t.length+.01))<.01);
     assert.ok(Math.abs(t.slopeAt(-.01)-t.slopeAt(t.length+.01))<.001);
     let highest=0;
@@ -175,4 +175,4 @@ for(const difficulty of Object.keys(DIFFICULTIES))for(const track of TRACKS){
     assert.equal(new Set(r.karts.map(k=>k.rank)).size,8);
   });
 }
-console.log(`Kart: ${checks} behavior checks passed, including 9 complete eight-driver races.`);
+console.log(`Kart: ${checks} behavior checks passed, including 18 complete eight-driver races.`);

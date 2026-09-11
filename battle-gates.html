@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#101720" />
   <meta name="description" content="Før din hær gennem 20 slag i Borgstorm. Vælg porte, rekruttér specialenheder og erobr Guldborgen. Din kampagne gemmes lokalt." />
   <title>Borgstorm | Wutborg Spillehjørne</title>
-  <link rel="stylesheet" href="css/battle-gates.css?v=20260910" />
+  <link rel="stylesheet" href="css/battle-gates.css?v=20260911-expansion" />
 </head>
 <body>
   <div class="battle-page" data-view="menu">
@@ -25,13 +25,17 @@
         <div class="battle-unit-roster" id="battle-unit-roster" aria-label="Hærens enheder"></div>
         <progress class="battle-route-progress" id="battle-route-progress" max="6" value="0" aria-label="Gennemførte porte">0 af 6</progress>
       </section>
+      <section id="battle-combat" class="battle-combat" hidden aria-label="Aktiv kamp">
+        <strong id="battle-combat-label">Fjendehæren</strong><progress id="battle-enemy-health" max="100" value="100" aria-label="Fjendens styrke"></progress>
+        <div><button type="button" id="battle-shield">◆ Skjoldmur [Q]</button><button type="button" id="battle-volley">↗ Pilesalve [E]</button></div>
+      </section>
       <section class="battle-screen" id="battle-menu" aria-label="Kampagnekort">
         <div class="battle-campaign-card">
           <div class="campaign-heading"><div><p class="battle-kicker">Kampagnekort</p><h2>Vejen til Guldborgen</h2></div><div class="campaign-wallet"><strong id="battle-coins">0 mønter</strong><span id="battle-campaign-progress">0/60 stjerner · 1/20 baner åbne</span></div></div>
           <div class="campaign-layout">
             <div class="campaign-map"><div class="map-label"><span>Fem riger · 20 slag</span><span>★ Op til tre stjerner pr. bane</span></div><div id="battle-level-grid" aria-label="Vælg bane"></div></div>
             <aside class="campaign-loadout">
-              <div class="selected-mission"><p class="battle-kicker" id="battle-region-name">Kløvermarken</p><h2 id="battle-campaign-title">Bane 1: Porten ved engen</h2><p class="battle-copy" id="battle-campaign-copy">6 porte · start med 24 soldater</p><button class="battle-primary" id="battle-start" type="button">Start banen</button><p class="mission-tip">Vælg den port, der giver din hær den bedste chance. Du styrer med piletaster eller ved at trække på arenaen.</p></div>
+              <div class="selected-mission"><p class="battle-kicker" id="battle-region-name">Kløvermarken</p><h2 id="battle-campaign-title">Bane 1: Porten ved engen</h2><p class="battle-copy" id="battle-campaign-copy">6 porte · start med 24 soldater</p><button class="battle-primary" id="battle-start" type="button">Start banen</button><p class="mission-tip">Vælg porte og styr hæren uden om røde angrebsfelter. Brug Q til skjoldmur og E til pilesalve — eller knapperne på skærmen.</p></div>
               <section class="battle-upgrades" aria-labelledby="upgrade-title">
                 <h3 id="upgrade-title">Rust hæren</h3><p>Vind stjerner og brug mønterne her.</p>
                 <button type="button" data-battle-upgrade="reinforcement"><span><b>⚔ Forstærkninger</b><em>+3 soldater fra start pr. niveau</em></span><span class="upgrade-price"><strong>Niveau 0/5</strong><small>80 mønter</small></span></button>
@@ -58,12 +62,12 @@
         <button class="battle-choice" id="battle-right" type="button" aria-label="Vælg højre port"><b aria-hidden="true">→</b><span><strong>–</strong><small>Vælg højre</small></span><i>HØJRE</i></button>
       </div>
     </section>
-    <section class="battle-help"><span><kbd>←</kbd> <kbd>→</kbd> eller <kbd>A</kbd> <kbd>D</kbd> Vælg port</span><span>Træk hæren på arenaen · <kbd>Esc</kbd> Pause</span></section>
+    <section class="battle-help"><span><kbd>←</kbd> <kbd>→</kbd> eller <kbd>A</kbd> <kbd>D</kbd> Vælg port / undvig</span><span>Træk hæren på arenaen · <kbd>Esc</kbd> Pause</span></section>
     <footer class="battle-footer"><span><strong>Borgstorm</strong> · 20 slag gennem fem riger</span><span>Din kampagne gemmes i denne browser</span></footer>
   </div>
   <script src="js/highscores.js"></script>
   <script src="js/battle-gates-data.js?v=20260713-borg2"></script>
   <script src="js/battle-gates-3d-logic.js?v=20260714-borg6"></script>
-  <script src="js/battle-gates.js?v=20260910"></script>
+  <script src="js/battle-gates.js?v=20260911-expansion"></script>
 </body>
 </html>

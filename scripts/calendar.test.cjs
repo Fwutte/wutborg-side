@@ -1,0 +1,30 @@
+const assert = require("node:assert/strict");
+require("../js/calendar-data.js");
+const calendar = globalThis.WutborgCalendar;
+const dateOf = (year, name) => calendar.publicEvents(year).find(event => event.name === name).date;
+assert.equal(dateOf(2026, "Påskedag"), "2026-04-05");
+assert.equal(dateOf(2027, "Påskedag"), "2027-03-28");
+assert.equal(dateOf(2027, "Fastelavn"), "2027-02-07");
+assert.equal(dateOf(2027, "Skærtorsdag"), "2027-03-25");
+assert.equal(dateOf(2027, "Kristi himmelfartsdag"), "2027-05-06");
+assert.equal(dateOf(2027, "Pinsedag"), "2027-05-16");
+assert.equal(dateOf(2027, "Mors dag"), "2027-05-09");
+assert.equal(dateOf(2027, "Allehelgensdag"), "2027-11-07");
+assert.equal(dateOf(2027, "1. søndag i advent"), "2027-11-28");
+assert.equal(dateOf(2033, "4. søndag i advent"), "2033-12-18", "Advent ligger før juledag, også når jul er søndag");
+assert.equal(dateOf(2028, "Påskedag"), "2028-04-16");
+assert.equal(calendar.isValidMonthDay(2028, "02-29"), true);
+assert.equal(calendar.isValidMonthDay(2027, "02-29"), false);
+assert.equal(calendar.isValidMonthDay(2027, "02-30"), false);
+for (let year = 2026; year <= 2036; year++) {
+  const events = calendar.publicEvents(year);
+  assert.ok(events.every(event => event.date.startsWith(String(year)) && calendar.isValidMonthDay(year, event.date.slice(5))));
+  assert.equal(events.filter(event => event.types.includes("holiday")).length, 10);
+  assert.equal(events.filter(event => event.types.includes("flag")).length, 21);
+}
+const september = calendar.publicEvents(2026).filter(event => event.date.startsWith("2026-09"));
+assert.equal(calendar.visibleEvents(september, new Set(["holiday", "observance", "family"])).length, 0);
+assert.equal(calendar.visibleEvents(september, new Set(["flag"])).length, 1);
+assert.equal(calendar.visibleEvents(calendar.publicEvents(2026), new Set()).length, 0);
+assert.ok(calendar.visibleEvents(calendar.publicEvents(2026), new Set(["holiday"])).some(event => event.name === "Påskedag"));
+console.log("Kalender: årsskift, skudår, bevægelige dage og filtrering bestået.");

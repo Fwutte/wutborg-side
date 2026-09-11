@@ -43,19 +43,19 @@ function ready(){
   g.race.player.item='mushroom';doc.getElementById('kart-item').click();g.update(1/60);check(g.race.player.boostTimer>0,'HUD item button uses turbo');
   w.dispatchEvent(new w.Event('blur'));check(g.paused&&!g.input.enabled,'window blur pauses');g.togglePause(false);
   g.mode='cup';g.cup={round:0,points:Object.fromEntries(D.DRIVERS.map(d=>[d.id,0]))};g.startRace();g.audio.enabled=false;
-  for(let round=0;round<3;round++){
+  for(let round=0;round<D.TRACKS.length;round++){
    g.renderer.draw(g.race,0,{driver:D.DRIVERS[0]});
    g.race.state='racing';let n=0;
    while(g.race.state==='racing'&&n++<60*(g.track.length*3/180+40))g.race.update(1/60,g.race.ai.inputFor(g.race.player,g.track));
    check(g.race.state==='finished','Grand Prix round '+(round+1)+' finishes with actual physics');
    g.showResult();check(!doc.getElementById('kart-result').hidden,'result dialog '+(round+1));
    check(g.cup.points[g.selectedDriver]>0,'cup points recorded');
-   if(round<2){doc.getElementById('kart-next').click();g.audio.enabled=false;check(g.track===D.TRACKS[round+1],'next track loads');}
+   if(round<D.TRACKS.length-1){doc.getElementById('kart-next').click();g.audio.enabled=false;check(g.track===D.TRACKS[round+1],'next track loads');}
   }
   check(doc.getElementById('kart-next').hidden,'final cup has no next-track button');
   check(doc.getElementById('result-kicker').textContent.includes('SAMLET'),'overall cup standings shown');
   if(scenario==='result'){out.hidden=true;g.renderer.draw(g.race,.016,{driver:D.DRIVERS[0]});return;}
-  const total=Object.values(g.cup.points).reduce((a,b)=>a+b,0);check(total===174,'exactly three sets of cup points');
+  const total=Object.values(g.cup.points).reduce((a,b)=>a+b,0);check(total===D.CUP_POINTS.reduce((sum,n)=>sum+n,0)*D.TRACKS.length,'one set of cup points per track');
   doc.getElementById('kart-retry').click();check(g.cup.round===0&&Object.values(g.cup.points).every(x=>x===0),'cup retry resets points');
   g.showMenu();g.mode='time';g.startRace();g.audio.enabled=false;check(g.race.karts.length===1&&g.race.itemBoxes.length===0,'time trial mode');
   g.togglePause(true);g.showMenu();g.renderer.draw(g.race,.016,{driver:D.DRIVERS[0]});

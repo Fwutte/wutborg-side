@@ -1802,9 +1802,24 @@ input[type="search"] {
     padding-top: 8px;
   }
 
-  .brand > span:last-child,
-  .topbar-links a {
+  .brand > span:last-child {
     display: none;
+  }
+
+  .topbar {
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .topbar-links a {
+    padding-inline: 8px;
+    font-size: 0.75rem;
+  }
+
+  .sound-toggle {
+    flex-shrink: 0;
+    padding-inline: 9px;
+    white-space: nowrap;
   }
 
   .setup-screen {

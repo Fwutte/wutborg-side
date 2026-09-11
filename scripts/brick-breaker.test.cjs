@@ -128,4 +128,30 @@ assert.match(source, /zap:\s*\{[^}]*Zap metal/, "DX-Ball-power-ups skal omfatte 
 assert.match(source, /warp:\s*\{[^}]*Bane-warp/, "DX-Ball-power-ups skal omfatte bane-warp");
 assert.match(source, /playSound\(name\)/, "Spillet skal have DX-Ball-lignende lydfeedback");
 
-console.log("Neon Breaker-test: 14 baner, DX-Ball-blokke, progression og automatisk laser bestÃ¥et");
+const inputListeners = {};
+const register = (type, callback) => (inputListeners[type] ||= []).push(callback);
+sandbox.document = { addEventListener: register, hidden: false };
+sandbox.window = { addEventListener: register };
+const inputGame = Object.create(NeonBreaker.prototype);
+for (const key of ["startButton", "controlsButton", "pauseButton", "restartButton", "canvas", "mobilePaddleTrack", "mobileLaunchButton"]) {
+  inputGame[key] = { addEventListener() {} };
+}
+inputGame.keys = { left: false, right: false };
+inputGame.state = "playing";
+inputGame.pointerActive = true;
+let pauseCalls = 0;
+inputGame.togglePause = () => { inputGame.state = "paused"; pauseCalls++; };
+inputGame.bindEvents();
+inputListeners.keydown.forEach(callback => callback({ code: "ArrowRight", preventDefault() {} }));
+assert.equal(inputGame.keys.right, true);
+inputListeners.blur.forEach(callback => callback());
+assert.equal(inputGame.keys.right, false, "En tast sluppet i et andet vindue må ikke hænge");
+assert.equal(inputGame.pointerActive, false);
+assert.equal(inputGame.state, "paused");
+sandbox.document.hidden = true;
+inputListeners.visibilitychange.forEach(callback => callback());
+assert.equal(pauseCalls, 1, "Blur og skjult fane må ikke genoptage spillet");
+inputGame.state = "menu";
+inputListeners.blur.forEach(callback => callback());
+assert.equal(inputGame.state, "menu");
+console.log("Neon Breaker: baner, power-ups og pause ved vinduesskift bestået.");

@@ -31,7 +31,7 @@ for (const token of ["PerspectiveCamera", "WebGLRenderer", "ACESFilmicToneMappin
 }
 assert.ok(!sceneSource.includes("https://"), "Del 1 skal køre uden eksterne runtime-assets");
 
-assert.match(gameSource, /await import\("\.\/battle-gates-3d\.js\?v=20260714-borg16"\)/, "Hovedspillet skal indlæse 3D uden at blokere Start-knappen");
+assert.match(gameSource, /await import\("\.\/battle-gates-3d\.js\?v=[^"]+"\)/, "Hovedspillet skal indlæse 3D uden at blokere Start-knappen");
 assert.match(gameSource, /drawGateSilhouette/, "2D-reserven skal også tegne indholdsspecifikke porte");
 assert.match(gameSource, /this\.gateTravel\+dt\*\.29/, "2D-reservens mål skal bevæge sig mod spilleren");
 assert.match(gameSource, /enemyCount=Math\.min\(30,Math\.max\(1,Math\.round\(choice\.value\)\)\)/, "2D-reserven skal vise små fjendeantal én til én");

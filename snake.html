@@ -502,6 +502,7 @@
     </div>
   </div>
 
+  <script src="js/game-storage.js"></script>
   <script src="js/highscores.js"></script>
   <script>
     const canvas = document.getElementById("game");
@@ -545,8 +546,8 @@
     const soundDie   = () => [280,200,140].forEach((f,i) => setTimeout(() => playTone(f,"sawtooth",0.22), i*130));
 
     // ── Highscore ──
-    const getHS  = d   => parseInt(localStorage.getItem("snakeHS_" + d) || "0");
-    const saveHS = (d,v) => localStorage.setItem("snakeHS_" + d, v);
+    const getHS  = d   => parseInt(window.WutborgGameStorage.getItem("snakeHS_" + d) || "0");
+    const saveHS = (d,v) => window.WutborgGameStorage.setItem("snakeHS_" + d, v);
 
     // ── Neon: stars ──
     const stars = Array.from({ length: 55 }, () => ({
@@ -794,11 +795,11 @@
     let floatTexts = [], particles = [], foodPulse = 0, tongueFlick = 0, deathFlash = 0, gameOverTime = 0, screenShake = 0;
 
     // ── Theme ──
-    let theme = localStorage.getItem("snakeTheme") || "realistic";
+    let theme = window.WutborgGameStorage.getItem("snakeTheme") || "realistic";
 
     function setTheme(t) {
       theme = t;
-      localStorage.setItem("snakeTheme", t);
+      window.WutborgGameStorage.setItem("snakeTheme", t);
       document.body.setAttribute("data-theme", t);
       document.getElementById("btn-neon").classList.toggle("active", t === "neon");
       document.getElementById("btn-realistic").classList.toggle("active", t === "realistic");

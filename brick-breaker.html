@@ -944,6 +944,17 @@
           this.launchServe();
         });
 
+        const pauseOnLeave = () => {
+          this.keys.left = false;
+          this.keys.right = false;
+          this.pointerActive = false;
+          if (!["menu", "paused", "gameover", "win"].includes(this.state)) this.togglePause();
+        };
+        window.addEventListener("blur", pauseOnLeave);
+        document.addEventListener("visibilitychange", () => {
+          if (document.hidden) pauseOnLeave();
+        });
+
         const moveFromMobileTrack = (event) => {
           const rect = this.mobilePaddleTrack.getBoundingClientRect();
           const ratio = this.clamp((event.clientX - rect.left) / rect.width, 0, 1);

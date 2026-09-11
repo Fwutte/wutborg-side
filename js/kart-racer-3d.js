@@ -1,7 +1,7 @@
 import * as THREE from "./vendor/three/three.module.js";
 import { mergeGeometries } from "./vendor/three/addons/utils/BufferGeometryUtils.js";
 
-import { SCALE, world, material, createLandscape } from "./kart-racer-world.js?v=20260910-kart3";
+import { SCALE, world, material, createLandscape } from "./kart-racer-world.js?v=20260911-expansion";
 const TAU=Math.PI*2;
 const yaw=h=>Math.PI/2-h;
 const damp=(a,b,rate,dt)=>THREE.MathUtils.lerp(a,b,1-Math.exp(-rate*dt));
@@ -124,7 +124,7 @@ export class KartRacer3DRenderer {
       }
     }
     const dash=this.instance(new THREE.BoxGeometry(.04,.008,.95),new THREE.MeshBasicMaterial({color:night?"#a1dfea":"#dedfd2"}),dashes);dash.castShadow=false;
-    this.createStart(track);this.createScenery(track);
+    this.createStart(track);this.createScenery(track);this.createCourseFeatures(track);
     for(const pad of track.boostPads){
       const g=new THREE.Group(),m=material("#42dec9",{emissive:"#13775e",emissiveIntensity:1});
       this.box(g,m,0,.075,0,2.35,.07,1.8);
@@ -168,6 +168,32 @@ export class KartRacer3DRenderer {
     this.scratch.scale.setScalar(0);this.scratch.updateMatrix();
     for(let i=0;i<480;i++)this.skids.setMatrixAt(i,this.scratch.matrix);
     this.scene.add(this.skids);
+  }
+  createCourseFeatures(track){
+    this.obstacleMeshes=[];
+    for(const ramp of track.ramps){
+      const g=new THREE.Group(),board=this.box(g,material("#ef9950"),0,.22,0,3.8,.16,2.9);board.rotation.x=-.2;
+      for(const z of [-.8,0,.8]){const stripe=this.box(g,material("#fff1b0"),0,.26+z*.2,z,3.6,.04,.18);stripe.rotation.x=-.2;}
+      const sign=this.sign("HOP", "#293c50", "#ffe69a",1.7,.65);sign.position.set(-2.5,1.4,0);g.add(sign);
+      g.position.copy(world(ramp));g.rotation.y=yaw(ramp.heading);this.scene.add(this.bake(g));
+    }
+    if(track.shortcut){
+      const entries=[];
+      for(let s=track.shortcut[0]*track.length;s<track.shortcut[1]*track.length;s+=26){const p=track.at(s,-track.halfWidth-30),v=world(p,.07);entries.push({x:v.x,y:v.y,z:v.z,ry:yaw(p.heading),rx:-Math.atan(p.slope)});}
+      this.instance(new THREE.BoxGeometry(1.5,.045,.86),material("#b9b575"),entries);
+      for(const f of track.shortcut){const p=track.at(f*track.length,-track.halfWidth-35),sign=this.sign("GENVEJ →", "#283d37", "#ffee8b",2.9,.65);sign.position.copy(world(p,1.3));sign.rotation.y=yaw(p.heading)+Math.PI;this.scene.add(sign);}
+    }
+    for(const obstacle of track.obstacles){
+      const g=new THREE.Group(),mat=material(obstacle.kind==="snowball"?"#f1fbff":obstacle.kind==="log"?"#795439":"#614c52");
+      const geo=obstacle.kind==="log"?new THREE.CylinderGeometry(.48,.48,2,10):new THREE.DodecahedronGeometry(.74,1);
+      const mesh=this.mesh(geo,mat,g,0,.7,0);if(obstacle.kind==="log")mesh.rotation.z=Math.PI/2;
+      const ring=this.mesh(new THREE.RingGeometry(.85,1.0,24),new THREE.MeshBasicMaterial({color:"#ffc96b",transparent:true,opacity:.7,side:THREE.DoubleSide}),g,0,.09,0);ring.rotation.x=-Math.PI/2;
+      this.scene.add(g);this.obstacleMeshes.push({group:g,mesh,obstacle});
+    }
+    const positions=[];for(let i=0;i<130;i++)positions.push((i*17%60)-30,2+i*13%18,(i*23%60)-30);
+    const geo=new THREE.BufferGeometry();geo.setAttribute("position",new THREE.Float32BufferAttribute(positions,3));
+    this.weather=new THREE.Points(geo,new THREE.PointsMaterial({color:track.theme==="volcano"?"#ffb759":track.theme==="frost"?"#ffffff":"#dff697",size:track.theme==="frost"?.12:.06,transparent:true,opacity:.65,depthWrite:false}));
+    this.weather.visible=["volcano","frost","jungle"].includes(track.theme);this.scene.add(this.weather);
   }
   createStart(track){
     const root=new THREE.Group(),dark=material("#253a48"),accent=material(track.palette.accent),cream=material("#f5f0d8");
@@ -272,13 +298,15 @@ export class KartRacer3DRenderer {
   }
   sync(race,dt,options){
     const t=this.time,preview=!race.player;
+    this.obstacleMeshes?.forEach(({group,mesh,obstacle})=>{group.position.copy(world(race.track.obstacleAt(obstacle,race.elapsed)));mesh.rotation.x=t*2;});
+    if(this.weather){this.weather.position.copy(world(race.player||race.track.start));const pos=this.weather.geometry.attributes.position;for(let i=0;i<pos.count;i++)pos.setY(i,2+(i*13+t*(race.track.theme==="volcano"?1.4:-1.2)+2000)%18);pos.needsUpdate=true;}
     this.waterTime.value=t;
     this.balloons.forEach((b,i)=>{b.group.position.y=b.y+Math.sin(t*.55+i)*.45;b.group.rotation.z=Math.sin(t*.3+i)*.03;});
     this.rotors.forEach((g,i)=>g.rotation.z=t*.55+i);
     const list=preview?[{driver:options.driver,...race.track.at(-70,-25),speed:0,visualSteer:0}]:race.karts;
     list.forEach((k,i)=>{
       const e=this.karts[i];if(!e)return;
-      e.group.position.copy(world(k,.04));
+      e.group.position.copy(world(k,.04+(k.airHeight||0)*SCALE));
       e.group.rotation.set(-Math.atan(k.slope||0),yaw(k.heading),0,"YXZ");
       e.body.rotation.y=k.spinTimer>0?Math.sin(k.spinTimer*16)*Math.PI:k.drifting?-k.driftDirection*.15:0;
       e.body.rotation.z=damp(e.body.rotation.z,-(k.visualSteer||0)*Math.min(k.speed/600,.55)*.14,10,dt);

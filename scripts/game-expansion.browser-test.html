@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="da"><meta charset="utf-8"><title>Game expansion visual tests</title>
+<style>body{margin:0;background:#18272e;color:#eef5db;font:14px system-ui}nav{display:flex;gap:8px;padding:9px}button{padding:8px;cursor:pointer}iframe{display:block;border:0;width:100%;height:calc(100vh - 85px)}output{display:block;padding:5px 12px}</style>
+<nav><button data-scene="mario">Mario · øvre rute</button><button data-scene="boss">Mario · boss</button><button data-scene="siege">Borgstorm · belejring</button><button data-scene="frost">Kart · Frost</button><button id="mobile">Mobil / desktop</button><button id="ability">Pilesalve</button><button id="phase">Borg · sidste fase</button></nav>
+<output id="status">Vælg en testscene. Scenerne gemmer ikke resultater.</output><iframe id="game" title="Testspil"></iframe>
+<script>
+const frame=document.getElementById('game'),status=document.getElementById('status');let serial=0;
+document.getElementById('mobile').onclick=()=>{frame.style.width=frame.style.width==='390px'?'100%':'390px';frame.contentWindow.focus();frame.contentWindow.wutborgBattleGame?.togglePause(false);};
+document.getElementById('ability').onclick=()=>{const g=frame.contentWindow.wutborgBattleGame;if(g){frame.contentWindow.focus();g.togglePause(false);g.run.ability('volley');}};
+document.getElementById('phase').onclick=()=>{const g=frame.contentWindow.wutborgBattleGame;if(g?.run.combat){g.run.combat.health=g.run.combat.maxHealth*.28;frame.contentWindow.focus();g.togglePause(false);}};
+document.querySelectorAll('[data-scene]').forEach(button=>button.onclick=()=>{
+ const scene=button.dataset.scene,current=++serial;status.textContent='Indlæser '+scene;
+ frame.src='../'+(scene==='siege'?'battle-gates.html':scene==='frost'?'kart-racer.html':'pips-skybound.html');
+ frame.onload=async()=>{
+  const w=frame.contentWindow;w.addEventListener('error',e=>{status.textContent='FEJL: '+e.message;});
+  for(let i=0;i<100;i++){
+   if(current!==serial)return;
+   const g=scene==='siege'?w.wutborgBattleGame:scene==='frost'?w.wutborgKartGame:w.pipsSkyboundGame;
+   if(g&&(scene==='siege'?g.is3D:scene==='frost'?true:g.assetsReady)){
+    // Replace only persistence/submission boundaries in this isolated test frame.
+    w.WutborgHighscores={submit(){},best(){}};g.saveProgress=()=>{};g.persist=()=>{};
+    if(scene==='siege'){
+     g.selectedLevel=4;g.start();g.run.gateIndex=g.run.level.gates.length-1;g.run.army=100;g.run.units.soldier=100;
+     const side=g.run.currentGate.choices.findIndex(c=>c.boss);g.run.choose(side);g.run.beginCombat();g.run.combat.maxHealth=700;g.run.combat.health=700;const update=g.run.update.bind(g.run);g.run.update=dt=>update(dt*.06);g.refresh();g.setMessage('Visuel test · brug knapperne til at undvige');
+    }else if(scene==='frost'){
+     g.selectedTrackId='frost-peaks';g.track=w.WutborgKartData.TRACKS.find(t=>t.id===g.selectedTrackId);g.startRace();g.race.state='racing';
+     const p=g.track.at(g.track.length*.29);Object.assign(g.race.player,p,{velocityHeading:p.heading,road:g.track.nearest(p.x,p.y),raceDistance:p.s,lastS:p.s,lastX:p.x,lastY:p.y,nextGate:Math.ceil(p.s/(g.track.length/12))*g.track.length/12});
+    }else{
+     g.startNewGame(scene==='boss'?7:18);g.state='playing';g.ui.hideAll();const level=g.level;
+     const x=scene==='boss'?level.enemies.find(e=>e.isBoss).x-220:level.springs[0].x-90;
+     Object.assign(g.player,{x,y:440,vy:0,invincible:30});g.camera.reset(x-200);
+    }
+    frame.contentWindow.focus();status.textContent='KLAR · '+scene;return;
+   }
+   await new Promise(r=>setTimeout(r,100));
+  }
+  status.textContent='FEJL: spillet blev ikke klar';
+ };
+});
+</script></html>

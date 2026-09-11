@@ -102,7 +102,7 @@
     }
 
     .brand-mark::before {
-      content: "26";
+      content: attr(data-year-short);
       margin-top: 5px;
       font-size: 0.86rem;
       font-weight: 900;
@@ -186,6 +186,29 @@
 
     h1 span {
       color: var(--red);
+    }
+
+    .year-select {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 24px;
+      font-weight: 750;
+    }
+
+    .year-select select {
+      min-height: 44px;
+      padding: 8px 32px 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      color: var(--ink);
+      background: white;
+      font: inherit;
+    }
+
+    .year-select select:focus-visible {
+      outline: 3px solid var(--red);
+      outline-offset: 3px;
     }
 
     .hero-copy {
@@ -1022,7 +1045,7 @@
   <div class="page">
     <header class="topbar">
       <a class="brand" href="index.html">
-        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-mark" data-year-short="26" aria-hidden="true"></span>
         <span>
           Wutborg.dk
           <small>Familiekalender</small>
@@ -1035,14 +1058,15 @@
         <a href="mailto:hej@wutborg.dk">Kontakt</a>
       </nav>
 
-      <span class="year-pill">Hele 2026</span>
+      <span class="year-pill">Hele <span data-calendar-year>2026</span></span>
     </header>
 
     <main>
       <section class="hero" aria-labelledby="page-title">
         <div>
           <span class="eyebrow">Dansk kalender</span>
-          <h1 id="page-title">Året <span>2026</span></h1>
+          <h1 id="page-title">Året <span data-calendar-year>2026</span></h1>
+          <label class="year-select" for="calendar-year">Vælg år <select id="calendar-year"></select></label>
           <p class="hero-copy">
             Alle årets måneder med danske ugenumre, helligdage, mærkedage,
             officielle flagdage og private familiedage, der kun gemmes på din enhed.
@@ -1055,12 +1079,12 @@
             <span>måneder</span>
           </div>
           <div class="fact">
-            <strong>10</strong>
+            <strong id="holiday-count">10</strong>
             <span>helligdage</span>
           </div>
           <div class="fact">
-            <strong>21</strong>
-            <span>officielle flagdage</span>
+            <strong id="flag-count">21</strong>
+            <span id="flag-count-label">officielle flagdage</span>
           </div>
         </div>
       </section>
@@ -1130,9 +1154,7 @@
 
       <aside class="sources">
         <span>
-          <strong>Datagrundlag:</strong> Officielle flagdage er kontrolleret mod
-          Justitsministeriets liste for 2026. Bevægelige kirkelige dage er beregnet
-          ud fra påskedag den 5. april 2026.
+          <strong>Datagrundlag:</strong> <span id="calendar-source-note"></span>
         </span>
         <span>
           <a href="https://www.justitsministeriet.dk/temaer/flagning/flagdage/">
@@ -1143,13 +1165,17 @@
     </main>
 
     <footer class="footer">
-      <span><strong>Wutborg.dk</strong> · Dansk kalender 2026</span>
+      <span><strong>Wutborg.dk</strong> · Dansk kalender <span data-calendar-year>2026</span></span>
       <a href="mailto:hej@wutborg.dk">hej@wutborg.dk</a>
     </footer>
   </div>
 
+  <script src="js/calendar-data.js?v=20260911-fixes"></script>
   <script>
-    const YEAR = 2026;
+    const currentYear = Math.max(2026, new Date().getFullYear());
+    const availableYears = Array.from({ length: currentYear + 11 - 2026 }, (_, index) => 2026 + index);
+    const requestedYear = Number(new URL(location.href).searchParams.get("year"));
+    let YEAR = availableYears.includes(requestedYear) ? requestedYear : currentYear;
 
     const monthNames = [
       "januar", "februar", "marts", "april", "maj", "juni",
@@ -1168,85 +1194,7 @@
      * Offentlige kalenderbegivenheder redigeres her.
      * Private familiedage tilføjes lokalt i browseren nedenfor.
      */
-    const publicEvents = [
-      { date: "2026-01-01", name: "Nytårsdag", types: ["holiday", "flag"] },
-      { date: "2026-01-06", name: "Helligtrekonger", types: ["observance"] },
-
-      { date: "2026-02-02", name: "Kyndelmisse", types: ["observance"] },
-      { date: "2026-02-05", name: "Dronning Marys fødselsdag", types: ["flag"] },
-      { date: "2026-02-06", name: "Prinsesse Maries fødselsdag", types: ["flag"] },
-      { date: "2026-02-14", name: "Valentinsdag", types: ["observance"] },
-      { date: "2026-02-15", name: "Fastelavn", types: ["observance"] },
-
-      { date: "2026-03-08", name: "Kvindernes internationale kampdag", types: ["observance"] },
-      { date: "2026-03-29", name: "Palmesøndag", types: ["observance"] },
-
-      { date: "2026-04-01", name: "Aprilsnar", types: ["observance"] },
-      { date: "2026-04-02", name: "Skærtorsdag", types: ["holiday"] },
-      {
-        date: "2026-04-03",
-        name: "Langfredag",
-        types: ["holiday", "flag"],
-        note: "Der flages på halv stang hele dagen."
-      },
-      { date: "2026-04-05", name: "Påskedag", types: ["holiday", "flag"] },
-      { date: "2026-04-06", name: "2. påskedag", types: ["holiday"] },
-      {
-        date: "2026-04-09",
-        name: "Besættelsesdagen",
-        types: ["observance", "flag"],
-        note: "Halv stang til kl. 12, derefter hel stang."
-      },
-      { date: "2026-04-16", name: "Dronning Margrethes fødselsdag", types: ["flag"] },
-      { date: "2026-04-21", name: "Prinsesse Isabellas fødselsdag", types: ["flag"] },
-      { date: "2026-04-29", name: "Prinsesse Benediktes fødselsdag", types: ["flag"] },
-
-      { date: "2026-05-01", name: "Arbejdernes internationale kampdag", types: ["observance"] },
-      { date: "2026-05-04", name: "Befrielsesbudskabet · lys i vinduerne", types: ["observance"] },
-      { date: "2026-05-05", name: "Befrielsesdagen", types: ["observance", "flag"] },
-      { date: "2026-05-10", name: "Mors dag", types: ["observance"] },
-      { date: "2026-05-14", name: "Kristi himmelfartsdag", types: ["holiday", "flag"] },
-      { date: "2026-05-24", name: "Pinsedag", types: ["holiday", "flag"] },
-      { date: "2026-05-25", name: "2. pinsedag", types: ["holiday"] },
-      { date: "2026-05-26", name: "Kong Frederik X's fødselsdag", types: ["flag"] },
-
-      { date: "2026-06-05", name: "Grundlovsdag", types: ["observance", "flag"] },
-      { date: "2026-06-05", name: "Fars dag", types: ["observance"] },
-      { date: "2026-06-07", name: "Prins Joachims fødselsdag", types: ["flag"] },
-      { date: "2026-06-15", name: "Valdemarsdag og genforeningsdag", types: ["observance", "flag"] },
-      {
-        date: "2026-06-21",
-        name: "Grønlands nationaldag",
-        types: ["flag"],
-        flag: "greenland"
-      },
-      { date: "2026-06-23", name: "Sankt Hans aften", types: ["observance"] },
-
-      {
-        date: "2026-07-29",
-        name: "Færøernes nationale festdag · Ólavsøka",
-        types: ["flag"],
-        flag: "faroe"
-      },
-
-      { date: "2026-09-05", name: "Danmarks udsendte", types: ["flag"] },
-
-      { date: "2026-10-15", name: "Kronprins Christians fødselsdag", types: ["flag"] },
-      { date: "2026-10-31", name: "Halloween", types: ["observance"] },
-
-      { date: "2026-11-01", name: "Allehelgensdag", types: ["observance"] },
-      { date: "2026-11-10", name: "Mortensaften", types: ["observance"] },
-      { date: "2026-11-29", name: "1. søndag i advent", types: ["observance"] },
-
-      { date: "2026-12-06", name: "2. søndag i advent", types: ["observance"] },
-      { date: "2026-12-13", name: "3. søndag i advent", types: ["observance"] },
-      { date: "2026-12-13", name: "Luciadag", types: ["observance"] },
-      { date: "2026-12-20", name: "4. søndag i advent", types: ["observance"] },
-      { date: "2026-12-24", name: "Juleaften", types: ["observance"] },
-      { date: "2026-12-25", name: "Juledag", types: ["holiday", "flag"] },
-      { date: "2026-12-26", name: "2. juledag", types: ["holiday"] },
-      { date: "2026-12-31", name: "Nytårsaften", types: ["observance"] }
-    ];
+    let publicEvents = window.WutborgCalendar.publicEvents(YEAR);
 
     let familyEvents = readFamilyEvents();
     let events = [];
@@ -1272,11 +1220,7 @@
     function normalizeFamilyEvent(value) {
       const name = String(value?.name || "").trim().slice(0, 60);
       const monthDay = String(value?.monthDay || "");
-      const candidate = new Date(`${YEAR}-${monthDay}T00:00:00Z`);
-      const validDate =
-        /^\d{2}-\d{2}$/.test(monthDay) &&
-        !Number.isNaN(candidate.valueOf()) &&
-        candidate.toISOString().slice(5, 10) === monthDay;
+      const validDate = window.WutborgCalendar.isValidMonthDay(2000, monthDay);
 
       if (!name || !validDate) return null;
 
@@ -1303,7 +1247,7 @@
     }
 
     function buildEvents() {
-      const privateEvents = familyEvents.map((event) => ({
+      const privateEvents = familyEvents.filter(event => window.WutborgCalendar.isValidMonthDay(YEAR, event.monthDay)).map((event) => ({
         date: `${YEAR}-${event.monthDay}`,
         name: event.name,
         types: ["family"]
@@ -1398,7 +1342,8 @@
       const daysInMonth = new Date(Date.UTC(YEAR, monthIndex + 1, 0)).getUTCDate();
       const startOffset = (firstDate.getUTCDay() + 6) % 7;
       const rowCount = Math.ceil((startOffset + daysInMonth) / 7);
-      const monthEvents = events.filter((event) => Number(event.date.slice(5, 7)) === monthIndex + 1);
+      const monthEvents = window.WutborgCalendar.visibleEvents(events, activeFilters)
+        .filter((event) => Number(event.date.slice(5, 7)) === monthIndex + 1);
 
       let grid = `
         <div class="week-heading">Uge</div>
@@ -1424,7 +1369,7 @@
           }
 
           const key = dateKey(monthIndex, day);
-          const dayEvents = eventsByDate[key] || [];
+          const dayEvents = window.WutborgCalendar.visibleEvents(eventsByDate[key] || [], activeFilters);
           const classes = [
             "day",
             weekday > 4 ? "weekend" : "",
@@ -1451,18 +1396,14 @@
           <div class="calendar-grid">${grid}</div>
           <div class="mobile-agenda">
             <h3>Månedens mærkedage</h3>
-            ${monthEvents.length ? monthEvents.map(renderAgendaItem).join("") : "<p>Ingen mærkedage denne måned.</p>"}
+            ${monthEvents.length ? monthEvents.map(renderAgendaItem).join("") : "<p>Ingen begivenheder med de valgte filtre.</p>"}
           </div>
         </section>
       `;
     }
 
     function updateFilters() {
-      document.querySelectorAll("[data-types]").forEach((element) => {
-        const types = element.dataset.types.split(" ");
-        const isVisible = types.some((type) => activeFilters.has(type));
-        element.classList.toggle("is-hidden", !isVisible);
-      });
+      renderCalendar();
     }
 
     function renderFamilyList() {
@@ -1478,7 +1419,7 @@
       );
 
       list.innerHTML = sorted.map((event) => {
-        const date = new Date(`${YEAR}-${event.monthDay}T00:00:00Z`);
+        const date = new Date(`2000-${event.monthDay}T00:00:00Z`);
         return `
           <li>
             <span><strong>${escapeHtml(event.name)}</strong> · ${formatter.format(date)}</span>
@@ -1499,7 +1440,6 @@
       document.querySelector("#calendar").innerHTML = monthNames
         .map((_, monthIndex) => renderMonth(monthIndex))
         .join("");
-      updateFilters();
     }
 
     function setFamilyStatus(message) {
@@ -1510,14 +1450,49 @@
       .map((month) => `<a href="#${month}">${month.slice(0, 3)}.</a>`)
       .join("");
 
-    renderCalendar();
-    renderFamilyList();
-
     const familyForm = document.querySelector("#local-family-form");
     const familyDateInput = document.querySelector("#local-family-date");
-    familyDateInput.value = today.getFullYear() === YEAR
-      ? todayKey
-      : `${YEAR}-01-01`;
+    const yearSelect = document.querySelector("#calendar-year");
+    yearSelect.innerHTML = availableYears.map(year => `<option value="${year}">${year}</option>`).join("");
+
+    function updateYear() {
+      publicEvents = window.WutborgCalendar.publicEvents(YEAR);
+      yearSelect.value = String(YEAR);
+      document.querySelectorAll("[data-calendar-year]").forEach(element => element.textContent = YEAR);
+      document.querySelector(".brand-mark").dataset.yearShort = String(YEAR).slice(-2);
+      document.title = `Dansk kalender ${YEAR} · Wutborg.dk`;
+      document.querySelector('meta[name="description"]').content = `Dansk kalender for ${YEAR} med helligdage, mærkedage, flagdage og private familiedage gemt lokalt på din enhed.`;
+      const countDays = type => new Set(publicEvents.filter(event => event.types.includes(type)).map(event => event.date)).size;
+      document.querySelector("#holiday-count").textContent = countDays("holiday");
+      document.querySelector("#flag-count").textContent = countDays("flag");
+      const verified = YEAR === window.WutborgCalendar.VERIFIED_FLAG_YEAR;
+      document.querySelector("#flag-count-label").textContent = verified ? "officielle flagdage" : "forventede flagdage";
+      const easterLabel = new Intl.DateTimeFormat("da-DK", { dateStyle: "long", timeZone: "UTC" }).format(window.WutborgCalendar.easter(YEAR));
+      document.querySelector("#calendar-source-note").textContent = (verified
+        ? "Flagdagene er kontrolleret mod Justitsministeriets liste for 2026. "
+        : `Flagdagene for ${YEAR} er forventede ud fra Justitsministeriets liste for 2026. Særlige flagdage kan blive tilføjet. `)
+        + `Bevægelige kirkelige dage er beregnet ud fra påskedag den ${easterLabel}.`;
+      const monthDay = familyDateInput.value.slice(5);
+      familyDateInput.min = `${YEAR}-01-01`;
+      familyDateInput.max = `${YEAR}-12-31`;
+      familyDateInput.value = window.WutborgCalendar.isValidMonthDay(YEAR, monthDay)
+        ? `${YEAR}-${monthDay}`
+        : today.getFullYear() === YEAR ? todayKey : `${YEAR}-01-01`;
+      renderCalendar();
+      renderFamilyList();
+    }
+
+    yearSelect.addEventListener("change", () => {
+      const nextYear = Number(yearSelect.value);
+      if (!availableYears.includes(nextYear)) return;
+      YEAR = nextYear;
+      updateYear();
+      const url = new URL(location.href);
+      url.searchParams.set("year", String(YEAR));
+      history.replaceState(null, "", url);
+      setFamilyStatus(`Kalenderen viser nu ${YEAR}.`);
+    });
+    updateYear();
 
     familyForm.addEventListener("submit", (event) => {
       event.preventDefault();

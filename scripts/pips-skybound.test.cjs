@@ -39,7 +39,7 @@ assert.ok(
 
 const allowedSymbols = new Set([".", "X", "?", "M", "I", "S", "L", "T", "B", "R", "^"]);
 const allowedEntities = new Set([
-  "player",
+  "player", "spring", "platform", "secret",
   "coin",
   "goomba",
   "koopa",

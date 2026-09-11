@@ -375,18 +375,24 @@
 
   function renderMoves() {
     if (!currentBattle) return;
-    dom.moveMenu.innerHTML = currentBattle.player.moves.map((move, index) => `
+    const reserve = engine.needsReserveMove(currentBattle.player);
+    const choices = reserve
+      ? [{ move: engine.RESERVE_MOVE, index: -1 }]
+      : currentBattle.player.moves.map((move, index) => ({ move, index }));
+    dom.moveMenu.innerHTML = (reserve
+      ? '<p>Alle angreb er opbrugt. Reserveangreb kan bruges uden PP og rammer alle typer.</p>'
+      : '') + choices.map(({ move, index }) => `
       <button
         class="move-button"
         type="button"
         data-move-index="${index}"
         style="--move-color:${TYPE_COLORS[move.type] || TYPE_COLORS.normal}"
-        ${move.currentPp <= 0 || busy ? "disabled" : ""}
+        ${!engine.canUseMove(currentBattle.player, index) || busy ? "disabled" : ""}
       >
         <span class="move-name">${escapeHtml(move.name)}</span>
         <span class="move-meta">
-          <span>${escapeHtml(move.type)}</span>
-          <span>PP ${move.currentPp}/${move.pp}</span>
+          <span>${move.reserve ? "Neutral" : escapeHtml(move.type)}</span>
+          <span>${move.reserve ? "Uden PP" : `PP ${move.currentPp}/${move.pp}`}</span>
           <span>POW ${move.power ?? "—"}</span>
           <span>ACC ${move.accuracy}%</span>
         </span>

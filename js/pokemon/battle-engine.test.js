@@ -161,6 +161,36 @@
       assert(smartGood > 75, `Smart selected the good move ${smartGood} times`);
     });
 
+    test("Reserveangreb åbnes kun ved opbrugt PP og virker mod Ghost", () => {
+      const player = combatant({ moves: [move("Tackle", "normal")] });
+      assert(!engine.canUseMove(player, -1), "Reserveangreb må ikke omgå normale angreb");
+      player.moves[0].currentPp = 0;
+      assert(engine.canUseMove(player, -1));
+      assert(!engine.canUseMove(player, 0));
+      const ghost = combatant({ types: ["ghost"] });
+      const event = engine.resolveMove(player, ghost, -1, () => 0.5);
+      assert(event.damage > 0 && ghost.hp < ghost.maxHp);
+      assert(player.moves[0].currentPp === 0, "Reserveangreb må ikke ændre PP");
+      player.fainted = true;
+      assert(!engine.canUseMove(player, -1));
+    });
+
+    test("Begge spillere uden PP kan afslutte en kamp uden at ændre input", () => {
+      let battle = {
+        player: combatant({ id: 1, types: ["ghost"], moves: [{ ...move("Lick", "ghost"), currentPp: 0 }] }),
+        opponent: combatant({ id: 2, moves: [{ ...move("Tackle", "normal"), currentPp: 0 }] }),
+        turn: 0, finished: false
+      };
+      const initial = battle;
+      for (let turn = 0; turn < 30 && !battle.finished; turn += 1) {
+        battle = engine.resolveTurn(battle, -1, { random: () => 0.5 });
+        assert(battle.events.some(event => event.moveName === "Reserveangreb"));
+      }
+      assert(battle.finished, "Kampen skal kunne afgøres");
+      assert(initial.player.hp === 150 && initial.opponent.hp === 150);
+      assert(battle.player.moves[0].currentPp === 0 && battle.opponent.moves[0].currentPp === 0);
+    });
+
     return tests.map(({ name, fn }) => {
       try {
         fn();

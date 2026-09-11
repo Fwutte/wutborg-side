@@ -33,7 +33,7 @@
     });
     const xs=samples.map(p=>p.x),ys=samples.map(p=>p.y),padding=config.halfWidth+160;
     const bounds={minX:Math.min(...xs)-padding,maxX:Math.max(...xs)+padding,minY:Math.min(...ys)-padding,maxY:Math.max(...ys)+padding};
-    const track = { ...config, revision:3, length, samples, bounds, step:length/segments,
+    const track = { ...config, revision:4, length, samples, bounds, step:length/segments,
       cx:(bounds.minX+bounds.maxX)/2,cy:(bounds.minY+bounds.maxY)/2,width:bounds.maxX-bounds.minX,height:bounds.maxY-bounds.minY };
     // Cosine hills join the start/finish seamlessly and keep every gradient driveable.
     track.elevationAt = function(s) {
@@ -68,6 +68,12 @@
       return best;
     };
     track.isRoad = (x,y) => track.nearest(x,y).distance <= track.halfWidth;
+    track.surfaceAt = s => track.theme === "frost" && s / length > .16 && s / length < .72 ? "ice" : "asphalt";
+    track.shortcut = config.shortcut || null;
+    track.isShortcut = road => Boolean(track.shortcut && road.s / length > track.shortcut[0] && road.s / length < track.shortcut[1] && Math.abs(road.lateral + track.halfWidth + 30) < 24);
+    track.ramps = (config.ramps || []).map(t => ({...track.at(t * length), fraction:t}));
+    track.obstacles = (config.obstacles || []).map((t,i) => ({s:t*length, phase:i*2, radius:23, kind:track.theme === "frost" ? "snowball" : track.theme === "jungle" ? "log" : "boulder"}));
+    track.obstacleAt = (o,time) => track.at(o.s, Math.sin(time * 1.3 + o.phase) * track.halfWidth * .7);
     track.start = track.at(0);
     track.heading = track.start.heading;
     track.itemBoxes = [.09,.23,.38,.54,.69,.85].flatMap((t,i) => [-.55,0,.55].map((lane,n) => ({ ...track.at(t*length,lane*track.halfWidth), id: `box-${i}-${n}` })));
@@ -107,6 +113,20 @@
       palette:{ sky:"#141e39", grass:"#2f4260", grassDark:"#223149", road:"#46516d", edge:"#9cefff", accent:"#c98cff", fog:"#233752" },
       points:[[1500,450],[2450,400],[3400,650],[4250,1000],[4100,1740],[3480,1850],[2880,1500],[2450,1940],[3000,2400],[4070,2620],[4200,3370],[3500,3920],[2700,3650],[2240,3050],[1640,3370],[1000,3770],[400,3250],[480,2570],[1100,2260],[1270,1700],[650,1460],[450,900],[750,450]] }),
   ];
+  TRACKS.push(
+    makeTrack({id:"volcano-run",name:"Vulkanpasset",short:"Vulkan",number:"04",theme:"volcano",difficulty:"Svær",subtitle:"Lavakrater · springramper · rullende klipper",halfWidth:118,
+      hills:[[.2,.17,220],[.52,.18,260],[.82,.14,195]],bridge:[.48,.56],landmark:.51,ramps:[.12,.45,.78],obstacles:[.26,.64],shortcut:[.32,.39],
+      palette:{sky:"#d88965",grass:"#534147",grassDark:"#342e3c",road:"#494355",edge:"#ffbc69",accent:"#ff7542",fog:"#c08176"},
+      points:[[1400,400],[2350,400],[3370,600],[4050,1200],[4050,2000],[3420,2470],[3700,3210],[3010,3740],[2150,3600],[1600,3000],[850,3150],[400,2480],[650,1600],[430,970],[750,450]]}),
+    makeTrack({id:"frost-peaks",name:"Frosttinderne",short:"Frost",number:"05",theme:"frost",difficulty:"Mellem",subtitle:"Glat is · snebolde · krystalbro",halfWidth:122,
+      hills:[[.24,.18,240],[.52,.16,210],[.82,.16,200]],bridge:[.46,.55],landmark:.5,ramps:[.1,.76],obstacles:[.33,.65],shortcut:[.38,.44],
+      palette:{sky:"#b9d9ec",grass:"#e0edf4",grassDark:"#9cb9d4",road:"#8ebbd1",edge:"#f7ffff",accent:"#648ddd",fog:"#b7d6e8"},
+      points:[[1300,450],[2400,400],[3420,650],[4070,1280],[3810,2060],[3200,2270],[3400,3130],[2670,3700],[1770,3500],[1380,2840],[650,2810],[400,2050],[840,1440],[500,850],[850,420]]}),
+    makeTrack({id:"jungle-trail",name:"Junglestien",short:"Jungle",number:"06",theme:"jungle",difficulty:"Svær",subtitle:"Tempelruiner · træstammer · smalle genveje",halfWidth:116,
+      hills:[[.24,.16,200],[.53,.19,240],[.83,.13,185]],bridge:[.49,.58],landmark:.53,ramps:[.1,.47,.8],obstacles:[.22,.68],shortcut:[.33,.42],
+      palette:{sky:"#b8d4bc",grass:"#528f65",grassDark:"#294c49",road:"#897b58",edge:"#e1cf92",accent:"#f6c75c",fog:"#9ec4a7"},
+      points:[[1300,400],[2300,400],[3330,570],[4090,1110],[4150,1910],[3450,2180],[3110,2710],[3460,3370],[2750,3850],[1860,3570],[1460,2930],[750,3040],[390,2300],[860,1700],[460,1020],[710,490]]})
+  );
   const DIFFICULTIES = { relaxed:{ name:"Hyggelig", speed:.79 }, normal:{ name:"Sport", speed:.91 }, expert:{ name:"Ekspert", speed:1.02 } };
   const CUP_POINTS = [15,12,10,8,6,4,2,1];
   window.WutborgKartData = { DRIVERS, ITEM_TYPES, TRACKS, DIFFICULTIES, CUP_POINTS, TAU, clamp, mod, lerp, normalizeAngle, angleDelta };

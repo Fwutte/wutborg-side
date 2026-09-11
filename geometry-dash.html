@@ -530,6 +530,7 @@
     </main>
   </div>
 
+  <script src="js/game-storage.js"></script>
   <script src="js/highscores.js"></script>
   <script>
     const canvas = document.getElementById("game");
@@ -661,7 +662,7 @@
       scroll: 0,
       elapsed: 0,
       score: 0,
-      best: Number(localStorage.getItem(BEST_KEY) || "0"),
+      best: Number(window.WutborgGameStorage.getItem(BEST_KEY) || "0"),
       lastTime: 0,
       shake: 0,
       flash: 0,
@@ -828,7 +829,7 @@
       stopBeat();
       state.mode = "win";
       state.best = Math.max(state.best, state.score);
-      localStorage.setItem(BEST_KEY, String(state.best));
+      window.WutborgGameStorage.setItem(BEST_KEY, String(state.best));
       updateHud();
       showOverlay(
         "Banen klaret",
@@ -867,7 +868,7 @@
         if (state.mode !== "crashed") return;
         state.mode = "gameover";
         state.best = Math.max(state.best, state.score);
-        localStorage.setItem(BEST_KEY, String(state.best));
+        window.WutborgGameStorage.setItem(BEST_KEY, String(state.best));
         updateHud();
         showOverlay(
           "Crash",
@@ -1506,7 +1507,7 @@
     });
 
     window.addEventListener("pagehide", () => {
-      try { localStorage.setItem(BEST_KEY, String(state.best)); } catch {}
+      try { window.WutborgGameStorage.setItem(BEST_KEY, String(state.best)); } catch {}
     });
 
     bestElement.textContent = state.best.toLocaleString("da-DK");

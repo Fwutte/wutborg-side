@@ -81,6 +81,7 @@ export class BattleScene3D {
     this.buildArmy();
     this.buildEncounter();
     this.buildVfx();
+    this.buildSiege();
     this.resize = () => this.resizeRenderer();
     window.addEventListener("resize", this.resize);
     this.bindPointer();
@@ -529,6 +530,23 @@ export class BattleScene3D {
     this.encounter.add(this.hazards);
   }
 
+  buildSiege(){
+    this.siege=new THREE.Group();this.scene.add(this.siege);this.siegeParts=[];
+    const stone=new THREE.MeshStandardMaterial({color:0x778ca0,roughness:.88}),wood=new THREE.MeshStandardMaterial({color:0x765448,roughness:.8}),gold=new THREE.MeshStandardMaterial({color:0xeac47c,metalness:.55,roughness:.3});
+    const box=(group,x,y,z,w,h,d,mat=stone)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);m.position.set(x,y,z);m.castShadow=!this.quality.compact;m.receiveShadow=true;group.add(m);return m;};
+    for(let section=0;section<2;section++){
+      const g=new THREE.Group();this.siege.add(g);this.siegeParts.push(g);
+      if(section===0){for(let i=0;i<7;i++)box(g,(i-3)*.45,1.25,-5.7,.4,2.5,.35,wood);for(const y of [.5,1.6,2.3])box(g,0,y,-5.47,3.3,.14,.15,gold);}
+      else for(const x of [-4,4]){box(g,x,2,-6,2.1,4,2.2);for(let n=0;n<3;n++)box(g,x+(n-1)*.73,4.35,-5.3,.45,.7,.65);box(g,x,2.7,-4.89,.4,.8,.05,wood);const roof=new THREE.Mesh(new THREE.ConeGeometry(1.8,1.5,4),new THREE.MeshStandardMaterial({color:0x925761}));roof.position.set(x,5.1,-6);roof.rotation.y=Math.PI/4;g.add(roof);}
+    }
+    const banner=box(this.siege,0,4.4,-7.1,1.5,1.1,.08,gold);box(this.siege,0,3.5,-7.2,.08,4,.08,wood);
+    this.attackZone=new THREE.Mesh(new THREE.PlaneGeometry(1,8),new THREE.MeshBasicMaterial({color:0xff624e,transparent:true,opacity:.45,depthWrite:false,side:THREE.DoubleSide}));this.attackZone.rotation.x=-Math.PI/2;this.attackZone.position.y=.045;this.scene.add(this.attackZone);
+    this.shieldBubble=new THREE.Mesh(new THREE.SphereGeometry(2.15,24,16,0,Math.PI*2,0,Math.PI/2),new THREE.MeshStandardMaterial({color:0x89e6ff,emissive:0x409ad5,emissiveIntensity:.6,transparent:true,opacity:.26,roughness:.2,side:THREE.DoubleSide,depthWrite:false}));this.scene.add(this.shieldBubble);
+    this.battleArrows=[];
+    for(let i=0;i<24;i++){const arrow=new THREE.Group();box(arrow,0,0,0,.025,.025,.7,wood);const head=new THREE.Mesh(new THREE.ConeGeometry(.065,.17,4),gold);head.rotation.x=Math.PI/2;head.position.z=.43;arrow.add(head);this.scene.add(arrow);this.battleArrows.push(arrow);}
+    this.rubble=[];for(let i=0;i<24;i++){const block=box(this.siege,(i%8-3.5)*.9,.15,-5.2+Math.floor(i/8)*.6,.45,.3,.45);block.rotation.set(i*.7,i,0);this.rubble.push(block);}
+  }
+
   buildVfx() {
     this.particleCursor = 0;
     this.particleLife = new Float32Array(this.quality.particles);
@@ -670,10 +688,10 @@ export class BattleScene3D {
       const actorColumns = Math.min(this.quality.compact ? 5 : 6, logic.formationColumns(Math.min(run.army, this.quality.actorCount)));
       actor.root.position.set((index % actorColumns - (actorColumns - 1) / 2) * 0.58, 0, 0.45 - Math.floor(index / actorColumns) * 0.56);
       actor.root.visible = index < Math.min(run.army, this.quality.actorCount);
-      const action = run.state === "marching" ? (run.currentGate?.choices[run.selectedSide]?.type === "hazard" ? "block" : "attack") : run.state === "won" ? "cheer" : run.state === "lost" ? "death" : "run";
-      this.setActorAction(actor, action, ["attack", "hit", "death"].includes(action));
+      const action = run.state === "battling" ? (run.shieldTime>0?"block":"attack") : run.state === "marching" ? (run.currentGate?.choices[run.selectedSide]?.type === "hazard" ? "block" : "attack") : run.state === "won" ? "cheer" : run.state === "lost" ? "death" : "run";
+      this.setActorAction(actor, action, run.state!=="battling"&&["attack", "hit", "death"].includes(action));
     });
-    this.drawArmyMarker(run.army);
+    this.drawArmyMarker(run.combat?Math.max(0,run.combat.startArmy-run.combat.loss):run.army);
   }
 
   drawArmyMarker(army) {
@@ -769,7 +787,7 @@ export class BattleScene3D {
       const selected = run.selectedSide === side;
       const transition = run.state === "marching" ? logic.clamp(run.marchTime / 0.92, 0, 1) : 0;
       const opacity = run.selectedSide === null ? 1 : selected ? 1 - logic.clamp((transition - 0.64) / 0.36, 0, 1) : 1 - logic.clamp(transition / 0.24, 0, 1);
-      sceneGate.group.visible = opacity > 0.015;
+      sceneGate.group.visible = run.state!=="battling"&&opacity > 0.015;
       sceneGate.group.position.x = sceneGate.side * 3 * (selected ? 1 - transition * 0.28 : 1);
       sceneGate.group.position.z = this.gateZ;
       sceneGate.materials.forEach((material) => {
@@ -814,9 +832,21 @@ export class BattleScene3D {
     });
   }
 
-  updateEncounter(run) {
-    this.hazards.visible = false;
-    this.enemyActors.forEach((actor) => { actor.root.visible = false; });
+  updateEncounter(run,dt) {
+    this.hazards.visible=false;const c=run.combat,active=run.state==="battling"&&Boolean(c);
+    this.siege.visible=active&&c.boss;this.attackZone.visible=active&&(c.warning>0||c.impact>0);this.shieldBubble.visible=active&&run.shieldTime>0;
+    this.battleArrows.forEach(a=>a.visible=false);
+    if(active){
+      if(this.lastCombat!==c){this.lastCombat=c;this.lastImpact=0;this.lastPhase=0;this.siegeParts.forEach(p=>{p.position.y=0;p.rotation.z=0;});}
+      if(c.phase!==this.lastPhase){this.lastPhase=c.phase;for(let i=0;i<24;i++)this.spawnParticle((Math.random()-.5)*5,2,-5.4,new THREE.Color(0xabb2aa),4);}
+      this.attackZone.position.set(c.targetX*3.45,.05,-.8);this.attackZone.scale.x=c.phase===2?4:2.97;this.attackZone.material.opacity=c.impact>0?.8:.2+Math.sin(this.time*14)*.12;
+      this.shieldBubble.position.set(this.formationX,.02,this.formationZ);this.shieldBubble.scale.set(1,1,.9);
+      this.siegeParts.forEach((part,i)=>{const broken=c.phase>i;part.position.y+=((broken?-4.5:0)-part.position.y)*Math.min(1,dt*4);part.rotation.z+=((broken?(i?.25:-.25):0)-part.rotation.z)*Math.min(1,dt*5);});this.rubble.forEach((block,i)=>block.visible=c.phase>0&&(c.phase>1||i<12));
+      this.battleArrows.forEach((arrow,i)=>{const volley=c.volleyFlash>0,attack=c.warning>0||c.impact>0;if(!volley&&!attack)return;const progress=volley?1-c.volleyFlash/.7:c.impact>0?1:1-c.warning/1.05;arrow.visible=true;arrow.position.set((volley?this.formationX:c.targetX*3.45)+(i%6-2.5)*.28,Math.sin(Math.max(0,progress)*Math.PI)*3+.4,volley?this.formationZ-progress*7:-6+progress*8+(Math.floor(i/6)-1)*.22);arrow.rotation.x=volley?-.3:.3;arrow.rotation.y=volley?Math.PI:0;});
+      if(c.impact>0&&this.lastImpact!==c.hitCount){this.lastImpact=c.hitCount;this.cameraShake=this.reducedMotion?0:.2;for(let i=0;i<14;i++)this.spawnParticle(this.formationX,.5,this.formationZ,new THREE.Color(run.shieldTime>0?0x8fe4ff:0xffb776),2);}
+    }
+    if(this.characterAsset&&this.enemyActors.length===0){for(let i=0;i<this.quality.enemyCount;i++){const actor=this.makeActor(i===0?"giant":"soldier",true);actor.baseScale=actor.root.scale.x;this.encounter.add(actor.root);this.enemyActors.push(actor);}}
+    this.enemyActors.forEach((actor,i)=>{const commander=active&&c.boss&&c.phase===2;actor.root.visible=active&&(commander?i===0:i>0&&i<Math.max(2,Math.ceil(c.health/c.maxHealth*(c.boss?18:12))));if(!actor.root.visible)return;actor.root.scale.setScalar(actor.baseScale*(commander?1.7:1));actor.root.position.set(commander?0:(i%6-2.5)*.55,0,commander?-3.3:-3.5-Math.floor(i/6)*.65);actor.root.rotation.y=0;this.setActorAction(actor,c.warning>0?"attack":"run");});
   }
 
   emit(outcome) {
@@ -884,6 +914,8 @@ export class BattleScene3D {
         this.gateZ = -4.05;
         this.onGateChoice(side);
       }
+    } else if (run.state === "battling") {
+      this.formationX=run.battleX*3.45;this.formationZ=2.7;this.gateZ=-6;
     } else if (run.state === "marching") {
       const laneX = run.selectedSide === 0 ? -1.95 : 1.95;
       const transition = logic.clamp(run.marchTime / 0.92, 0, 1);
@@ -897,12 +929,14 @@ export class BattleScene3D {
       this.formationX += (0 - this.formationX) * Math.min(1, dt * 7);
     }
     this.army.position.set(this.formationX, 0, this.formationZ);
+    this.canvas.dataset.battlePhase=run.combat?String(run.combat.phase+1):"0";
+    this.canvas.dataset.battleState=run.state;
     this.canvas.dataset.battleDisplayedArmy = String(Math.min(run.army, this.quality.actorCount));
     this.canvas.dataset.battleDisplayedEnemies = this.gates.map((gate) => gate.group.userData.displayedEnemyCount || 0).join(",");
     this.canvas.dataset.battleGateZ = this.gateZ.toFixed(2);
     this.canvas.dataset.battleArmyZ = this.formationZ.toFixed(2);
     this.arrangeArmy(run);
-    this.updateEncounter(run);
+    this.updateEncounter(run,dt);
     this.updateEnvironment(run, dt);
     this.updateParticles(dt, run);
     this.updateMixers(dt);

@@ -25,7 +25,7 @@
         coins:0,item:null,pendingItem:null,itemRoulette:0,finished:false,finishTime:0,lap:0,lapTimes:[],lapStarted:0,
         progress:s,raceDistance:s,nextGate:track.length/12,gateCount:0,lastS:p.s,lastX:p.x,lastY:p.y,
         road:track.nearest(p.x,p.y),wrongWay:0,offroad:false,boosts:0,recoveries:0,stuckTime:0,hop:0,
-        speedFactor:1,aiLane:(slot%3-1)*24,aiItemTime:2+slot*.37});
+        airHeight:0,airVelocity:0,rampCooldown:0,surface:"asphalt",shortcut:false,speedFactor:1,aiLane:(slot%3-1)*24,aiItemTime:2+slot*.37});
     }
     cancelDrift(){this.drifting=false;this.driftTimer=0;this.driftDirection=0;}
     applySpin(duration=.85){
@@ -43,10 +43,10 @@
       this.raceDistance=safe;this.progress=safe;
       this.x=p.x;this.y=p.y;this.elevation=p.elevation;this.slope=p.slope;this.heading=p.heading;this.velocityHeading=p.heading;
       this.lastS=p.s;this.lastX=p.x;this.lastY=p.y;this.road=track.nearest(p.x,p.y);
-      this.speed=50;this.invincibleTimer=1.8;this.spinTimer=0;this.cancelDrift();this.recoveries++;this.stuckTime=0;
+      this.airHeight=0;this.airVelocity=0;this.speed=50;this.invincibleTimer=1.8;this.spinTimer=0;this.cancelDrift();this.recoveries++;this.stuckTime=0;
     }
     update(dt,input,track,assist=false){
-      for(const key of ["spinTimer","boostTimer","starTimer","invincibleTimer","hop"])this[key]=Math.max(0,this[key]-dt);
+      for(const key of ["spinTimer","boostTimer","starTimer","invincibleTimer","hop","rampCooldown"])this[key]=Math.max(0,this[key]-dt);
       const ratio=clamp(Math.abs(this.speed)/this.driver.maxSpeed,0,1);
       this.steer=lerp(this.steer,input.steer,1-Math.exp(-12*dt));
       const boosting=this.boostTimer>0||this.starTimer>0;
@@ -72,11 +72,14 @@
         }
         if(this.drifting)this.speed*=Math.exp(-.025*dt);
       }
-      const slip=this.drifting?-this.driftDirection*.25:0,grip=this.drifting?5:14;
+      this.surface=track.surfaceAt(this.road.s);
+      const slip=this.drifting?-this.driftDirection*.25:0,grip=this.airHeight>0?3:this.surface==="ice"?(this.drifting?2.8:4.5):this.drifting?5:14;
       this.velocityHeading+=angleDelta(this.velocityHeading,this.heading+slip)*(1-Math.exp(-grip*dt));
       this.x+=Math.cos(this.velocityHeading)*this.speed*dt;this.y+=Math.sin(this.velocityHeading)*this.speed*dt;
-      this.road=track.nearest(this.x,this.y,this.road?.index);this.elevation=this.road.elevation;this.slope=this.road.slope;this.offroad=this.road.distance>track.halfWidth;
-      if(this.offroad)this.speed*=Math.exp(-(this.starTimer>0?.15:2.1)*dt);
+      this.road=track.nearest(this.x,this.y,this.road?.index);this.elevation=this.road.elevation;this.slope=this.road.slope;this.shortcut=track.isShortcut(this.road);this.offroad=this.road.distance>track.halfWidth&&!this.shortcut;
+      if(this.shortcut)this.boostTimer=Math.max(this.boostTimer,.28);
+      if(this.airHeight>0||this.airVelocity>0){this.airVelocity-=280*dt;this.airHeight=Math.max(0,this.airHeight+this.airVelocity*dt);if(this.airHeight===0){this.airVelocity=0;if(input.drift&&this.speed>120){this.boostTimer=Math.max(this.boostTimer,.85);this.boosts++;}}}
+      if(this.offroad&&this.airHeight===0)this.speed*=Math.exp(-(this.starTimer>0?.15:2.1)*dt);
       const wall=track.halfWidth+62;
       if(this.road.distance>wall){
         const excess=this.road.distance-wall,side=Math.sign(this.road.lateral);
@@ -166,7 +169,7 @@
     resolveKartCollisions(){
       for(let i=0;i<this.karts.length;i++)for(let j=i+1;j<this.karts.length;j++){
         const a=this.karts[i],b=this.karts[j];if(a.finished||b.finished)continue;
-        const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy),min=a.radius+b.radius;if(d>=min)continue;
+        const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy),min=a.radius+b.radius;if(d>=min||Math.abs(a.airHeight-b.airHeight)>24)continue;
         const nx=d>.001?dx/d:1,ny=d>.001?dy/d:0,overlap=min-d+.1,total=a.driver.weight+b.driver.weight;
         a.x-=nx*overlap*b.driver.weight/total;a.y-=ny*overlap*b.driver.weight/total;
         b.x+=nx*overlap*a.driver.weight/total;b.y+=ny*overlap*a.driver.weight/total;
@@ -197,6 +200,8 @@
         if(k.finished)continue;
         for(const box of this.itemBoxes)if(box.cooldown<=0&&!k.item&&!k.itemRoulette&&distance(k,box)<34){box.cooldown=4;k.pendingItem=this.itemForRank(k.rank);k.itemRoulette=.8;}
         for(const coin of this.coins)if(coin.cooldown<=0&&distance(k,coin)<29){coin.cooldown=5;k.coins=Math.min(10,k.coins+1);}
+        for(const ramp of this.track.ramps)if(k.speed>150&&k.rampCooldown===0&&k.airHeight===0&&distance(k,ramp)<55){k.airVelocity=160;k.airHeight=.1;k.rampCooldown=2;if(k===this.player)this.events.push("Hop! Hold drift ved landing for turbo");}
+        for(const obstacle of this.track.obstacles)if(k.airHeight<28&&distance(k,this.track.obstacleAt(obstacle,this.elapsed))<k.radius+obstacle.radius)k.applySpin(.6);
         for(const pad of this.track.boostPads)if(distance(k,pad)<44)k.boostTimer=Math.max(k.boostTimer,.65);
       }
       this.traps=this.traps.filter(t=>{
@@ -300,6 +305,9 @@
       ctx.translate(w/2,h*.58);ctx.scale(scale,scale);ctx.translate(-(p?.x??t.cx),-(p?.y??t.cy));
       const road=(width,color)=>{ctx.beginPath();t.samples.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineJoin="round";ctx.stroke();};
       road(t.halfWidth*2+26,t.palette.edge);road(t.halfWidth*2,t.palette.road);
+      if(t.shortcut){ctx.beginPath();for(let s=t.shortcut[0]*t.length;s<t.shortcut[1]*t.length;s+=20){const q=t.at(s,-t.halfWidth-30);s===t.shortcut[0]*t.length?ctx.moveTo(q.x,q.y):ctx.lineTo(q.x,q.y);}ctx.strokeStyle="#c7be79";ctx.lineWidth=46;ctx.stroke();}
+      for(const ramp of t.ramps){ctx.save();ctx.translate(ramp.x,ramp.y);ctx.rotate(ramp.heading);ctx.fillStyle="#ec9c4f";ctx.fillRect(-42,-52,84,104);ctx.strokeStyle="#fff1b3";ctx.lineWidth=7;ctx.beginPath();ctx.moveTo(-20,-32);ctx.lineTo(15,0);ctx.lineTo(-20,32);ctx.stroke();ctx.restore();}
+      for(const o of t.obstacles){const q=t.obstacleAt(o,race.elapsed);ctx.fillStyle=o.kind==="snowball"?"#fffaf0":"#634e49";ctx.beginPath();ctx.arc(q.x,q.y,o.radius,0,TAU);ctx.fill();ctx.strokeStyle="#ffd27c";ctx.lineWidth=4;ctx.stroke();}
       const start=t.at(0);ctx.save();ctx.translate(start.x,start.y);ctx.rotate(start.heading);ctx.fillStyle="white";ctx.fillRect(-8,-t.halfWidth,16,t.halfWidth*2);ctx.restore();
       for(const coin of race.coins)if(!coin.cooldown){ctx.beginPath();ctx.arc(coin.x,coin.y,13,0,TAU);ctx.fillStyle="#ffdb5d";ctx.fill();}
       for(const box of race.itemBoxes)if(!box.cooldown){ctx.fillStyle="#7addec";ctx.fillRect(box.x-18,box.y-18,36,36);}
@@ -307,7 +315,7 @@
       for(const trap of race.traps){ctx.beginPath();ctx.arc(trap.x,trap.y,20,0,TAU);ctx.fillStyle="#302443";ctx.fill();}
       for(const shell of race.shells){ctx.beginPath();ctx.arc(shell.x,shell.y,13,0,TAU);ctx.fillStyle=shell.homing?"#ff695e":"#85ffa7";ctx.fill();}
       for(const k of [...race.karts].reverse()){
-        ctx.save();ctx.translate(k.x,k.y);ctx.rotate(k.heading);ctx.fillStyle="#192131";ctx.fillRect(-26,-24,16,48);ctx.fillRect(15,-24,14,48);
+        ctx.save();ctx.translate(k.x,k.y);ctx.rotate(k.heading);ctx.scale(1+(k.airHeight||0)/190,1+(k.airHeight||0)/190);ctx.fillStyle="#192131";ctx.fillRect(-26,-24,16,48);ctx.fillRect(15,-24,14,48);
         ctx.fillStyle=k.driver.color;ctx.fillRect(-30,-17,65,34);ctx.fillStyle=k.driver.accent;ctx.fillRect(-5,-12,20,24);
         if(k===p){ctx.strokeStyle="white";ctx.lineWidth=3;ctx.strokeRect(-33,-27,71,54);}ctx.restore();
       }
@@ -355,7 +363,7 @@
       this.$("stat-handling").style.width=`${(d.handling-1.7)/1.2*100}%`;
       this.$("track-name").textContent=this.track.name;this.$("track-subtitle").textContent=this.track.subtitle;
       this.$("kart-start").innerHTML=this.mode==="cup"?'Start Grand Prix <span>↗</span>':'Ud på banen <span>↗</span>';
-      this.$("mode-description").textContent=this.mode==="cup"?"Tre baner. Saml point og vind pokalen.":this.mode==="time"?"Kun dig og uret. Find den perfekte linje.":"Tre omgange. Syv rivaler. Ét målflag.";
+      this.$("mode-description").textContent=this.mode==="cup"?"Seks baner. Saml point og vind pokalen.":this.mode==="time"?"Kun dig og uret. Find den perfekte linje.":"Tre omgange. Syv rivaler. Ét målflag.";
       this.$("kart-difficulty").disabled=this.mode==="time";
       const record=this.save.records[this.recordKey()];
       this.$("kart-best").textContent=Number.isFinite(record?.time)?`Din rekord · ${formatTime(record.time)}`:"Din første rekord venter";
@@ -377,7 +385,7 @@
       this.$("kart-assist").addEventListener("change",e=>{this.assist=e.target.checked;this.persist();});
       this.$("kart-start").addEventListener("click",()=>{this.cup=this.mode==="cup"?{round:0,points:Object.fromEntries(DRIVERS.map(d=>[d.id,0]))}:null;this.startRace();});
       this.$("kart-retry").addEventListener("click",()=>{if(this.cup)this.cup={round:0,points:Object.fromEntries(DRIVERS.map(d=>[d.id,0]))};this.startRace();});
-      this.$("kart-next").addEventListener("click",()=>{if(this.cup&&this.cup.round<2){this.cup.round++;this.startRace();}});
+      this.$("kart-next").addEventListener("click",()=>{if(this.cup&&this.cup.round<TRACKS.length-1){this.cup.round++;this.startRace();}});
       this.$("kart-resume").addEventListener("click",()=>this.togglePause(false));
       this.$("kart-restart").addEventListener("click",()=>this.startRace());
       this.$("kart-menu-button").addEventListener("click",()=>this.showMenu());
@@ -417,7 +425,7 @@
       this.race.start(this.selectedDriver);this.paused=false;this.resultSaved=false;this.accumulator=0;this.lastCountdown=4;
       this.input.reset();this.input.enabled=true;this.$("kart-menu").hidden=true;this.$("kart-result").hidden=true;this.$("kart-pause").hidden=true;
       document.body.classList.add("kart-racing");document.body.classList.remove("kart-paused");
-      this.$("race-label").textContent=this.cup?`GRAND PRIX · ${this.cup.round+1}/3 · ${this.track.name}`:this.track.name;
+      this.$("race-label").textContent=this.cup?`GRAND PRIX · ${this.cup.round+1}/${TRACKS.length} · ${this.track.name}`:this.track.name;
       this.$("kart-pause-button").textContent="Pause";this.$("kart-pause-button").disabled=false;
       this.$("kart-touch-gas").hidden=this.autoGas;
       this.canvas.focus({preventScroll:true});this.showToast(this.autoGas?"Autogas er til · Du styrer og drifter":"Giv gas ved 1 for startturbo");
@@ -446,7 +454,7 @@
       this.save.records[key]={time:Math.min(Number.isFinite(old?.time)?old.time:Infinity,result.time),lap:Math.min(Number.isFinite(old?.lap)?old.lap:Infinity,result.bestLap)};this.persist();
       if(this.cup)this.race.lastRankings.forEach((k,i)=>this.cup.points[k.driver.id]+=CUP_POINTS[i]);
       const finishingRank=id=>this.race.karts.find(k=>k.driver.id===id)?.rank||8;
-      const cupDone=this.cup?.round===2,standings=this.cup?[...DRIVERS].sort((a,b)=>this.cup.points[b.id]-this.cup.points[a.id]||finishingRank(a.id)-finishingRank(b.id)):null;
+      const cupDone=this.cup?.round===TRACKS.length-1,standings=this.cup?[...DRIVERS].sort((a,b)=>this.cup.points[b.id]-this.cup.points[a.id]||finishingRank(a.id)-finishingRank(b.id)):null;
       const cupRank=standings?standings.findIndex(d=>d.id===this.selectedDriver)+1:0;
       this.$("result-kicker").textContent=cupDone?"GRAND PRIX · SAMLET RESULTAT":record?"NY PERSONLIG REKORD":"MÅLFLAG";
       this.$("kart-result-title").textContent=cupDone?(cupRank===1?"Pokalen er din!":`Nr. ${cupRank} i Grand Prix`):this.mode==="time"?"Godt kørt!":result.position===1?"Sejren er din!":`Du blev nr. ${result.position}`;
@@ -460,7 +468,7 @@
       this.$("kart-result").hidden=false;this.$(this.cup&&!cupDone?"kart-next":"kart-retry").focus({preventScroll:true});
       this.audio.tone(523,.18);setTimeout(()=>this.audio.tone(659,.18),160);setTimeout(()=>this.audio.tone(784,.4),320);
       if(this.mode!=="time")try{
-        const submission=window.WutborgHighscores?.submit({gameKey:"wutborg-kart",gameTitle:"Wutborg Kart",playerName:this.race.player.driver.name,score:result.score,outcome:result.position===1?"won":"completed",details:{version:3,track:this.track.id,difficulty:this.difficulty,position:result.position,seconds:Math.round(result.time*100)/100}});
+        const submission=window.WutborgHighscores?.submit({gameKey:"wutborg-kart",gameTitle:"Wutborg Kart",playerName:this.race.player.driver.name,score:result.score,outcome:result.position===1?"won":"completed",details:{version:4,track:this.track.id,difficulty:this.difficulty,position:result.position,seconds:Math.round(result.time*100)/100}});
         submission?.catch(()=>{});
       }catch{/* Local results work offline. */}
     }
@@ -527,7 +535,7 @@
     let canvas=document.getElementById("kart-canvas");if(!canvas)return;
     let renderer;
     try{
-      const module=await import("./kart-racer-3d.js?v=20260910-kart3");
+      const module=await import("./kart-racer-3d.js?v=20260911-expansion");
       renderer=new module.KartRacer3DRenderer(canvas);
     }catch(error){
       console.warn("3D er ikke tilgængelig. Starter 2D-visningen.",error);

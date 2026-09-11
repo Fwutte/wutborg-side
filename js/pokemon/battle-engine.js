@@ -10,6 +10,10 @@
     "fire", "water", "grass", "electric", "psychic", "ice", "dragon", "dark"
   ]);
   const DEFAULT_IV = 15;
+  const RESERVE_MOVE = Object.freeze({
+    name: "Reserveangreb", type: "normal", power: 50, accuracy: 100,
+    priority: 0, reserve: true
+  });
   const FALLBACK_MOVES = [
     { name: "Tackle", type: "normal", power: 35, accuracy: 95, pp: 35, priority: 0 },
     { name: "Scratch", type: "normal", power: 40, accuracy: 100, pp: 35, priority: 0 },
@@ -36,6 +40,7 @@
       accuracy: Number.isFinite(move?.accuracy) ? move.accuracy : 100,
       pp: Number.isFinite(move?.pp) ? move.pp : 20,
       priority: Number.isFinite(move?.priority) ? move.priority : 0,
+      reserve: move?.reserve === true,
       effect: move?.effect || null
     };
     normalized.categoryGen3 = getMoveCategory(normalized);
@@ -123,15 +128,25 @@
     };
   }
 
+  function needsReserveMove(combatant) {
+    return Boolean(combatant && !combatant.moves.some((move) => move.currentPp > 0));
+  }
+
+  function getBattleMove(combatant, moveIndex) {
+    return moveIndex === -1 && needsReserveMove(combatant)
+      ? RESERVE_MOVE
+      : combatant?.moves?.[moveIndex];
+  }
+
   function canUseMove(combatant, moveIndex) {
-    const move = combatant?.moves?.[moveIndex];
-    return Boolean(move && move.currentPp > 0 && !combatant.fainted && combatant.hp > 0);
+    const move = getBattleMove(combatant, moveIndex);
+    return Boolean(move && (move.reserve || move.currentPp > 0) && !combatant.fainted && combatant.hp > 0);
   }
 
   function calculateDamage(attacker, defender, rawMove, random = Math.random, options = {}) {
     const move = normalizeMove(rawMove);
     const category = getMoveCategory(move);
-    const effectiveness = getTypeEffectiveness(move.type, defender.types);
+    const effectiveness = move.reserve ? 1 : getTypeEffectiveness(move.type, defender.types);
 
     if (category === "status" || effectiveness === 0) {
       return {
@@ -155,7 +170,7 @@
       Math.floor((((2 * attacker.level / 5 + 2) * move.power * attackStat / defenseStat) / 50)) +
       2
     );
-    const stab = attacker.types.includes(move.type) ? 1.5 : 1;
+    const stab = !move.reserve && attacker.types.includes(move.type) ? 1.5 : 1;
     const critical = options.forceCritical ?? (random() < 1 / 16);
     const variance = options.variance ?? (0.85 + random() * 0.15);
     const burnModifier = attacker.status === "burn" && category === "physical" ? 0.5 : 1;
@@ -290,7 +305,7 @@
   }
 
   function resolveMove(attacker, defender, moveIndex, random = Math.random) {
-    const move = attacker.moves[moveIndex];
+    const move = getBattleMove(attacker, moveIndex);
     const event = {
       kind: "move",
       actorId: attacker.id,
@@ -318,7 +333,7 @@
       event.logs.push(statusResult.message);
     }
 
-    move.currentPp -= 1;
+    if (!move.reserve) move.currentPp -= 1;
     event.logs.push(`${attacker.displayName} used ${move.name}!`);
 
     if (random() * 100 >= move.accuracy) {
@@ -397,8 +412,8 @@
     };
     const opponentMoveIndex = options.opponentMoveIndex ??
       chooseAiMove(next.opponent, next.player, state.difficulty || "normal", random);
-    const playerMove = next.player.moves[playerMoveIndex];
-    const opponentMove = next.opponent.moves[opponentMoveIndex];
+    const playerMove = getBattleMove(next.player, playerMoveIndex);
+    const opponentMove = getBattleMove(next.opponent, opponentMoveIndex);
     const order = determineTurnOrder(
       next.player,
       playerMove,
@@ -434,6 +449,9 @@
   }
 
   global.PokemonBattleEngine = {
+    RESERVE_MOVE,
+    needsReserveMove,
+    getBattleMove,
     DEFAULT_IV,
     PHYSICAL_TYPES,
     SPECIAL_TYPES,

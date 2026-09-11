@@ -858,6 +858,7 @@
       this.hurtTimer = 0;
       this.comboValue = 1;
       this.hitsRemaining = options.hits || (this.isBoss ? 3 : 1);
+      this.maxHits=this.hitsRemaining;this.anchorX=this.x;this.attackClock=2;this.warning=0;this.attackIndex=options.style||0;this.shots=[];
     }
 
     update(dt, tileMap, cameraX, player = null) {
@@ -902,11 +903,20 @@
       this.y += this.vy * dt;
       tileMap.resolveVertical(this);
       if (this.isBoss) {
+        const enraged=this.hitsRemaining<=this.maxHits/2;
+        if(this.x<this.anchorX-TILE*5||this.x>tileMap.worldWidth-TILE*5)this.vx=(this.x<this.anchorX?1:-1)*(enraged?95:58);
+        this.attackClock-=dt;
+        if(this.attackClock<.65)this.warning=Math.max(0,this.attackClock);
+        if(this.attackClock<=0&&player){
+          const direction=Math.sign(player.x-this.x)||-1;const wave=this.attackIndex++%2===0;
+          for(let i=0;i<(enraged?3:2);i++)this.shots.push({x:this.x+this.w/2,y:wave?TILE*11-20:this.y+20-i*22,w:22,h:18,vx:direction*(wave?220:170),vy:wave?0:(i-1)*70,life:3.2,wave});
+          this.attackClock=enraged?1.9:2.8;this.warning=0;
+        }
         this.bossJumpTimer -= dt;
         if (this.bossJumpTimer <= 0 && Math.abs(this.vy) < 1) {
           this.vy = -470;
           if (player) this.vx = Math.sign((player.x + player.w / 2) - (this.x + this.w / 2)) * 58;
-          this.bossJumpTimer = 1.8 + Math.random() * 0.9;
+          this.bossJumpTimer = this.hitsRemaining<=this.maxHits/2?1.25:2.3;
         }
       }
       if (this.y > tileMap.worldHeight + TILE) this.active = false;
@@ -915,6 +925,7 @@
     stomp(attackerX = this.x + this.w / 2) {
       if (this.anchored) return { defeated: false, score: 0 };
       if (this.isBoss) {
+        if(this.hurtTimer>0)return {defeated:false,score:0};
         this.hitsRemaining -= 1;
         this.hurtTimer = 0.42;
         this.vx = attackerX < this.x + this.w / 2 ? 95 : -95;
@@ -1155,6 +1166,7 @@
   class TileMap {
     constructor(definition, game) {
       this.game = game;
+      this.definition = definition;
       this.rows = definition.map.map((row) => row.split(""));
       this.width = this.rows[0].length;
       this.height = this.rows.length;
@@ -1370,19 +1382,6 @@
     drawTile(ctx, x, y, tx, ty, symbol, palette) {
       const key = this.key(tx, ty);
       if (symbol === "X") {
-        if (
-          this.game.sprites.draw(
-            ctx,
-            "tiles",
-            SPRITE_RECTS.ground,
-            x,
-            y,
-            TILE,
-            TILE
-          )
-        ) {
-          return;
-        }
         ctx.fillStyle = palette.dirt;
         ctx.fillRect(x, y, TILE, TILE);
         ctx.fillStyle = "rgba(55, 31, 24, 0.18)";
@@ -1409,6 +1408,13 @@
             ctx.lineTo(x + 12 + blade * 12, y + 13);
             ctx.fill();
           }
+        }
+        if(this.definition.biome==="snow"){
+          ctx.fillStyle="rgba(162,211,236,.3)";ctx.fillRect(x,y,TILE,TILE);
+          if(!this.isSolidTile(this.getTile(tx,ty-1))){ctx.fillStyle="#f3fcff";ctx.fillRect(x,y,TILE,9);ctx.fillStyle="#a9d9e7";for(let i=0;i<3;i++){ctx.beginPath();ctx.moveTo(x+8+i*15,y+10);ctx.lineTo(x+11+i*15,y+22+(tx+i)%3*3);ctx.lineTo(x+15+i*15,y+10);ctx.fill();}}
+        }
+        if(["castle","underground"].includes(this.definition.biome)){
+          ctx.strokeStyle="rgba(24,25,40,.5)";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x,y+24);ctx.lineTo(x+48,y+24);ctx.moveTo(x+(ty%2?12:36),y+24);ctx.lineTo(x+(ty%2?12:36),y+48);ctx.stroke();
         }
         ctx.strokeStyle = "rgba(73, 39, 28, 0.22)";
         ctx.strokeRect(x + 0.5, y + 0.5, TILE - 1, TILE - 1);
@@ -1526,7 +1532,7 @@
         this.vx += axis * acceleration * dt;
         if (!this.skidding || Math.abs(this.vx) < 90) this.facing = axis;
       } else {
-        const drag = this.grounded ? this.crouching ? 0.035 : 0.00012 : 0.065;
+        const drag = this.grounded ? tileMap.definition?.biome === "snow" ? .12 : this.crouching ? 0.035 : 0.00012 : 0.065;
         this.vx *= Math.pow(drag, dt);
         if (Math.abs(this.vx) < 3) this.vx = 0;
       }
@@ -1674,6 +1680,7 @@
       this.checkpoints = [];
       this.pipes = [];
       this.hazards = [];
+      this.platforms=[];this.springs=[];this.secrets=[];this.enemyShots=[];this.clock=0;
       this.finish = null;
       this.spawn = { x: TILE * 2, y: TILE * 9 };
       this.parseEntities();
@@ -1683,6 +1690,9 @@
       const addEntity = (entity) => {
         const x = entity.x * TILE;
         const y = entity.y * TILE;
+        if(entity.type==="platform")this.platforms.push({x,y,baseX:x,baseY:y,w:(entity.width||3)*TILE,h:16,range:(entity.range||0)*TILE,axis:entity.axis||"x",crumble:entity.crumble,age:0,fall:0});
+        if(entity.type==="spring")this.springs.push({x,y:y-16,w:TILE,h:16,pulse:0});
+        if(entity.type==="secret")this.secrets.push({x,y,w:40,h:90});
         if (entity.type === "player") this.spawn = { x, y };
         if (entity.type === "coin") this.coins.push(new Coin(x, y));
         if (["goomba", "koopa", "buzzy", "flyer", "piranha", "swimmer", "boss"].includes(entity.type)) {
@@ -1731,6 +1741,7 @@
     update(dt) {
       const player = this.game.player;
       this.tileMap.update(dt);
+      this.updateAdventure(dt);
 
       this.coins.forEach((coin) => {
         coin.update(dt);
@@ -1742,8 +1753,9 @@
 
       this.enemies.forEach((enemy) => {
         enemy.update(dt, this.tileMap, this.game.camera.x, player);
+        if(enemy.shots.length)this.enemyShots.push(...enemy.shots.splice(0));
         const fireball = this.game.fireballs.find(
-          (item) => item.active && enemy.active && !enemy.hidden && rectsOverlap(item, enemy)
+          (item) => item.active && enemy.active && !enemy.hidden && enemy.squished<=0 && enemy.hurtTimer<=0 && rectsOverlap(item, enemy)
         );
         if (fireball) {
           fireball.active = false;
@@ -1867,8 +1879,35 @@
       if (this.hazards.some((hazard) => rectsOverlap(player, hazard))) this.game.damagePlayer(true);
     }
 
+    updateAdventure(dt){
+      this.clock+=dt;const p=this.game.player;
+      for(const platform of this.platforms){
+        const oldX=platform.x,oldY=platform.y;
+        if(platform.fall>0){platform.fall+=dt;platform.y+=platform.fall*380*dt;if(platform.fall>2.5){platform.fall=0;platform.age=0;platform.x=platform.baseX;platform.y=platform.baseY;}continue;}
+        platform[platform.axis]=(platform.axis==="x"?platform.baseX:platform.baseY)+Math.sin(this.clock*1.2)*platform.range;
+        if(p.vy>=0&&p.previousBottom<=oldY+12&&p.y+p.h>=platform.y&&p.x+p.w>platform.x&&p.x<platform.x+platform.w){
+          p.x+=platform.x-oldX;p.y=platform.y-p.h;p.vy=0;p.grounded=true;p.coyoteTime=.11;
+          if(platform.crumble){platform.age+=dt;if(platform.age>.65)platform.fall=.01;}
+        }
+      }
+      for(const spring of this.springs){spring.pulse=Math.max(0,spring.pulse-dt);if(p.vy>=0&&rectsOverlap(p,spring)){p.vy=-940;p.grounded=false;p.coyoteTime=0;spring.pulse=.4;this.game.audio.play("jump");}}
+      if(this.secrets.some(gate=>rectsOverlap(p,gate))){this.game.completeLevel(true);return;}
+      const aliveBoss=this.enemies.some(e=>e.isBoss&&e.active&&e.squished<=0);
+      this.enemyShots=this.enemyShots.filter(shot=>{shot.life-=dt;shot.x+=shot.vx*dt;shot.y+=shot.vy*dt;if(aliveBoss&&rectsOverlap(p,shot)){this.game.damagePlayer();return false;}return aliveBoss&&shot.life>0;});
+    }
+
+    drawAdventure(ctx,camera){
+      for(const p of this.platforms){const x=p.x-camera.x,y=p.y-camera.y;ctx.fillStyle=p.crumble?(p.age>.3?"#e9a066":"#ad845d"):"#54bfa5";ctx.fillRect(x,y,p.w,p.h);ctx.fillStyle="#fff0ac";ctx.fillRect(x,y,p.w,4);ctx.strokeStyle="#4b635d";for(let i=8;i<p.w;i+=20){ctx.beginPath();ctx.moveTo(x+i,y+4);ctx.lineTo(x+i-5,y+14);ctx.stroke();}}
+      for(const s of this.springs){const x=s.x-camera.x,y=s.y-camera.y;ctx.fillStyle="#e14f58";ctx.fillRect(x,y-(s.pulse?8:0),s.w,7);ctx.strokeStyle="#d9edee";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x+8,y+7);for(let i=0;i<4;i++)ctx.lineTo(x+(i%2?10:38),y+7+i*3);ctx.stroke();}
+      for(const s of this.secrets){const x=s.x-camera.x,y=s.y-camera.y;ctx.fillStyle="#423764";ctx.fillRect(x,y,s.w,s.h);ctx.strokeStyle="#ffd66b";ctx.lineWidth=4;ctx.strokeRect(x,y,s.w,s.h);ctx.fillStyle="#fff0a0";ctx.font="bold 26px monospace";ctx.fillText("★",x+6,y+48);ctx.font="bold 12px monospace";ctx.fillText("HEMMELIG",x-14,y-12);}
+      for(const shot of this.enemyShots){const x=shot.x-camera.x,y=shot.y-camera.y;ctx.fillStyle="#ffaf48";ctx.beginPath();ctx.ellipse(x+11,y+9,shot.wave?19:11,9,0,0,Math.PI*2);ctx.fill();ctx.fillStyle="#fff0a0";ctx.fillRect(x+6,y+5,10,6);}
+      const boss=this.enemies.find(e=>e.isBoss&&e.active&&e.awake&&e.squished<=0);
+      if(boss){ctx.fillStyle="rgba(25,19,41,.85)";ctx.fillRect(270,32,324,52);ctx.fillStyle="#ffe7bc";ctx.font="bold 15px monospace";ctx.textAlign="center";ctx.fillText(boss.hitsRemaining<=boss.maxHits/2?"SLOTSHERREN · FASE 2":"SLOTSHERREN · FASE 1",432,52);ctx.fillStyle="#e96b68";ctx.fillRect(284,64,296*boss.hitsRemaining/boss.maxHits,8);ctx.textAlign="left";if(boss.warning>0){ctx.fillStyle="#ffe57a";ctx.font="bold 32px monospace";ctx.fillText("!",boss.x-camera.x+25,boss.y-camera.y-16);}}
+    }
+
     draw(ctx, camera) {
       this.tileMap.draw(ctx, camera, this.definition.palette);
+      this.drawAdventure(ctx,camera);
       this.hazards.forEach((hazard) => this.drawHazard(ctx, camera, hazard));
       this.checkpoints.forEach((checkpoint) => this.drawCheckpoint(ctx, camera, checkpoint));
       if (this.finish) this.drawFinish(ctx, camera, this.finish);
@@ -2121,12 +2160,15 @@
       document.querySelectorAll("[data-back-menu]").forEach((button) => {
         button.addEventListener("click", () => this.returnToMenu());
       });
-      document.getElementById("mute-button").addEventListener("click", (event) => {
+      const muteButtons = ["mute-button", "pause-mute-button"].map(id => document.getElementById(id));
+      muteButtons.forEach(button => button.addEventListener("click", () => {
         const muted = this.audio.toggle();
         if (!muted && this.state === "playing") this.audio.startMusic(this.level.definition.biome);
-        event.currentTarget.textContent = muted ? "Lyd: fra" : "Lyd: til";
-        event.currentTarget.setAttribute("aria-pressed", String(muted));
-      });
+        muteButtons.forEach(control => {
+          control.textContent = muted ? "Lyd: fra" : "Lyd: til";
+          control.setAttribute("aria-pressed", String(muted));
+        });
+      }));
     }
 
     prepareAssets() {
@@ -2435,8 +2477,10 @@
       this.ui.updateHud(this);
     }
 
-    completeLevel() {
+    completeLevel(secret = false) {
       if (this.state !== "playing" || this.transition > 0) return;
+      this.secretClear=secret;
+      if(secret){this.unlockLevel(Math.min(TOTAL_LEVELS-1,this.levelIndex+2));this.addScore(2000);}
       this.state = "finishing";
       this.finishTimer = 2.1;
       this.finishDuration = this.finishTimer;
@@ -2462,6 +2506,7 @@
       document.getElementById("complete-copy").textContent = finalLevel
         ? "Alle otte verdener er erobret. Mario har klaret hele kampagnen!"
         : `${this.level.definition.name} er gennemført. ${getLevelLabel(this.levelIndex + 1)} venter.`;
+      if(this.secretClear){document.getElementById("complete-title").textContent="Hemmelig udgang fundet!";document.getElementById("complete-copy").textContent="Du har åbnet en ekstra bane på verdenskortet og fået 2.000 bonuspoint.";}
       document.getElementById("result-coins").textContent = String(this.totalCoins);
       document.getElementById("result-time").textContent = `${this.completedTime} sek.`;
       document.getElementById("next-level-button").textContent = finalLevel
@@ -2525,7 +2570,7 @@
 
       if (this.state === "finishing") {
         const elapsed = this.finishDuration - this.finishTimer;
-        const finish = this.level.finish;
+        const finish = this.secretClear ? null : this.level.finish;
         if (finish) {
           if (elapsed < 0.7) {
             const targetY = finish.y + finish.h - this.player.h;
@@ -2582,6 +2627,7 @@
 
       if (["underground", "castle"].includes(biome)) {
         this.drawDungeonBackdrop(biome === "castle");
+        this.drawScenicDetails(palette,biome);
         return;
       }
 
@@ -2591,8 +2637,37 @@
       this.drawWorldMountains(palette.hillFar, 510, this.camera.x * 0.1);
       this.drawHills(palette.hillNear, 522, 132, this.camera.x * 0.2);
       this.drawBushes(palette.grass, 552, this.camera.x * 0.32);
+      this.drawScenicDetails(palette,biome);
       if (biome === "water") this.drawWaterline();
       if (biome === "snow") this.drawSnow();
+    }
+
+    drawScenicDetails(palette,biome){
+      const ctx=this.ctx,t=this.level.clock||0,night=biome==="night",snow=biome==="snow",cave=biome==="underground",castle=biome==="castle";
+      ctx.save();
+      if(cave||castle){
+        for(let i=-1;i<6;i++){
+          const x=i*230-(this.camera.x*.18%230);
+          ctx.fillStyle=castle?"#221c38":"#182f4a";ctx.beginPath();ctx.roundRect(x+25,112,140,430,[70,70,0,0]);ctx.fill();
+          ctx.fillStyle=castle?"#73576a":"#527d94";ctx.fillRect(x+15,100,12,448);ctx.fillRect(x+165,100,12,448);ctx.fillRect(x+8,100,175,16);
+          if(castle){const glow=ctx.createRadialGradient(x+175,270,2,x+175,270,100);glow.addColorStop(0,"rgba(255,154,69,.38)");glow.addColorStop(1,"rgba(255,154,69,0)");ctx.fillStyle=glow;ctx.fillRect(x+75,170,200,200);ctx.fillStyle="#c68b65";ctx.fillRect(x+164,290,20,10);ctx.fillStyle="#ffb958";ctx.beginPath();ctx.moveTo(x+161,288);ctx.lineTo(x+173,252+Math.sin(t*8+i)*8);ctx.lineTo(x+187,288);ctx.fill();}
+          else for(let n=0;n<4;n++){ctx.fillStyle=n%2?"#73dcda":"#78acd5";ctx.beginPath();ctx.moveTo(x+52+n*18,526);ctx.lineTo(x+55+n*18,455-n%2*24);ctx.lineTo(x+77+n*18,526);ctx.fill();}
+        }
+      }else{
+        const orb=ctx.createRadialGradient(690,110,12,690,110,100);orb.addColorStop(0,night?"rgba(230,224,255,.3)":"rgba(255,236,169,.42)");orb.addColorStop(1,"rgba(255,240,190,0)");ctx.fillStyle=orb;ctx.fillRect(590,10,200,200);ctx.fillStyle=night?"#fff2d5":"#fff1b2";ctx.beginPath();ctx.arc(690,110,night?25:37,0,Math.PI*2);ctx.fill();
+        for(let layer=0;layer<2;layer++)for(let i=-1;i<8;i++){
+          const spacing=layer?235:170,x=i*spacing-((this.camera.x*(layer?.28:.13))%spacing),y=layer?515:488,h=layer?210:145;
+          ctx.fillStyle=layer?"#755c5b":palette.hillFar;ctx.fillRect(x+51,y-h,16,h);
+          const shades=snow?["#91b8ca","#cce5eb"]:night?["#3c516e","#526d80"]:["#62a888","#318569"];
+          for(let branch=0;branch<3;branch++){ctx.fillStyle=shades[layer];ctx.beginPath();ctx.moveTo(x+59,y-h-62+branch*40);ctx.lineTo(x-12-branch*9,y-h+54+branch*40);ctx.lineTo(x+130+branch*9,y-h+54+branch*40);ctx.closePath();ctx.fill();ctx.fillStyle=snow?"#e9f6f9":"rgba(193,236,158,.13)";ctx.beginPath();ctx.moveTo(x+59,y-h-62+branch*40);ctx.lineTo(x+25,y-h+branch*40);ctx.lineTo(x+88,y-h+branch*40);ctx.fill();}
+        }
+        if(biome==="water"){ctx.fillStyle="rgba(139,231,244,.6)";for(let i=0;i<3;i++){const x=i*490+130-(this.camera.x*.15%490);ctx.fillRect(x,285,33,235);ctx.fillStyle="rgba(229,255,255,.5)";for(let n=0;n<9;n++)ctx.fillRect(x+5,290+(n*27+t*55)%218,8,14);}}
+      }
+      for(let i=0;i<36;i++){
+        const x=((i*137-this.camera.x*.36+Math.sin(t+i)*12)%VIEW_WIDTH+VIEW_WIDTH)%VIEW_WIDTH,y=80+(i*89+t*(snow?24:castle?-18:8)+8000)%420;
+        ctx.fillStyle=snow?"rgba(255,255,255,.8)":castle?"#ffd087":night?"rgba(255,235,160,.55)":"rgba(233,238,158,.55)";ctx.fillRect(x,y,snow?4:3,snow?4:2);
+      }
+      ctx.restore();
     }
 
     drawDungeonBackdrop(castle) {
@@ -2817,7 +2892,7 @@
       FIXED_STEP,
       MAX_STEPS_PER_FRAME,
     },
-    testHooks: { Camera, Enemy, Game, Player, TileMap, touchesFinishPole },
+    testHooks: { Camera, Enemy, Game, Level, Player, TileMap, touchesFinishPole },
   };
 
   window.addEventListener("DOMContentLoaded", () => {

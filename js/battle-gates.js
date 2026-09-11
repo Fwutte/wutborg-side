@@ -31,6 +31,7 @@
       this.maxCombo = 0;
       this.scoreValue = 0;
       this.lastOutcome = null;
+      this.combat=null;this.battleX=0;this.steering=0;this.shieldTime=0;this.shieldCooldown=0;this.volleyCooldown=0;
     }
 
     start() {
@@ -50,22 +51,64 @@
     }
 
     update(dt) {
-      if (["choosing", "marching"].includes(this.state)) this.elapsed += dt;
+      if (["choosing", "marching", "battling"].includes(this.state)) this.elapsed += dt;
+      if(this.state==="battling")return this.updateCombat(dt);
       if (this.state !== "marching") return null;
       this.marchTime += dt;
       if (this.marchTime < MARCH_DURATION) return null;
+      if(this.currentGate.choices[this.selectedSide].type==="tower"){this.beginCombat();return {type:"battle"};}
       return this.resolve();
     }
 
+    beginCombat(){
+      const choice=this.currentGate.choices[this.selectedSide];
+      const outcome=resolveChoice(this.army,choice,{armor:this.upgrades.armor,archers:this.units.archer,shields:this.units.shield,giants:this.units.giant});
+      const maxHealth=Math.max(12,this.army*(choice.boss?3.8:2.1),choice.value*(choice.boss?2.4:1));
+      this.combat={startArmy:this.army,maxHealth,health:maxHealth,damageBudget:outcome.damage,loss:0,phase:0,clock:0,attackClock:1.1,warning:0,targetX:0,impact:0,volleyFlash:0,hitCount:0,dodges:0,boss:Boolean(choice.boss)};
+      this.state="battling";this.battleX=0;this.steering=0;this.shieldTime=0;this.shieldCooldown=0;this.volleyCooldown=0;
+    }
+
+    ability(kind){
+      if(this.state!=="battling")return false;
+      if(kind==="shield"&&this.shieldCooldown<=0){this.shieldTime=2.2+Math.min(.8,this.units.shield*.04);this.shieldCooldown=6;return true;}
+      if(kind==="volley"&&this.volleyCooldown<=0){this.combat.health=Math.max(0,this.combat.health-this.combat.maxHealth*(.16+Math.min(.1,this.units.archer*.003)));this.volleyCooldown=4.5;this.combat.volleyFlash=.7;return true;}
+      return false;
+    }
+
+    updateCombat(dt){
+      const c=this.combat;
+      this.battleX=clamp(this.battleX+this.steering*dt*1.7,-1,1);
+      for(const key of ["shieldTime","shieldCooldown","volleyCooldown"])this[key]=Math.max(0,this[key]-dt);
+      c.clock+=dt;c.impact=Math.max(0,c.impact-dt);c.volleyFlash=Math.max(0,c.volleyFlash-dt);
+      c.health=Math.max(0,c.health-dt*Math.max(5,c.startArmy*.42)*(1+Math.min(.4,this.units.giant*.03)));
+      c.phase=c.boss?Math.min(2,Math.floor((1-c.health/c.maxHealth)*3)):0;
+      if(c.warning>0){
+        c.warning-=dt;
+        if(c.warning<=0){
+          const hit=Math.abs(this.battleX-c.targetX)<(c.phase===2?.58:.43);
+          if(hit){const damage=Math.max(1,Math.ceil(c.damageBudget*(c.boss?.22:.4)*(this.shieldTime>0?.12:1)));c.loss+=damage;c.hitCount++;c.impact=.35;}else c.dodges++;
+          c.attackClock=c.phase===2?.7:1.1;
+        }
+      }else{c.attackClock-=dt;if(c.attackClock<=0){c.targetX=this.battleX;c.warning=c.phase===2?.8:1.05;}}
+      if(c.health<=0||c.loss>=c.startArmy)return this.resolve();
+      return null;
+    }
+
     resolve() {
-      if (this.state !== "marching" || this.selectedSide === null) return null;
+      if (!["marching","battling"].includes(this.state) || this.selectedSide === null) return null;
       const choice = this.currentGate.choices[this.selectedSide];
-      const outcome = resolveChoice(this.army, choice, {
+      const outcome = resolveChoice(this.combat?.startArmy ?? this.army, choice, {
         armor: this.upgrades.armor,
         archers: this.units.archer,
         shields: this.units.shield,
         giants: this.units.giant,
       });
+      if(this.state==="battling"){
+        const c=this.combat,damage=Math.max(1,Math.round(c.damageBudget*.2)+c.loss);
+        outcome.damage=damage;outcome.army=Math.max(0,c.startArmy-damage);outcome.delta=outcome.army-c.startArmy;outcome.survived=outcome.army>0;
+        outcome.message=(outcome.survived?"Slaget vundet":"Hæren faldt")+" · "+c.dodges+" angreb undveget · "+damage+" tab";
+      }
+      this.combat=null;this.steering=0;
       this.army = outcome.army;
       if (outcome.recruited) this.units[outcome.recruited] += choice.value;
       const specialUnits = this.units.archer + this.units.shield + this.units.giant;
@@ -177,6 +220,7 @@
       this.drawGate(ctx, run, 1);
       this.drawArmy(ctx, run);
       this.drawParticles(ctx, dt);
+      if(run.combat){const c=run.combat;ctx.fillStyle="rgba(255,84,64,.35)";if(c.warning>0||c.impact>0)ctx.fillRect(480+c.targetX*240-105,235,210,350);ctx.fillStyle="#806b72";ctx.fillRect(315,175,330,150);ctx.fillStyle="#dba878";ctx.fillRect(440,215,80,110);if(c.phase>0){ctx.clearRect(440,250,80,75);ctx.fillStyle="#776973";for(let i=0;i<14;i++)ctx.fillRect(365+i*18,310+i%3*10,16,12);}ctx.fillStyle="#c8585c";for(let i=0;i<Math.ceil(c.health/c.maxHealth*16);i++){ctx.beginPath();ctx.arc(360+i%8*33,350+Math.floor(i/8)*22,9,0,Math.PI*2);ctx.fill();}if(run.shieldTime>0){ctx.strokeStyle="#8de8ff";ctx.lineWidth=5;ctx.beginPath();ctx.ellipse(480+run.battleX*240,500,70,64,0,0,Math.PI*2);ctx.stroke();}}
       if (run.level.boss && run.gateIndex === run.level.gates.length - 1) this.drawBossBanner(ctx);
     }
 
@@ -205,7 +249,7 @@
     }
 
     drawGate(ctx, run, side) {
-      const gate = run.currentGate; if (!gate) return;
+      const gate = run.currentGate; if (!gate||run.state==="battling") return;
       const choice = gate.choices[side];
       const selected = run.selectedSide === side;
       const transition=run.state==="marching"?clamp(run.marchTime/MARCH_DURATION,0,1):0;
@@ -261,7 +305,7 @@
     }
 
     drawArmy(ctx, run) {
-      const visible=Math.min(40,Math.max(4,Math.ceil(run.army/2))); const lane=run.selectedSide===null?0:run.selectedSide===0?-1:1; const progress=run.state==="marching"?clamp(run.marchTime/MARCH_DURATION,0,1):0; const baseY=455; const baseX=480+lane*progress*96;
+      const visible=Math.min(40,Math.max(4,Math.ceil(run.army/2))); const lane=run.selectedSide===null?0:run.selectedSide===0?-1:1; const progress=run.state==="marching"?clamp(run.marchTime/MARCH_DURATION,0,1):0; const baseY=455; const baseX=480+(run.combat?run.battleX*240:lane*progress*96);
       const specials=[]; Object.entries(run.units).forEach(([type,count])=>{if(type!=="soldier")for(let index=0;index<Math.min(8,count);index+=1)specials.push(type);});
       for(let index=0;index<visible;index+=1){const type=specials[index%specials.length]||"soldier";const column=index%7;const row=Math.floor(index/7);const x=baseX+(column-3)*15+Math.sin(this.time*6+index)*1.7;const y=baseY+row*14+Math.cos(this.time*6+index)*1.2;ctx.fillStyle=UNIT_TYPES[type].color;ctx.beginPath();ctx.arc(x,y,type==="giant"?9:7,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#173a78";ctx.lineWidth=2;ctx.stroke();ctx.fillStyle="#173a78";ctx.fillRect(x-2,y-13,4,8);}
       ctx.fillStyle="#163e73";this.roundRect(ctx,baseX-39,baseY+76,78,31,15);ctx.fill();ctx.fillStyle="#fff";ctx.font="900 18px Inter,system-ui,sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(String(run.army),baseX,baseY+92);
@@ -314,7 +358,7 @@
 
     async initializeRenderer() {
       try {
-        const { BattleScene3D } = await import("./battle-gates-3d.js?v=20260714-borg16");
+        const { BattleScene3D } = await import("./battle-gates-3d.js?v=20260911-expansion");
         this.renderer = new BattleScene3D(this.canvas, side => this.choose(side));
         this.is3D = true;
         this.canvas.dataset.battleRenderer = "3d";
@@ -378,6 +422,8 @@
       document.querySelectorAll("[data-battle-upgrade]").forEach(button => {
         button.addEventListener("click", () => this.purchaseUpgrade(button.dataset.battleUpgrade));
       });
+      for(const kind of ["shield","volley"])document.getElementById("battle-"+kind)?.addEventListener("click",()=>{if(!this.paused)this.run.ability(kind);this.refreshCombat();});
+      this.canvas.addEventListener("pointermove",event=>{if(this.run.state!=="battling"||this.paused||(!event.buttons&&event.pointerType!=="touch"))return;const box=this.canvas.getBoundingClientRect();this.run.battleX=clamp(((event.clientX-box.left)/box.width-.5)*2.6,-1,1);});
       window.addEventListener("keydown", event => {
         const dialog = !this.els.pause.hidden ? this.els.pause : !this.els.result.hidden ? this.els.result : null;
         if (dialog && event.code === "Tab") {
@@ -387,16 +433,18 @@
           else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
         }
         if (event.code === "Escape") { event.preventDefault(); this.togglePause(); return; }
-        if (this.paused || !["choosing", "marching"].includes(this.run.state)) return;
+        if (this.paused || !["choosing", "marching", "battling"].includes(this.run.state)) return;
+        if(this.run.state==="battling"&&["KeyQ","KeyE"].includes(event.code)){event.preventDefault();if(!event.repeat)this.run.ability(event.code==="KeyQ"?"shield":"volley");}
         if (["ArrowLeft", "KeyA", "ArrowRight", "KeyD"].includes(event.code)) {
           event.preventDefault();
           const side = ["ArrowLeft", "KeyA"].includes(event.code) ? 0 : 1;
+          if(this.run.state==="battling"){this.run.steering=side?1:-1;return;}
           if (this.is3D) this.renderer.setSteering(side ? 1 : -1);
           else if (!event.repeat) this.choose(side);
         }
       });
       window.addEventListener("keyup", event => {
-        if (["ArrowLeft", "KeyA", "ArrowRight", "KeyD"].includes(event.code)) this.renderer.setSteering?.(0);
+        if (["ArrowLeft", "KeyA", "ArrowRight", "KeyD"].includes(event.code)){this.renderer.setSteering?.(0);this.run.steering=0;}
       });
       window.addEventListener("blur", () => {
         this.renderer.setSteering?.(0);
@@ -533,6 +581,7 @@
     }
 
     choose(side) {
+      if(this.run.state==="battling"&&!this.paused){this.run.battleX=clamp(this.run.battleX+(side?.65:-.65),-1,1);return;}
       if (this.paused || !this.run.choose(side)) return;
       this.audio.tone(side === 0 ? 294 : 330, .08, "triangle", .03);
       this.setMessage(side === 0 ? "Hæren marcherer mod venstre…" : "Hæren marcherer mod højre…");
@@ -540,10 +589,11 @@
     }
 
     togglePause(forcePause) {
-      if (!["choosing", "marching"].includes(this.run.state)) return;
+      if (!["choosing", "marching", "battling"].includes(this.run.state)) return;
       const paused = typeof forcePause === "boolean" ? forcePause : !this.paused;
       if (paused === this.paused) return;
       this.paused = paused;
+      this.run.steering=0;
       this.renderer.setSteering?.(0);
       this.els.pause.hidden = !paused;
       this.refresh();
@@ -552,6 +602,7 @@
 
     resolve(outcome) {
       if (!outcome) return;
+      if(outcome.type==="battle"){this.setMessage("Undvig røde felter · Q: skjoldmur · E: pilesalve");this.refresh();return;}
       this.renderer.emit(outcome);
       this.setMessage(outcome.message + (outcome.combo > 1 ? " · " + outcome.combo + "× combo!" : ""));
       this.audio.tone(outcome.delta >= 0 ? 588 : 164, .12, outcome.delta >= 0 ? "triangle" : "sawtooth", .045);
@@ -595,6 +646,16 @@
       return choice.type === "recruit" ? "recruit" : "bonus";
     }
 
+    refreshCombat(){
+      const panel=document.getElementById("battle-combat");if(!panel)return;
+      const c=this.run.combat;panel.hidden=!c||this.paused;panel.inert=this.paused;
+      if(!c)return;
+      const health=document.getElementById("battle-enemy-health");health.max=c.maxHealth;health.value=c.health;
+      document.getElementById("battle-combat-label").textContent=c.boss?["Belejring · Bryd porten","Belejring · Tårnene","Belejring · Borgherren"][c.phase]:"Fjendehæren";
+      for(const kind of ["shield","volley"]){const button=document.getElementById("battle-"+kind),cooldown=this.run[kind+"Cooldown"];button.disabled=this.paused||cooldown>0;button.textContent=(kind==="shield"?"◆ Skjoldmur":"↗ Pilesalve")+(cooldown>0?" · "+Math.ceil(cooldown)+" s":kind==="shield"?" [Q]":" [E]");}
+      this.els.army.textContent=Math.max(0,c.startArmy-c.loss);
+    }
+
     refresh() {
       const level = this.run.level;
       this.page.dataset.view = !this.els.menu.hidden ? "menu" : this.paused ? "paused" : !this.els.result.hidden ? "result" : "playing";
@@ -611,14 +672,16 @@
       const gate = this.run.currentGate;
       [this.els.left, this.els.right].forEach((button, side) => {
         const choice = gate?.choices[side];
-        button.disabled = this.paused || this.run.state !== "choosing";
+        button.disabled = this.paused || !["choosing","battling"].includes(this.run.state);
         button.dataset.choiceKind = this.choiceKind(choice);
         button.querySelector("strong").textContent = choice?.label || "–";
         button.querySelector("small").textContent = choice?.hint || "Færdig";
-        button.setAttribute("aria-label", (side ? "Højre" : "Venstre") + " port" + (choice ? ": " + choice.hint + " " + choice.label : ""));
+        if(this.run.state==="battling"){button.querySelector("strong").textContent=side?"Undvig højre":"Undvig venstre";button.querySelector("small").textContent="Flyt hæren";}
+        button.setAttribute("aria-label", this.run.state==="battling"?(side?"Undvig højre":"Undvig venstre"):(side ? "Højre" : "Venstre") + " port" + (choice ? ": " + choice.hint + " " + choice.label : ""));
       });
-      this.els.pauseButton.disabled = !["choosing", "marching"].includes(this.run.state);
+      this.els.pauseButton.disabled = !["choosing", "marching", "battling"].includes(this.run.state);
       this.els.pauseButton.textContent = this.paused ? "Fortsæt" : "Pause";
+      this.refreshCombat();
       this.els.unitRoster.innerHTML = Object.entries(this.run.units).filter(([, count]) => count > 0).map(([type, count]) => '<span title="' + UNIT_TYPES[type].name + '" aria-label="' + UNIT_TYPES[type].name + ': ' + Math.min(count, this.run.army) + '" style="--unit:' + UNIT_TYPES[type].color + '"><b aria-hidden="true">' + UNIT_TYPES[type].icon + '</b> ' + Math.min(count, this.run.army) + '</span>').join("");
     }
 
@@ -627,7 +690,8 @@
       this.lastFrame = now;
       if (!this.paused && this.els.menu.hidden && !document.hidden) {
         this.resolve(this.run.update(dt));
-        this.audio.update(dt, ["choosing", "marching"].includes(this.run.state));
+        this.refreshCombat();
+        this.audio.update(dt, ["choosing", "marching", "battling"].includes(this.run.state));
         this.renderer.draw(this.run, dt);
       }
       requestAnimationFrame(time => this.loop(time));

@@ -10,6 +10,7 @@ const smooth=t=>{t=THREE.MathUtils.clamp(t,0,1);return t*t*(3-2*t);};
 // All terrain, structures and decorations use the same road height as the karts.
 export function createLandscape(r,track){
   const random=rng(track.theme==="garden"?27:track.theme==="coast"?61:91);
+  const frost=track.theme==="frost",volcano=track.theme==="volcano",jungle=track.theme==="jungle";
   const night=track.theme==="night",coast=track.theme==="coast",scene=r.scene;
   const bridgeAt=s=>{const t=s/track.length;return t>track.bridge[0]&&t<track.bridge[1];};
   const terrainHeight=(p,road=track.nearest(p.x,p.y))=>{
@@ -50,7 +51,7 @@ export function createLandscape(r,track){
   }
   const sky=new THREE.ShaderMaterial({
     side:THREE.BackSide,depthWrite:false,
-    uniforms:{top:{value:new THREE.Color(night?"#070e28":coast?"#519dc8":"#47a8d5")},bottom:{value:new THREE.Color(track.palette.sky)}},
+    uniforms:{top:{value:new THREE.Color(volcano?"#392f49":frost?"#619ebf":jungle?"#367d78":night?"#070e28":coast?"#519dc8":"#47a8d5")},bottom:{value:new THREE.Color(track.palette.sky)}},
     vertexShader:"varying vec3 vWorld; void main(){vWorld=(modelMatrix*vec4(position,1.)).xyz;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}",
     fragmentShader:"uniform vec3 top;uniform vec3 bottom;varying vec3 vWorld;void main(){float h=clamp(normalize(vWorld).y*1.8,0.,1.);gl_FragColor=vec4(mix(bottom,top,pow(h,.65)),1.);\n#include <tonemapping_fragment>\n#include <colorspace_fragment>\n}"
   });
@@ -70,14 +71,14 @@ export function createLandscape(r,track){
     }else for(let n=0;n<3;n++){
       crowns.push({x:v.x+(n-1)*.62,y:base+height+.5+(n===1?.7:0),z:v.z+Math.sin(n*3)*.5,
         sx:1.25+height*.16,sy:1.4+height*.14,sz:1.3+height*.13,ry:random()*TAU,
-        color:night?(i%2?"#436a82":"#557c98"):["#379f68","#62b667","#95c969"][i%3]});
+        color:frost?(i%2?"#daeafa":"#a9ccdf"):volcano?"#56434a":jungle?(i%2?"#28664d":"#45845c"):night?(i%2?"#436a82":"#557c98"):["#379f68","#62b667","#95c969"][i%3]});
     }
     if(i%4===0)rocks.push({x:v.x+1.8,y:base+.4,z:v.z-1.5,sx:1.5,sy:.9,sz:1.2,ry:random()*TAU});
   }
   r.instance(new THREE.CylinderGeometry(.65,1,1,7),material(coast?"#bd9267":"#81624c"),trunks);
   r.instance(new THREE.IcosahedronGeometry(1,1),material("#ffffff",{roughness:.88}),crowns);
   r.instance(new THREE.DodecahedronGeometry(.7,0),material(night?"#69849d":"#b1b5a0"),rocks);
-  if(!coast)for(let i=0;i<1300;i++){
+  if(!coast&&!frost&&!volcano)for(let i=0;i<1300;i++){
     const p=track.at(random()*track.length,(i%2?1:-1)*(track.halfWidth+85+random()*155));
     const road=track.nearest(p.x,p.y);if(road.distance<track.halfWidth+78||bridgeAt(road.s))continue;
     const v=world(p),base=terrainHeight(p,road),h=.15+random()*.23;
@@ -89,7 +90,7 @@ export function createLandscape(r,track){
   for(let i=0;i<34;i++){
     const a=i/34*TAU,rad=145+random()*35,h=12+random()*27;
     mountains.push({x:Math.cos(a)*rad,y:h*.2-3,z:Math.sin(a)*rad,sx:19+random()*14,sy:h,sz:18+random()*15,ry:a,
-      color:night?"#283d62":coast?"#7ea9af":i%2?"#6faf96":"#7bbc9f"});
+      color:frost?"#c5dfed":volcano?"#604455":jungle?"#4d7d70":night?"#283d62":coast?"#7ea9af":i%2?"#6faf96":"#7bbc9f"});
   }
   r.instance(new THREE.IcosahedronGeometry(1,1),material("#ffffff",{flatShading:true}),mountains);
   for(let i=0;i<45;i++){
@@ -190,6 +191,7 @@ function createLandmarks(r,track,groundHeight,random){
     }
     place(stand,.012,side*(track.halfWidth+190));stand.rotation.y+=side*Math.PI/2;
   }
+  if(["volcano","frost","jungle"].includes(track.theme)){createWildLandmarks(r,track,place,parts);r.scene.add(r.bake(parts));return;}
   const landmark=new THREE.Group();
   if(coast){
     const island=r.mesh(new THREE.SphereGeometry(4,18,12),stone,landmark,0,-.65,0);island.scale.y=.28;
@@ -266,4 +268,29 @@ function createLandmarks(r,track,groundHeight,random){
     for(const x of [-.3,.3])r.mesh(new THREE.CylinderGeometry(.013,.013,.9,4),stone,g,x,-.05,0);
     g.position.copy(world(p,12+i%2*5));r.scene.add(g);r.balloons.push({group:g,y:g.position.y});
   }
+}
+
+function createWildLandmarks(r,track,place,parts){
+  const lava=track.theme==="volcano",snow=track.theme==="frost";
+  const stone=material(lava?"#473748":snow?"#d4e9f4":"#8b9472"),glow=material(lava?"#ffad45":snow?"#b4edff":"#ffd17c",{emissive:lava?"#fc5122":snow?"#62c9ef":"#5c7c49",emissiveIntensity:lava?1.6:.35,metalness:snow?.35:0,roughness:snow?.15:.8});
+  for(let i=0;i<12;i++){
+    const g=new THREE.Group();
+    if(lava){
+      r.mesh(new THREE.CylinderGeometry(1.7,7,10,11),stone,g,0,4.5,0);
+      const pool=r.mesh(new THREE.CircleGeometry(1.6,24),glow,g,0,9.52,0);pool.rotation.x=-Math.PI/2;
+      for(let n=0;n<5;n++){const crack=r.box(g,glow,Math.sin(n*2)*2,6-n,.6+n*.5,.2,2,.2);crack.rotation.z=n*.7;}
+    }else if(snow){
+      for(let n=0;n<5;n++){const crystal=r.mesh(new THREE.ConeGeometry(.65,4+n%3,5),n%2?stone:glow,g,(n-2)*.9,2+n%3*.4,Math.sin(n)*.7);crystal.rotation.z=(n-2)*.12;}
+    }else{
+      for(let n=0;n<5;n++)r.box(g,stone,0,n*.65,0,6-n,.65,6-n);
+      for(const x of [-1.3,1.3])r.box(g,stone,x,4,0,.65,2,.7);
+      r.box(g,stone,0,5.1,0,3.6,.65,1);r.box(g,glow,0,3.7,.45,.6,.8,.05);
+    }
+    place(g,.04+i*.077,(i%2?1:-1)*(track.halfWidth+185));
+  }
+  const main=new THREE.Group();
+  if(lava){r.mesh(new THREE.CylinderGeometry(5,23,26,18),stone,main,0,12,0);const pool=r.mesh(new THREE.CircleGeometry(5,32),glow,main,0,25.05,0);pool.rotation.x=-Math.PI/2;}
+  else if(snow){for(let i=0;i<6;i++){const peak=r.mesh(new THREE.ConeGeometry(7,18+i%3*4,5),i%2?glow:stone,main,(i-2.5)*6,9,Math.sin(i)*5);peak.rotation.z=(i-2.5)*.07;}}
+  else{for(let i=0;i<7;i++)r.box(main,stone,0,i*1.2,0,19-i*2,1.2,19-i*2);r.box(main,glow,0,9,3,2,2,.1);}
+  place(main,track.landmark,-(track.halfWidth+650));
 }
