@@ -3,71 +3,59 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#101720" />
-  <meta name="description" content="Før din hær gennem 20 slag i Borgstorm. Vælg porte, rekruttér specialenheder og erobr Guldborgen. Din kampagne gemmes lokalt." />
-  <title>Borgstorm | Wutborg Spillehjørne</title>
-  <link rel="stylesheet" href="css/battle-gates.css?v=20260911-art" />
+  <meta name="theme-color" content="#172922" />
+  <meta name="description" content="En lille hær. Et stort eventyr. Vælg din vej, saml allierede og erobr fem riger i Borgstorm – et gratis 3D-strategispil fra Wutborg." />
+  <title>Borgstorm · Det store felttog</title>
+  <link rel="stylesheet" href="css/battle-gates.css?v=20260917-rebuilt" />
 </head>
 <body>
-  <div class="battle-page" data-view="menu">
-    <nav class="battle-nav" aria-label="Borgstorm navigation">
-      <a class="battle-brand" href="minispil.html"><span class="battle-brand-mark" aria-hidden="true">W.</span><span>Borgstorm<small>Wutborg Spillehjørne</small></span></a>
-      <div class="battle-nav-links"><a href="minispil.html">← Minispil</a><button class="battle-nav-button" id="battle-sound" type="button" aria-pressed="true" aria-label="Spillyd">Lyd: til</button><button class="battle-nav-button" id="battle-pause-button" type="button" disabled>Pause</button></div>
+  <div class="game-app" data-view="menu">
+    <nav class="topbar" aria-label="Spilnavigation">
+      <a href="minispil.html" class="brand"><span class="brand-icon" aria-hidden="true">♜</span><span>WUTBORG <small>SPILLEHJØRNET</small></span></a>
+      <span class="nav-title">BORGSTORM <span>/ DET STORE FELTTOG</span></span>
+      <div class="nav-actions"><button id="sound" class="quiet" type="button" aria-pressed="true" aria-label="Spillyd">♪ <span>Lyd til</span></button><button id="help" class="quiet" type="button">? <span>Sådan spiller du</span></button><a class="back-link" href="minispil.html">← <span>Alle spil</span></a></div>
     </nav>
-    <header class="battle-hero"><div><p class="battle-kicker">Det store felttog</p><h1>Borgstorm<span>.</span></h1></div><p>Hver port er et valg.<br />Før din hær hele vejen til Guldborgen.</p></header>
-    <main class="battle-shell">
-      <canvas class="battle-canvas" id="battle-canvas" width="960" height="600" aria-label="Borgstorm-arena. Træk hæren til venstre eller højre, eller brug piletasterne, for at vælge port."></canvas>
-      <section class="battle-hud" aria-label="Spilstatus">
-        <div class="battle-hud-top">
-          <div class="battle-hud-cluster"><div class="battle-stat"><small>Bane</small><strong id="battle-level">1/20</strong></div><div class="battle-stat"><small>Port</small><strong id="battle-stage">1/6</strong></div></div>
-          <div class="battle-hud-cluster"><div class="battle-stat"><small>Combo</small><strong id="battle-combo">0×</strong></div><div class="battle-stat army-stat"><small>Din hær</small><strong id="battle-army">24</strong></div></div>
-        </div>
-        <div class="battle-unit-roster" id="battle-unit-roster" aria-label="Hærens enheder"></div>
-        <progress class="battle-route-progress" id="battle-route-progress" max="6" value="0" aria-label="Gennemførte porte">0 af 6</progress>
-      </section>
-      <section id="battle-combat" class="battle-combat" hidden aria-label="Aktiv kamp">
-        <strong id="battle-combat-label">Fjendehæren</strong><progress id="battle-enemy-health" max="100" value="100" aria-label="Fjendens styrke"></progress>
-        <div><button type="button" id="battle-shield">◆ Skjoldmur [Q]</button><button type="button" id="battle-volley">↗ Pilesalve [E]</button></div>
-      </section>
-      <section class="battle-screen" id="battle-menu" aria-label="Kampagnekort">
-        <div class="battle-campaign-card">
-          <div class="campaign-heading"><div><p class="battle-kicker">Kampagnekort</p><h2>Vejen til Guldborgen</h2></div><div class="campaign-wallet"><strong id="battle-coins">0 mønter</strong><span id="battle-campaign-progress">0/60 stjerner · 1/20 baner åbne</span></div></div>
-          <div class="campaign-layout">
-            <div class="campaign-map"><div class="map-label"><span>Fem riger · 20 slag</span><span>★ Op til tre stjerner pr. bane</span></div><div id="battle-level-grid" aria-label="Vælg bane"></div></div>
-            <aside class="campaign-loadout">
-              <div class="selected-mission"><p class="battle-kicker" id="battle-region-name">Kløvermarken</p><h2 id="battle-campaign-title">Bane 1: Porten ved engen</h2><p class="battle-copy" id="battle-campaign-copy">6 porte · start med 24 soldater</p><button class="battle-primary" id="battle-start" type="button">Start banen</button><p class="mission-tip">Vælg porte og styr hæren uden om røde angrebsfelter. Brug Q til skjoldmur og E til pilesalve — eller knapperne på skærmen.</p></div>
-              <section class="battle-upgrades" aria-labelledby="upgrade-title">
-                <h3 id="upgrade-title">Rust hæren</h3><p>Vind stjerner og brug mønterne her.</p>
-                <button type="button" data-battle-upgrade="reinforcement"><span><b>⚔ Forstærkninger</b><em>+3 soldater fra start pr. niveau</em></span><span class="upgrade-price"><strong>Niveau 0/5</strong><small>80 mønter</small></span></button>
-                <button type="button" data-battle-upgrade="armor"><span><b>◆ Rustning</b><em>6 % mindre skade pr. niveau</em></span><span class="upgrade-price"><strong>Niveau 0/5</strong><small>80 mønter</small></span></button>
-                <button type="button" data-battle-upgrade="banner"><span><b>⚑ Fanebærer</b><em>Flere point fra dine kombokæder</em></span><span class="upgrade-price"><strong>Niveau 0/5</strong><small>80 mønter</small></span></button>
-                <p class="campaign-feedback" id="battle-upgrade-message" role="status"></p>
-              </section>
-              <p class="battle-best" id="battle-best">Bedste: ingen endnu</p>
-            </aside>
+    <main>
+      <div class="heading"><div><p class="eyebrow"><span class="live-dot"></span> ET LILLE STRATEGISK EVENTYR</p><h1>Borgstorm<span>.</span></h1></div><p>En lille hær. Et stort eventyr.<br>Hver beslutning tæller.</p></div>
+      <div class="game-layout">
+        <section class="stage" aria-label="Slagmark">
+          <canvas id="battle-canvas" aria-label="Styr hæren med piletasterne eller ved at trække på slagmarken."></canvas>
+          <div class="stage-grain" aria-hidden="true"></div>
+          <div id="loading" class="loading"><span class="loading-mark">♜</span><p>Vi hejser fanerne…</p></div>
+          <div id="world-intro" class="world-intro"><span class="chapter-tag" id="chapter-tag">RIGE I AF V</span><h2 id="world-name">Kløvermarken</h2><p id="world-subtitle">Hvor et lille mod bliver til en stor hær</p></div>
+          <div class="stage-caption" id="stage-caption"><span class="compass" aria-hidden="true">✥</span><div><strong>Dit felttog begynder her.</strong><span>Byg en hær. Vælg din vej. Storm borgen.</span></div><span class="scene-badge">5 RIGER · 20 SLAG</span></div>
+          <section id="hud" class="hud" aria-label="Spilstatus" hidden>
+            <div class="hud-top"><div class="mission-hud"><small id="hud-region">KLØVERMARKEN</small><strong id="hud-mission">Den første fane</strong></div><button id="pause-button" class="square" type="button" aria-label="Pause spillet">Ⅱ</button></div>
+            <div class="route"><span id="route-label">Vejen til borgen</span><progress id="route-progress" value="0" max="5" aria-label="Fremgang mod borgen"></progress><span aria-hidden="true">♜</span></div>
+            <div id="enemy-panel" class="enemy-panel" hidden><span id="enemy-title">Borgens port</span><progress id="enemy-health" max="100" value="100" aria-label="Fjendens liv"></progress><small id="enemy-phase">FASE 1 / 3</small></div>
+            <div class="army-hud"><span>DIN HÆR</span><strong id="army">24</strong><div id="roster" class="roster"></div></div>
+            <div id="floating-message" class="floating-message" role="status" aria-live="polite"></div>
+            <div class="combo-hud" id="combo" hidden>2× <span>FREMDRIFT</span></div>
+          </section>
+          <div class="play-controls" id="play-controls" hidden>
+            <div id="message" class="message">Vælg en port, og før hæren frem.</div>
+            <div id="abilities" class="abilities" hidden><button id="shield" type="button"><kbd>Q</kbd><span>◆ Skjoldmur</span><small>Klar</small></button><button id="volley" type="button"><kbd>E</kbd><span>➶ Pilesalve</span><small>Klar</small></button></div>
+            <div class="choices"><button id="left" type="button"><span class="arrow">←</span><span class="choice-copy"><strong>+12</strong><small>Forstærkninger</small></span><kbd>A</kbd></button><button id="right" type="button"><span class="choice-copy"><strong>+7</strong><small>Bueskytter</small></span><kbd>D</kbd><span class="arrow">→</span></button></div>
           </div>
-        </div>
-      </section>
-      <section class="battle-screen" id="battle-pause" role="dialog" aria-modal="true" aria-labelledby="pause-title" hidden>
-        <div class="battle-screen-card"><p class="battle-kicker">Et pusterum</p><h2 id="pause-title">Hæren venter.</h2><p class="battle-copy">Fortsæt, når du er klar til den næste port.</p><div class="result-actions"><button class="battle-primary" id="battle-resume" type="button">Fortsæt slaget</button><button class="battle-secondary" id="battle-menu-button" type="button">Til kampagnekortet</button></div></div>
-      </section>
-      <section class="battle-screen" id="battle-result" role="dialog" aria-modal="true" aria-labelledby="battle-result-title" hidden>
-        <div class="battle-screen-card"><p class="battle-kicker">Slaget er afgjort</p><h2 id="battle-result-title">Borgen er din!</h2><p class="battle-result-score" id="battle-result-copy"></p><div class="battle-result-stats" id="battle-result-stats"></div><p class="battle-reward" id="battle-reward"></p><div class="result-actions"><button class="battle-primary" id="battle-next" type="button" hidden>Næste bane →</button><button class="battle-secondary" id="battle-retry" type="button">Spil banen igen</button><button class="battle-secondary" id="battle-result-menu" type="button">Til kampagnekortet</button></div></div>
-      </section>
-    </main>
-    <section class="battle-command" aria-label="Vælg port">
-      <div class="battle-message" id="battle-message" role="status" aria-live="polite">Tryk start for at føre hæren frem.</div>
-      <div class="battle-controls">
-        <button class="battle-choice" id="battle-left" type="button" aria-label="Vælg venstre port"><b aria-hidden="true">←</b><span><strong>–</strong><small>Vælg venstre</small></span><i>VENSTRE</i></button>
-        <button class="battle-choice" id="battle-right" type="button" aria-label="Vælg højre port"><b aria-hidden="true">→</b><span><strong>–</strong><small>Vælg højre</small></span><i>HØJRE</i></button>
+        </section>
+        <aside class="campaign" id="campaign" aria-label="Din kampagne">
+          <div class="campaign-top"><span class="eyebrow">DIT FELTTOG</span><span class="wallet" title="Mønter til opgraderinger">◈ <b id="coins">0</b></span></div>
+          <div class="campaign-tabs" role="tablist" aria-label="Kampagne"><button id="map-tab" role="tab" aria-selected="true" aria-controls="map-panel" type="button">Kampagnekort</button><button id="upgrades-tab" role="tab" aria-selected="false" aria-controls="upgrades-panel" tabindex="-1" type="button">Rust hæren</button></div>
+          <section id="map-panel" role="tabpanel" aria-labelledby="map-tab"><div class="map-summary"><span>Vejen til Guldborgen</span><span id="total-stars">0 / 60 ★</span></div><div id="level-grid" class="level-grid"></div></section>
+          <section id="upgrades-panel" class="upgrades-panel" role="tabpanel" aria-labelledby="upgrades-tab" hidden><h3>Gør næste slag til dit.</h3><p>Opgraderinger følger din hær gennem hele felttoget.</p><div id="upgrades"></div><p id="upgrade-message" class="feedback" role="status"></p></section>
+          <section class="mission"><div class="mission-heading"><span class="eyebrow" id="mission-number">BANE 01</span><span id="mission-stars" class="mission-stars">☆ ☆ ☆</span></div><h3 id="mission-title">Den første fane</h3><p id="mission-description">5 porte · 24 soldater · én borg at erobre</p><label class="difficulty-label" for="difficulty">Dit tempo <select id="difficulty"><option value="calm">Rolig</option><option value="normal" selected>Eventyr</option><option value="veteran">Veteran</option></select></label><button id="start" class="primary" type="button" disabled><span>Gør klar til slaget…</span><span>→</span></button><p class="save-note" id="save-note">✓ Dit felttog gemmes automatisk</p></section>
+        </aside>
       </div>
-    </section>
-    <section class="battle-help"><span><kbd>←</kbd> <kbd>→</kbd> eller <kbd>A</kbd> <kbd>D</kbd> Vælg port / undvig</span><span>Træk hæren på arenaen · <kbd>Esc</kbd> Pause</span></section>
-    <footer class="battle-footer"><span><strong>Borgstorm</strong> · 20 slag gennem fem riger</span><span>Din kampagne gemmes i denne browser</span></footer>
+      <section class="below-stage"><span><kbd>←</kbd> <kbd>→</kbd> Flyt hæren <i>·</i> <kbd>Q</kbd> Skjold <i>·</i> <kbd>E</kbd> Pilesalve</span><span>På mobil? Træk hæren eller brug knapperne.</span></section>
+      <section class="field-notes"><article><span>01 / VÆLG DIN VEJ</span><p>Flere soldater eller bedre allierede?<br>Den største hær er ikke altid den stærkeste.</p></article><article><span>02 / HOLD SAMMEN</span><p>Læs fjendens angreb. Flyt hæren.<br>Et skjold på det rette tidspunkt redder liv.</p></article><article><span>03 / TAG KRONEN</span><p>Erobr borge, vind stjerner og rust hæren.<br>Guldborgen venter for enden af vejen.</p></article></section>
+      <footer><span>BORGSTORM <span class="footer-dot">✦</span> ET WUTBORG-EVENTYR</span><span id="record">Din første sejr venter.</span></footer>
+    </main>
   </div>
+  <dialog id="pause-dialog" aria-labelledby="pause-title"><div class="dialog-symbol">⚑</div><p class="eyebrow">ET PUSTERUM</p><h2 id="pause-title">Hæren venter på dig.</h2><p>Tag dig god tid. Slaget er sat på pause.</p><button id="resume" class="primary" type="button">Fortsæt felttoget →</button><button class="secondary" id="pause-menu" type="button">Til kampagnekortet</button></dialog>
+  <dialog id="result-dialog" aria-labelledby="result-title"><div id="result-icon" class="dialog-symbol">♜</div><p class="eyebrow" id="result-kicker">SLAGET ER AFGJORT</p><h2 id="result-title">Borgen er din.</h2><div id="result-stars" class="result-stars"></div><p id="result-copy"></p><div id="result-stats" class="result-stats"></div><p id="reward" class="reward"></p><button id="next" class="primary" type="button">Næste slag →</button><button id="retry" class="secondary" type="button">Spil banen igen</button><button id="result-menu" class="text-button" type="button">Til kampagnekortet</button></dialog>
+  <dialog id="help-dialog" aria-labelledby="help-title"><p class="eyebrow">FELTHÅNDBOGEN</p><h2 id="help-title">Før din hær til sejr.</h2><div class="help-steps"><p><b>1. Vælg en port.</b> Hæren løber selv. Flyt med ← → / A D, træk på slagmarken eller tryk på portknapperne. Knapperne skynder hæren frem.</p><p><b>2. Rekruttér klogt.</b> Sværd giver antal. Bueskytter styrker pilesalven, skjolde beskytter, og kæmper gør stor skade på borgen. Gangeporte forstærker hele hæren.</p><p><b>3. Undvig det røde felt.</b> Flyt dig, før angrebet rammer. Q giver et kort skjold, E affyrer en pilesalve. Begge evner lader op igen.</p><p><b>4. Storm borgen.</b> Alle baner ender med en belejring i tre faser. Få to stjerner med mindst 35 overlevende; få tre med mindst 65 og højst to træffere.</p><p><b>5. Byg videre.</b> Nye stjerner giver 50 mønter hver. Hver sejr giver også 20 mønter. Brug dem under Rust hæren. Rolig giver mere betænkningstid og mildere angreb.</p></div><button id="help-close" class="primary" type="button">Fanerne er klar →</button></dialog>
+  <noscript><p class="noscript">Borgstorm kræver JavaScript. Aktivér JavaScript for at spille.</p></noscript>
   <script src="js/highscores.js"></script>
-  <script src="js/battle-gates-data.js?v=20260713-borg2"></script>
-  <script src="js/battle-gates-3d-logic.js?v=20260714-borg6"></script>
-  <script src="js/battle-gates.js?v=20260911-art"></script>
+  <script type="module" src="js/borgstorm/game.mjs?v=20260917-rebuilt"></script>
 </body>
 </html>

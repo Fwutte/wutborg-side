@@ -21,3 +21,7 @@ Del 1 brugte kun kodebyggede low-poly former. Borgstorm bruger nu fire riggede K
 Modellerne er fuldt riggede og har det samme bibliotek med 76 animationer. Borgstorm anvender blandt andet `Idle`, `Running_A`, `1H_Melee_Attack_Slice_Horizontal`, `Block_Hit`, `Hit_A`, `Death_A` og `Cheer`.
 
 Three.js 0.183.0 ligger lokalt i `js/vendor/three/`. MIT-licensen ligger ved siden af filerne.
+
+## Borgstorm v3: optimerede runtimefiler
+
+`optimized/*.glb` er afledt af de fire KayKit-filer ovenfor under samme CC0-licens. `scripts/build-borgstorm-assets.cjs` bevarer original geometri, skeletter, materialer og teksturer, men fjerner ubrugte animationer og pakker bufferdata på ny. De otte animationer i spillet bevares. De originale filer og deres licens ændres ikke.

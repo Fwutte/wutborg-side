@@ -1,0 +1,99 @@
+<!doctype html><html lang="da"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Borgstorm · browserkontrol</title>
+<style>body{margin:0;background:#172922;color:#ece7d5;font:14px system-ui}header{padding:16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}button,select{padding:9px;background:#e5c687;border:0;border-radius:4px;color:#172922}iframe{display:block;width:1100px;max-width:100%;height:780px;border:0;margin:auto}#results{padding:18px;white-space:pre-wrap;font-size:13px}#metrics{font-variant-numeric:tabular-nums}</style>
+<header><b>Borgstorm — lokal kvalitetstest</b><button id="run">Kør kontroller</button><button id="mobile">Mobil 390 px</button><button id="desktop">Computer 1100 px</button><select id="region"><option value="0">Kløvermarken</option><option value="4">Hviskeskoven</option><option value="8">Glødelandet</option><option value="12">Frosttinderne</option><option value="19">Guldborgen</option></select><button id="preview">Vis belejring</button><button id="effect">Vis skjold og pilesalve</button><button id="fallback">Vis 2D-reserve</button><span id="metrics"></span></header>
+<iframe id="game" title="Borgstorm testspil" src="../battle-gates.html"></iframe><pre id="results" role="status">Indlæser spillet…</pre>
+<script type="module">
+import { Run, LEVELS, normalizeProgress } from '../js/borgstorm/core.mjs';
+const frame=document.getElementById('game'), output=document.getElementById('results');
+let game, results=[], failures=0, busy=false, preview=false, errors=[];
+const delay=ms=>new Promise(r=>setTimeout(r,ms));
+const check=(condition,message)=>{results.push((condition?'PASS ':'FAIL ')+message);if(!condition)failures++;output.textContent=results.join('\n');};
+async function ready(){for(let i=0;i<200;i++){if(frame.contentWindow.borgstorm?.ready)return frame.contentWindow.borgstorm;await delay(50);}throw Error('Spillet startede ikke');}
+frame.addEventListener('load',async()=>{
+  game=await ready();game.save=()=>true;frame.contentWindow.WutborgHighscores.submit=async()=>({ok:true});
+  frame.contentWindow.addEventListener('error',e=>errors.push(e.message));
+  frame.contentWindow.addEventListener('unhandledrejection',e=>errors.push(String(e.reason)));
+  output.textContent='Klar. Testkørsler gemmer aldrig fremskridt eller rekorder.';
+  const params=new URLSearchParams(location.search);
+  if(params.get('autotest')==='1')runTests();
+});
+function reset(){game.menu();game.progress=normalizeProgress();game.selected=0;game.run=new Run(LEVELS[0]);game.renderMenu();}
+function simulate(){
+  const r=game.run;let gate=-1;
+  for(let tick=0;tick<30000&&r.active;tick++){
+    if(r.state==='running'&&gate!==r.gateIndex){gate=r.gateIndex;r.choose(r.gate[0].type==='multiply'||r.gate[0].type==='add'?0:1);}
+    if(r.combat?.warning>0)r.steer(r.combat.lane>=0?-1:1);
+    r.update(1/60);r.events.splice(0);
+  }
+  game.renderHUD();game.finish();return r;
+}
+async function runTests(){
+  if(busy)return;busy=true;preview=false;results=[];failures=0;errors=[];
+  try{
+    reset();const d=frame.contentDocument;
+    check(d.querySelectorAll('.level').length===20,'20 baner vises');
+    check(d.querySelectorAll('.level:disabled').length===19,'19 baner er låst fra start');
+    check(!game.selectLevel(19)&&game.selected===0,'Låste baner kan ikke vælges');
+    check(!d.getElementById('start').disabled,'Start er klar efter indlæsning');
+    d.getElementById('start').click();await delay(90);
+    check(game.run.active&&game.view==='playing','Start skifter til et aktivt spil');
+    check(!d.getElementById('hud').hidden&&!d.getElementById('play-controls').hidden,'HUD og touchknapper vises');
+    const canvas=d.getElementById('battle-canvas').getBoundingClientRect();check(canvas.width>200&&canvas.height>200,'Arenaen har en reel størrelse');
+    d.getElementById('left').click();check(game.run.targetX<0&&game.run.travel>=.58,'Portknap flytter hæren og fremskynder marchen');
+    d.getElementById('pause-button').click();const elapsed=game.run.elapsed,time=game.scene.time;await delay(130);
+    check(game.run.paused&&game.run.elapsed===elapsed&&game.scene.time===time,'Pause stopper både kamp og grafik');
+    check(d.getElementById('pause-dialog').open&&d.activeElement.id==='resume','Pausedialog har fokus');
+    const target=game.run.targetX;d.getElementById('right').click();check(game.run.targetX===target,'Pause blokerer touchknapper');
+    d.getElementById('resume').click();check(!game.run.paused&&!d.getElementById('pause-dialog').open,'Fortsæt genoptager spillet');
+    d.getElementById('help').click();const helpElapsed=game.run.elapsed;await delay(70);check(game.run.elapsed===helpElapsed,'Hjælp fryser slaget');d.getElementById('help-close').click();await delay(30);check(!game.run.paused,'Luk hjælp genoptager slaget');
+    game.run.beginSiege();game.renderHUD();d.getElementById('shield').click();d.getElementById('volley').click();
+    check(game.run.shieldTime>0&&game.run.cooldowns.volley>0,'Begge touch-evner virker i kamp');
+    game.renderHUD();check(d.getElementById('volley').disabled,'Pilesalve viser sin nedkøling');
+    game.menu();game.start();const r=simulate();
+    check(r.state==='won'&&d.getElementById('result-dialog').open,'En hel bane ender med sejr og resultat');
+    check(game.progress.unlockedLevel===2&&game.progress.coins>0,'Sejr åbner næste bane og giver mønter');
+    const coins=game.progress.coins;game.finish();check(game.progress.coins===coins,'Resultat kan ikke udbetales to gange');
+    d.getElementById('next').click();check(game.run.level.id===2&&game.run.active,'Næste bane starter direkte');
+    game.menu();d.getElementById('upgrades-tab').click();check(!d.getElementById('upgrades-panel').hidden,'Rust hæren-fanen åbner');
+    game.progress.coins=500;game.renderMenu();d.querySelector('[data-upgrade="armor"]').click();
+    check(game.progress.upgrades.armor===1&&game.progress.coins===420,'Et opgraderingskøb trækker den rigtige pris');
+    game.progress.coins=0;game.renderMenu();d.querySelector('[data-upgrade="armor"]').click();check(/mangler/.test(d.getElementById('upgrade-message').textContent),'Manglende mønter forklares');
+    game.progress=normalizeProgress({unlockedLevel:20});game.selected=19;game.start();simulate();
+    check(d.getElementById('next').hidden&&/Guldborgen/.test(d.getElementById('result-title').textContent),'Sidste bane afslutter hele kampagnen');
+    game.menu();game.selected=0;game.start();game.run.damage(999);game.finish();check(/Saml fanerne/.test(d.getElementById('result-title').textContent),'Nederlag vises med en ny chance');
+    d.getElementById('retry').click();check(game.run.army===24&&game.run.state==='running','Prøv igen starter et rent slag');
+    game.pause(true);await delay(50);game.menu();
+    frame.style.width='390px';frame.style.height='844px';await delay(180);
+    check(d.documentElement.scrollWidth<=390,'Mobilmenuen har ingen vandret overflow');
+    game.start();await delay(150);game.pause(true);
+    const stage=d.querySelector('.stage').getBoundingClientRect(),controls=d.getElementById('play-controls').getBoundingClientRect();
+    check(stage.height>500&&controls.bottom<=frame.clientHeight+2,'Mobilspillet fylder højden og holder knapperne i skærmen');
+    check(d.getElementById('left').getBoundingClientRect().height>=44,'Touchknapper er mindst 44 px høje');
+    game.menu();frame.style.width='1100px';frame.style.height='780px';await delay(100);
+    for(let i=0;i<160&&game.canvas.dataset.characters==='loading';i++)await delay(50);
+    check(game.canvas.dataset.renderer==='3d','3D-rendereren er aktiv');
+    check(game.canvas.dataset.characters==='ready','Alle fire animerede figurer er indlæst');
+    check(errors.length===0,'Ingen JavaScript-fejl: '+errors.join('; '));
+    reset();game.selectTab('map');
+    output.textContent=results.join('\n')+`\n\n${results.length-failures}/${results.length} bestået · ${failures} fejl`;
+    document.body.dataset.testResult=failures?'failed':'passed';
+  }catch(e){check(false,e.stack);document.body.dataset.testResult='failed';}
+  busy=false;
+}
+document.getElementById('run').onclick=runTests;
+document.getElementById('mobile').onclick=()=>{frame.style.width='390px';frame.style.height='844px';frame.contentWindow.focus();game.pause(false);};
+document.getElementById('desktop').onclick=()=>{frame.style.width='1100px';frame.style.height='780px';frame.contentWindow.focus();game.pause(false);};
+document.getElementById('preview').onclick=()=>{
+  preview=true;game.menu();game.progress=normalizeProgress({unlockedLevel:20});game.selected=Number(document.getElementById('region').value);game.start();
+  game.run.addUnits('archer',12);game.run.addUnits('shield',10);game.run.addUnits('giant',6);game.run.beginSiege();
+  game.run.combat.health=game.run.combat.maxHealth*.3;game.run.combat.damage=0;
+};
+document.getElementById('effect').onclick=()=>{frame.contentWindow.focus();game.pause(false);game.run.cooldowns={shield:0,volley:0};game.run.ability('shield');game.run.ability('volley');};
+document.getElementById('fallback').onclick=()=>{frame.contentWindow.focus();game.pause(false);game.fallback();game.bindCanvas();};
+let last=performance.now(),frames=0,start=last;
+function metrics(now){
+  frames++;if(now-start>1500){document.getElementById('metrics').textContent=`${Math.round(frames*1000/(now-start))} fps · ${game?.scene.renderer?.info.render.calls||0} draw calls`;frames=0;start=now;}
+  if(preview&&game?.run.combat){game.run.combat.health=Math.max(game.run.combat.health,game.run.combat.maxHealth*.22);if(game.run.state==='won')preview=false;}
+  last=now;requestAnimationFrame(metrics);
+}requestAnimationFrame(metrics);
+</script></html>

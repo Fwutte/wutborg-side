@@ -5,10 +5,10 @@
 <output id="status">Vælg en testscene. Scenerne gemmer ikke resultater.</output><iframe id="game" title="Testspil"></iframe>
 <script>
 const frame=document.getElementById('game'),status=document.getElementById('status');let serial=0;
-document.getElementById('mobile').onclick=()=>{frame.style.width=frame.style.width==='390px'?'100%':'390px';frame.contentWindow.focus();frame.contentWindow.wutborgBattleGame?.togglePause(false);};
-document.getElementById('ability').onclick=()=>{const g=frame.contentWindow.wutborgBattleGame;if(g){frame.contentWindow.focus();g.togglePause(false);g.run.ability('volley');}};
-document.getElementById('shield').onclick=()=>{const w=frame.contentWindow,b=w.wutborgBattleGame,k=w.wutborgKartGame;w.focus();if(b){b.togglePause(false);b.run.ability('shield');}if(k?.race?.player){k.togglePause(false);k.race.player.starTimer=5;k.race.player.boostTimer=5;}};
-document.getElementById('phase').onclick=()=>{const g=frame.contentWindow.wutborgBattleGame;if(g?.run.combat){g.run.combat.health=g.run.combat.maxHealth*.28;frame.contentWindow.focus();g.togglePause(false);}};
+document.getElementById('mobile').onclick=()=>{frame.style.width=frame.style.width==='390px'?'100%':'390px';frame.contentWindow.focus();frame.contentWindow.borgstorm?.pause(false);};
+document.getElementById('ability').onclick=()=>{const g=frame.contentWindow.borgstorm;if(g){frame.contentWindow.focus();g.pause(false);g.run.ability('volley');}};
+document.getElementById('shield').onclick=()=>{const w=frame.contentWindow,b=w.borgstorm,k=w.wutborgKartGame;w.focus();if(b){b.pause(false);b.run.ability('shield');}if(k?.race?.player){k.togglePause(false);k.race.player.starTimer=5;k.race.player.boostTimer=5;}};
+document.getElementById('phase').onclick=()=>{const g=frame.contentWindow.borgstorm;if(g?.run.combat){g.run.combat.health=g.run.combat.maxHealth*.28;frame.contentWindow.focus();g.pause(false);}};
 document.querySelectorAll('[data-scene]').forEach(button=>button.onclick=()=>{
  const scene=button.dataset.scene,current=++serial;status.textContent='Indlæser '+scene;
  frame.src='../'+(scene==='siege'?'battle-gates.html':scene==='frost'?'kart-racer.html':'pips-skybound.html');
@@ -16,13 +16,13 @@ document.querySelectorAll('[data-scene]').forEach(button=>button.onclick=()=>{
   const w=frame.contentWindow;const errors=[];w.addEventListener('error',e=>{errors.push(e.message);status.textContent='FEJL: '+e.message;});w.addEventListener('unhandledrejection',e=>{errors.push(String(e.reason));status.textContent='FEJL: '+e.reason;});const originalError=w.console.error.bind(w.console);w.console.error=(...args)=>{errors.push(args.map(String).join(' '));status.textContent='FEJL · '+errors.join(' | ');originalError(...args);};
   for(let i=0;i<100;i++){
    if(current!==serial)return;
-   const g=scene==='siege'?w.wutborgBattleGame:scene==='frost'?w.wutborgKartGame:w.pipsSkyboundGame;
-   if(g&&(scene==='siege'?g.is3D:scene==='frost'?true:g.assetsReady)){
+   const g=scene==='siege'?w.borgstorm:scene==='frost'?w.wutborgKartGame:w.pipsSkyboundGame;
+   if(g&&(scene==='siege'?g.ready:scene==='frost'?true:g.assetsReady)){
     // Replace only persistence/submission boundaries in this isolated test frame.
-    w.WutborgHighscores={submit(){},best(){}};g.saveProgress=()=>{};g.persist=()=>{};
+    w.WutborgHighscores={submit(){},best(){}};g.saveProgress=()=>{};g.persist=()=>{};g.save=()=>true;
     if(scene==='siege'){
-     g.selectedLevel=4;g.start();g.run.gateIndex=g.run.level.gates.length-1;g.run.army=100;g.run.units.soldier=100;
-     const side=g.run.currentGate.choices.findIndex(c=>c.boss);g.run.choose(side);g.run.beginCombat();g.run.combat.maxHealth=700;g.run.combat.health=700;const update=g.run.update.bind(g.run);g.run.update=dt=>update(dt*.06);g.refresh();g.setMessage('Visuel test · brug knapperne til at undvige');
+     g.progress.unlockedLevel=20;g.selected=3;g.start();g.run.gateIndex=g.run.level.gates.length;g.run.units.soldier=100;
+     g.run.beginSiege();g.run.combat.maxHealth=700;g.run.combat.health=700;const update=g.run.update.bind(g.run);g.run.update=dt=>update(dt*.06);g.renderHUD();
     }else if(scene==='frost'){
      g.selectedTrackId='frost-peaks';g.track=w.WutborgKartData.TRACKS.find(t=>t.id===g.selectedTrackId);g.startRace();g.race.state='racing';
      const p=g.track.at(g.track.length*.29);Object.assign(g.race.player,p,{velocityHeading:p.heading,road:g.track.nearest(p.x,p.y),raceDistance:p.s,lastS:p.s,lastX:p.x,lastY:p.y,nextGate:Math.ceil(p.s/(g.track.length/12))*g.track.length/12});
@@ -32,7 +32,7 @@ document.querySelectorAll('[data-scene]').forEach(button=>button.onclick=()=>{
      Object.assign(g.player,{x,y:440,vy:0,invincible:Infinity});g.camera.reset(x-200);
     }
     frame.contentWindow.focus();status.textContent='KLAR · '+scene;
-    let frames=0,start=w.performance.now();const sample=now=>{if(current!==serial)return;frames++;if(now-start<5000){w.requestAnimationFrame(sample);return;}const renderer=g.renderer?.renderer||g.scene3D?.renderer;status.textContent=errors.length?'FEJL · '+errors.join(' | '):'KLAR · '+scene+' · '+Math.round(frames*1000/(now-start))+' fps'+(renderer?' · '+renderer.info.render.calls+' draw calls':'');status.dataset.errors=JSON.stringify(errors);};w.requestAnimationFrame(sample);return;
+    let frames=0,start=w.performance.now();const sample=now=>{if(current!==serial)return;frames++;if(now-start<5000){w.requestAnimationFrame(sample);return;}const renderer=g.scene?.renderer||g.renderer?.renderer||g.scene3D?.renderer;status.textContent=errors.length?'FEJL · '+errors.join(' | '):'KLAR · '+scene+' · '+Math.round(frames*1000/(now-start))+' fps'+(renderer?' · '+renderer.info.render.calls+' draw calls':'');status.dataset.errors=JSON.stringify(errors);};w.requestAnimationFrame(sample);return;
    }
    await new Promise(r=>setTimeout(r,100));
   }
