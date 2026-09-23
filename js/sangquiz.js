@@ -6,6 +6,7 @@
   const TEAM_NAMES_KEY = "wutborg.sangquiz.teams.v1";
   const MODE_KEY = "wutborg.sangquiz.mode.v1";
   const CATEGORY_KEY = "wutborg.sangquiz.category.v1";
+  const FILTERS_KEY = "wutborg.sangquiz.filters.v1";
   const HISTORY_KEY = "wutborg.sangquiz.history.v1";
   const BROKEN_LINKS_KEY = "wutborg.sangquiz.brokenLinks.v1";
   const CLIENT_ID_KEY = "wutborg.sangquiz.spotify.clientId";
@@ -14,6 +15,7 @@
   const PKCE_KEY = "wutborg.sangquiz.spotify.pkce";
   const SOUND_KEY = "wutborg.sangquiz.sound.v1";
   const WINNING_SCORE = 10;
+  const MIN_CATEGORY_SONGS = 100;
   const TEAM_COLORS = ["#D0502C", "#5B84A8"];
   const TURN_SPLASH_MS = 1500;
   const SPOTIFY_SCOPES = [
@@ -43,9 +45,21 @@
   };
   const SPECIAL_EDITIONS = new Set(["christmas", "eurovision", "screen"]);
   const TAG_CATEGORIES = new Set(["70s", "80s", "90s", "00s", "10s", "rock"]);
+  const ORIGIN_LABELS = { mixed: "Danske og internationale", danish: "Danske kunstnere", international: "Internationale kunstnere" };
+  const ARTIST_LETTERS = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ", "0-9"];
 
   const els = {};
   let selectedCategory = normalizeCategory(readTextStorage(CATEGORY_KEY, "mixed"));
+  let selectedFilters = normalizeFilters(readStorage(FILTERS_KEY, {}));
+  if (["danish", "international"].includes(selectedCategory)) {
+    selectedFilters.origin = selectedCategory;
+    selectedCategory = "mixed";
+    safeSetStorage(CATEGORY_KEY, selectedCategory);
+    safeSetStorage(FILTERS_KEY, JSON.stringify(selectedFilters));
+  }
+  if (getSongPool(selectedCategory, { origin: selectedFilters.origin }).length < MIN_CATEGORY_SONGS) {
+    selectedFilters.origin = "mixed";
+  }
   let state = createEmptyState();
   let setupTeamNames = ["Hold 1", "Hold 2"];
   let mode = readTextStorage(MODE_KEY, "screen");
@@ -117,6 +131,7 @@
       "spotify-game-forget-button",
       "spotify-game-mode-status",
       "category-status",
+      "artist-letter-options",
       "round-number",
       "deck-status",
       "active-team-name",
@@ -176,6 +191,16 @@
 
     els.modeButtons = [...document.querySelectorAll("[data-sangquiz-mode]")];
     els.categoryButtons = [...document.querySelectorAll("[data-song-category]")];
+    els.originButtons = [...document.querySelectorAll("[data-song-origin]")];
+    ["", ...ARTIST_LETTERS].forEach((letter) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.dataset.artistLetter = letter;
+      button.textContent = letter || "Alle";
+      button.setAttribute("aria-label", letter ? `Kunstnere, der starter med ${letter}` : "Alle begyndelsesbogstaver");
+      els.artistLetterOptions.append(button);
+    });
+    els.letterButtons = [...els.artistLetterOptions.querySelectorAll("button")];
     els.scoreButtons = [...document.querySelectorAll("[data-score-action]")];
     els.equalizerBars = [...document.querySelectorAll("[data-eq-bar]")];
   }
@@ -247,6 +272,18 @@
     els.categoryButtons.forEach((button) => {
       button.addEventListener("click", () => setSongCategory(button.dataset.songCategory));
     });
+    els.originButtons.forEach((button) => {
+      button.addEventListener("click", () => setSongFilters({ ...selectedFilters, origin: button.dataset.songOrigin }));
+    });
+    els.letterButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const letter = button.dataset.artistLetter;
+        const letters = !letter ? [] : selectedFilters.letters.includes(letter)
+          ? selectedFilters.letters.filter((value) => value !== letter)
+          : [...selectedFilters.letters, letter];
+        setSongFilters({ ...selectedFilters, letters });
+      });
+    });
   }
 
   function toCamel(id) {
@@ -264,6 +301,7 @@
       selectedSlot: -1,
       currentSongId: "",
       songCategory: selectedCategory,
+      songFilters: normalizeFilters(selectedFilters),
       usedSongIds: [],
       brokenSongIds: [],
       teams: [],
@@ -310,6 +348,11 @@
     next.selectedSlot = clamp(slotValue, activeTimelineLength ? -1 : 0, activeTimelineLength);
     next.selectedSlot = coerceSelectableSlot(getActiveTimeline(next), next.selectedSlot);
     next.songCategory = normalizeCategory(next.songCategory || selectedCategory);
+    next.songFilters = normalizeFilters(next.songFilters);
+    if (["danish", "international"].includes(next.songCategory)) {
+      next.songFilters.origin = next.songCategory;
+      next.songCategory = "mixed";
+    }
     next.finished = Boolean(next.finished);
     next.phase = next.finished
       ? "finished"
@@ -381,7 +424,7 @@
       if (state.phase === "starting") return team ? `${team.name} vandt terningeslaget` : "Terningerne afgør starten";
       return team ? `${team.name}: ${teamSongCount(team)} sange spillet` : "Spil i gang";
     }
-    return `${pool.length} sange klar · ${CATEGORY_LABELS[selectedCategory]}`;
+    return `${pool.length} sange klar · ${getPoolLabel(selectedCategory, selectedFilters)}`;
   }
 
   function renderSetupState() {
@@ -454,7 +497,8 @@
   }
 
   function startGame() {
-    if (!getSongPool(selectedCategory).length) return;
+    if (getSongPool(selectedCategory, { origin: selectedFilters.origin }).length < MIN_CATEGORY_SONGS
+      || !getSongPool(selectedCategory, selectedFilters).length) return;
     setupTeamNames = collectTeamNames();
     saveSetupTeams();
     state = createGameState(setupTeamNames);
@@ -983,6 +1027,7 @@
         id: resultId,
         playedAt: new Date().toISOString(),
         category: state.songCategory,
+        songFilters: normalizeFilters(state.songFilters),
         rounds: state.round,
         finishReason: state.finishReason,
         teams: state.teams.map((team) => ({
@@ -1015,6 +1060,7 @@
         id: String(entry.id || ""),
         playedAt: String(entry.playedAt || ""),
         category: normalizeCategory(entry.category),
+        songFilters: normalizeFilters(entry.songFilters),
         rounds: Number(entry.rounds) || 0,
         finishReason: String(entry.finishReason || ""),
         teams: entry.teams.map((team, index) => ({
@@ -1234,32 +1280,94 @@
   }
 
   function setSongCategory(category) {
+    if (state.started && !state.finished) return;
     selectedCategory = normalizeCategory(category);
+    if (getSongPool(selectedCategory, { origin: selectedFilters.origin }).length < MIN_CATEGORY_SONGS) {
+      selectedFilters.origin = "mixed";
+      state.songFilters = normalizeFilters(selectedFilters);
+      safeSetStorage(FILTERS_KEY, JSON.stringify(selectedFilters));
+    }
     safeSetStorage(CATEGORY_KEY, selectedCategory);
     if (!state.started || state.finished) state.songCategory = selectedCategory;
     render();
   }
 
+  function setSongFilters(filters) {
+    if (state.started && !state.finished) return;
+    const next = normalizeFilters(filters);
+    if (getSongPool(selectedCategory, { origin: next.origin }).length < MIN_CATEGORY_SONGS) return;
+    selectedFilters = next;
+    safeSetStorage(FILTERS_KEY, JSON.stringify(selectedFilters));
+    state.songFilters = normalizeFilters(selectedFilters);
+    render();
+  }
+
+  function normalizeFilters(filters) {
+    return {
+      origin: Object.prototype.hasOwnProperty.call(ORIGIN_LABELS, filters?.origin) ? filters.origin : "mixed",
+      letters: ARTIST_LETTERS.filter((letter) => Array.isArray(filters?.letters) && filters.letters.includes(letter)),
+    };
+  }
+
+  function getArtistLetter(artist) {
+    const first = [...String(artist || "").trim().normalize("NFC").toLocaleUpperCase("da-DK")][0] || "";
+    if (/\d/.test(first)) return "0-9";
+    if (ARTIST_LETTERS.includes(first)) return first;
+    return first.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  }
+
+  function getPoolLabel(category, filters) {
+    const { origin, letters } = normalizeFilters(filters);
+    return [CATEGORY_LABELS[category], ORIGIN_LABELS[origin], letters.length ? `Kunstnere: ${letters.join(", ")}` : "Alle bogstaver"].join(" · ");
+  }
+
   function updateCategoryUi() {
     if (!els.categoryButtons) return;
-    const category = state.started && !state.finished ? state.songCategory : selectedCategory;
+    const inProgress = state.started && !state.finished;
+    const category = inProgress ? state.songCategory : selectedCategory;
+    const filters = inProgress ? state.songFilters : selectedFilters;
     els.categoryButtons.forEach((button) => {
       const pressed = button.dataset.songCategory === category;
       button.setAttribute("aria-pressed", pressed ? "true" : "false");
+      button.disabled = inProgress;
     });
+    els.originButtons.forEach((button) => {
+      button.setAttribute("aria-pressed", String(button.dataset.songOrigin === filters.origin));
+      const originCount = getSongPool(category, { origin: button.dataset.songOrigin }).length;
+      button.disabled = inProgress || originCount < MIN_CATEGORY_SONGS;
+      button.title = originCount < MIN_CATEGORY_SONGS
+        ? `${originCount} sange. Der kræves mindst ${MIN_CATEGORY_SONGS} sange før bogstavfilteret.` : "";
+    });
+    els.letterButtons.forEach((button) => {
+      const letter = button.dataset.artistLetter;
+      button.setAttribute("aria-pressed", String(letter ? filters.letters.includes(letter) : !filters.letters.length));
+      button.disabled = inProgress;
+    });
+    const count = getSongPool(category, filters).length;
+    const categoryCount = getSongPool(category, { origin: filters.origin }).length;
+    els.startGameButton.disabled = !count || categoryCount < MIN_CATEGORY_SONGS;
     if (els.categoryStatus) {
-      els.categoryStatus.textContent = `${getSongPool(category).length} sange i puljen · ${CATEGORY_LABELS[category]}`;
+      els.categoryStatus.textContent = categoryCount < MIN_CATEGORY_SONGS
+        ? `Kategorien har kun ${categoryCount} brugbare sange. Vælg en pulje med mindst ${MIN_CATEGORY_SONGS} sange.`
+        : count
+        ? `${count} sange i puljen · ${getPoolLabel(category, filters)}`
+        : "Ingen sange matcher dine valg. Vælg flere bogstaver, Alle eller en anden kategori.";
     }
   }
 
   function getActiveSongPool() {
-    return getSongPool(state.started && !state.finished ? state.songCategory : selectedCategory);
+    return state.started && !state.finished
+      ? getSongPool(state.songCategory, state.songFilters)
+      : getSongPool(selectedCategory, selectedFilters);
   }
 
-  function getSongPool(category) {
+  function getSongPool(category, filters = {}) {
     const normalized = normalizeCategory(category);
+    const { origin, letters } = normalizeFilters(filters);
     const brokenSongIds = new Set(getBrokenLinkRecords().map((record) => record.songId));
-    const availableSongs = ALL_SONGS.filter((song) => !brokenSongIds.has(song.id));
+    const availableSongs = ALL_SONGS.filter((song) => !brokenSongIds.has(song.id)
+      && (origin === "mixed" || song.category === origin)
+      && (!letters.length || letters.includes(getArtistLetter(song.artist))));
     if (SPECIAL_EDITIONS.has(normalized)) {
       return availableSongs.filter((song) => song.edition === normalized);
     }
@@ -2067,9 +2175,10 @@
       const response = await fetch(`https://open.spotify.com/oembed?url=${encodeURIComponent(url.toString())}`, {
         signal: controller?.signal,
       });
+      const missing = response.status === 404 || response.status === 410;
       return {
-        checked: true,
-        valid: response.ok,
+        checked: response.ok || missing,
+        valid: !missing,
         reason: `Spotify-linket svarede med status ${response.status}`,
       };
     } catch {

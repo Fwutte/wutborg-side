@@ -4504,6 +4504,35 @@
     }
 
     /* Sangquiz 2026: startterning, live-visning og kampstatistik */
+    .song-filter {
+      min-width: 0;
+      margin: 22px 0 0;
+      padding: 0;
+      border: 0;
+    }
+
+    .song-filter legend {
+      margin-bottom: 10px;
+      font-weight: 900;
+    }
+
+    .song-filter-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .song-filter-options button {
+      min-width: 44px;
+      min-height: 44px;
+    }
+
+    .song-filter-options button[aria-pressed="true"] {
+      color: var(--night);
+      background: var(--green);
+      border-color: var(--green);
+    }
+
     .category-options {
       grid-template-columns: repeat(3, minmax(0, 1fr));
     }
@@ -4951,15 +4980,7 @@
                   <div class="category-options" aria-label="Vælg sangkategori">
                     <button type="button" data-song-category="mixed" aria-pressed="true">
                       Blandet standard
-                      <small>Dansk og internationalt</small>
-                    </button>
-                    <button type="button" data-song-category="danish" aria-pressed="false">
-                      Dansk
-                      <small>Kun danske kunstnere</small>
-                    </button>
-                    <button type="button" data-song-category="international" aria-pressed="false">
-                      Internationalt
-                      <small>Kun internationale kunstnere</small>
+                      <small>Alle årtier</small>
                     </button>
                     <button type="button" data-song-category="christmas" aria-pressed="false">
                       Julesange
@@ -4998,7 +5019,21 @@
                       <small>Danske og internationale rockklassikere</small>
                     </button>
                   </div>
-                  <p id="category-status" class="hint-text">Sangpulje vælges</p>
+                  <fieldset class="song-filter">
+                    <legend>Kunstnere</legend>
+                    <div class="song-filter-options">
+                      <button type="button" data-song-origin="mixed" aria-pressed="true">Danske og internationale</button>
+                      <button type="button" data-song-origin="danish" aria-pressed="false">Kun danske</button>
+                      <button type="button" data-song-origin="international" aria-pressed="false">Kun internationale</button>
+                    </div>
+                    <p class="hint-text">Hver pulje skal have mindst 100 sange. Grå valg har for få sange; vælg danske og internationale sammen.</p>
+                  </fieldset>
+                  <fieldset class="song-filter" aria-describedby="artist-letter-help">
+                    <legend>Kunstnerens begyndelsesbogstav</legend>
+                    <div id="artist-letter-options" class="song-filter-options"></div>
+                    <p id="artist-letter-help" class="hint-text">Vælg ét eller flere bogstaver. Bogstavfilteret kan give færre end 100 sange. Navnet tæller fra starten: ABBA under A og The Beatles under T. 0-9 er navne, der starter med et tal.</p>
+                  </fieldset>
+                  <p id="category-status" class="hint-text" role="status" aria-live="polite">Sangpulje vælges</p>
                 </section>
 
                 <section class="spotify-box" aria-label="Afspilning">
@@ -5380,8 +5415,8 @@
     </div>
   </div>
   <script src="js/highscores.js"></script>
-  <script src="js/sangquiz-data.js?v=20260724-categories100"></script>
+  <script src="js/sangquiz-data.js?v=20260922-origin100"></script>
   <script src="js/sangquiz-special-data.js?v=20260724-categories100"></script>
-  <script src="js/sangquiz.js?v=20260724-no-card-counts"></script>
+  <script src="js/sangquiz.js?v=20260922-link-checks"></script>
 </body>
 </html>
