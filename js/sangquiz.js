@@ -386,6 +386,7 @@
   }
 
   function render() {
+    const previousPagePhase = document.body.dataset.sangquizPhase;
     const pagePhase = state.finished ? "finish" : state.started ? "game" : "setup";
     const colorIndex = state.finished ? getWinnerTeamIndex() : state.activeTeamIndex;
     const activeColor = getTeamColor(colorIndex);
@@ -413,6 +414,9 @@
     updateModeUi();
     updateSpotifyUi();
     updateSoundUi();
+    if (previousPagePhase && previousPagePhase !== pagePhase) {
+      els.sangquizApp.scrollIntoView?.({ block: "start", behavior: "instant" });
+    }
   }
 
   function getAppStatus() {
@@ -451,6 +455,8 @@
 
       const input = document.createElement("input");
       input.type = "text";
+      input.id = `setup-team-${index + 1}`;
+      label.htmlFor = input.id;
       input.maxLength = 24;
       input.value = name;
       input.autocomplete = "off";

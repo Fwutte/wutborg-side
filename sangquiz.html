@@ -4922,6 +4922,7 @@
     }
 
   </style>
+  <link rel="stylesheet" href="css/sangquiz.css?v=20260923-record-room" />
 </head>
 <body>
   <div class="page">
@@ -4937,9 +4938,15 @@
       <section id="sangquiz-app" class="quiz-app" data-mode="screen" aria-label="Sangquiz spil">
         <header class="app-head">
           <div>
-            <p class="kicker">Musikquiz · tidslinje</p>
+            <p class="kicker">Wutborgs pladeklub · Musikquiz for hold</p>
             <h1>Sangquiz</h1>
+            <p class="quiz-intro">Store hits. Vilde gæt. Hvem kender årstallet?</p>
             <p id="app-status" class="status-line">Sanglisten indlæses</p>
+          </div>
+
+          <div class="cover-art" aria-hidden="true">
+            <div class="cover-sleeve"><span>SIDE A / SIDE B</span><strong>Gæt et hit.<br>Find et år.</strong><i>WUTBORG RECORDS</i></div>
+            <div class="cover-vinyl"><span>W<span class="vinyl-hole"></span>33⅓ RPM</span></div>
           </div>
 
           <div class="mode-picker">
@@ -4947,7 +4954,7 @@
               <button type="button" data-sangquiz-mode="screen" aria-pressed="true">Storskærm</button>
               <button type="button" data-sangquiz-mode="phone" aria-pressed="false">Kompakt visning</button>
             </div>
-            <p class="mode-hint">Valget ændrer kun layoutet på denne enhed – det forbinder ikke en ekstra skærm eller telefon.</p>
+            <p class="mode-hint">Tilpas layoutet til denne skærm.</p>
           </div>
         </header>
 
@@ -4955,8 +4962,8 @@
           <div class="app-main">
             <section id="setup-screen" class="screen sq-panel" aria-label="Opsætning">
               <div class="panel-heading">
-                <span>Setup</span>
-                <h2>Hold og afspilning</h2>
+                <span>Før nålen rammer pladen</span>
+                <h2>Gør klar til første hit</h2>
               </div>
 
               <ol class="setup-steps" aria-label="Kom i gang i fire trin">
@@ -4968,7 +4975,8 @@
 
               <div class="setup-grid">
                 <section class="setup-box" aria-label="Hold">
-                  <h3>Hold</h3>
+                  <h3><span class="section-number" aria-hidden="true">01</span> Hvem spiller?</h3>
+                  <p class="hint-text">Saml 2–6 hold, og giv jer et navn.</p>
                   <div id="setup-teams" class="team-list"></div>
                   <div class="primary-actions">
                     <button id="add-team-button" type="button">Tilføj hold</button>
@@ -4976,11 +4984,16 @@
                 </section>
 
                 <section class="category-box" aria-label="Sangkategori">
-                  <h3>Sangkategori</h3>
+                  <h3><span class="section-number" aria-hidden="true">02</span> Vælg jeres soundtrack</h3>
+                  <p class="hint-text">Find et årti, eller lad hele pladesamlingen spille.</p>
                   <div class="category-options" aria-label="Vælg sangkategori">
                     <button type="button" data-song-category="mixed" aria-pressed="true">
                       Blandet standard
                       <small>Alle årtier</small>
+                    </button>
+                    <button type="button" data-song-category="rock" aria-pressed="false">
+                      Rock
+                      <small>Danske og internationale rockklassikere</small>
                     </button>
                     <button type="button" data-song-category="christmas" aria-pressed="false">
                       Julesange
@@ -5014,10 +5027,6 @@
                       10'erne
                       <small>Hits fra 2010-2019</small>
                     </button>
-                    <button type="button" data-song-category="rock" aria-pressed="false">
-                      Rock
-                      <small>Danske og internationale rockklassikere</small>
-                    </button>
                   </div>
                   <fieldset class="song-filter">
                     <legend>Kunstnere</legend>
@@ -5037,7 +5046,7 @@
                 </section>
 
                 <section class="spotify-box" aria-label="Afspilning">
-                  <h3>Afspilning</h3>
+                  <h3><span class="section-number" aria-hidden="true">03</span> Sæt musikken på</h3>
                   <p class="hint-text">
                     Manuel DJ virker uden login: værten åbner sangen i Spotify, mens svaret forbliver skjult i quizzen.
                   </p>
@@ -5064,9 +5073,10 @@
                 </section>
               </div>
 
-              <div class="primary-actions">
+              <div class="primary-actions start-actions">
                 <button id="start-game-button" class="primary-button" type="button">Start quiz</button>
                 <button id="restore-game-button" type="button" hidden>Fortsæt spil</button>
+                <p>Lyt til sangen. Find pladsen på tidslinjen. Saml point.</p>
               </div>
               <section class="history-card" aria-label="Spilstatistik">
                 <div class="history-heading">
@@ -5417,6 +5427,6 @@
   <script src="js/highscores.js"></script>
   <script src="js/sangquiz-data.js?v=20260922-origin100"></script>
   <script src="js/sangquiz-special-data.js?v=20260724-categories100"></script>
-  <script src="js/sangquiz.js?v=20260922-link-checks"></script>
+  <script src="js/sangquiz.js?v=20260924-record-room"></script>
 </body>
 </html>
