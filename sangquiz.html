@@ -4923,7 +4923,7 @@
 
   </style>
   <link rel="stylesheet" href="css/sangquiz.css?v=20260924-calm-table" />
-  <link rel="stylesheet" href="css/sangquiz-player.css?v=20260927-stage" />
+  <link rel="stylesheet" href="css/sangquiz-player.css?v=20260927-vinyl-deck" />
 </head>
 <body>
   <div class="page">
@@ -5120,106 +5120,76 @@
                       <button id="play-hidden-button" class="play-hidden record-play-button dance-play-button" type="button" aria-label="Åbn sang i Spotify">
                         <svg class="dance-play-scene" viewBox="0 0 640 480" aria-hidden="true" focusable="false">
                           <defs>
-                            <radialGradient id="stageBackdrop" cx="50%" cy="34%" r="76%">
-                              <stop stop-color="#294e42" /><stop offset=".52" stop-color="#102c25" /><stop offset="1" stop-color="#061711" />
-                            </radialGradient>
-                            <radialGradient id="stageHalo">
-                              <stop stop-color="#edca80" stop-opacity=".32" /><stop offset="1" stop-color="#edca80" stop-opacity="0" />
-                            </radialGradient>
-                            <linearGradient id="stageBeam" x1="0" y1="0" x2="0" y2="1">
-                              <stop stop-color="#f8dc9f" stop-opacity=".5" /><stop offset="1" stop-color="#f8dc9f" stop-opacity="0" />
-                            </linearGradient>
-                            <linearGradient id="stageCoolBeam" x1="0" y1="0" x2="0" y2="1">
-                              <stop stop-color="#92bdc5" stop-opacity=".4" /><stop offset="1" stop-color="#92bdc5" stop-opacity="0" />
-                            </linearGradient>
-                            <radialGradient id="stageMirror" cx="30%" cy="24%" r="82%">
-                              <stop stop-color="#fffdf0" /><stop offset=".28" stop-color="#e7d6a1" /><stop offset=".58" stop-color="#a9b5a0" /><stop offset=".82" stop-color="#506f67" /><stop offset="1" stop-color="#1a3e33" />
-                            </radialGradient>
-                            <linearGradient id="stageRim" x1="0" y1="0" x2="1" y2="1">
-                              <stop stop-color="#f8e4ac" /><stop offset=".38" stop-color="#b89150" /><stop offset=".7" stop-color="#715d38" /><stop offset="1" stop-color="#d6b777" />
-                            </linearGradient>
-                            <radialGradient id="stageCone">
-                              <stop stop-color="#35483e" /><stop offset=".32" stop-color="#0d2019" /><stop offset=".78" stop-color="#263e32" /><stop offset="1" stop-color="#071a13" />
-                            </radialGradient>
-                            <radialGradient id="stageButton" cx="36%" cy="24%" r="80%">
-                              <stop stop-color="#fff9e9" /><stop offset=".75" stop-color="#eddfbf" /><stop offset="1" stop-color="#c9b781" />
-                            </radialGradient>
-                            <linearGradient id="stageEq" x1="0" y1="0" x2="0" y2="1">
-                              <stop stop-color="#f3d18a" /><stop offset="1" stop-color="#99703b" />
-                            </linearGradient>
-                            <linearGradient id="stageFloor" x1="0" y1="0" x2="0" y2="1">
-                              <stop stop-color="#789880" stop-opacity=".25" /><stop offset="1" stop-color="#789880" stop-opacity="0" />
-                            </linearGradient>
-                            <clipPath id="stageMirrorClip"><circle cx="320" cy="88" r="44" /></clipPath>
+                            <linearGradient id="deckCase" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#315b48"/><stop offset=".55" stop-color="#173c30"/><stop offset="1" stop-color="#0b241d"/></linearGradient>
+                            <radialGradient id="deckGlow"><stop stop-color="#dce88c" stop-opacity=".42"/><stop offset="1" stop-color="#dce88c" stop-opacity="0"/></radialGradient>
+                            <radialGradient id="deckVinyl"><stop stop-color="#31443a"/><stop offset=".48" stop-color="#091811"/><stop offset=".76" stop-color="#1e3026"/><stop offset="1" stop-color="#060f0a"/></radialGradient>
+                            <linearGradient id="deckMetal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff4c5"/><stop offset=".24" stop-color="#ddba76"/><stop offset=".5" stop-color="#6d754c"/><stop offset=".8" stop-color="#f0d293"/><stop offset="1" stop-color="#a98952"/></linearGradient>
+                            <linearGradient id="deckArm"><stop stop-color="#688979"/><stop offset=".4" stop-color="#f1f3d3"/><stop offset=".65" stop-color="#c9d4b2"/><stop offset="1" stop-color="#658774"/></linearGradient>
+                            <linearGradient id="deckLabel" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffc980"/><stop offset="1" stop-color="#f47b4b"/></linearGradient>
+                            <linearGradient id="deckMeter" x1="0" y1="1" x2="0" y2="0"><stop stop-color="#7ed8b0"/><stop offset=".55" stop-color="#eee084"/><stop offset="1" stop-color="#ff9a60"/></linearGradient>
+                            <clipPath id="deckDiscClip"><circle r="159"/></clipPath>
+                            <pattern id="deckMeterSegments" width="8" height="10" patternUnits="userSpaceOnUse"><rect width="8" height="7" fill="white"/></pattern>
+                            <mask id="deckMeterMask"><rect x="448" y="170" width="150" height="142" fill="url(#deckMeterSegments)"/></mask>
                           </defs>
-                          <rect width="640" height="480" rx="24" fill="url(#stageBackdrop)" />
-                          <rect class="stage-frame" x="12" y="12" width="616" height="456" rx="18" />
-                          <path class="stage-header-rule" d="M30 64h214m152 0h214" />
-                          <text class="stage-wordmark" x="32" y="45">SANGQUIZ</text>
-                          <g class="stage-status"><circle cx="530" cy="40" r="4" /><text x="544" y="45">MUSIK</text></g>
-                          <circle cx="320" cy="106" r="158" fill="url(#stageHalo)" />
-                          <g class="stage-beams">
-                            <path class="stage-beam stage-beam-left" d="M304 108 52 402h166z" fill="url(#stageBeam)" />
-                            <path class="stage-beam stage-beam-right" d="M336 108 422 402h166z" fill="url(#stageCoolBeam)" />
-                            <path class="stage-beam stage-beam-center" d="M320 114 210 384h220z" fill="url(#stageBeam)" />
-                          </g>
-                          <path class="stage-wire" d="M320 0v44" />
-                          <g class="stage-mirror-ball">
-                            <circle cx="320" cy="88" r="45" fill="url(#stageRim)" />
-                            <circle cx="320" cy="88" r="44" fill="url(#stageMirror)" />
-                            <g class="stage-mirror-grid" clip-path="url(#stageMirrorClip)">
-                              <path d="M287.81304612113786 58h64.37390775772433" /><path d="M280.80816411546914 68h78.38367176906169" /><path d="M277.1514294287429 78h85.6971411425142" /><path d="M276 88h88" /><path d="M277.1514294287429 98h85.6971411425142" /><path d="M280.80816411546914 108h78.38367176906169" /><path d="M287.81304612113786 118h64.37390775772433" />
-                              <ellipse cx="320" cy="88" rx="13" ry="44" /><ellipse cx="320" cy="88" rx="29" ry="44" /><path d="M320 44v88" />
+                          <rect width="640" height="480" rx="24" fill="url(#deckCase)"/>
+                          <path class="deck-corner-stripe" d="M520 0h36l84 84v36zM574 0h20l46 46v20z"/>
+                          <rect class="deck-frame" x="10" y="10" width="620" height="460" rx="18"/>
+                          <text class="deck-brand" x="34" y="47">SANGQUIZ</text>
+                          <g class="deck-side-label"><rect x="505" y="26" width="100" height="30" rx="15"/><text x="555" y="46" text-anchor="middle">SIDE A</text></g>
+                          <circle cx="218" cy="226" r="228" fill="url(#deckGlow)"/>
+                          <ellipse cx="224" cy="251" rx="169" ry="165" fill="#05140f" opacity=".5"/>
+                          <g transform="translate(218 230)">
+                            <g class="deck-index-ring"><path d="M0-174v7" transform="rotate(0)" /><path d="M0-174v3" transform="rotate(7.5)" /><path d="M0-174v3" transform="rotate(15)" /><path d="M0-174v3" transform="rotate(22.5)" /><path d="M0-174v7" transform="rotate(30)" /><path d="M0-174v3" transform="rotate(37.5)" /><path d="M0-174v3" transform="rotate(45)" /><path d="M0-174v3" transform="rotate(52.5)" /><path d="M0-174v7" transform="rotate(60)" /><path d="M0-174v3" transform="rotate(67.5)" /><path d="M0-174v3" transform="rotate(75)" /><path d="M0-174v3" transform="rotate(82.5)" /><path d="M0-174v7" transform="rotate(90)" /><path d="M0-174v3" transform="rotate(97.5)" /><path d="M0-174v3" transform="rotate(105)" /><path d="M0-174v3" transform="rotate(112.5)" /><path d="M0-174v7" transform="rotate(120)" /><path d="M0-174v3" transform="rotate(127.5)" /><path d="M0-174v3" transform="rotate(135)" /><path d="M0-174v3" transform="rotate(142.5)" /><path d="M0-174v7" transform="rotate(150)" /><path d="M0-174v3" transform="rotate(157.5)" /><path d="M0-174v3" transform="rotate(165)" /><path d="M0-174v3" transform="rotate(172.5)" /><path d="M0-174v7" transform="rotate(180)" /><path d="M0-174v3" transform="rotate(187.5)" /><path d="M0-174v3" transform="rotate(195)" /><path d="M0-174v3" transform="rotate(202.5)" /><path d="M0-174v7" transform="rotate(210)" /><path d="M0-174v3" transform="rotate(217.5)" /><path d="M0-174v3" transform="rotate(225)" /><path d="M0-174v3" transform="rotate(232.5)" /><path d="M0-174v7" transform="rotate(240)" /><path d="M0-174v3" transform="rotate(247.5)" /><path d="M0-174v3" transform="rotate(255)" /><path d="M0-174v3" transform="rotate(262.5)" /><path d="M0-174v7" transform="rotate(270)" /><path d="M0-174v3" transform="rotate(277.5)" /><path d="M0-174v3" transform="rotate(285)" /><path d="M0-174v3" transform="rotate(292.5)" /><path d="M0-174v7" transform="rotate(300)" /><path d="M0-174v3" transform="rotate(307.5)" /><path d="M0-174v3" transform="rotate(315)" /><path d="M0-174v3" transform="rotate(322.5)" /><path d="M0-174v7" transform="rotate(330)" /><path d="M0-174v3" transform="rotate(337.5)" /><path d="M0-174v3" transform="rotate(345)" /><path d="M0-174v3" transform="rotate(352.5)" /></g>
+                            <circle class="deck-orbit" r="178"/>
+                            <circle r="164" fill="url(#deckMetal)"/>
+                            <circle r="160" fill="url(#deckVinyl)"/>
+                            <g class="deck-record-spin">
+                              <g class="deck-grooves"><circle r="80" /><circle r="86" /><circle r="92" /><circle r="98" /><circle r="104" /><circle r="110" /><circle r="116" /><circle r="122" /><circle r="128" /><circle r="134" /><circle r="140" /><circle r="146" /><circle r="152" /></g>
+                              <g class="deck-sheen" clip-path="url(#deckDiscClip)"><path d="M0 0-176-74-110-150zM0 0 176 74 110 150z"/><path class="deck-sheen-fine" d="M0 0-170-122-147-148zM0 0 170 122 147 148z"/></g>
+                              <circle r="75" fill="url(#deckLabel)"/>
+                              <path class="deck-label-stripe" d="M-68-28a75 75 0 0 1 91-44L45-60a75 75 0 0 0-111 36zM68 28a75 75 0 0 1-91 44L-45 60a75 75 0 0 0 111-36z"/>
+                              <circle class="deck-label-dot" cx="0" cy="-65" r="3"/><circle class="deck-label-dot" cx="0" cy="65" r="3"/>
                             </g>
-                            <g class="stage-mirror-tiles" clip-path="url(#stageMirrorClip)">
-                              <path d="M294 60h10v8h-10zM308 80h11v8h-11zM331 60h10v8h-10zM343 90h10v8h-10zM320 108h11v8h-11z" />
-                            </g>
-                            <path class="stage-glint" d="m303 57 2 9 9 2-9 2-2 9-2-9-9-2 9-2z" />
+                            <circle class="deck-play-ripple" r="52"/>
+                            <circle class="dance-control-core" r="49"/>
+                            <path class="dance-play-mark" d="M-11-22a3 3 0 0 1 5-2L25-3a4 4 0 0 1 0 6L-6 24a3 3 0 0 1-5-2z"/>
+                            <g class="dance-playing-mark"><rect class="dance-playing-bar" x="-20" y="-16" width="9" height="32" rx="4.5"/><rect class="dance-playing-bar" x="-4.5" y="-25" width="9" height="50" rx="4.5"/><rect class="dance-playing-bar" x="11" y="-11" width="9" height="22" rx="4.5"/></g>
                           </g>
-                          <g class="stage-stars"><path d="m181 136 2 6 6 2-6 2-2 6-2-6-6-2 6-2zM455 164l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" /><circle cx="120" cy="101" r="2" /><circle cx="505" cy="114" r="2" /><circle cx="218" cy="192" r="1.5" /><circle cx="410" cy="122" r="1.5" /></g>
-                          <ellipse cx="320" cy="365" rx="270" ry="38" fill="url(#stageHalo)" />
-                          <path class="stage-floor" d="M72 366h496l50 85H22z" fill="url(#stageFloor)" />
-                          <path class="stage-floor-grid" d="M72 366h496M49 404h542M25 443h590M156 366l-47 78m131-78-22 78m102-78v78m80-78 22 78m62-78 47 78" />
-                          <g class="stage-speakers">
-                            <g transform="translate(38 234)">
-                              <rect class="stage-speaker-side" x="5" y="6" width="73" height="122" rx="13" /><rect class="stage-speaker-face" width="72" height="122" rx="12" />
-                              <circle class="stage-tweeter" cx="36" cy="28" r="12" /><circle class="stage-cone" cx="36" cy="78" r="26" /><circle class="stage-cone-cap" cx="36" cy="78" r="9" /><path class="stage-speaker-slot" d="M24 112h24" />
+                          <g class="deck-meter-panel">
+                            <rect x="433" y="139" width="175" height="213" rx="14"/>
+                            <text class="deck-meter-label" x="451" y="164">LYD</text>
+                            <g class="deck-status-lights"><circle cx="563" cy="159" r="3"/><circle cx="575" cy="159" r="3"/><circle cx="587" cy="159" r="3"/></g>
+                            <path class="deck-meter-lines" d="M451 192h137M451 230h137M451 268h137M451 307h137"/>
+                            <g id="music-equalizer" class="music-equalizer" mask="url(#deckMeterMask)">
+                            <rect class="music-eq-bar" data-eq-bar="0" x="456" y="185" width="5" height="116" rx="2" />
+                            <rect class="music-eq-bar" data-eq-bar="1" x="464" y="185" width="5" height="116" rx="2" />
+                            <rect class="music-eq-bar" data-eq-bar="2" x="472" y="185" width="5" height="116" rx="2" />
+                            <rect class="music-eq-bar" data-eq-bar="3" x="480" y="185" width="5" height="116" rx="2" />
+                            <rect class="music-eq-bar" data-eq-bar="4" x="488" y="185" width="5" height="116" rx="2" />
+                            <rect class="music-eq-bar" data-eq-bar="5" x="496" y="185" width="5" height="116" rx="2" />
+                            <rect class="music-eq-bar" data-eq-bar="6" x="504" y="185" width="5" height="116" rx="2" />
+                            <rect class="music-eq-bar" data-eq-bar="7" x="512" y="185" width="5" height="116" rx="2" />
+                            <rect class="music-eq-bar" data-eq-bar="8" x="520" y="185" width="5" height="116" rx="2" />
+                            <rect class="music-eq-bar" data-eq-bar="9" x="528" y="185" width="5" height="116" rx="2" />
+                            <rect class="music-eq-bar" data-eq-bar="10" x="536" y="185" width="5" height="116" rx="2" />
+                            <rect class="music-eq-bar" data-eq-bar="11" x="544" y="185" width="5" height="116" rx="2" />
+                            <rect class="music-eq-bar" data-eq-bar="12" x="552" y="185" width="5" height="116" rx="2" />
+                            <rect class="music-eq-bar" data-eq-bar="13" x="560" y="185" width="5" height="116" rx="2" />
+                            <rect class="music-eq-bar" data-eq-bar="14" x="568" y="185" width="5" height="116" rx="2" />
+                            <rect class="music-eq-bar" data-eq-bar="15" x="576" y="185" width="5" height="116" rx="2" />
                             </g>
-                            <g transform="translate(530 234)">
-                              <rect class="stage-speaker-side" x="-6" y="6" width="73" height="122" rx="13" /><rect class="stage-speaker-face" width="72" height="122" rx="12" />
-                              <circle class="stage-tweeter" cx="36" cy="28" r="12" /><circle class="stage-cone" cx="36" cy="78" r="26" /><circle class="stage-cone-cap" cx="36" cy="78" r="9" /><path class="stage-speaker-slot" d="M24 112h24" />
-                            </g>
+                            <text class="deck-meter-caption" x="452" y="330">WUTBORG RECORDS</text>
                           </g>
-                          <path class="stage-eq-baseline" d="M126 348h118m152 0h118" />
-                          <g id="music-equalizer" class="music-equalizer" aria-hidden="true">
-                            <rect class="music-eq-bar" data-eq-bar="0" x="128" y="236" width="9" height="108" rx="4.5" />
-                            <rect class="music-eq-bar" data-eq-bar="1" x="143" y="236" width="9" height="108" rx="4.5" />
-                            <rect class="music-eq-bar" data-eq-bar="2" x="158" y="236" width="9" height="108" rx="4.5" />
-                            <rect class="music-eq-bar" data-eq-bar="3" x="173" y="236" width="9" height="108" rx="4.5" />
-                            <rect class="music-eq-bar" data-eq-bar="4" x="188" y="236" width="9" height="108" rx="4.5" />
-                            <rect class="music-eq-bar" data-eq-bar="5" x="203" y="236" width="9" height="108" rx="4.5" />
-                            <rect class="music-eq-bar" data-eq-bar="6" x="218" y="236" width="9" height="108" rx="4.5" />
-                            <rect class="music-eq-bar" data-eq-bar="7" x="233" y="236" width="9" height="108" rx="4.5" />
-                            <rect class="music-eq-bar" data-eq-bar="8" x="397" y="236" width="9" height="108" rx="4.5" />
-                            <rect class="music-eq-bar" data-eq-bar="9" x="412" y="236" width="9" height="108" rx="4.5" />
-                            <rect class="music-eq-bar" data-eq-bar="10" x="427" y="236" width="9" height="108" rx="4.5" />
-                            <rect class="music-eq-bar" data-eq-bar="11" x="442" y="236" width="9" height="108" rx="4.5" />
-                            <rect class="music-eq-bar" data-eq-bar="12" x="457" y="236" width="9" height="108" rx="4.5" />
-                            <rect class="music-eq-bar" data-eq-bar="13" x="472" y="236" width="9" height="108" rx="4.5" />
-                            <rect class="music-eq-bar" data-eq-bar="14" x="487" y="236" width="9" height="108" rx="4.5" />
-                            <rect class="music-eq-bar" data-eq-bar="15" x="502" y="236" width="9" height="108" rx="4.5" />
+                          <g class="deck-tonearm">
+                            <circle cx="408" cy="101" r="29" fill="#081e16"/>
+                            <circle cx="408" cy="101" r="23" fill="url(#deckMetal)"/>
+                            <circle cx="408" cy="101" r="15" fill="#1b392b"/>
+                            <path class="deck-arm-shadow" d="M408 101v72q0 14-10 25l-58 62"/>
+                            <path class="deck-arm" d="M408 101v72q0 14-10 25l-58 62"/>
+                            <g transform="translate(338 262) rotate(42)"><rect class="deck-cartridge" x="-12" y="-8" width="24" height="41" rx="5"/><path d="M-6 22H6" stroke="#ffb170" stroke-width="5"/><path d="M0 33v8" stroke="#e9e2bf" stroke-width="2"/></g>
                           </g>
-                          <g class="stage-control" transform="translate(320 267)">
-                            <circle class="stage-control-shadow" cy="8" r="74" />
-                            <circle class="stage-control-aura" r="82" />
-                            <circle class="stage-control-rim" r="70" />
-                            <circle class="dance-control-core" r="59" />
-                            <path class="dance-play-mark" d="M-13-24a3 3 0 0 1 5-2L27-3a4 4 0 0 1 0 6L-8 26a3 3 0 0 1-5-2z" />
-                            <g class="dance-playing-mark">
-                              <rect class="dance-playing-bar" x="-21" y="-15" width="10" height="30" rx="5" /><rect class="dance-playing-bar" x="-5" y="-26" width="10" height="52" rx="5" /><rect class="dance-playing-bar" x="11" y="-19" width="10" height="38" rx="5" />
-                            </g>
-                          </g>
-                          <text class="stage-caption" x="320" y="433" text-anchor="middle">LYT · GÆT · PLACÉR</text>
+                          <g class="deck-ornament"><path d="M453 380h58m16 0h60"/><circle cx="520" cy="380" r="4"/></g>
+                          <path class="deck-footer-rule" d="M34 414h572"/>
                         </svg>
                         <span id="play-hidden-label" class="record-play-text">Åbn sang i Spotify</span>
                       </button>

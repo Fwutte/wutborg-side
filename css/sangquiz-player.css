@@ -1,63 +1,67 @@
-/* Vector playback stage. All animation follows the existing playback state. */
+/* A compact record deck: strong shapes stay legible at the actual game size. */
 .quiz-app .current-card .dance-play-button {
+  position: relative;
   border-radius: 16px;
-  background: #071a13;
+  background: #0a241a;
   isolation: isolate;
-  transition: filter .2s ease;
+  transition: filter .2s ease, transform .2s ease;
 }
-.quiz-app .current-card .dance-play-button:not(:disabled):hover { filter: brightness(1.1); }
-.quiz-app .current-card .dance-play-button:focus-visible { outline: 3px solid #f1cf88; outline-offset: 5px; }
-.stage-frame { fill: none; stroke: #c8d1a8; stroke-opacity: .22; stroke-width: 1; }
-.stage-header-rule { fill: none; stroke: #b8c6a4; stroke-opacity: .13; }
-.stage-wordmark, .stage-status text, .stage-caption { font-family: Archivo, Arial, sans-serif; fill: #cdd5be; font-weight: 700; }
-.stage-wordmark { font-size: 13px; letter-spacing: 3px; }
-.stage-status text { font-size: 10px; letter-spacing: 2px; }
-.stage-status circle { fill: #78977b; }
-.stage-caption { font-size: 12px; letter-spacing: 4px; fill: #abbda3; }
-.stage-beam { opacity: .35; transform-box: fill-box; transform-origin: top center; }
-.stage-wire { stroke: #91a190; stroke-width: 1.5; opacity: .5; }
-.stage-mirror-grid { fill: none; stroke: #173d32; stroke-opacity: .55; stroke-width: 1; }
-.stage-mirror-tiles { fill: #fffbe0; opacity: .45; }
-.stage-glint { fill: #fffceb; }
-.stage-stars { fill: #eae6c7; opacity: .5; }
-.stage-floor { opacity: .6; }
-.stage-floor-grid { fill: none; stroke: #8fa78b; stroke-width: 1; stroke-opacity: .15; }
-.stage-speaker-side { fill: #050f0c; }
-.stage-speaker-face { fill: #14271e; stroke: #697356; stroke-width: 1.5; }
-.stage-tweeter { fill: #0b1c15; stroke: #a89460; stroke-width: 1.5; }
-.stage-cone { fill: url(#stageCone); stroke: #bda16b; stroke-width: 1.5; transform-box: fill-box; transform-origin: center; }
-.stage-cone-cap { fill: #102218; stroke: #4d604c; stroke-width: 1; }
-.stage-speaker-slot { stroke: #0a180f; stroke-width: 3; stroke-linecap: round; }
-.stage-eq-baseline { fill: none; stroke: #d0ac66; stroke-opacity: .25; }
-.dance-play-scene .music-equalizer { filter: none; }
-.dance-play-scene .music-eq-bar { fill: url(#stageEq); opacity: .45; transition: transform 100ms linear, opacity .3s; }
-.dance-play-scene .music-eq-bar:nth-child(3n + 2) { fill: #81a99e; }
-.stage-control-shadow { fill: #051710; opacity: .6; }
-.stage-control-aura { fill: none; stroke: #efd397; stroke-width: 1; stroke-opacity: .16; }
-.stage-control-rim { fill: #122c21; stroke: url(#stageRim); stroke-width: 2; }
-.dance-play-scene .dance-control-core { fill: url(#stageButton); stroke: #fff5d5; stroke-width: 1; filter: none; }
-.dance-play-scene .dance-play-mark { fill: #17392c; }
+.quiz-app .current-card .dance-play-button:not(:disabled):hover { filter: brightness(1.12); transform: translateY(-2px); }
+.quiz-app .current-card .dance-play-button:focus-visible { outline: 3px solid #ffce80; outline-offset: 5px; }
+.deck-frame { fill: none; stroke: #d5dda6; stroke-opacity: .26; stroke-width: 1.5; }
+.deck-corner-stripe { fill: #ffac70; opacity: .25; }
+.deck-brand { fill: #f8edce; font: 900 19px Archivo, Arial, sans-serif; letter-spacing: 4px; }
+.deck-side-label rect { fill: #eab275; }
+.deck-side-label text { fill: #163426; font: 900 13px Archivo, Arial, sans-serif; letter-spacing: 2px; }
+.deck-index-ring { fill: none; stroke: #c6cba1; stroke-width: 2; opacity: .55; }
+.deck-orbit { fill: none; stroke: #a2e2b7; stroke-width: 2; stroke-dasharray: 120 1000; transform: rotate(-100deg); opacity: .75; }
+.deck-record-spin { transform-box: view-box; transform-origin: 0 0; animation: deckSpin 6s linear infinite; animation-play-state: paused; }
+.deck-grooves { fill: none; stroke: #789581; stroke-width: 1; opacity: .3; }
+.deck-sheen { fill: #c5e3c7; opacity: .12; }
+.deck-sheen-fine { opacity: .5; }
+.deck-label-stripe { fill: #fff2c3; opacity: .55; }
+.deck-label-dot { fill: #7e3927; }
+.deck-play-ripple { fill: none; stroke: #ffdaa2; stroke-width: 2; opacity: 0; }
+.dance-play-scene .dance-control-core { fill: #fff2ce; stroke: #8d522f; stroke-width: 2; filter: none; }
+.dance-play-scene .dance-play-mark { fill: #153c2b; }
 .dance-play-scene .dance-playing-bar { fill: #fff0c8; }
-body[data-playback='playing'] .stage-status circle { fill: #e7c980; }
-body[data-playback='playing'] .stage-frame { stroke: #cbb16f; stroke-opacity: .4; }
-body[data-playback='playing'] .stage-control-aura { animation: stageAura 3s ease-in-out infinite; }
-body[data-playback='playing'] .dance-play-scene .dance-control-core { fill: #204634; stroke: #e0cc92; stroke-width: 1.5; opacity: 1; }
-body[data-playback='playing'] .dance-play-scene .music-eq-bar { opacity: .92; }
-body[data-playback='playing'] .stage-beam-left { animation: stageSweepLeft 7s ease-in-out infinite; }
-body[data-playback='playing'] .stage-beam-right { animation: stageSweepRight 9s ease-in-out infinite; }
-body[data-playback='playing'] .stage-beam-center { animation: stageBeamBreathe 5s ease-in-out infinite; }
-body[data-playback='playing'] .stage-mirror-tiles { animation: stageMirrorShimmer 4s ease-in-out infinite; }
-body[data-playback='playing'] .stage-cone { animation: stageSpeakerPulse 1.2s ease-in-out infinite; }
-@keyframes stageAura { 0%, 100% { stroke-opacity: .18; } 50% { stroke-opacity: .5; } }
-@keyframes stageSweepLeft { 0%, 100% { transform: rotate(-6deg); opacity: .55; } 50% { transform: rotate(7deg); opacity: .8; } }
-@keyframes stageSweepRight { 0%, 100% { transform: rotate(7deg); opacity: .6; } 50% { transform: rotate(-7deg); opacity: .85; } }
-@keyframes stageBeamBreathe { 0%, 100% { opacity: .3; } 50% { opacity: .65; } }
-@keyframes stageMirrorShimmer { 0%, 100% { opacity: .25; } 50% { opacity: .8; } }
-@keyframes stageSpeakerPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.025); } }
+.deck-meter-panel > rect { fill: #071d16; stroke: #74927a; stroke-opacity: .55; }
+.deck-meter-label { fill: #e6dab7; font: 700 14px Archivo, Arial, sans-serif; letter-spacing: 3px; }
+.deck-status-lights { fill: #668b72; }
+.deck-meter-lines { fill: none; stroke: #b5c4a2; stroke-opacity: .12; }
+.deck-meter-caption { fill: #a7b797; font: 700 9px Archivo, Arial, sans-serif; letter-spacing: 1.4px; }
+.dance-play-scene .music-equalizer { filter: none; }
+.dance-play-scene .music-eq-bar { fill: url(#deckMeter); opacity: .65; transition: transform 90ms linear, opacity .2s; }
+.dance-play-scene .music-eq-bar:nth-child(3n + 1),
+.dance-play-scene .music-eq-bar:nth-child(3n + 2) { fill: url(#deckMeter); }
+.deck-tonearm { transform-box: view-box; transform-origin: 408px 101px; transition: transform .65s ease; transform: rotate(-18deg); }
+.deck-arm-shadow { fill: none; stroke: #020c08; stroke-opacity: .6; stroke-width: 17; stroke-linecap: round; transform: translate(4px, 7px); }
+.deck-arm { fill: none; stroke: url(#deckArm); stroke-width: 10; stroke-linecap: round; }
+.deck-cartridge { fill: #123123; stroke: #bfd3af; stroke-width: 1.5; }
+.deck-ornament { fill: #ebbd79; stroke: #b2bb8c; stroke-width: 1.5; }
+.deck-footer-rule { stroke: #c9d0a6; stroke-opacity: .25; }
+.quiz-app .dance-play-button .record-play-text {
+  position: absolute; inset: auto 12px 5.5%; width: auto; height: auto;
+  margin: 0; padding: 0; clip: auto; clip-path: none; overflow: visible;
+  color: #f6ebcf; font: 700 clamp(11px, 1.1vw, 14px)/1.3 Archivo, Arial, sans-serif;
+  letter-spacing: .01em; text-align: center; white-space: normal;
+}
+body[data-playback='playing'] .deck-record-spin { animation-play-state: running; }
+body[data-playback='playing'] .deck-orbit { animation: deckOrbit 4s linear infinite; stroke: #bbf6c8; }
+body[data-playback='playing'] .deck-tonearm { transform: rotate(0deg); }
+body[data-playback='playing'] .deck-play-ripple { animation: deckRipple 2s ease-out infinite; }
+body[data-playback='playing'] .dance-play-scene .dance-control-core { fill: #204d35; stroke: #ffe1a3; stroke-width: 2; opacity: 1; }
+body[data-playback='playing'] .dance-play-scene .music-eq-bar { opacity: 1; }
+body[data-playback='playing'] .deck-status-lights { fill: #b8efb2; }
+body[data-playback='playing'] .deck-status-lights circle:nth-child(2) { animation: deckLed 1.6s ease-in-out infinite; }
+body[data-playback='playing'] .deck-corner-stripe { opacity: .5; }
+@keyframes deckSpin { to { transform: rotate(360deg); } }
+@keyframes deckOrbit { from { transform: rotate(-100deg); } to { transform: rotate(260deg); } }
+@keyframes deckRipple { 0% { r: 53; opacity: .7; } 100% { r: 74; opacity: 0; } }
+@keyframes deckLed { 0%, 100% { opacity: .45; } 50% { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) {
   .quiz-app .dance-play-scene *, .quiz-app .current-card .dance-play-button { animation: none !important; transition: none !important; }
-  /* JS still updates its synthetic meter; suppress motion at the rendering layer. */
   .quiz-app .dance-play-scene .music-eq-bar { transform: scaleY(.15); }
-  body[data-playback='playing'] .quiz-app .dance-play-scene .music-eq-bar { transform: scaleY(.45); }
-  body[data-playback='playing'] .quiz-app .dance-play-scene .music-eq-bar:nth-child(3n) { transform: scaleY(.7); }
+  body[data-playback='playing'] .quiz-app .dance-play-scene .music-eq-bar { transform: scaleY(.5); }
+  body[data-playback='playing'] .quiz-app .dance-play-scene .music-eq-bar:nth-child(3n) { transform: scaleY(.8); }
 }
