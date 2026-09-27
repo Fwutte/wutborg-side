@@ -118,11 +118,11 @@ body[data-sangquiz-phase='game'] .app-grid { gap: 18px; }
 body[data-sangquiz-phase='game'] #game-screen { border: 1px solid #49604d; border-radius: 18px; background: #173e32; padding: 24px; }
 body[data-sangquiz-phase='game'] .current-card { border-radius: 14px; background: #102e25; border-width: 1px; }
 body[data-sangquiz-phase='game'] .game-mode-switch { position: static; width: 280px; padding: 3px; }
-body[data-sangquiz-phase='game'] .current-card .dance-play-button { width: min(100%, 360px); }
+body[data-sangquiz-phase='game'] .current-card .dance-play-button { width: min(100%, 440px); }
 body[data-sangquiz-phase='game'] .turntable { min-height: 0; padding: 0; }
 body[data-sangquiz-phase='game'] .turntable .player-controls { position: static; width: 100%; margin-top: 10px; }
 body[data-sangquiz-phase='game'] .active-team strong { color: color-mix(in srgb, var(--active-team-color) 65%, #fff8de); }
-body[data-sangquiz-phase='game'] .current-card[data-answer-visible='false'] > div { display: grid; grid-template-columns: minmax(120px, .65fr) minmax(0, 1fr); grid-template-rows: 1fr 1fr; gap: 12px; align-items: center; }
+body[data-sangquiz-phase='game'] .current-card[data-answer-visible='false'] > div { display: grid; grid-template-columns: minmax(120px, .45fr) minmax(0, 1fr); grid-template-rows: 1fr 1fr; gap: 12px; align-items: center; }
 body[data-sangquiz-phase='game'] .current-card[data-answer-visible='false'] .active-team { align-self: end; margin: 0; overflow-wrap: anywhere; }
 body[data-sangquiz-phase='game'] .current-card[data-answer-visible='false'] .turn-label { align-self: start; }
 body[data-sangquiz-phase='game'] .current-card[data-answer-visible='false'] .record-player { grid-column: 2; grid-row: 1 / 3; margin: 0; }
