@@ -4923,6 +4923,7 @@
 
   </style>
   <link rel="stylesheet" href="css/sangquiz.css?v=20260924-calm-table" />
+  <link rel="stylesheet" href="css/sangquiz-player.css?v=20260927-stage" />
 </head>
 <body>
   <div class="page">
@@ -5119,101 +5120,106 @@
                       <button id="play-hidden-button" class="play-hidden record-play-button dance-play-button" type="button" aria-label="Åbn sang i Spotify">
                         <svg class="dance-play-scene" viewBox="0 0 640 480" aria-hidden="true" focusable="false">
                           <defs>
-                            <linearGradient id="danceClubBack" x1="0" x2="1" y1="0" y2="1">
-                              <stop offset="0" stop-color="#0a1714" />
-                              <stop offset="0.55" stop-color="#16382c" />
-                              <stop offset="1" stop-color="#081f19" />
+                            <radialGradient id="stageBackdrop" cx="50%" cy="34%" r="76%">
+                              <stop stop-color="#294e42" /><stop offset=".52" stop-color="#102c25" /><stop offset="1" stop-color="#061711" />
+                            </radialGradient>
+                            <radialGradient id="stageHalo">
+                              <stop stop-color="#edca80" stop-opacity=".32" /><stop offset="1" stop-color="#edca80" stop-opacity="0" />
+                            </radialGradient>
+                            <linearGradient id="stageBeam" x1="0" y1="0" x2="0" y2="1">
+                              <stop stop-color="#f8dc9f" stop-opacity=".5" /><stop offset="1" stop-color="#f8dc9f" stop-opacity="0" />
                             </linearGradient>
-                            <radialGradient id="danceDiscoBall" cx="34%" cy="28%" r="72%">
-                              <stop offset="0" stop-color="#fff8e8" />
-                              <stop offset="0.4" stop-color="#e5a83b" />
-                              <stop offset="1" stop-color="#5b84a8" />
+                            <linearGradient id="stageCoolBeam" x1="0" y1="0" x2="0" y2="1">
+                              <stop stop-color="#92bdc5" stop-opacity=".4" /><stop offset="1" stop-color="#92bdc5" stop-opacity="0" />
+                            </linearGradient>
+                            <radialGradient id="stageMirror" cx="30%" cy="24%" r="82%">
+                              <stop stop-color="#fffdf0" /><stop offset=".28" stop-color="#e7d6a1" /><stop offset=".58" stop-color="#a9b5a0" /><stop offset=".82" stop-color="#506f67" /><stop offset="1" stop-color="#1a3e33" />
                             </radialGradient>
-                            <radialGradient id="danceFloorGlow" cx="50%" cy="50%" r="50%">
-                              <stop offset="0" stop-color="#f6efe2" stop-opacity="0.72" />
-                              <stop offset="0.38" stop-color="#e5a83b" stop-opacity="0.34" />
-                              <stop offset="1" stop-color="#e5a83b" stop-opacity="0" />
+                            <linearGradient id="stageRim" x1="0" y1="0" x2="1" y2="1">
+                              <stop stop-color="#f8e4ac" /><stop offset=".38" stop-color="#b89150" /><stop offset=".7" stop-color="#715d38" /><stop offset="1" stop-color="#d6b777" />
+                            </linearGradient>
+                            <radialGradient id="stageCone">
+                              <stop stop-color="#35483e" /><stop offset=".32" stop-color="#0d2019" /><stop offset=".78" stop-color="#263e32" /><stop offset="1" stop-color="#071a13" />
                             </radialGradient>
-                            <filter id="danceSoftShadow" x="-40%" y="-40%" width="180%" height="180%">
-                              <feDropShadow dx="0" dy="10" stdDeviation="7" flood-color="#000" flood-opacity="0.26" />
-                            </filter>
+                            <radialGradient id="stageButton" cx="36%" cy="24%" r="80%">
+                              <stop stop-color="#fff9e9" /><stop offset=".75" stop-color="#eddfbf" /><stop offset="1" stop-color="#c9b781" />
+                            </radialGradient>
+                            <linearGradient id="stageEq" x1="0" y1="0" x2="0" y2="1">
+                              <stop stop-color="#f3d18a" /><stop offset="1" stop-color="#99703b" />
+                            </linearGradient>
+                            <linearGradient id="stageFloor" x1="0" y1="0" x2="0" y2="1">
+                              <stop stop-color="#789880" stop-opacity=".25" /><stop offset="1" stop-color="#789880" stop-opacity="0" />
+                            </linearGradient>
+                            <clipPath id="stageMirrorClip"><circle cx="320" cy="88" r="44" /></clipPath>
                           </defs>
-                          <rect class="dance-club-back" width="640" height="480" rx="18" />
-                          <rect class="dance-edge-glow" x="5" y="5" width="630" height="470" rx="14" />
-                          <path class="dance-beam dance-beam-red" d="M286 42 64 414h190z" />
-                          <path class="dance-beam dance-beam-blue" d="M356 42 386 414h196z" />
-                          <path class="dance-beam dance-beam-brass" d="M320 52 180 410h280z" />
-                          <line class="dance-disco-wire" x1="320" y1="0" x2="320" y2="48" />
-                          <g class="dance-disco-ball">
-                            <circle class="dance-disco-shell" cx="320" cy="72" r="42" />
-                            <path class="dance-mirror-line" d="M284 58h72M282 76h76M292 94h56M302 35c18 22 18 52 0 74M338 35c-18 22-18 52 0 74" />
-                            <circle class="dance-disco-glint" cx="303" cy="54" r="7" fill="#fff8e8" opacity="0.86" />
+                          <rect width="640" height="480" rx="24" fill="url(#stageBackdrop)" />
+                          <rect class="stage-frame" x="12" y="12" width="616" height="456" rx="18" />
+                          <path class="stage-header-rule" d="M30 64h214m152 0h214" />
+                          <text class="stage-wordmark" x="32" y="45">SANGQUIZ</text>
+                          <g class="stage-status"><circle cx="530" cy="40" r="4" /><text x="544" y="45">MUSIK</text></g>
+                          <circle cx="320" cy="106" r="158" fill="url(#stageHalo)" />
+                          <g class="stage-beams">
+                            <path class="stage-beam stage-beam-left" d="M304 108 52 402h166z" fill="url(#stageBeam)" />
+                            <path class="stage-beam stage-beam-right" d="M336 108 422 402h166z" fill="url(#stageCoolBeam)" />
+                            <path class="stage-beam stage-beam-center" d="M320 114 210 384h220z" fill="url(#stageBeam)" />
                           </g>
-                          <circle class="dance-spark" cx="118" cy="92" r="5" />
-                          <circle class="dance-spark" cx="522" cy="96" r="4" />
-                          <circle class="dance-spark" cx="154" cy="184" r="3.5" />
-                          <circle class="dance-spark" cx="500" cy="178" r="5" />
-                          <circle class="dance-spark" cx="272" cy="142" r="4" />
-                          <circle class="dance-spark" cx="382" cy="142" r="3.5" />
-                          <path class="dance-float-note dance-float-note-a" d="M132 188v-30l25-6v27a11 8-18 1 1-7-7v-12l-12 3v20a11 8-18 1 1-6-7z" />
-                          <path class="dance-float-note dance-float-note-b" d="M478 202v-34l24 8v9l-16-5v22a10 8 18 1 1-8-7z" />
-                          <path class="dance-float-note dance-float-note-c" d="M438 126v-24l20-5v8l-13 3v18a8 6-18 1 1-7-5z" />
-                          <ellipse class="dance-floor-glow" cx="320" cy="382" rx="224" ry="76" />
-                          <path class="dance-floor-back" d="M56 356h528l-50 92H106z" />
-                          <path class="dance-floor-line" d="M106 448 196 356M188 448 248 356M270 448 300 356M352 448 352 356M434 448 404 356M516 448 456 356M58 394h524M82 424h474" />
-                          <g>
-                            <path class="dance-floor-tile dance-tile-red" d="M72 366h78l-18 27H58z" />
-                            <path class="dance-floor-tile dance-tile-blue" d="M160 366h78l-10 27h-78z" />
-                            <path class="dance-floor-tile dance-tile-brass" d="M248 366h74v27h-82z" />
-                            <path class="dance-floor-tile dance-tile-mint" d="M332 366h74l10 27h-82z" />
-                            <path class="dance-floor-tile dance-tile-red" d="M416 366h78l18 27h-74z" />
-                            <path class="dance-floor-tile dance-tile-blue" d="M92 402h86l-20 28H76z" />
-                            <path class="dance-floor-tile dance-tile-brass" d="M190 402h86l-8 28h-90z" />
-                            <path class="dance-floor-tile dance-tile-mint" d="M288 402h76v28h-84z" />
-                            <path class="dance-floor-tile dance-tile-red" d="M376 402h86l12 28h-90z" />
-                            <path class="dance-floor-tile dance-tile-blue" d="M474 402h80l18 28h-82z" />
+                          <path class="stage-wire" d="M320 0v44" />
+                          <g class="stage-mirror-ball">
+                            <circle cx="320" cy="88" r="45" fill="url(#stageRim)" />
+                            <circle cx="320" cy="88" r="44" fill="url(#stageMirror)" />
+                            <g class="stage-mirror-grid" clip-path="url(#stageMirrorClip)">
+                              <path d="M287.81304612113786 58h64.37390775772433" /><path d="M280.80816411546914 68h78.38367176906169" /><path d="M277.1514294287429 78h85.6971411425142" /><path d="M276 88h88" /><path d="M277.1514294287429 98h85.6971411425142" /><path d="M280.80816411546914 108h78.38367176906169" /><path d="M287.81304612113786 118h64.37390775772433" />
+                              <ellipse cx="320" cy="88" rx="13" ry="44" /><ellipse cx="320" cy="88" rx="29" ry="44" /><path d="M320 44v88" />
+                            </g>
+                            <g class="stage-mirror-tiles" clip-path="url(#stageMirrorClip)">
+                              <path d="M294 60h10v8h-10zM308 80h11v8h-11zM331 60h10v8h-10zM343 90h10v8h-10zM320 108h11v8h-11z" />
+                            </g>
+                            <path class="stage-glint" d="m303 57 2 9 9 2-9 2-2 9-2-9-9-2 9-2z" />
                           </g>
-                          <g>
-                            <rect class="dance-speaker" x="38" y="236" width="70" height="102" rx="14" />
-                            <circle class="dance-speaker-cone" cx="73" cy="268" r="18" />
-                            <circle class="dance-speaker-cone" cx="73" cy="312" r="14" />
-                            <rect class="dance-speaker" x="532" y="236" width="70" height="102" rx="14" />
-                            <circle class="dance-speaker-cone" cx="567" cy="268" r="18" />
-                            <circle class="dance-speaker-cone" cx="567" cy="312" r="14" />
-                          </g>
-                          <g aria-hidden="true">
-                            <path class="dance-sound-wave dance-sound-wave-a" d="M118 257c20 15 20 37 0 52" />
-                            <path class="dance-sound-wave dance-sound-wave-b" d="M130 246c32 22 32 56 0 78" />
-                            <path class="dance-sound-wave dance-sound-wave-a" d="M522 257c-20 15-20 37 0 52" />
-                            <path class="dance-sound-wave dance-sound-wave-b" d="M510 246c-32 22-32 56 0 78" />
-                          </g>
-                          <g id="music-equalizer" class="music-equalizer" aria-hidden="true">
-                            <rect class="music-eq-bar" data-eq-bar="0" x="132" y="174" width="16" height="164" rx="8" />
-                            <rect class="music-eq-bar" data-eq-bar="1" x="156" y="174" width="16" height="164" rx="8" />
-                            <rect class="music-eq-bar" data-eq-bar="2" x="180" y="174" width="16" height="164" rx="8" />
-                            <rect class="music-eq-bar" data-eq-bar="3" x="204" y="174" width="16" height="164" rx="8" />
-                            <rect class="music-eq-bar" data-eq-bar="4" x="228" y="174" width="16" height="164" rx="8" />
-                            <rect class="music-eq-bar" data-eq-bar="5" x="252" y="174" width="16" height="164" rx="8" />
-                            <rect class="music-eq-bar" data-eq-bar="6" x="276" y="174" width="16" height="164" rx="8" />
-                            <rect class="music-eq-bar" data-eq-bar="7" x="300" y="174" width="16" height="164" rx="8" />
-                            <rect class="music-eq-bar" data-eq-bar="8" x="324" y="174" width="16" height="164" rx="8" />
-                            <rect class="music-eq-bar" data-eq-bar="9" x="348" y="174" width="16" height="164" rx="8" />
-                            <rect class="music-eq-bar" data-eq-bar="10" x="372" y="174" width="16" height="164" rx="8" />
-                            <rect class="music-eq-bar" data-eq-bar="11" x="396" y="174" width="16" height="164" rx="8" />
-                            <rect class="music-eq-bar" data-eq-bar="12" x="420" y="174" width="16" height="164" rx="8" />
-                            <rect class="music-eq-bar" data-eq-bar="13" x="444" y="174" width="16" height="164" rx="8" />
-                            <rect class="music-eq-bar" data-eq-bar="14" x="468" y="174" width="16" height="164" rx="8" />
-                            <rect class="music-eq-bar" data-eq-bar="15" x="492" y="174" width="16" height="164" rx="8" />
-                          </g>
-                          <g transform="translate(320 296)">
-                            <circle class="dance-control-core" r="46" />
-                            <path class="dance-play-mark" d="M-12-24 28 0-12 24z" />
-                            <g class="dance-playing-mark">
-                              <rect class="dance-playing-bar" x="-19" y="-16" width="9" height="32" rx="4.5" />
-                              <rect class="dance-playing-bar" x="-4.5" y="-25" width="9" height="50" rx="4.5" />
-                              <rect class="dance-playing-bar" x="10" y="-11" width="9" height="22" rx="4.5" />
+                          <g class="stage-stars"><path d="m181 136 2 6 6 2-6 2-2 6-2-6-6-2 6-2zM455 164l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" /><circle cx="120" cy="101" r="2" /><circle cx="505" cy="114" r="2" /><circle cx="218" cy="192" r="1.5" /><circle cx="410" cy="122" r="1.5" /></g>
+                          <ellipse cx="320" cy="365" rx="270" ry="38" fill="url(#stageHalo)" />
+                          <path class="stage-floor" d="M72 366h496l50 85H22z" fill="url(#stageFloor)" />
+                          <path class="stage-floor-grid" d="M72 366h496M49 404h542M25 443h590M156 366l-47 78m131-78-22 78m102-78v78m80-78 22 78m62-78 47 78" />
+                          <g class="stage-speakers">
+                            <g transform="translate(38 234)">
+                              <rect class="stage-speaker-side" x="5" y="6" width="73" height="122" rx="13" /><rect class="stage-speaker-face" width="72" height="122" rx="12" />
+                              <circle class="stage-tweeter" cx="36" cy="28" r="12" /><circle class="stage-cone" cx="36" cy="78" r="26" /><circle class="stage-cone-cap" cx="36" cy="78" r="9" /><path class="stage-speaker-slot" d="M24 112h24" />
+                            </g>
+                            <g transform="translate(530 234)">
+                              <rect class="stage-speaker-side" x="-6" y="6" width="73" height="122" rx="13" /><rect class="stage-speaker-face" width="72" height="122" rx="12" />
+                              <circle class="stage-tweeter" cx="36" cy="28" r="12" /><circle class="stage-cone" cx="36" cy="78" r="26" /><circle class="stage-cone-cap" cx="36" cy="78" r="9" /><path class="stage-speaker-slot" d="M24 112h24" />
                             </g>
                           </g>
+                          <path class="stage-eq-baseline" d="M126 348h118m152 0h118" />
+                          <g id="music-equalizer" class="music-equalizer" aria-hidden="true">
+                            <rect class="music-eq-bar" data-eq-bar="0" x="128" y="236" width="9" height="108" rx="4.5" />
+                            <rect class="music-eq-bar" data-eq-bar="1" x="143" y="236" width="9" height="108" rx="4.5" />
+                            <rect class="music-eq-bar" data-eq-bar="2" x="158" y="236" width="9" height="108" rx="4.5" />
+                            <rect class="music-eq-bar" data-eq-bar="3" x="173" y="236" width="9" height="108" rx="4.5" />
+                            <rect class="music-eq-bar" data-eq-bar="4" x="188" y="236" width="9" height="108" rx="4.5" />
+                            <rect class="music-eq-bar" data-eq-bar="5" x="203" y="236" width="9" height="108" rx="4.5" />
+                            <rect class="music-eq-bar" data-eq-bar="6" x="218" y="236" width="9" height="108" rx="4.5" />
+                            <rect class="music-eq-bar" data-eq-bar="7" x="233" y="236" width="9" height="108" rx="4.5" />
+                            <rect class="music-eq-bar" data-eq-bar="8" x="397" y="236" width="9" height="108" rx="4.5" />
+                            <rect class="music-eq-bar" data-eq-bar="9" x="412" y="236" width="9" height="108" rx="4.5" />
+                            <rect class="music-eq-bar" data-eq-bar="10" x="427" y="236" width="9" height="108" rx="4.5" />
+                            <rect class="music-eq-bar" data-eq-bar="11" x="442" y="236" width="9" height="108" rx="4.5" />
+                            <rect class="music-eq-bar" data-eq-bar="12" x="457" y="236" width="9" height="108" rx="4.5" />
+                            <rect class="music-eq-bar" data-eq-bar="13" x="472" y="236" width="9" height="108" rx="4.5" />
+                            <rect class="music-eq-bar" data-eq-bar="14" x="487" y="236" width="9" height="108" rx="4.5" />
+                            <rect class="music-eq-bar" data-eq-bar="15" x="502" y="236" width="9" height="108" rx="4.5" />
+                          </g>
+                          <g class="stage-control" transform="translate(320 267)">
+                            <circle class="stage-control-shadow" cy="8" r="74" />
+                            <circle class="stage-control-aura" r="82" />
+                            <circle class="stage-control-rim" r="70" />
+                            <circle class="dance-control-core" r="59" />
+                            <path class="dance-play-mark" d="M-13-24a3 3 0 0 1 5-2L27-3a4 4 0 0 1 0 6L-8 26a3 3 0 0 1-5-2z" />
+                            <g class="dance-playing-mark">
+                              <rect class="dance-playing-bar" x="-21" y="-15" width="10" height="30" rx="5" /><rect class="dance-playing-bar" x="-5" y="-26" width="10" height="52" rx="5" /><rect class="dance-playing-bar" x="11" y="-19" width="10" height="38" rx="5" />
+                            </g>
+                          </g>
+                          <text class="stage-caption" x="320" y="433" text-anchor="middle">LYT · GÆT · PLACÉR</text>
                         </svg>
                         <span id="play-hidden-label" class="record-play-text">Åbn sang i Spotify</span>
                       </button>

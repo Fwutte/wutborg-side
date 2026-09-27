@@ -1,0 +1,63 @@
+/* Vector playback stage. All animation follows the existing playback state. */
+.quiz-app .current-card .dance-play-button {
+  border-radius: 16px;
+  background: #071a13;
+  isolation: isolate;
+  transition: filter .2s ease;
+}
+.quiz-app .current-card .dance-play-button:not(:disabled):hover { filter: brightness(1.1); }
+.quiz-app .current-card .dance-play-button:focus-visible { outline: 3px solid #f1cf88; outline-offset: 5px; }
+.stage-frame { fill: none; stroke: #c8d1a8; stroke-opacity: .22; stroke-width: 1; }
+.stage-header-rule { fill: none; stroke: #b8c6a4; stroke-opacity: .13; }
+.stage-wordmark, .stage-status text, .stage-caption { font-family: Archivo, Arial, sans-serif; fill: #cdd5be; font-weight: 700; }
+.stage-wordmark { font-size: 13px; letter-spacing: 3px; }
+.stage-status text { font-size: 10px; letter-spacing: 2px; }
+.stage-status circle { fill: #78977b; }
+.stage-caption { font-size: 12px; letter-spacing: 4px; fill: #abbda3; }
+.stage-beam { opacity: .35; transform-box: fill-box; transform-origin: top center; }
+.stage-wire { stroke: #91a190; stroke-width: 1.5; opacity: .5; }
+.stage-mirror-grid { fill: none; stroke: #173d32; stroke-opacity: .55; stroke-width: 1; }
+.stage-mirror-tiles { fill: #fffbe0; opacity: .45; }
+.stage-glint { fill: #fffceb; }
+.stage-stars { fill: #eae6c7; opacity: .5; }
+.stage-floor { opacity: .6; }
+.stage-floor-grid { fill: none; stroke: #8fa78b; stroke-width: 1; stroke-opacity: .15; }
+.stage-speaker-side { fill: #050f0c; }
+.stage-speaker-face { fill: #14271e; stroke: #697356; stroke-width: 1.5; }
+.stage-tweeter { fill: #0b1c15; stroke: #a89460; stroke-width: 1.5; }
+.stage-cone { fill: url(#stageCone); stroke: #bda16b; stroke-width: 1.5; transform-box: fill-box; transform-origin: center; }
+.stage-cone-cap { fill: #102218; stroke: #4d604c; stroke-width: 1; }
+.stage-speaker-slot { stroke: #0a180f; stroke-width: 3; stroke-linecap: round; }
+.stage-eq-baseline { fill: none; stroke: #d0ac66; stroke-opacity: .25; }
+.dance-play-scene .music-equalizer { filter: none; }
+.dance-play-scene .music-eq-bar { fill: url(#stageEq); opacity: .45; transition: transform 100ms linear, opacity .3s; }
+.dance-play-scene .music-eq-bar:nth-child(3n + 2) { fill: #81a99e; }
+.stage-control-shadow { fill: #051710; opacity: .6; }
+.stage-control-aura { fill: none; stroke: #efd397; stroke-width: 1; stroke-opacity: .16; }
+.stage-control-rim { fill: #122c21; stroke: url(#stageRim); stroke-width: 2; }
+.dance-play-scene .dance-control-core { fill: url(#stageButton); stroke: #fff5d5; stroke-width: 1; filter: none; }
+.dance-play-scene .dance-play-mark { fill: #17392c; }
+.dance-play-scene .dance-playing-bar { fill: #fff0c8; }
+body[data-playback='playing'] .stage-status circle { fill: #e7c980; }
+body[data-playback='playing'] .stage-frame { stroke: #cbb16f; stroke-opacity: .4; }
+body[data-playback='playing'] .stage-control-aura { animation: stageAura 3s ease-in-out infinite; }
+body[data-playback='playing'] .dance-play-scene .dance-control-core { fill: #204634; stroke: #e0cc92; stroke-width: 1.5; opacity: 1; }
+body[data-playback='playing'] .dance-play-scene .music-eq-bar { opacity: .92; }
+body[data-playback='playing'] .stage-beam-left { animation: stageSweepLeft 7s ease-in-out infinite; }
+body[data-playback='playing'] .stage-beam-right { animation: stageSweepRight 9s ease-in-out infinite; }
+body[data-playback='playing'] .stage-beam-center { animation: stageBeamBreathe 5s ease-in-out infinite; }
+body[data-playback='playing'] .stage-mirror-tiles { animation: stageMirrorShimmer 4s ease-in-out infinite; }
+body[data-playback='playing'] .stage-cone { animation: stageSpeakerPulse 1.2s ease-in-out infinite; }
+@keyframes stageAura { 0%, 100% { stroke-opacity: .18; } 50% { stroke-opacity: .5; } }
+@keyframes stageSweepLeft { 0%, 100% { transform: rotate(-6deg); opacity: .55; } 50% { transform: rotate(7deg); opacity: .8; } }
+@keyframes stageSweepRight { 0%, 100% { transform: rotate(7deg); opacity: .6; } 50% { transform: rotate(-7deg); opacity: .85; } }
+@keyframes stageBeamBreathe { 0%, 100% { opacity: .3; } 50% { opacity: .65; } }
+@keyframes stageMirrorShimmer { 0%, 100% { opacity: .25; } 50% { opacity: .8; } }
+@keyframes stageSpeakerPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.025); } }
+@media (prefers-reduced-motion: reduce) {
+  .quiz-app .dance-play-scene *, .quiz-app .current-card .dance-play-button { animation: none !important; transition: none !important; }
+  /* JS still updates its synthetic meter; suppress motion at the rendering layer. */
+  .quiz-app .dance-play-scene .music-eq-bar { transform: scaleY(.15); }
+  body[data-playback='playing'] .quiz-app .dance-play-scene .music-eq-bar { transform: scaleY(.45); }
+  body[data-playback='playing'] .quiz-app .dance-play-scene .music-eq-bar:nth-child(3n) { transform: scaleY(.7); }
+}
