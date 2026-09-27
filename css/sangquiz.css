@@ -158,7 +158,60 @@ body[data-sangquiz-phase='game'] .score-controls button { color: var(--paper); b
 .quiz-app .timeline-card .song-card-year { color: var(--ink); font-size: clamp(28px, 2.6vw, 38px); line-height: 1.15; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .quiz-app .timeline-card .song-card-front { padding: 14px 10px; gap: 8px; }
 @media (min-width: 1041px) {
-  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] .app-grid { grid-template-columns: minmax(0, 1fr) minmax(300px, 350px); }
+  /* Room-scale reading: use the display width and scale the whole playing table. */
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] {
+    --sq-room-text: clamp(20px, 1.45vw, 30px);
+    --sq-room-small: clamp(18px, 1.15vw, 24px);
+    font-size: var(--sq-room-text);
+  }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] .page { width: calc(100% - 32px); max-width: 2560px; }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] .app-grid { grid-template-columns: minmax(0, 1fr) clamp(330px, 25vw, 560px); gap: 20px; }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] #game-screen { padding: clamp(18px, 1.4vw, 32px); }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] #game-screen:not([hidden]) { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'status mode' 'song song' 'timeline action' 'answer answer'; gap: 14px 20px; align-content: start; }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] .round-bar { grid-area: status; align-self: center; flex-wrap: wrap; justify-content: flex-start; margin: 0; }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] .current-card { grid-area: song; min-width: 0; }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] .placement-grid { grid-area: timeline; min-width: 0; margin: 0; }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] #game-screen > .primary-actions { grid-area: action; align-self: end; margin: 0 0 14px; }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] #reveal-panel { grid-area: answer; min-width: 0; }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] .game-mode-switch { grid-area: mode; align-self: start; width: max-content; max-width: 100%; margin: 0; }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] .game-mode-switch button { min-height: 48px; font-size: var(--sq-room-small); padding: 10px 18px; }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] :is(.round-meta, .deck-status, .turn-label) { font-size: var(--sq-room-small); line-height: 1.3; padding: 10px 14px; }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] .active-team strong { font-size: clamp(56px, 5.2vw, 112px); line-height: 1.1; }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] .current-card[data-answer-visible='false'] > div { grid-template-columns: minmax(0, .65fr) minmax(0, 1fr); grid-template-rows: auto; gap: 20px; }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] .current-card[data-answer-visible='false'] .active-team { align-self: center; }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] .current-card[data-answer-visible='false'] .record-player { grid-row: 1; }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] .current-card .turn-label { display: none; }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] .current-card .dance-play-button { width: min(100%, clamp(440px, 30vw, 680px)); }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] .dance-play-button .record-play-text { font-size: var(--sq-room-small); }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] .player-controls { gap: 12px; }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] .player-controls button { min-height: 54px; font-size: var(--sq-room-small); padding: 12px 18px; }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] :is(.primary-actions, .score-actions) button { min-height: 64px; padding: 16px 26px; font-size: var(--sq-room-text); line-height: 1.25; }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] .placement-box { padding: 18px 0 0; }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] .placement-box h3 { font-size: var(--sq-room-text); }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] .slot-grid { gap: 14px; }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] .slot-button { flex-basis: clamp(126px, 8.5vw, 180px); min-height: clamp(160px, 18vh, 210px); padding: 14px; }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] .slot-main { font-size: var(--sq-room-text); }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] .slot-hint { font-size: var(--sq-room-small); line-height: 1.35; }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] .timeline-card { flex-basis: clamp(210px, 15vw, 320px); min-height: 230px; }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] .timeline-card .song-card-year { font-size: clamp(44px, 3.3vw, 72px); }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] .song-card-title { font-size: var(--sq-room-text); line-height: 1.2; }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] .song-card-artist { font-size: var(--sq-room-small); line-height: 1.35; }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] .score-panel { padding: clamp(18px, 1.4vw, 30px); }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] .score-panel > .panel-heading h2 { font-size: clamp(30px, 2.2vw, 48px); }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] .score-panel > .panel-heading span { font-size: var(--sq-room-small); }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] .score-row { padding: 20px; gap: 14px; }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] .score-name strong { display: block; font-size: clamp(32px, 2.5vw, 56px); line-height: 1.15; }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] .score-name strong::after { margin-left: 8px; vertical-align: middle; }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] .score-name small { font-size: var(--sq-room-small); line-height: 1.4; margin-top: 8px; }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] .score-value { font-size: clamp(80px, 6vw, 132px); line-height: 1; }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] .score-track { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] .score-tick { min-height: clamp(48px, 3.2vw, 68px); font-size: var(--sq-room-small); }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] .host-panel > summary { width: 56px; height: 56px; font-size: 24px; }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] #reveal-title { font-size: clamp(36px, 3vw, 64px); }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] #reveal-panel .answer-year { font-size: clamp(64px, 5vw, 108px); }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] :is(.answer-artist, .placement-result, .bonus-toggle) { font-size: var(--sq-room-text); }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] .bonus-toggle small { font-size: var(--sq-room-small); }
+  body[data-sangquiz-mode='screen'][data-sangquiz-phase='game'] .bonus-toggle input { width: 30px; height: 30px; }
 }
 body[data-sangquiz-phase='finish'] #finish-screen { padding: 36px; border: 0; border-radius: 20px; background: var(--sq-green); }
 body[data-sangquiz-phase='finish'][data-sangquiz-mode] .app-head,
