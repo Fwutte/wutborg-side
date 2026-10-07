@@ -33,7 +33,7 @@
     });
     const xs=samples.map(p=>p.x),ys=samples.map(p=>p.y),padding=config.halfWidth+160;
     const bounds={minX:Math.min(...xs)-padding,maxX:Math.max(...xs)+padding,minY:Math.min(...ys)-padding,maxY:Math.max(...ys)+padding};
-    const track = { ...config, revision:5, length, samples, bounds, step:length/segments,
+    const track = { ...config, revision:6, length, samples, bounds, step:length/segments,
       cx:(bounds.minX+bounds.maxX)/2,cy:(bounds.minY+bounds.maxY)/2,width:bounds.maxX-bounds.minX,height:bounds.maxY-bounds.minY };
     // Cosine hills join the start/finish seamlessly and keep every gradient driveable.
     track.elevationAt = function(s) {

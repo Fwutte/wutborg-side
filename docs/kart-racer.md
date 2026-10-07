@@ -1,4 +1,4 @@
-# Wutborg Kart, version 5
+# Wutborg Kart, version 6
 
 The game at kart-racer.html uses local Three.js and procedural scenery. No new packages or remote assets are required.
 
@@ -9,8 +9,28 @@ The game at kart-racer.html uses local Three.js and procedural scenery. No new p
 - The new courses add launch ramps, moving obstacles and narrow turbo side routes. Holding drift when landing gives a boost. Airborne karts can clear obstacles.
 - Frosttinderne has reduced grip between 16% and 72% of the lap. Steer early; drifting also has less grip here.
 - Volcano craters, snowy crystals, jungle temples and weather distinguish the landscapes. The Canvas fallback also draws ramps, obstacles and side routes.
-- Keyboard: arrows/WASD to drive, Shift/X to drift, Space/Z for items, R to recover and Escape to pause. Touch buttons provide the same actions.
+- Keyboard: arrows/WASD to drive, Shift/X to drift, Space/Z for items, C to hold rear view, R to recover and Escape to pause. Touch buttons provide the same actions; gamepad Y holds rear view.
 - Gamepad mappings remain available, but this update was not tested with a physical controller.
+
+## Follow-up review: time trial and control fixes
+
+Time trial now records the best completed run without recovery as a personal ghost for the same course revision and driver. It samples position, heading, road/jump height and furthest progress at 10 Hz, interpolates playback between samples and renders one translucent kart without shadows. The ghost never joins the physical field or takes pickups. The HUD compares elapsed time at the same progress on the recorded run; the reference uses first crossings so reversing does not corrupt the comparison. Pause freezes both playback and the clock. Item controls are hidden in time trial.
+
+The four most recently updated driver/course ghosts are cached locally under `ghosts` in the existing save. Recordings are limited to ten minutes and 6,002 frames; malformed replays are rejected while records and preferences remain available. Faster clean runs replace their own ghost. Recovery runs still show normal results, but do not overwrite a clean ghost. On a storage quota error the oldest cached replays are removed until records/preferences can be saved. Existing record keys remain version 6.
+
+Gamepad Start launches the selected race, pauses/resumes and continues/retries from results. B recovers during racing. Held Start cannot repeatedly toggle after reset, and held buttons do not activate when a controller connects. Mobile now has a separate recovery button. Pause/menu/restart clear pressed touch highlights and pending actions. Keyboard focus returns to driving after sound/fullscreen actions, repeated Escape keydowns are ignored, and recovery cannot move the kart during countdown. Kart collisions also compare total elevation plus jump height to prevent contact between separate heights.
+
+## Racing update
+
+Version 6 adds slipstream for both human and AI drivers. Follow an aligned, moving kart 60–300 simulation units ahead; after 1.3 seconds its wake provides up to 22 units of extra top speed and 30 units of acceleration. It fades over 0.5 seconds when the wake is lost. Opposite travel, off-road driving, spins, jumps and separated elevations cannot produce a tow. The AI includes earned slipstream speed in its existing corner/braking plan.
+
+A nearby-car radar and side arrows show physical proximity, including lapped cars. The HUD names the next ranked rival and shows an approximate gap based on progress and current speed, not an official timing split. The rear camera switches immediately while C, gamepad Y or the touch button is held, and returns to chase view on release. Pause and restart clear held/view state; recovery clears the tow and resets the gearbox/camera.
+
+The automatic gearbox provides five forward gears, reverse, neutral and engine RPM with shift hysteresis. This models audiovisual engine feedback; the existing continuous torque curve still drives the kart. Engine pitch and load now follow RPM and throttle, with a brief dip during shifts. Filtered tyre noise follows actual slip and surface, and stops in the air, menus or pause. Sound remains optional.
+
+Completed laps show their time and difference against the best earlier/saved lap for five simulation seconds. Pause freezes this feedback. The best lap is visible during racing; the result lists all three lap splits. Result handling is idempotent so repeated display cannot award cup points twice.
+
+Jump height now gates floor traps, shells, turbo pads and pickups; a high jump can clear traps without collecting objects on the ground. Coins use two animated instanced meshes for the entire course, retaining bobbing, spinning, collection and respawn while reducing draw calls. No new packages or external assets are required.
 
 ## Handling update
 
@@ -34,7 +54,7 @@ js/kart-racer-data.js owns spline geometry, surface regions, ramps and obstacles
 
 js/kart-racer.js runs fixed 60 Hz physics and separately simulates jump height. js/kart-racer-3d.js renders course mechanics and particles; js/kart-racer-world.js batches landscape geometry. Weather and particle counts are capped. Mobile retains its reduced pixel ratio and shadow settings.
 
-Settings stay under wutborg.kart.v2. Personal records now use track-id:v5:difficulty (or time), since the handling model changes race times. Earlier records remain in storage. Highscore submissions identify version 5.
+Settings stay under wutborg.kart.v2. Personal records now use track-id:v6:difficulty (or time), since slipstream and jump interactions change race times. Earlier records remain in storage. Highscore submissions identify version 6.
 
 ## Validation
 
@@ -44,8 +64,10 @@ npm run test:expansions tests launching, landing boosts, obstacle clearance, sid
 
 npm run test:kart-ai runs 14 checks for rival profiles, starts, ice anticipation, passing, obstacle prediction, safe pickups, ramp setup, item tactics and drift release. It compares the new AI against the previous controller using the same physics, driver, pickups and moving hazards over three laps on each of the six tracks. The deterministic benchmark measured 20.0% shorter total race time for Sport; Expert was another 4.9% quicker overall and finished faster on every course. These are controlled simulations, not a prediction of a human player's win rate.
 
+npm run test:kart-racing runs 21 checks for slipstream, radar, gears/RPM, lap comparisons, airborne interactions, rear view, command edges/reconnects, collision height, ghost interpolation/capture/validation/isolation and storage quota handling. The browser scenario `?scenario=racing` passed 27 integration checks including the Web Audio graph, rear camera, HUD, coin hiding/respawn and frozen lap feedback. `?scenario=refinement` passed 33 checks for focus restoration, held Escape, touch/gamepad recovery, gamepad race launch/retry, full time-trial recording/playback, ghost timing, pause and GPU resource cleanup. `?scenario=ghost-view` exposes that same recorded run for visual inspection. Portrait 390 × 844 and landscape 844 × 390 screenshots verified the time-trial HUD and recovery/rear-view buttons. Browser QA disables score submissions and persistence.
+
 Serve the repository and open scripts/game-expansion.browser-test.html for isolated visual scenes without saved results. The existing scripts/kart-racer.browser-test.html covers the full six-race cup; ?scenario=preview&track=0&stop=10 supports course indices 0–5, an optional &at=0.46 starting fraction and &difficulty=expert (or normal/relaxed). The rival update's live Expert preview ran for 12 seconds on Frosttinderne without runtime errors. Browser screenshots verify local rendering; they do not establish performance on physical phones.
 
 The six-race browser integration test exercises race completion, totals, final standings, restart, rendering budget and GPU resource cleanup.
 
-The October 7 handling check (`scripts/kart-racer.browser-test.html?scenario=handling`) passed all 17 browser checks, including keyboard/touch input, restoring focus after item use, pose interpolation, body movement, steering wheels, paused wheel animation, camera recovery and GPU cleanup. The full integration run completed all six Grand Prix races. Its existing menu budget of fewer than 300 draw calls failed: isolated measurements gave 322 calls for both the original renderer and version 5 at the same viewport. That scenery budget remains an outstanding issue independent of handling.
+The October 7 handling check (`scripts/kart-racer.browser-test.html?scenario=handling`) passed all 17 browser checks. Version 6 also passed the expanded full Grand Prix integration run: 52 checks, including all six races, three lap splits per result, duplicate-point protection and GPU cleanup. The same desktop menu now uses 261 draw calls, down from the previously measured 322; the existing budget of fewer than 300 passes. Browser checks do not establish physical controller or phone performance.
