@@ -6,6 +6,12 @@ import { reflectionEnvironment, glowTexture, softSprite, energyShieldMaterial } 
 const TAU=Math.PI*2;
 const yaw=h=>Math.PI/2-h;
 const damp=(a,b,rate,dt)=>THREE.MathUtils.lerp(a,b,1-Math.exp(-rate*dt));
+const renderPose=(kart,alpha=1)=>{
+  const previous=kart.previousPose;if(!previous)return kart;
+  const pose={};for(const key of ["x","y","elevation","airHeight"])pose[key]=THREE.MathUtils.lerp(previous[key],kart[key],alpha);
+  pose.heading=previous.heading+window.WutborgKartData.angleDelta(previous.heading,kart.heading)*alpha;
+  return pose;
+};
 const rng=seed=>()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
 
 export class KartRacer3DRenderer {
@@ -320,12 +326,14 @@ export class KartRacer3DRenderer {
     const list=preview?[{driver:options.driver,...race.track.at(-70,-25),speed:0,visualSteer:0}]:race.karts;
     list.forEach((k,i)=>{
       const e=this.karts[i];if(!e)return;
-      e.group.position.copy(world(k,.04+(k.airHeight||0)*SCALE));
-      e.group.rotation.set(-Math.atan(k.slope||0),yaw(k.heading),0,"YXZ");
-      e.body.rotation.y=k.spinTimer>0?Math.sin(k.spinTimer*16)*Math.PI:k.drifting?-k.driftDirection*.15:0;
-      e.body.rotation.z=damp(e.body.rotation.z,-(k.visualSteer||0)*Math.min(k.speed/600,.55)*.14,10,dt);
+      const pose=renderPose(k,options.alpha);
+      e.group.position.copy(world(pose,.04+(pose.airHeight||0)*SCALE));
+      e.group.rotation.set(-Math.atan(k.slope||0),yaw(pose.heading),0,"YXZ");
+      e.body.rotation.y=k.spinTimer>0?Math.sin(k.spinTimer*16)*Math.PI:0;
+      e.body.rotation.x=damp(e.body.rotation.x,THREE.MathUtils.clamp((k.longitudinalAcceleration||0)/440,-1,1)*.065,8,dt);
+      e.body.rotation.z=damp(e.body.rotation.z,-THREE.MathUtils.clamp((k.lateralAcceleration||0)/760,-1,1)*.12,8,dt);
       e.body.position.y=(k.hop>0?Math.sin(k.hop/.25*Math.PI)*.25:0)+Math.sin(t*17+i)*Math.min(k.speed/18000,.02);
-      e.wheels.forEach(w=>{if(w.front)w.pivot.rotation.y=-(k.visualSteer||0)*.36;w.wheel.rotation.x=t*k.speed*.02;});
+      e.wheels.forEach(w=>{if(w.front)w.pivot.rotation.y=-(k.steeringAngle||0);w.wheel.rotation.x=(k.wheelTravel||0)*SCALE/.26;});
       e.flames.forEach(f=>{f.visible=k.boostTimer>0;f.scale.y=1+Math.sin(t*38)*.22;});
       e.shield.visible=k.starTimer>0||k.invincibleTimer>0;e.shield.rotation.y=t;
       e.shield.material.color.set(k.starTimer>0?"#ffe88f":"#a3e6ff");
@@ -372,7 +380,7 @@ export class KartRacer3DRenderer {
     });
     this.particles.instanceMatrix.needsUpdate=true;if(this.particles.instanceColor)this.particles.instanceColor.needsUpdate=true;
   }
-  updateCamera(race,dt){
+  updateCamera(race,dt,alpha=1){
     const p=race.player,portrait=this.camera.aspect<.9;
     let desired,look,fov;
     if(!p){
@@ -382,14 +390,18 @@ export class KartRacer3DRenderer {
       look=position.clone().addScaledVector(forward,4).addScaledVector(side,portrait?0:4.6);look.y=position.y+1;
       fov=portrait?65:57;
     }else{
-      const delta=window.WutborgKartData.angleDelta(this.cameraHeading,p.heading);
-      if(!this.cameraReady)this.cameraHeading=p.heading;else this.cameraHeading+=delta*(1-Math.exp(-7*dt));
-      const forward=new THREE.Vector3(Math.cos(this.cameraHeading),0,Math.sin(this.cameraHeading)),position=world(p);
+      const pose=renderPose(p,alpha),slip=window.WutborgKartData.angleDelta(p.heading,p.velocityHeading);
+      const followHeading=pose.heading+THREE.MathUtils.clamp(slip,-.65,.65)*.35;
+      const delta=window.WutborgKartData.angleDelta(this.cameraHeading,followHeading);
+      if(this.cameraRecoveries!==p.recoveries){this.cameraReady=false;this.cameraRecoveries=p.recoveries;}
+      if(!this.cameraReady)this.cameraHeading=followHeading;else this.cameraHeading+=delta*(1-Math.exp(-(p.drifting?4.5:7)*dt));
+      const forward=new THREE.Vector3(Math.cos(this.cameraHeading),0,Math.sin(this.cameraHeading)),position=world(pose);
       const ratio=Math.min(1,Math.abs(p.speed)/400),boost=p.boostTimer>0;
       desired=position.clone().addScaledVector(forward,-(portrait?8.8:8.2)-ratio*.8);
       desired.y=position.y+(portrait?5.1:4.8)+ratio*.25;
       const behind=race.track.at(p.road.s-290);desired.y=Math.max(desired.y,behind.elevation*SCALE+2.5);
       look=position.clone().addScaledVector(forward,portrait?5.5:7.5);look.y=race.track.elevationAt(p.road.s+200)*SCALE+.7;
+      look.addScaledVector(new THREE.Vector3(-forward.z,0,forward.x),THREE.MathUtils.clamp(p.yawRate||0,-1.5,1.5)*.7);
       fov=(portrait?69:60)+ratio*5+(boost?5:0);
     }
     if(!this.cameraReady){this.camera.position.copy(desired);this.target.copy(look);this.cameraReady=true;}
@@ -407,7 +419,7 @@ export class KartRacer3DRenderer {
       this.renderer.setSize(w,h,false);this.camera.aspect=w/h;this.camera.updateProjectionMatrix();
     }
     this.sync(race,options.paused?0:dt,options);
-    this.updateCamera(race,options.paused?0:dt);
+    this.updateCamera(race,options.paused?0:dt,options.alpha);
     this.sun.position.copy(this.target).add(new THREE.Vector3(-25,55,-35));this.sun.target.position.copy(this.target);
     this.renderer.render(this.scene,this.camera);
   }

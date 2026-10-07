@@ -34,7 +34,7 @@ test("six closed, distinct tracks; pickups and grid stay on the road",()=>{
 });
 test("expanded roads and hills remain continuous, wide and within their maps",()=>{
   for(const t of TRACKS){
-    assert.equal(t.revision,4);assert.ok(t.bridge[0]<t.bridge[1]);
+    assert.equal(t.revision,5);assert.ok(t.bridge[0]<t.bridge[1]);
     assert.ok(Math.abs(t.elevationAt(-.01)-t.elevationAt(t.length+.01))<.01);
     assert.ok(Math.abs(t.slopeAt(-.01)-t.slopeAt(t.length+.01))<.001);
     let highest=0;
@@ -60,10 +60,10 @@ test("karts and recovery follow the same hill height as the road",()=>{
   }
 });
 test("new course records are isolated while driver preferences are retained",()=>{
-  const track=TRACKS[0],oldKey=track.id+":normal";
+  const track=TRACKS[0],oldKey=track.id+":v4:normal";
   const saved=readSave({getItem:()=>JSON.stringify({records:{[oldKey]:{time:45}},settings:{driver:"luna",autoGas:true}})});
   const key=KartGame.prototype.recordKey.call({track,mode:"single",difficulty:"normal"});
-  assert.notEqual(key,oldKey);assert.equal(saved.records[key],undefined);assert.equal(saved.records[oldKey].time,45);
+  assert.equal(key,track.id+":v5:normal");assert.notEqual(key,oldKey);assert.equal(saved.records[key],undefined);assert.equal(saved.records[oldKey].time,45);
   assert.equal(saved.settings.driver,"luna");assert.equal(saved.settings.autoGas,true);
 });
 test("countdown, correct rear grid position and start boost timing",()=>{
@@ -160,6 +160,122 @@ test("malformed or unavailable storage and time rounding",()=>{
   for(const value of ["{", "null", "5", '{"records":null,"settings":null}'])assert.ok(readSave({getItem:()=>value}).records);
   assert.ok(readSave({getItem(){throw Error("blocked");}}).records);
   assert.equal(formatTime(59.999),"1:00.00");assert.equal(formatTime(-1),"0:00.00");
+});
+
+// An unbounded flat road isolates handling from barriers, pickups and course curvature.
+function handlingTrack(surface="asphalt"){
+  return {halfWidth:100000,surfaceAt:()=>surface,isShortcut:()=>false,slopeAt:()=>0,
+    at:s=>({x:s,y:0,s,elevation:0,slope:0,heading:0}),
+    nearest:(x,y)=>({x,y:0,s:x,index:0,elevation:0,slope:0,heading:0,lateral:y,distance:Math.abs(y)})};
+}
+function handlingKart(speed=0,track=handlingTrack()){
+  const kart=new Kart(DRIVERS[0]);kart.reset(track);
+  Object.assign(kart,{x:0,y:0,heading:0,velocityHeading:0,speed,road:track.nearest(0,0)});
+  return kart;
+}
+function drive(kart,track,input,seconds){for(let i=0;i<Math.round(seconds*60);i++)kart.update(1/60,input,track);}
+
+test("stationary steering cannot rotate a kart and reverse steering changes direction",()=>{
+  const track=handlingTrack(),parked=handlingKart(0,track);
+  drive(parked,track,{...EMPTY,steer:1},1);assert.equal(parked.heading,0);assert.equal(parked.speed,0);
+  const forward=handlingKart(80,track),reverse=handlingKart(-80,track);
+  drive(forward,track,{...EMPTY,steer:1},.3);drive(reverse,track,{...EMPTY,steer:1},.3);
+  assert.ok(forward.heading>.05);assert.ok(reverse.heading<-.05);
+});
+test("high-speed steering reduces wheel angle and respects available grip",()=>{
+  const track=handlingTrack(),slow=handlingKart(80,track),fast=handlingKart(480,track);
+  drive(slow,track,{...EMPTY,steer:1},.3);drive(fast,track,{...EMPTY,steer:1},.3);
+  assert.ok(Math.abs(fast.steeringAngle)<Math.abs(slow.steeringAngle)*.65);
+  assert.ok(Math.abs(fast.yawRate)*Math.abs(fast.speed)<900,"full steering at boost speed has a finite grip budget");
+  const heading=fast.heading;drive(fast,track,EMPTY,.6);
+  assert.ok(Math.abs(fast.yawRate)<.12,"steering recenters after releasing the key");assert.ok(fast.heading>heading);
+});
+test("partial throttle and brake remain proportional; braking pauses before reverse",()=>{
+  const track=handlingTrack(),full=handlingKart(0,track),partial=handlingKart(0,track);
+  drive(full,track,gas,1);drive(partial,track,{...gas,accelerate:.35},1);
+  assert.ok(partial.speed>30&&partial.speed<full.speed*.55);
+  const hard=handlingKart(250,track),soft=handlingKart(250,track);
+  drive(hard,track,{...EMPTY,brake:true},.3);drive(soft,track,{...EMPTY,brake:.3},.3);
+  assert.ok(hard.speed<soft.speed-50);
+  const reverse=handlingKart(0,track);drive(reverse,track,{...EMPTY,brake:true},.2);assert.equal(reverse.speed,0);
+  drive(reverse,track,{...EMPTY,brake:true},1);assert.ok(reverse.speed<-50&&reverse.speed>=-95);
+  drive(reverse,track,gas,.1);assert.ok(reverse.speed<=0,"gas brakes reverse motion before driving forwards");
+  drive(reverse,track,gas,1);assert.ok(reverse.speed>100);
+});
+test("boost expiration decelerates smoothly instead of snapping to a speed cap",()=>{
+  const track=handlingTrack(),kart=handlingKart(470,track);kart.boostTimer=.001;
+  kart.update(1/60,gas,track);assert.ok(kart.speed>450&&kart.speed<470);
+  drive(kart,track,gas,3);assert.ok(kart.speed<=kart.driver.maxSpeed+1);
+});
+test("drift responds to countersteer, restores grip and cannot charge on a straight",()=>{
+  const track=handlingTrack(),kart=handlingKart(280,track);
+  drive(kart,track,{...gas,steer:.7,drift:true},.7);
+  assert.ok(kart.drifting&&kart.driftTimer>.3);assert.ok(kart.slipAngle<-.15);
+  const yawBefore=kart.yawRate;drive(kart,track,{...gas,steer:-1,drift:true},.3);
+  assert.ok(kart.yawRate<yawBefore-.4,"opposite steering controls the slide");
+  const charge=kart.driftTimer;drive(kart,track,{...gas,steer:-1,drift:true},.1);assert.equal(kart.driftTimer,charge);
+  drive(kart,track,gas,1);assert.equal(kart.drifting,false);assert.ok(Math.abs(kart.slipAngle)<.05);
+  const straight=handlingKart(280,track);drive(straight,track,{...gas,drift:true},1);
+  assert.equal(straight.driftTimer,0);assert.equal(straight.boostTimer,0);
+});
+test("ice has less cornering grip and airborne steering preserves momentum",()=>{
+  const asphalt=handlingTrack(),ice=handlingTrack("ice"),dry=handlingKart(300,asphalt),icy=handlingKart(300,ice);
+  drive(dry,asphalt,{...gas,steer:1},.6);drive(icy,ice,{...gas,steer:1},.6);
+  assert.ok(Math.abs(icy.slipAngle)>Math.abs(dry.slipAngle)*1.3);assert.ok(icy.yawRate<dry.yawRate);
+  const air=handlingKart(300,asphalt);air.airHeight=200;air.airVelocity=100;
+  drive(air,asphalt,{...gas,steer:1,drift:true},.5);
+  assert.ok(Math.abs(air.y)<.00001);assert.ok(Math.abs(air.speed-300)<.00001);assert.ok(air.heading<.15);
+  assert.equal(air.driftTimer,0);assert.equal(air.airHeight>0,true);
+});
+test("barrier glances preserve tangent speed and a head-on contact removes outward motion",()=>{
+  const track=handlingTrack();track.halfWidth=100;
+  const glancing=handlingKart(300,track);glancing.y=163;glancing.velocityHeading=.15;glancing.road=track.nearest(glancing.x,glancing.y);
+  glancing.update(1/60,EMPTY,track);const v=glancing.velocity();
+  assert.ok(glancing.y<=162.01);assert.ok(v.x>270&&v.y<=0);
+  const headOn=handlingKart(300,track);headOn.y=163;headOn.heading=headOn.velocityHeading=Math.PI/2;headOn.road=track.nearest(headOn.x,headOn.y);
+  headOn.update(1/60,EMPTY,track);assert.ok(headOn.velocity().y<=0&&Math.abs(headOn.speed)<30);
+});
+test("kart collision impulses conserve momentum without adding kinetic energy",()=>{
+  const race=raceFor(),a=race.karts[0],b=race.karts[1];race.karts=[a,b];
+  Object.assign(a,{x:0,y:0,heading:0,velocityHeading:0,speed:300});Object.assign(b,{x:30,y:0,heading:0,velocityHeading:0,speed:100});
+  const momentum=a.speed*a.driver.weight+b.speed*b.driver.weight;
+  const energy=a.speed**2*a.driver.weight+b.speed**2*b.driver.weight;
+  race.resolveKartCollisions();
+  assert.ok(Math.abs(a.velocity().x*a.driver.weight+b.velocity().x*b.driver.weight-momentum)<.00001);
+  assert.ok(a.speed**2*a.driver.weight+b.speed**2*b.driver.weight<energy);
+  assert.ok(b.velocity().x>a.velocity().x,"cars separate after impact");
+});
+test("reverse travel warns about wrong way and recovery clears handling state",()=>{
+  const track=handlingTrack(),kart=handlingKart(-90,track);
+  drive(kart,track,{...EMPTY,brake:true},1);assert.ok(kart.wrongWay>.7);
+  Object.assign(kart,{yawRate:2,steer:1,reverseHold:1,slipAngle:.5,longitudinalAcceleration:150,lateralAcceleration:250});
+  kart.recover(track);assert.equal(kart.yawRate,0);assert.equal(kart.steer,0);assert.equal(kart.reverseHold,0);assert.equal(kart.slipAngle,0);assert.equal(kart.previousPose,null);
+});
+test("gamepad deadzone, analog triggers, D-pad and reconnecting item edges",()=>{
+  const pad={connected:true,axes:[.08],buttons:Array.from({length:16},()=>({pressed:false,value:0}))};
+  context.navigator={getGamepads:()=>[null,pad]};
+  try{
+    const input=new InputManager();assert.equal(input.read().steer,0);
+    pad.axes[0]=.5;pad.buttons[7].value=.4;
+    let controls=input.read();assert.ok(controls.steer>.1&&controls.steer<.4);assert.equal(controls.accelerate,.4);
+    pad.buttons[6].value=.3;controls=input.read();assert.equal(controls.brake,.3);assert.equal(controls.accelerate,false);
+    pad.buttons[14].pressed=true;assert.equal(input.read().steer,-1);
+    pad.buttons[2].pressed=true;assert.equal(input.read().itemPressed,true);assert.equal(input.read().itemPressed,false);
+    pad.connected=false;controls=input.read();assert.equal(controls.brake,false);assert.equal(controls.steer,0);
+    pad.connected=true;assert.equal(input.read().itemPressed,true);
+  }finally{delete context.navigator;}
+});
+test("fixed-step handling stays stable across 30, 60 and 144 Hz render schedules",()=>{
+  function simulate(fps){
+    const track=handlingTrack(),kart=handlingKart(0,track);let accumulator=0,ticks=0;
+    for(let frame=0;frame<fps*6;frame++){
+      accumulator+=1/fps;
+      while(accumulator+1e-9>=1/60){const seconds=ticks/60;kart.update(1/60,{...gas,steer:seconds>1&&seconds<3?.7:0,drift:seconds>1.5&&seconds<2.5},track);accumulator-=1/60;ticks++;}
+    }
+    assert.equal(ticks,360);return kart;
+  }
+  const baseline=simulate(60);
+  for(const fps of [30,144]){const kart=simulate(fps);assert.ok(Math.hypot(kart.x-baseline.x,kart.y-baseline.y)<.000001);assert.equal(kart.heading,baseline.heading);}
 });
 
 for(const difficulty of Object.keys(DIFFICULTIES))for(const track of TRACKS){

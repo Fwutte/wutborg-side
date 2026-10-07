@@ -8,8 +8,8 @@
   <title>Wutborg Kart · Ud på banen</title>
   <link rel="stylesheet" href="css/kart-racer.css?v=20260911-art" />
   <script defer src="js/highscores.js"></script>
-  <script defer src="js/kart-racer-data.js?v=20260911-expansion"></script>
-  <script defer src="js/kart-racer.js?v=20260911-art"></script>
+  <script defer src="js/kart-racer-data.js?v=20261007-physics"></script>
+  <script defer src="js/kart-racer.js?v=20261007-physics"></script>
 </head>
 <body>
   <nav class="kart-nav" aria-label="Spilnavigation">
@@ -68,7 +68,7 @@
       <div class="modal-card pause-card"><p class="eyebrow">ET ØJEBLIK I PIT</p><h2 id="pause-title">Tag en puster.</h2><p>Løbet venter lige her.</p>
         <button id="kart-resume" class="primary-kart-button" type="button">Tilbage i løbet <span>↗</span></button>
         <button id="kart-restart" class="secondary-kart-button" type="button">Genstart løbet</button><button id="kart-menu-button" class="text-button" type="button">Vælg et andet løb</button>
-        <div class="pause-help"><p><kbd>↑ / W</kbd> Gas <kbd>↓ / S</kbd> Brems / bak</p><p><kbd>← → / A D</kbd> Styr <kbd>SHIFT / X</kbd> Drift</p><p><kbd>SPACE / Z</kbd> Item <kbd>R</kbd> Tilbage på banen</p><p>Gamepad: venstre pind styrer · RT gas · LT bremse · RB drift · X item.</p><p>Hold drift i svinget. Slip ved blå, orange eller lilla gnister for mere turbo.</p></div>
+        <div class="pause-help"><p><kbd>↑ / W</kbd> Gas <kbd>↓ / S</kbd> Brems / bak</p><p><kbd>← → / A D</kbd> Styr <kbd>SHIFT / X</kbd> Drift</p><p><kbd>SPACE / Z</kbd> Item <kbd>R</kbd> Tilbage på banen</p><p>Gamepad: venstre pind / D-pad styrer · RT gas · LT bremse · RB drift · X item. Triggere doserer gas og bremse.</p><p>Brems før svinget. Hold bremsen efter stilstand for at bakke. Hold drift i svinget, og modstyr for at rette bilen op. Slip ved blå, orange eller lilla gnister for turbo.</p></div>
       </div>
     </section>
     <section id="kart-result" class="modal-screen" hidden role="dialog" aria-modal="true" aria-labelledby="kart-result-title">

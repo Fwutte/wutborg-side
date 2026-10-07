@@ -25,12 +25,13 @@
         coins:0,item:null,pendingItem:null,itemRoulette:0,finished:false,finishTime:0,lap:0,lapTimes:[],lapStarted:0,
         progress:s,raceDistance:s,nextGate:track.length/12,gateCount:0,lastS:p.s,lastX:p.x,lastY:p.y,
         road:track.nearest(p.x,p.y),wrongWay:0,offroad:false,boosts:0,recoveries:0,stuckTime:0,hop:0,
-        airHeight:0,airVelocity:0,rampCooldown:0,surface:"asphalt",shortcut:false,speedFactor:1,aiLane:(slot%3-1)*24,aiItemTime:2+slot*.37});
+        airHeight:0,airVelocity:0,rampCooldown:0,surface:"asphalt",shortcut:false,speedFactor:1,aiLane:(slot%3-1)*24,aiItemTime:2+slot*.37,
+        yawRate:0,steeringAngle:0,reverseHold:0,slipAngle:0,longitudinalAcceleration:0,lateralAcceleration:0,wheelTravel:0,previousPose:null});
     }
     cancelDrift(){this.drifting=false;this.driftTimer=0;this.driftDirection=0;}
     applySpin(duration=.85){
       if(this.starTimer>0||this.invincibleTimer>0||this.finished)return false;
-      this.cancelDrift();this.spinTimer=duration;this.invincibleTimer=duration+1.3;this.speed*=.38;this.coins=Math.max(0,this.coins-2);
+      this.cancelDrift();this.yawRate=0;this.spinTimer=duration;this.invincibleTimer=duration+1.3;this.speed*=.38;this.coins=Math.max(0,this.coins-2);
       return true;
     }
     releaseDrift(){
@@ -43,50 +44,121 @@
       this.raceDistance=safe;this.progress=safe;
       this.x=p.x;this.y=p.y;this.elevation=p.elevation;this.slope=p.slope;this.heading=p.heading;this.velocityHeading=p.heading;
       this.lastS=p.s;this.lastX=p.x;this.lastY=p.y;this.road=track.nearest(p.x,p.y);
-      this.airHeight=0;this.airVelocity=0;this.speed=50;this.invincibleTimer=1.8;this.spinTimer=0;this.cancelDrift();this.recoveries++;this.stuckTime=0;
+      this.airHeight=0;this.airVelocity=0;this.speed=50;this.yawRate=0;this.steer=0;this.visualSteer=0;this.steeringAngle=0;this.reverseHold=0;this.slipAngle=0;
+      this.previousPose=null;this.longitudinalAcceleration=0;this.lateralAcceleration=0;this.invincibleTimer=1.8;this.spinTimer=0;this.cancelDrift();this.recoveries++;this.stuckTime=0;
+    }
+    velocity(){return {x:Math.cos(this.velocityHeading)*this.speed,y:Math.sin(this.velocityHeading)*this.speed};}
+    setVelocity(x,y){
+      // Keep speed signed for reverse, while preserving lateral collision momentum.
+      const magnitude=Math.hypot(x,y),sign=x*Math.cos(this.heading)+y*Math.sin(this.heading)<0?-1:1;
+      this.speed=magnitude*sign;
+      if(magnitude>.001)this.velocityHeading=Math.atan2(y*sign,x*sign);
     }
     update(dt,input,track,assist=false){
+      this.previousPose={x:this.x,y:this.y,elevation:this.elevation,heading:this.heading,airHeight:this.airHeight};
       for(const key of ["spinTimer","boostTimer","starTimer","invincibleTimer","hop","rampCooldown"])this[key]=Math.max(0,this[key]-dt);
-      const ratio=clamp(Math.abs(this.speed)/this.driver.maxSpeed,0,1);
-      this.steer=lerp(this.steer,input.steer,1-Math.exp(-12*dt));
+      const throttle=clamp(Number(input.accelerate)||0,0,1),brake=clamp(Number(input.brake)||0,0,1),steer=clamp(Number(input.steer)||0,-1,1);
+      const oldVelocity=this.velocity(),oldSpeed=this.speed,grounded=this.airHeight===0&&this.airVelocity<=0;
+      this.surface=track.surfaceAt(this.road.s);
+      this.shortcut=track.isShortcut(this.road);this.offroad=this.road.distance>track.halfWidth&&!this.shortcut;
+      const ratio=clamp(Math.abs(this.speed)/this.driver.maxSpeed,0,1.5);
+      // Quick countersteer and centering; gentler turn-in at high speed on digital controls.
+      const steerRate=this.steer*steer<0?16:Math.abs(steer)<Math.abs(this.steer)?14:10-ratio*2;
+      this.steer=lerp(this.steer,steer,1-Math.exp(-steerRate*dt));
       const boosting=this.boostTimer>0||this.starTimer>0;
       const top=(this.driver.maxSpeed+this.coins*2.5)*this.speedFactor+(boosting?125:0);
-      if(this.spinTimer>0){this.speed*=Math.exp(-1.8*dt);}
-      else{
-        const wants=input.drift&&!input.brake&&this.speed>130&&(this.drifting||Math.abs(this.steer)>.22);
+      let vx=oldVelocity.x,vy=oldVelocity.y;
+      if(this.spinTimer>0){
+        vx*=Math.exp(-1.8*dt);vy*=Math.exp(-1.8*dt);this.yawRate=0;
+      }else{
+        const wants=grounded&&input.drift&&!brake&&!this.offroad&&this.speed>130&&(this.drifting||Math.abs(this.steer)>.22);
         if(wants){
           if(!this.drifting){this.driftDirection=Math.sign(this.steer);this.hop=.25;}
-          this.drifting=true;this.driftTimer=clamp(this.driftTimer+dt*(this.offroad?.15:1),0,2.4);
-        }else if(this.drifting){
-          if(input.brake||this.speed<120||this.offroad)this.cancelDrift();else this.releaseDrift();
+          this.drifting=true;
+          // Charge only a real slide through a turn, rather than a held button on a straight.
+          if(Math.abs(this.slipAngle)>.1&&this.steer*this.driftDirection>-.35)this.driftTimer=clamp(this.driftTimer+dt,0,2.4);
+        }else if(this.drifting&&grounded){
+          if(brake||this.speed<120||this.offroad)this.cancelDrift();else this.releaseDrift();
         }
-        if(input.brake)this.speed-=310*dt;
-        else if(input.accelerate||boosting)this.speed+=(this.driver.acceleration+(boosting?240:0))*dt;
-        else this.speed*=Math.exp(-.85*dt);
-        this.speed=clamp(this.speed,-95,top);
-        const turn=this.drifting?this.driftDirection*.28+this.steer*.88:this.steer;
-        this.heading+=turn*this.driver.handling*(.22+ratio*.56)*dt*(this.speed>=0?1:-.7);
-        if(assist&&this.road.distance>track.halfWidth*.73&&Math.abs(angleDelta(this.heading,this.road.heading))<1.1&&this.speed>80){
+        const c=Math.cos(this.heading),s=Math.sin(this.heading);
+        let forward=vx*c+vy*s,lateral=-vx*s+vy*c;
+        const surfaceGrip=this.offroad?.55:this.surface==="ice"?.55:1;
+        const traction=760*surfaceGrip*(.92+this.driver.handling*.032);
+        let drive=0;
+        if(grounded){
+          if(brake){
+            if(forward>4){drive=-440*brake;this.reverseHold=0;}
+            else{
+              if(forward>0)forward=0;
+              this.reverseHold+=dt;
+              if(this.reverseHold>=.25)drive=-this.driver.acceleration*.62*brake;
+            }
+          }else{
+            this.reverseHold=0;
+            if(throttle||boosting)drive=forward<-4?380*(throttle||1):(this.driver.acceleration+(boosting?240:0))*(boosting?1:throttle)*Math.max(.25,1-.65*(Math.max(0,forward)/top)**2);
+          }
+          const resistance=8+Math.abs(forward)*((throttle||boosting)?.08:.28)+forward*forward*.00015;
+          if(forward>=top&&drive>0)drive=Math.min(drive,resistance);
+          const slowdown=Math.min(Math.abs(forward),resistance*dt);
+          forward-=Math.sign(forward)*slowdown;
+          // Hills load the engine; the reverse input always brakes before selecting reverse.
+          const hill=-track.slopeAt(this.road.s)*100;
+          const powered=forward+(clamp(drive,-traction,traction)+hill)*dt;
+          forward=brake&&drive<0&&forward>0?Math.max(0,powered):throttle&&forward<0?Math.min(0,powered):powered;
+          if(forward>top)forward=top+(forward-top)*Math.exp(-3*dt);
+          forward=Math.max(-95,forward);
+        }
+        this.steeringAngle=this.steer*.62/(1+Math.abs(forward)/300*.95);
+        let requestedYaw=forward/62*Math.tan(this.steeringAngle)*(this.driver.handling/2.5);
+        if(this.drifting)requestedYaw+=this.driftDirection*.32*clamp(forward/200,0,1);
+        // A bicycle steering model bounded by the tyres' lateral acceleration budget.
+        const yawLimit=traction/Math.max(80,Math.abs(forward))*(this.drifting?1.12:1);
+        requestedYaw=clamp(requestedYaw,-yawLimit,yawLimit);
+        if(!grounded)requestedYaw=this.steer*.18;
+        if(assist&&grounded&&!this.drifting&&Math.abs(steer)<.15&&this.road.distance>track.halfWidth*.73&&Math.abs(angleDelta(this.heading,this.road.heading))<1.1&&forward>80){
           const desired=this.road.heading-clamp(this.road.lateral/track.halfWidth,-1,1)*.36;
-          this.heading+=clamp(angleDelta(this.heading,desired),-dt*.75,dt*.75);
+          requestedYaw+=clamp(angleDelta(this.heading,desired)*2,-.45,.45);
         }
-        if(this.drifting)this.speed*=Math.exp(-.025*dt);
+        this.yawRate=lerp(this.yawRate,requestedYaw,1-Math.exp(-(grounded?9:3)*dt));
+        const rotation=this.yawRate*dt;
+        this.heading+=rotation;
+        // Rotate the body axes without rotating its momentum. Tyres then pull the velocity
+        // toward the new heading, with less rear grip during drift and on ice.
+        const bodyForward=forward*Math.cos(rotation)+lateral*Math.sin(rotation);
+        lateral=-forward*Math.sin(rotation)+lateral*Math.cos(rotation);forward=bodyForward;
+        if(grounded){
+          const driftSlip=this.drifting?this.driftDirection*(.18+Math.max(0,this.steer*this.driftDirection)*.13):0;
+          const targetLateral=-Math.abs(forward)*driftSlip;
+          const grip=(this.drifting?5.2:15)*surfaceGrip;
+          // Braking/acceleration and cornering share the available tyre grip.
+          const remainingGrip=Math.sqrt(Math.max(0,traction*traction-Math.min(Math.abs(drive),traction*.9)**2));
+          lateral+=clamp((targetLateral-lateral)*(1-Math.exp(-grip*dt)),-remainingGrip*dt,remainingGrip*dt);
+          if(this.drifting)forward*=Math.exp(-.055*dt);
+          if(this.offroad) {const drag=Math.exp(-(this.starTimer>0?.15:2.1)*dt);forward*=drag;lateral*=drag;}
+        }
+        const nc=Math.cos(this.heading),ns=Math.sin(this.heading);
+        vx=forward*nc-lateral*ns;vy=forward*ns+lateral*nc;
       }
-      this.surface=track.surfaceAt(this.road.s);
-      const slip=this.drifting?-this.driftDirection*.25:0,grip=this.airHeight>0?3:this.surface==="ice"?(this.drifting?2.8:4.5):this.drifting?5:14;
-      this.velocityHeading+=angleDelta(this.velocityHeading,this.heading+slip)*(1-Math.exp(-grip*dt));
-      this.x+=Math.cos(this.velocityHeading)*this.speed*dt;this.y+=Math.sin(this.velocityHeading)*this.speed*dt;
+      this.setVelocity(vx,vy);
+      this.x+=vx*dt;this.y+=vy*dt;
       this.road=track.nearest(this.x,this.y,this.road?.index);this.elevation=this.road.elevation;this.slope=this.road.slope;this.shortcut=track.isShortcut(this.road);this.offroad=this.road.distance>track.halfWidth&&!this.shortcut;
       if(this.shortcut)this.boostTimer=Math.max(this.boostTimer,.28);
       if(this.airHeight>0||this.airVelocity>0){this.airVelocity-=280*dt;this.airHeight=Math.max(0,this.airHeight+this.airVelocity*dt);if(this.airHeight===0){this.airVelocity=0;if(input.drift&&this.speed>120){this.boostTimer=Math.max(this.boostTimer,.85);this.boosts++;}}}
-      if(this.offroad&&this.airHeight===0)this.speed*=Math.exp(-(this.starTimer>0?.15:2.1)*dt);
       const wall=track.halfWidth+62;
       if(this.road.distance>wall){
         const excess=this.road.distance-wall,side=Math.sign(this.road.lateral);
         this.x+=Math.sin(this.road.heading)*side*excess;this.y-=Math.cos(this.road.heading)*side*excess;
-        this.speed*=.76;this.velocityHeading+=angleDelta(this.velocityHeading,this.road.heading)*.12;
+        const nx=-Math.sin(this.road.heading)*side,ny=Math.cos(this.road.heading)*side,outward=vx*nx+vy*ny;
+        // Remove only momentum into the barrier; glancing contacts retain forward speed.
+        if(outward>0)this.setVelocity(vx-nx*outward*1.08,vy-ny*outward*1.08);
+        this.road=track.nearest(this.x,this.y,this.road.index);this.elevation=this.road.elevation;this.slope=this.road.slope;
       }
-      this.wrongWay=this.speed>65&&Math.abs(angleDelta(this.velocityHeading,this.road.heading))>2?this.wrongWay+dt:Math.max(0,this.wrongWay-dt*3);
+      const finalVelocity=this.velocity(),ax=(finalVelocity.x-oldVelocity.x)/dt,ay=(finalVelocity.y-oldVelocity.y)/dt;
+      this.longitudinalAcceleration=lerp(this.longitudinalAcceleration,ax*Math.cos(this.heading)+ay*Math.sin(this.heading),1-Math.exp(-8*dt));
+      this.lateralAcceleration=lerp(this.lateralAcceleration,-ax*Math.sin(this.heading)+ay*Math.cos(this.heading),1-Math.exp(-8*dt));
+      this.slipAngle=angleDelta(this.heading,this.velocityHeading);this.wheelTravel+=(oldSpeed+this.speed)*.5*dt;
+      const alongRoad=finalVelocity.x*Math.cos(this.road.heading)+finalVelocity.y*Math.sin(this.road.heading);
+      this.wrongWay=alongRoad<-65?this.wrongWay+dt:Math.max(0,this.wrongWay-dt*3);
       this.stuckTime=this.isAI&&Math.abs(this.speed)<45?this.stuckTime+dt:0;
       if(this.stuckTime>2.5)this.recover(track);
       this.visualSteer=lerp(this.visualSteer,this.steer,1-Math.exp(-10*dt));
@@ -173,8 +245,12 @@
         const nx=d>.001?dx/d:1,ny=d>.001?dy/d:0,overlap=min-d+.1,total=a.driver.weight+b.driver.weight;
         a.x-=nx*overlap*b.driver.weight/total;a.y-=ny*overlap*b.driver.weight/total;
         b.x+=nx*overlap*a.driver.weight/total;b.y+=ny*overlap*a.driver.weight/total;
-        const closing=(Math.cos(a.velocityHeading)*a.speed-Math.cos(b.velocityHeading)*b.speed)*nx+(Math.sin(a.velocityHeading)*a.speed-Math.sin(b.velocityHeading)*b.speed)*ny;
-        if(closing>0){a.speed*=.965;b.speed=Math.min(b.driver.maxSpeed+100,b.speed+closing*.08);}
+        const av=a.velocity(),bv=b.velocity(),closing=(av.x-bv.x)*nx+(av.y-bv.y)*ny;
+        if(closing>0){
+          const impulse=closing*1.18/(1/a.driver.weight+1/b.driver.weight);
+          a.setVelocity(av.x-nx*impulse/a.driver.weight,av.y-ny*impulse/a.driver.weight);
+          b.setVelocity(bv.x+nx*impulse/b.driver.weight,bv.y+ny*impulse/b.driver.weight);
+        }
         if(a.starTimer>0)b.applySpin();if(b.starTimer>0)a.applySpin();
       }
     }
@@ -253,14 +329,19 @@
       const held=(...names)=>names.some(n=>this.keys.has(n)||[...this.pointers.values()].includes(n));
       let steer=Number(held("ArrowRight","KeyD","right"))-Number(held("ArrowLeft","KeyA","left"));
       let accelerate=autoGas||held("ArrowUp","KeyW","accelerate"),brake=held("ArrowDown","KeyS","brake"),drift=held("ShiftLeft","ShiftRight","KeyX","drift");
-      const pad=typeof navigator!=="undefined"?navigator.getGamepads?.()?.[0]:null;
+      const pad=typeof navigator!=="undefined"?Array.from(navigator.getGamepads?.()||[]).find(p=>p&&p.connected!==false):null;
       if(pad){
-        if(Math.abs(pad.axes[0])>.14)steer=pad.axes[0];
-        accelerate ||= pad.buttons[7]?.pressed||pad.buttons[0]?.pressed;
-        brake ||= pad.buttons[6]?.pressed;drift ||= pad.buttons[5]?.pressed;
+        const axis=clamp(Number(pad.axes[0])||0,-1,1),deadzone=.12;
+        const normalized=Math.sign(axis)*Math.max(0,(Math.abs(axis)-deadzone)/(1-deadzone));
+        const stick=normalized*.65+normalized**3*.35;
+        const digital=Number(Boolean(pad.buttons[15]?.pressed))-Number(Boolean(pad.buttons[14]?.pressed));
+        const padSteer=digital||stick;if(Math.abs(padSteer)>Math.abs(steer))steer=padSteer;
+        const trigger=index=>clamp(Number(pad.buttons[index]?.value??Number(Boolean(pad.buttons[index]?.pressed)))||0,0,1);
+        accelerate=Math.max(Number(accelerate),trigger(7),Number(Boolean(pad.buttons[0]?.pressed)));
+        brake=Math.max(Number(brake),trigger(6));drift ||= pad.buttons[5]?.pressed;
         const item=Boolean(pad.buttons[2]?.pressed);if(item&&!this.previousItem)this.itemPressed=true;this.previousItem=item;
-      }
-      const input={steer,accelerate:accelerate&&!brake,brake,drift,itemPressed:this.itemPressed};
+      }else this.previousItem=false;
+      const input={steer,accelerate:brake?false:accelerate,brake,drift,itemPressed:this.itemPressed};
       this.itemPressed=false;return input;
     }
     reset(){this.keys.clear();this.pointers.clear();this.itemPressed=false;this.previousItem=false;}
@@ -416,7 +497,7 @@
         const release=e=>{this.input.setControl(b.dataset.kartControl,false,e.pointerId);b.classList.remove("pressed");};
         b.addEventListener("pointerup",release);b.addEventListener("pointercancel",release);b.addEventListener("lostpointercapture",release);
       });
-      this.$("kart-item").addEventListener("click",()=>{if(this.input.enabled)this.input.itemPressed=true;});
+      this.$("kart-item").addEventListener("click",()=>{if(this.input.enabled){this.input.itemPressed=true;this.canvas.focus({preventScroll:true});}});
     }
     startRace(){
       this.audio.unlock();
@@ -468,7 +549,7 @@
       this.$("kart-result").hidden=false;this.$(this.cup&&!cupDone?"kart-next":"kart-retry").focus({preventScroll:true});
       this.audio.tone(523,.18);setTimeout(()=>this.audio.tone(659,.18),160);setTimeout(()=>this.audio.tone(784,.4),320);
       if(this.mode!=="time")try{
-        const submission=window.WutborgHighscores?.submit({gameKey:"wutborg-kart",gameTitle:"Wutborg Kart",playerName:this.race.player.driver.name,score:result.score,outcome:result.position===1?"won":"completed",details:{version:4,track:this.track.id,difficulty:this.difficulty,position:result.position,seconds:Math.round(result.time*100)/100}});
+        const submission=window.WutborgHighscores?.submit({gameKey:"wutborg-kart",gameTitle:"Wutborg Kart",playerName:this.race.player.driver.name,score:result.score,outcome:result.position===1?"won":"completed",details:{version:this.track.revision,track:this.track.id,difficulty:this.difficulty,position:result.position,seconds:Math.round(result.time*100)/100}});
         submission?.catch(()=>{});
       }catch{/* Local results work offline. */}
     }
@@ -524,7 +605,7 @@
       const dt=Math.min(.1,Math.max(0,(timestamp-(this.lastTime||timestamp))/1000));this.lastTime=timestamp;
       if(!this.paused){this.accumulator=Math.min(this.accumulator+dt,.1);while(this.accumulator>=STEP){this.update(STEP);this.accumulator-=STEP;}}
       this.audio.update(this.race.player,!this.paused&&this.race.state==="racing");
-      this.renderer.draw(this.race,dt,{paused:this.paused,driver:DRIVERS.find(d=>d.id===this.selectedDriver)});
+      this.renderer.draw(this.race,dt,{paused:this.paused,alpha:this.paused?1:this.accumulator/STEP,driver:DRIVERS.find(d=>d.id===this.selectedDriver)});
       if(timestamp-this.lastUI>65){this.updateUI(timestamp);this.lastUI=timestamp;}
       if(this.toastUntil&&timestamp>this.toastUntil){this.$("kart-toast").classList.remove("visible");this.toastUntil=0;}
       requestAnimationFrame(t=>this.loop(t));
@@ -535,7 +616,7 @@
     let canvas=document.getElementById("kart-canvas");if(!canvas)return;
     let renderer;
     try{
-      const module=await import("./kart-racer-3d.js?v=20260911-art");
+      const module=await import("./kart-racer-3d.js?v=20261007-physics");
       renderer=new module.KartRacer3DRenderer(canvas);
     }catch(error){
       console.warn("3D er ikke tilgængelig. Starter 2D-visningen.",error);

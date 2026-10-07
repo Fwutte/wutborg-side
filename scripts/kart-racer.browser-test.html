@@ -40,8 +40,30 @@ function ready(){
   g.race.countdown=0;g.race.state='racing';
   const event=new w.KeyboardEvent('keydown',{code:'KeyW',bubbles:true});g.canvas.dispatchEvent(event);g.update(1/60);
   check(g.race.player.speed>0,'keyboard accelerates');g.canvas.dispatchEvent(new w.KeyboardEvent('keyup',{code:'KeyW',bubbles:true}));g.input.reset();
-  g.race.player.item='mushroom';doc.getElementById('kart-item').click();g.update(1/60);check(g.race.player.boostTimer>0,'HUD item button uses turbo');
+  g.race.player.item='mushroom';doc.getElementById('kart-item').click();g.update(1/60);check(g.race.player.boostTimer>0&&doc.activeElement===g.canvas,'HUD item button uses turbo and restores driving focus');
   w.dispatchEvent(new w.Event('blur'));check(g.paused&&!g.input.enabled,'window blur pauses');g.togglePause(false);
+  if(scenario==='handling'){
+   g.race.player.speed=240;
+   for(const code of ['KeyW','KeyD'])g.canvas.dispatchEvent(new w.KeyboardEvent('keydown',{code,bubbles:true}));
+   for(let i=0;i<24;i++)g.update(1/60);
+   g.input.reset();const p=g.race.player,renderer=g.renderer;
+   renderer.draw(g.race,1/60,{alpha:0});const mesh=renderer.karts[0];
+   check(Math.abs(mesh.group.position.x-(p.previousPose.x-2200)*.032)<.00001,'interpolation renders previous physics pose at alpha zero');
+   renderer.draw(g.race,1/60,{alpha:1});
+   check(Math.abs(mesh.group.position.x-(p.x-2200)*.032)<.00001,'interpolation renders current physics pose at alpha one');
+   check(mesh.body.rotation.z!==0&&Number.isFinite(mesh.body.rotation.x),'body roll and pitch follow acceleration');
+   check(mesh.wheels.filter(wheel=>wheel.front).every(wheel=>Math.abs(wheel.pivot.rotation.y+p.steeringAngle)<.00001),'front wheels reflect speed-sensitive steering');
+   const wheelRotation=mesh.wheels[0].wheel.rotation.x;g.togglePause(true);
+   renderer.draw(g.race,.1,{paused:true,alpha:1});
+   check(mesh.wheels[0].wheel.rotation.x===wheelRotation,'wheel animation freezes with simulation');
+   p.recover(g.track);renderer.draw(g.race,1/60,{alpha:1});
+   check(renderer.cameraRecoveries===p.recoveries&&p.previousPose===null,'recovery resets camera and interpolation');
+   g.showMenu();renderer.draw(g.race,.016,{driver:D.DRIVERS[0]});const memory={...renderer.renderer.info.memory};
+   g.showMenu();renderer.draw(g.race,.016,{driver:D.DRIVERS[0]});
+   check(renderer.renderer.info.memory.geometries<=memory.geometries+3&&renderer.renderer.info.memory.textures<=memory.textures+3,'handling scene cleanup releases GPU resources');
+   check(errors.length===0,'no handling runtime errors');
+   out.textContent='PASS · '+checks.length+' handling integration checks\n'+checks.join('\n');out.dataset.status='passed';return;
+  }
   g.mode='cup';g.cup={round:0,points:Object.fromEntries(D.DRIVERS.map(d=>[d.id,0]))};g.startRace();g.audio.enabled=false;
   for(let round=0;round<D.TRACKS.length;round++){
    g.renderer.draw(g.race,0,{driver:D.DRIVERS[0]});
