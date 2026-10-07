@@ -26,6 +26,10 @@ The 3D renderer interpolates physics poses between the fixed simulation steps. B
 
 ## Implementation
 
+The rival update uses a cached curvature plan and a grip/braking envelope covering the next 560 course units. Steering inverts the bicycle model, and the planned lane follows the inside of bends. Rivals choose passing lanes, predict moving obstacles, slow for imminent hazards and pursue pickups when the approach is safe. They plan take-off speed for curved landings and release charged drifts with a cooldown. Item tactics hold redundant boosts, reserve straight shots for aligned targets and avoid attacking protected opponents.
+
+Hyggelig uses 88% base top speed with conservative cornering. Sport uses 106% and Expert 117%, with small fixed differences between rivals. Sport and Expert get a launch boost; their item cooldowns are 1.25 and 0.7 seconds. These profiles are fixed throughout a race. The player's physics and time-trial car remain unchanged.
+
 js/kart-racer-data.js owns spline geometry, surface regions, ramps and obstacles. Physics, AI, rendering and the minimap share the same 1,024 samples. Side routes follow the road projection and do not bypass the twelve lap checkpoints. Their narrow safe area rewards accurate steering; leaving it incurs the normal off-road penalty.
 
 js/kart-racer.js runs fixed 60 Hz physics and separately simulates jump height. js/kart-racer-3d.js renders course mechanics and particles; js/kart-racer-world.js batches landscape geometry. Weather and particle counts are capped. Mobile retains its reduced pixel ratio and shadow settings.
@@ -38,7 +42,9 @@ npm run test:kart covers 45 checks, including eighteen complete races with all e
 
 npm run test:expansions tests launching, landing boosts, obstacle clearance, side routes and ice alongside Mario and Borgstorm extensions.
 
-Serve the repository and open scripts/game-expansion.browser-test.html for isolated visual scenes without saved results. The existing scripts/kart-racer.browser-test.html covers the full six-race cup; ?scenario=preview&track=0&stop=10 supports course indices 0–5 and an optional &at=0.46 starting fraction. Browser screenshots verify local rendering; they do not establish performance on physical phones.
+npm run test:kart-ai runs 14 checks for rival profiles, starts, ice anticipation, passing, obstacle prediction, safe pickups, ramp setup, item tactics and drift release. It compares the new AI against the previous controller using the same physics, driver, pickups and moving hazards over three laps on each of the six tracks. The deterministic benchmark measured 20.0% shorter total race time for Sport; Expert was another 4.9% quicker overall and finished faster on every course. These are controlled simulations, not a prediction of a human player's win rate.
+
+Serve the repository and open scripts/game-expansion.browser-test.html for isolated visual scenes without saved results. The existing scripts/kart-racer.browser-test.html covers the full six-race cup; ?scenario=preview&track=0&stop=10 supports course indices 0–5, an optional &at=0.46 starting fraction and &difficulty=expert (or normal/relaxed). The rival update's live Expert preview ran for 12 seconds on Frosttinderne without runtime errors. Browser screenshots verify local rendering; they do not establish performance on physical phones.
 
 The six-race browser integration test exercises race completion, totals, final standings, restart, rendering budget and GPU resource cleanup.
 

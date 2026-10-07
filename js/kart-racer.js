@@ -26,7 +26,8 @@
         progress:s,raceDistance:s,nextGate:track.length/12,gateCount:0,lastS:p.s,lastX:p.x,lastY:p.y,
         road:track.nearest(p.x,p.y),wrongWay:0,offroad:false,boosts:0,recoveries:0,stuckTime:0,hop:0,
         airHeight:0,airVelocity:0,rampCooldown:0,surface:"asphalt",shortcut:false,speedFactor:1,aiLane:(slot%3-1)*24,aiItemTime:2+slot*.37,
-        yawRate:0,steeringAngle:0,reverseHold:0,slipAngle:0,longitudinalAcceleration:0,lateralAcceleration:0,wheelTravel:0,previousPose:null});
+        yawRate:0,steeringAngle:0,reverseHold:0,slipAngle:0,longitudinalAcceleration:0,lateralAcceleration:0,wheelTravel:0,previousPose:null,
+        aiProfile:DIFFICULTIES.normal,aiPlanTimer:0,aiPlanLane:0,aiTargetLane:slot%2?38:-38,aiDriftCooldown:0,aiHazardSpeed:Infinity});
     }
     cancelDrift(){this.drifting=false;this.driftTimer=0;this.driftDirection=0;}
     applySpin(duration=.85){
@@ -165,14 +166,129 @@
     }
   }
   class RaceAI {
-    inputFor(kart,track){
-      const target=track.at(kart.road.s+85+Math.max(0,kart.speed)*.36,kart.aiLane);
-      const delta=angleDelta(kart.heading,Math.atan2(target.y-kart.y,target.x-kart.x));
-      const bend=Math.abs(angleDelta(track.at(kart.road.s+30).heading,track.at(kart.road.s+200).heading));
-      const targetSpeed=kart.driver.maxSpeed*kart.speedFactor*clamp(1-bend*.28,.53,1);
-      return {steer:clamp(delta*2.5,-1,1),accelerate:kart.speed<targetSpeed+8,brake:kart.speed>targetSpeed+35,
-        drift:bend>.35&&bend<1.2&&Math.abs(delta)>.16&&kart.speed>200&&kart.driftTimer<1.9,
-        itemPressed:Boolean(kart.item&&kart.aiItemTime<=0)};
+    constructor(){this.plans=new WeakMap();}
+    planFor(track){
+      let plan=this.plans.get(track);if(plan)return plan;
+      const count=track.samples.length,span=Math.max(1,Math.round(28/track.step));
+      plan=track.samples.map((p,i)=>angleDelta(track.samples[mod(i-span,count)].heading,track.samples[mod(i+span,count)].heading)/(2*span*track.step));
+      this.plans.set(track,plan);return plan;
+    }
+    curvature(track,s){
+      const plan=this.planFor(track),position=mod(s,track.length)/track.step,index=Math.floor(position);
+      return lerp(plan[index],plan[(index+1)%plan.length],position-index);
+    }
+    laneFor(kart,track,race,ideal,allowPickups=true){
+      kart.aiHazardSpeed=Infinity;if(!race)return ideal;
+      const hazards=[],ahead=s=>mod(s-kart.road.s+track.length/2,track.length)-track.length/2;
+      for(const other of race.karts){
+        if(other===kart||other.finished)continue;
+        const gap=ahead(other.road.s);
+        if(gap>-45&&gap<320)hazards.push({gap,lateral:other.road.lateral,radius:48});
+      }
+      for(const obstacle of track.obstacles){
+        const gap=ahead(obstacle.s);if(gap<-35||gap>400)continue;
+        const arrival=race.elapsed+Math.max(0,gap)/Math.max(100,kart.speed);
+        hazards.push({gap,lateral:Math.sin(arrival*1.3+obstacle.phase)*track.halfWidth*.7,radius:obstacle.radius+kart.radius+17});
+      }
+      for(const trap of race.traps){
+        const road=trap.road||(trap.road=track.nearest(trap.x,trap.y)),gap=ahead(road.s);
+        if(gap>-25&&gap<320)hazards.push({gap,lateral:road.lateral,radius:45});
+      }
+      for(const hazard of hazards)if(hazard.gap>=0&&hazard.gap<130&&Math.abs(kart.road.lateral-hazard.lateral)<hazard.radius){
+        kart.aiHazardSpeed=Math.min(kart.aiHazardSpeed,Math.sqrt(160*160+500*Math.max(0,hazard.gap-40)));
+      }
+      let pickup=null,pickupScore=0;
+      const consider=(objects,priority)=>{
+        for(const object of objects){
+          if(object.cooldown>0)continue;
+          const gap=ahead(object.s);if(gap<-25||gap>380)continue;
+          // Pickups already carry their arc position and heading; avoid a full
+          // 1,024-segment road search in every rival's planning tick.
+          const center=track.at(object.s),lateral=(object.y-center.y)*Math.cos(object.heading)-(object.x-center.x)*Math.sin(object.heading);
+          const score=priority-gap*.002-Math.abs(lateral-ideal)*.008;
+          if(score>pickupScore){pickupScore=score;pickup=lateral;}
+        }
+      };
+      if(allowPickups){
+        consider(track.boostPads,2.5);
+        if(!kart.item&&!kart.itemRoulette)consider(race.itemBoxes,3);
+        if(kart.coins<10)consider(race.coins,2);
+      }
+      const candidates=[ideal,kart.aiPlanLane,-track.halfWidth*.56,0,track.halfWidth*.56];
+      if(pickup!==null)candidates.push(pickup);
+      let best=ideal,bestCost=Infinity;
+      for(const lane of candidates){
+        let cost=Math.abs(lane-ideal)*.015+Math.abs(lane-kart.aiPlanLane)*.008;
+        if(pickup!==null)cost+=Math.abs(lane-pickup)*.045;
+        for(const hazard of hazards){
+          const separation=Math.abs(lane-hazard.lateral);
+          if(separation<hazard.radius)cost+=(1-separation/hazard.radius)*(hazard.gap<180?12:7);
+        }
+        if(cost<bestCost){best=lane;bestCost=cost;}
+      }
+      return clamp(best,-track.halfWidth*.65,track.halfWidth*.65);
+    }
+    shouldUseItem(kart,race,cornerSpeed,cruise){
+      if(!kart.item||kart.aiItemTime>0||kart.spinTimer>0||kart.airHeight>0)return false;
+      if(kart.item==="mushroom")return kart.boostTimer<.1&&cornerSpeed>cruise*.94&&!kart.offroad;
+      if(kart.item==="star")return kart.starTimer<.1;
+      if(!race)return true;
+      const rivals=race.karts.filter(k=>k!==kart&&!k.finished&&k.starTimer<=0&&k.invincibleTimer<=0);
+      if(kart.item==="lightning")return rivals.length>0;
+      if(kart.item==="redShell"){
+        const target=race.karts.filter(k=>k!==kart&&!k.finished&&k.progress>kart.progress).sort((a,b)=>a.progress-b.progress)[0];
+        return Boolean(target&&target.starTimer<=0&&target.invincibleTimer<=0);
+      }
+      if(kart.item==="banana")return rivals.some(k=>kart.progress-k.progress>0&&kart.progress-k.progress<300&&Math.abs(k.road.lateral-kart.road.lateral)<60);
+      return rivals.some(k=>k.progress>kart.progress&&distance(k,kart)<650&&Math.abs(angleDelta(kart.heading,Math.atan2(k.y-kart.y,k.x-kart.x)))<.4);
+    }
+    inputFor(kart,track,race=null,dt=STEP){
+      const profile=kart.aiProfile||DIFFICULTIES.normal,speed=Math.max(0,kart.speed),lookahead=80+speed*.34;
+      const bend=this.curvature(track,kart.road.s+lookahead);
+      const cruise=(kart.driver.maxSpeed+kart.coins*2.5)*kart.speedFactor+(kart.boostTimer>0||kart.starTimer>0?125:0);
+      let targetSpeed=cruise,cornerSpeed=Infinity;
+      // Brake for the tightest upcoming corner, including reduced grip on future ice.
+      for(let ahead=0;ahead<=560;ahead+=80){
+        const s=kart.road.s+ahead,grip=track.surfaceAt(mod(s,track.length))==="ice"?.55:1;
+        const limit=Math.sqrt(760*profile.cornerGrip*grip/Math.max(.0001,Math.abs(this.curvature(track,s))));
+        cornerSpeed=Math.min(cornerSpeed,limit);
+        targetSpeed=Math.min(targetSpeed,Math.sqrt(limit*limit+2*300*Math.max(0,ahead-65)));
+      }
+      // Airborne momentum cannot follow a curved road. Set up a controlled take-off
+      // rather than arriving at a ramp at boost speed and running wide on landing.
+      let launchAhead=false;
+      for(const ramp of track.ramps){
+        const gap=mod(ramp.s-kart.road.s+track.length/2,track.length)-track.length/2;
+        if(gap<0||gap>420)continue;
+        let landingBend=0;for(let ahead=0;ahead<=400;ahead+=80)landingBend=Math.max(landingBend,Math.abs(this.curvature(track,ramp.s+ahead)));
+        const launchSpeed=clamp(Math.sqrt(track.halfWidth*.85/Math.max(.0001,landingBend*.66)),220,340);
+        targetSpeed=Math.min(targetSpeed,Math.sqrt(launchSpeed*launchSpeed+600*Math.max(0,gap-65)));
+        if(gap<180)launchAhead=true;
+      }
+      kart.aiPlanTimer-=dt;kart.aiDriftCooldown=Math.max(0,kart.aiDriftCooldown-dt);
+      if(kart.aiPlanTimer<=0){
+        const ideal=launchAhead?0:kart.aiLane*.45+clamp(bend*550,-1,1)*track.halfWidth*.28;
+        const safePickup=!launchAhead&&kart.airHeight===0&&kart.surface!=="ice"&&Math.abs(bend)<.0018;
+        kart.aiPlanLane=this.laneFor(kart,track,race,ideal,safePickup);kart.aiPlanTimer=.14;
+      }
+      kart.aiTargetLane=lerp(kart.aiTargetLane,kart.aiPlanLane,1-Math.exp(-5*dt));
+      targetSpeed=Math.min(targetSpeed,kart.aiHazardSpeed);
+      const target=track.at(kart.road.s+lookahead,kart.aiTargetLane),dx=target.x-kart.x,dy=target.y-kart.y;
+      const trackingHeading=kart.heading+clamp(kart.slipAngle,-.6,.6)*.35;
+      const delta=angleDelta(trackingHeading,Math.atan2(dy,dx));
+      const yaw=2*speed*Math.sin(delta)/Math.max(60,Math.hypot(dx,dy))-(kart.drifting?kart.driftDirection*.32:0);
+      const wheelAngle=Math.atan(62*yaw/Math.max(speed,60)*2.5/kart.driver.handling);
+      const steer=clamp(wheelAngle*(1+speed/300*.95)/.62,-1,1);
+      const unsafe=kart.offroad||Math.abs(kart.road.lateral)>track.halfWidth*.7;
+      if(unsafe)targetSpeed=Math.min(targetSpeed,180);
+      const brake=speed>targetSpeed+12?clamp((speed-targetSpeed-8)/65,0,1):false;
+      let drift=!brake&&!unsafe&&!launchAhead&&kart.airHeight===0&&kart.surface!=="ice"&&speed>210&&kart.boostTimer<.1&&kart.aiDriftCooldown===0&&Math.abs(bend)>.0017&&Math.abs(steer)>.26;
+      if(kart.drifting){
+        drift=!brake&&!unsafe&&!launchAhead&&Math.sign(bend)===kart.driftDirection&&Math.abs(bend)>.001&&kart.driftTimer<profile.driftCharge;
+        if(!drift)kart.aiDriftCooldown=1.1;
+      }
+      return {steer,accelerate:brake?false:clamp((targetSpeed-speed)/24+.35,0,1),brake,
+        drift,itemPressed:this.shouldUseItem(kart,race,cornerSpeed,cruise)};
     }
   }
   class Race {
@@ -187,7 +303,9 @@
       this.karts=lineup.map((d,i)=>new Kart(d,i,i>0));
       this.karts.forEach((k,i)=>{
         k.reset(this.track,lineup.length===1?0:i===0?7:i-1);
-        k.speedFactor=k.isAI?(DIFFICULTIES[this.options.difficulty]||DIFFICULTIES.normal).speed*(.98+i*.005):1;
+        k.aiProfile=DIFFICULTIES[this.options.difficulty]||DIFFICULTIES.normal;
+        k.speedFactor=k.isAI?k.aiProfile.speed*(.985+i*.004):1;
+        k.aiItemTime=k.aiProfile.itemDelay+i*.13;
       });
       this.player=this.karts[0];this.state="countdown";this.elapsed=0;this.countdown=3;this.result=null;this.events=[];
       this.traps=[];this.shells=[];this.startCharge=0;this.startTooEarly=false;
@@ -200,7 +318,11 @@
         if(input.accelerate&&!this.options.autoGas){if(this.countdown>1.15)this.startTooEarly=true;else this.startCharge+=dt;}
         else if(!input.accelerate){this.startTooEarly=false;this.startCharge=0;}
         this.countdown=Math.max(0,this.countdown-dt);
-        if(this.countdown===0){this.state="racing";if(!this.startTooEarly&&this.startCharge>.18){this.player.boostTimer=1.35;this.events.push("Perfekt start!");}}
+        if(this.countdown===0){
+          this.state="racing";
+          for(const kart of this.karts)if(kart.isAI)kart.boostTimer=kart.aiProfile.startBoost;
+          if(!this.startTooEarly&&this.startCharge>.18){this.player.boostTimer=1.35;this.events.push("Perfekt start!");}
+        }
         return;
       }
       this.elapsed+=dt;
@@ -208,10 +330,10 @@
       this.karts.forEach(k=>{
         if(k.finished){k.speed*=Math.exp(-2*dt);return;}
         k.aiItemTime-=dt;
-        const controls=k.isAI?this.ai.inputFor(k,this.track):input;
+        const controls=k.isAI?this.ai.inputFor(k,this.track,this,dt):input;
         k.update(dt,controls,this.track,!k.isAI&&this.options.assist);
         if(k.itemRoulette>0){k.itemRoulette=Math.max(0,k.itemRoulette-dt);if(!k.itemRoulette){k.item=k.pendingItem;k.pendingItem=null;}}
-        if(controls.itemPressed&&this.useItem(k))k.aiItemTime=2.2+Math.random()*2;
+        if(controls.itemPressed&&this.useItem(k))k.aiItemTime=k.aiProfile.itemDelay;
       });
       this.resolveKartCollisions();this.updateObjects(dt);this.karts.forEach(k=>this.updateKartProgress(k));this.updateRankings();
       if(this.player.finished)this.finish();

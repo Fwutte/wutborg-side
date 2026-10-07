@@ -14,13 +14,14 @@ function ready(){
  const consoleError=w.console.error.bind(w.console);w.console.error=(...args)=>{errors.push(args.map(String).join(' '));consoleError(...args);};
  try{
   if(scenario==='preview'){
+   if(D.DIFFICULTIES[params.get('difficulty')])g.difficulty=params.get('difficulty');
    g.selectedTrackId=D.TRACKS[Number(params.get('track')||0)].id;g.mode='single';g.autoGas=true;g.startRace();
    if(params.has('at')){
     const s=Number(params.get('at'))*g.track.length;
     g.race.karts.forEach((k,i)=>{const p=g.track.at(s-i*70,(i%3-1)*28);Object.assign(k,{x:p.x,y:p.y,elevation:p.elevation,slope:p.slope,heading:p.heading,velocityHeading:p.heading,lastX:p.x,lastY:p.y,lastS:p.s,raceDistance:s-i*70,progress:s-i*70,nextGate:(Math.floor((s-i*70)/(g.track.length/12))+1)*g.track.length/12,gateCount:Math.floor((s-i*70)/(g.track.length/12)),road:g.track.nearest(p.x,p.y),speed:280});});
     g.race.state='racing';
    }
-   const original=g.input.read.bind(g.input);g.input.read=()=>g.race.ai.inputFor(g.race.player,g.track);
+   const original=g.input.read.bind(g.input);g.input.read=()=>g.race.ai.inputFor(g.race.player,g.track,g.race);
    let frames=0,firstFrame=0,lastFrame=0,warmup=0;const originalDraw=g.renderer.draw.bind(g.renderer);
    g.renderer.draw=(r,dt,o)=>{originalDraw(r,dt,o);if(warmup++>30&&!o.paused){lastFrame=w.performance.now();if(!firstFrame)firstFrame=lastFrame;frames++;}};
    const timer=setInterval(()=>{

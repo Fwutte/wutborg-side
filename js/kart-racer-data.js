@@ -127,7 +127,11 @@
       palette:{sky:"#b8d4bc",grass:"#528f65",grassDark:"#294c49",road:"#897b58",edge:"#e1cf92",accent:"#f6c75c",fog:"#9ec4a7"},
       points:[[1300,400],[2300,400],[3330,570],[4090,1110],[4150,1910],[3450,2180],[3110,2710],[3460,3370],[2750,3850],[1860,3570],[1460,2930],[750,3040],[390,2300],[860,1700],[460,1020],[710,490]]})
   );
-  const DIFFICULTIES = { relaxed:{ name:"Hyggelig", speed:.79 }, normal:{ name:"Sport", speed:.91 }, expert:{ name:"Ekspert", speed:1.02 } };
+  const DIFFICULTIES = {
+    relaxed:{name:"Hyggelig",speed:.88,cornerGrip:.70,driftCharge:.65,itemDelay:2.2,startBoost:0},
+    normal:{name:"Sport",speed:1.06,cornerGrip:.86,driftCharge:1.05,itemDelay:1.25,startBoost:.8},
+    expert:{name:"Ekspert",speed:1.17,cornerGrip:.90,driftCharge:1.05,itemDelay:.7,startBoost:1.25}
+  };
   const CUP_POINTS = [15,12,10,8,6,4,2,1];
   window.WutborgKartData = { DRIVERS, ITEM_TYPES, TRACKS, DIFFICULTIES, CUP_POINTS, TAU, clamp, mod, lerp, normalizeAngle, angleDelta };
 })();
