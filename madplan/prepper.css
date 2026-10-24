@@ -1,0 +1,105 @@
+.prepper{--prepper-warn:#85571d;--prepper-warn-bg:#fff7e8}
+.prepper button,.prepper select,.prepper input,.prepper textarea{font-family:inherit}
+.prepper-hero{padding:18px;border:1px solid #cfdbcc;border-radius:20px;background:linear-gradient(135deg,#e1eadb,#f8faf5);margin-bottom:22px}
+.prepper-eyebrow{font-size:10px;text-transform:uppercase;letter-spacing:.15em;font-weight:600;color:var(--ink-soft)}
+.prepper-hero h1{font-family:"Fraunces",serif;font-size:28px;line-height:1.2;font-weight:500;letter-spacing:-.02em;margin:6px 0}
+.prepper-hero>p,.prepper-help{color:var(--muted);font-size:12px;line-height:1.65}
+.prepper-hero>p{font-size:11px;line-height:1.5}
+.prepper-progress-text{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:14px;font-size:11px}
+.prepper-progress-text span{color:var(--muted)}
+.prepper-hero progress{display:block;width:100%;height:5px;margin-top:7px;border:0;border-radius:9px;overflow:hidden;background:#d1ddcc;accent-color:var(--ink)}
+.prepper-hero progress::-webkit-progress-bar{background:#d1ddcc;border-radius:9px}
+.prepper-hero progress::-webkit-progress-value{background:var(--ink);border-radius:9px}
+.prepper-stats{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid #cfdbcc}
+.prepper-stats>div,.prepper-stats>button{min-width:0;text-align:left;border:0;background:transparent;color:var(--ink);padding:2px 0}
+.prepper-stats>button{cursor:pointer}
+.prepper-stats b{display:block;font-size:18px;line-height:1.25;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.prepper-stats span,.prepper-stats small{display:block;color:var(--ink-soft);font-size:9px;line-height:1.4;margin-top:3px}
+.prepper-stats small{font-size:9px}
+.prepper-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:7px}
+.prepper-toolbar h2{font-family:"Fraunces",serif;font-size:23px;font-weight:500}
+.prepper-toolbar .btn{padding:9px 16px;min-height:44px;font-size:12px}
+.prepper-help{margin-bottom:13px}
+.prepper-searchbar{display:grid;grid-template-columns:minmax(0,1fr) 145px;gap:7px}
+.prepper-searchbar input,.prepper-searchbar select{min-width:0;width:100%;height:46px;padding:0 11px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);font-size:12px}
+.prepper-searchbar input:focus,.prepper-searchbar select:focus{outline:2px solid var(--accent);outline-offset:1px}
+.prepper-filters{margin:12px 0;gap:6px;flex-wrap:wrap}
+.prepper-filters .chip{min-height:40px}
+.prepper-list-meta{display:flex;justify-content:space-between;gap:10px;color:var(--muted);font-size:10px;margin-bottom:15px}
+.prepper-groups{display:flex;flex-direction:column;gap:20px}
+.prepper-group-head{display:flex;align-items:center;justify-content:space-between;margin:0 3px 8px}
+.prepper-group-head h3{font-size:13px;font-weight:600}
+.prepper-group-head>span{font-size:11px;color:var(--muted)}
+.prepper-rows{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+.prepper-item{display:grid;grid-template-columns:minmax(0,1fr) 88px;padding:0 0 12px;border-bottom:1px solid var(--line);transition:background .15s}
+.prepper-item:last-child{border-bottom:0}
+.prepper-item.is-ready{background:#f3f8ee}
+.prepper-item.needs-attention{background:#fffcf5}
+.prepper-edit{border:0;background:transparent;color:var(--ink);font:inherit;text-align:left;padding:14px 14px 9px;cursor:pointer;min-width:0}
+.prepper-edit b{display:block;font-size:14px;font-weight:600;overflow-wrap:anywhere}
+.prepper-location{display:block;font-size:11px;color:var(--ink-soft);margin-top:3px}
+.prepper-note{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted);font-size:10px;margin-top:4px}
+.prepper-check{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:12px 6px 6px;cursor:pointer;min-height:62px}
+.prepper-check input,.prepper-sheet-check input{width:25px;height:25px;accent-color:var(--ink);cursor:pointer;flex-shrink:0}
+.prepper-check span{font-size:10px;color:var(--muted);max-width:100%;overflow-wrap:anywhere;text-align:center}
+.prepper-check input:checked+span{color:var(--ink);font-weight:600}
+.prepper-item button:disabled,.prepper-check input:disabled{opacity:.4;cursor:default}
+.prepper-stockline{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 14px}
+.prepper-stepper{display:flex;align-items:center;gap:4px;min-width:0}
+.prepper-stepper button{border:1px solid var(--line);background:var(--surface-2);color:var(--ink);border-radius:10px;min-width:40px;min-height:40px;font:inherit;font-size:19px;cursor:pointer}
+.prepper-stepper .prepper-amount{border-color:transparent;background:transparent;min-width:72px;font-size:14px;font-weight:600;padding:0 4px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.prepper-target{font-size:10px;color:var(--muted);text-align:right}
+.prepper-status{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:5px 10px;margin:7px 14px 0;font-size:10px;color:var(--muted)}
+.prepper-status.ready{color:#3f6038}
+.prepper-status.missing{color:#845339}
+.prepper-status.attention,.prepper-date-soon{color:#85571d}
+.prepper-buy{border:1px solid var(--line);border-radius:8px;padding:5px 9px;min-height:36px;background:var(--surface-2);color:var(--ink-soft);font:inherit;font-size:10px;cursor:pointer;margin-left:auto}
+.prepper-date-soon{font-size:9px;border-radius:5px;padding:1px 5px;background:#fff0d3}
+.prepper-dates{grid-column:1/-1;font-size:10px;color:var(--muted);margin:5px 14px 0;line-height:1.6}
+.prepper-recheck{grid-column:1/-1;justify-self:start;background:#fff1d8;border:1px solid #e8d8b8;border-radius:8px;padding:7px 10px;min-height:36px;font:inherit;font-size:11px;color:#85571d;margin:8px 14px 0;cursor:pointer}
+.prepper-tools{display:flex;justify-content:space-between;gap:4px;flex-wrap:wrap;border-top:1px solid var(--line);margin-top:24px;padding-top:10px}
+.prepper-tools button{font:inherit;font-size:11px;padding:10px 6px;min-height:44px;color:var(--ink-soft);border:0;background:transparent;cursor:pointer}
+.prepper-footnote{font-size:10px;color:var(--muted);line-height:1.7;margin:5px 4px 0}
+.prepper-warning{background:#fff1d8;color:#85571d;border-radius:10px;padding:10px;font-size:12px;margin-bottom:14px}
+.prepper-empty{padding:24px 12px;text-align:center;color:var(--muted);font-size:13px}
+.prepper-empty .btn{margin-top:14px}
+.prepper-sheet-check{display:flex;align-items:center;gap:12px;margin:10px 0 16px;font-size:14px;cursor:pointer}
+.prepper-sheet-check small{display:block;color:var(--muted);font-size:10px;margin-top:2px}
+#prepperForm select,#prepperForm textarea{width:100%;font:inherit;font-size:14px;padding:12px;border:1px solid var(--line);border-radius:12px;color:var(--ink);background:var(--surface-2);min-height:44px}
+#prepperForm textarea{resize:vertical}
+.prepper-details{margin:10px 0 14px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.prepper-details summary{cursor:pointer;font-size:12px;font-weight:600;padding:13px 0;min-height:44px}
+.prepper-details .field{margin-top:6px}
+.prepper-field-help{font-size:10px;color:var(--muted);line-height:1.6;margin:-2px 0 16px}
+.prepper-draft-status{font-size:11px;line-height:1.6;color:#85571d;margin-bottom:10px}
+.prepper-form-actions{display:flex;gap:8px;position:sticky;bottom:-1px;background:var(--paper);padding:10px 0 4px;z-index:1}
+.prepper-form-actions .btn{min-height:46px;flex:1}
+.prepper-form-actions .btn:first-child{background:var(--surface);border:1px solid var(--line);color:var(--ink)}
+@media(max-width:430px){.prepper-searchbar{grid-template-columns:minmax(0,1fr) 138px}.prepper-filters .chip{font-size:11px;padding:7px 11px}}
+@media(max-width:360px){.prepper-searchbar{grid-template-columns:minmax(0,1fr)}.prepper-searchbar select{height:40px}}
+@media(max-width:380px){.prepper-hero{padding:18px}.prepper-hero h1{font-size:26px}.prepper-stats b{font-size:16px}.prepper-stats span{font-size:9px}.prepper-item{grid-template-columns:minmax(0,1fr) 76px}.prepper-stockline{gap:5px}.prepper-stepper{gap:1px}.prepper-stepper .prepper-amount{font-size:12px;min-width:62px}.prepper-target{font-size:9px}}
+@media(prefers-reduced-motion:reduce){.prepper-item{transition:none}}
+@media print{
+  body:has(.prepper){background:white;font-size:10pt;color:black}
+  body:has(.prepper) .app{max-width:none;padding:0}
+  body:has(.prepper) .topbar{padding:0 0 12px}
+  body:has(.prepper) .top-actions,body:has(.prepper) .tabbar,body:has(.prepper) #sheet,body:has(.prepper) #overlay,body:has(.prepper) #toast{display:none!important}
+  .prepper-toolbar,.prepper-help,.prepper-searchbar,.prepper-filters,.prepper-tools,.prepper-list-meta,.prepper-empty,.prepper-footnote{display:none!important}
+  .prepper-hero{background:white;padding:14px;margin-bottom:16px}
+  .prepper-stats button{display:block}
+  .prepper-groups{display:block;columns:2;column-gap:20px}
+  .prepper-group[hidden]{display:block!important}
+  .prepper-group-head{margin-top:12px;break-after:avoid}
+  .prepper-rows{box-shadow:none;border-radius:0;overflow:visible}
+  .prepper-item,.prepper-item[hidden]{display:grid!important;break-inside:avoid;background:white!important;padding-bottom:8px}
+  .prepper-edit{padding:8px 10px 3px}
+  .prepper-edit b{font-size:11px}
+  .prepper-note{white-space:normal;overflow-wrap:anywhere}
+  .prepper-stepper button:not(.prepper-amount),.prepper-recheck,.prepper-buy{display:none}
+  .prepper-stepper .prepper-amount{padding:0;min-height:20px;text-align:left;font-size:12px}
+  .prepper-stockline{padding:0 10px}
+  .prepper-check{min-height:40px;padding:8px 2px}
+  .prepper-check input{width:15px;height:15px}
+  .prepper-check span{font-size:8px}
+  .prepper-status,.prepper-dates{font-size:8px;margin-left:10px;margin-right:10px}
+}

@@ -76,6 +76,9 @@ console.log("\n=== Server modules ===");
 checkModule("functions/api/_helpers.js", "helpers");
 checkModule("functions/api/freezer/index.js", "freezer GET/POST/DELETE");
 checkModule("functions/api/freezer/[id].js", "freezer PATCH/DELETE :id");
+checkModule("functions/api/prepper/_fields.js", "prepper validation");
+checkModule("functions/api/prepper/index.js", "prepper GET/POST");
+checkModule("functions/api/prepper/[id].js", "prepper PATCH/DELETE");
 checkModule("functions/api/highscores/index.js", "highscores GET/POST");
 checkModule("functions/api/shopping/index.js", "shopping GET/POST/DELETE");
 checkModule("functions/api/shopping/[id].js", "shopping PATCH/DELETE :id");
@@ -86,6 +89,8 @@ checkModule("functions/api/dishes/[id].js", "dishes PATCH/DELETE");
 
 console.log("\n=== Client JavaScript ===");
 checkModule("js/highscores.js", "highscore client helper");
+checkModule("madplan/prepper.js", "prepper client");
+checkModule("madplan/prepper-model.js", "prepper readiness rules");
 checkModule("js/sangquiz-data.js", "sangquiz song data");
 checkModule("js/sangquiz.js", "sangquiz game");
 checkModule("js/pips-skybound.js", "pips skybound game");
@@ -146,5 +151,13 @@ highscoreChecks.forEach(([pattern, name]) => {
   fail += ok ? 0 : 1;
 });
 
+const prepperTests = spawnSync(process.execPath, [path.join(ROOT, "scripts/prepper.test.cjs")], {
+  encoding: "utf8",
+  timeout: 15000,
+});
+process.stdout.write(prepperTests.stdout || "");
+process.stderr.write(prepperTests.stderr || "");
+if (prepperTests.error || prepperTests.status !== 0) fail += 1;
+else pass += 1;
 console.log(`\n=== Result: ${pass} OK, ${fail} FAIL ===\n`);
 process.exit(fail ? 1 : 0);

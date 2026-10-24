@@ -3,11 +3,14 @@
    API) sendes altid til netværket, så I ser den nyeste madplan.
    Bump CACHE-versionen når du ændrer skallen. */
 
-const CACHE = "madplan-shell-v11";
+const CACHE = "madplan-shell-v16";
 const SHELL = [
   "/madplan/",
   "/madplan/index.html",
   "/madplan/auth.js",
+  "/madplan/prepper-model.js?v=5",
+  "/madplan/prepper.js?v=5",
+  "/madplan/prepper.css?v=5",
   "/madplan/manifest.json",
   "/madplan/icon.svg",
 ];

@@ -6,6 +6,7 @@
 <meta name="theme-color" content="#1F3D2C">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon.svg">
+<link rel="stylesheet" href="prepper.css?v=5">
 <title>Privat madplan | Wutborg.dk</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -565,6 +566,10 @@
     <svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="3"/><path d="M5 9h14M8 6h2M8 13h8M8 17h8"/></svg>
     Fryser
   </button>
+  <button class="tab" data-view="prepper">
+    <svg viewBox="0 0 24 24"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6z"/><path d="m8 12 3 3 5-6"/></svg>
+    Prepper
+  </button>
 </nav>
 
 <!-- bottom sheet -->
@@ -574,6 +579,8 @@
 <div class="toast" id="toast"></div>
 
 <script src="auth.js"></script>
+<script src="prepper-model.js?v=5"></script>
+<script src="prepper.js?v=5"></script>
 <script>
 /* ============================================================
    DATALAG  (Cloudflare Pages Functions + D1)
@@ -695,9 +702,10 @@ async function loadFreezer(){
 }
 
 const store = {
-  init(){ return Promise.all([loadWeek(),loadDishes(),loadShopping(),loadFreezer()]); },
+  init(){ return Promise.all([loadWeek(),loadDishes(),loadShopping(),loadFreezer(),currentView==="prepper" ? Prepper.load() : Promise.resolve()]); },
   loadWeek,
   async loadView(view){
+    if(view==="prepper") return Prepper.load();
     if(view==="plan") return loadWeek();
     if(view==="dishes") return loadDishes();
     if(view==="shopping") return loadShopping();
@@ -887,7 +895,9 @@ function isoWeek(date){
 
 /* ---------------- app-tilstand ---------------- */
 let weekStart = mondayOf(new Date());
-let currentView = "plan";
+const requestedView = new URLSearchParams(location.search).get("view");
+let currentView = ["plan","dishes","shopping","freezer","prepper"].includes(requestedView) ? requestedView : "plan";
+if(currentView==="prepper") document.querySelector("#authTitle").textContent="Prepper er låst";
 let freezerQuery = "";
 let freezerDrawer = "Oksekød";
 const todayISO = iso(new Date());
@@ -900,7 +910,8 @@ function reportError(error,msg="Kunne ikke gemme"){ console.error(error); toast(
 /* ---------------- render ---------------- */
 function render(){
   $("#weekLabel").textContent = "Uge "+isoWeek(weekStart);
-  $("#wordmarkLabel").textContent = currentView==="freezer" ? "Fryser" : "Madplan";
+  $("#wordmarkLabel").textContent = currentView==="prepper" ? "Prepper" : currentView==="freezer" ? "Fryser" : "Madplan";
+  document.title = currentView==="prepper" ? "Privat Prepper | Wutborg.dk" : "Privat madplan | Wutborg.dk";
   $(".weeknav").hidden = currentView !== "plan";
   document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active", b.dataset.view===currentView));
   const view = $("#view");
@@ -908,6 +919,7 @@ function render(){
   if(currentView==="dishes")   view.innerHTML="", view.append(...renderDishes());
   if(currentView==="shopping") view.innerHTML="", view.append(...renderShopping());
   if(currentView==="freezer")  view.innerHTML="", view.append(...renderFreezer());
+  if(currentView==="prepper")  view.innerHTML="", view.append(...Prepper.render());
 }
 
 function otherMealSummary(dateISO, excludeMeal=DEFAULT_MEAL){
@@ -2054,6 +2066,9 @@ $("#view").addEventListener("click",event=>{
 }, true);
 document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",async()=>{
   currentView=b.dataset.view;
+  const url=new URL(location.href);
+  url.searchParams.set("view",currentView);
+  history.replaceState(null,"",url);
   render();
   try{
     await store.loadView(currentView); render();
@@ -2066,7 +2081,7 @@ document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",async()=
 render();
 window.madplanAuth.ensureAccess().then(allowed=>{
   if(!allowed) return;
-  store.init().then(render).catch(error=>reportError(error,"Kunne ikke hente data"));
+  store.init().then(render).catch(error=>{ render(); reportError(error,"Kunne ikke hente data"); });
 });
 
 /* registrér service worker (kun når siden serveres over http/https) */

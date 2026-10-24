@@ -1,5 +1,39 @@
 # Opsætning af madplanen
 
+## Prepper
+
+Prepper åbnes fra forsiden på `/prepper/` eller som fanen **Prepper** i
+madplanen. Den bruger den samme DB-binding og enhedsgodkendelse.
+
+Migration `0007_prepper.sql` opretter listen fra `prepperliste udkast.txt` og
+udvider mad med konkrete varer. Kør migrationen før den nye side udgives:
+
+```sh
+npx wrangler d1 migrations apply madplan --remote
+```
+
+Mængderne i udkastet bliver til mål. Beholdninger er ukendte, og flueben er
+umarkerede, indtil familien tæller op og markerer tingene. Tom beholdning
+betyder **Ikke optalt**; tallet 0 betyder, at man har talt op og ikke har nogen.
+Antal og klargjort-status gemmes hver for sig. Madvarer, enheder, mål, noter
+og teksten ved fluebenet kan ændres, og poster kan tilføjes og slettes.
+
+Migration `0008_prepper_checks.sql` tilføjer placering, nærmeste dato,
+kontrolinterval og seneste kontrol. De tre opladelige poster får som udgangspunkt
+et redigerbart tjekinterval på 90 dage; det er et personligt tjekinterval.
+Ændringer i antal fornyer aldrig kontroldatoen. Sæt flueben eller brug knappen
+til ny kontrol for at markere, at posten faktisk er kontrolleret igen.
+
+**Klar** kræver flueben, opfyldt mængdemål og ingen passeret kontrol- eller
+varedato. Beholdning på 0 er altid manglende. Varedatoer inden for 30 dage
+vises under **Tjek datoer**. CSV-eksport og print indeholder hele listen,
+også når en søgning eller et filter er aktivt.
+
+Når en optalt vare mangler en kendt mængde, kan **Til indkøb** lægge netop
+underskuddet på den fælles indkøbsliste med mærket `(Prepper)`. En eksisterende,
+uafkrydset linje med samme navn tilføjes ikke igen. Kontanter og mønter får
+ikke en indkøbsknap.
+
 Madplanen bruger kun Cloudflare Pages, Pages Functions og D1 på gratisniveauet.
 Der skal ikke tilføjes betalingskort eller aktiveres betalte Workers-funktioner.
 
