@@ -1,5 +1,6 @@
 import * as THREE from "./vendor/three/three.module.js";
 import { mergeGeometries } from "./vendor/three/addons/utils/BufferGeometryUtils.js";
+import { GLTFLoader } from "./vendor/three/addons/loaders/GLTFLoader.js";
 
 import { SCALE, world, material, createLandscape } from "./kart-racer-world.js?v=20260911-art";
 import { reflectionEnvironment, glowTexture, softSprite, energyShieldMaterial } from "./game-art-3d.js?v=20260911-art";
@@ -14,8 +15,20 @@ const renderPose=(kart,alpha=1)=>{
 };
 const rng=seed=>()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
 
+// Load once before the first scene. A missing model keeps the procedural karts.
+export async function loadKartModel(){
+  const response=await fetch(new URL("../assets/kart/blender/wutborg-sprint.glb?v=20261026",import.meta.url),{signal:AbortSignal.timeout(8000)});
+  if(!response.ok)throw new Error(`Kart model HTTP ${response.status}`);
+  const gltf=await new GLTFLoader().parseAsync(await response.arrayBuffer(),"");
+  for(const name of ["Chassis","Wheel_FL","Wheel_FR","Wheel_RL","Wheel_RR"]){
+    if(!gltf.scene.getObjectByName(name))throw new Error(`Kart model missing ${name}`);
+  }
+  return gltf.scene;
+}
+
 export class KartRacer3DRenderer {
-  constructor(canvas){
+  constructor(canvas,kartModel=null){
+    this.kartModel=kartModel;
     this.canvas=canvas;this.compact=matchMedia("(pointer:coarse), (max-width:760px)").matches;
     this.renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:"high-performance"});
     this.renderer.setPixelRatio(Math.min(devicePixelRatio||1,this.compact?1.4:1.75));
@@ -261,6 +274,7 @@ export class KartRacer3DRenderer {
     geo.translate(0,0,-(d-2*r)/2);geo.computeVertexNormals();return geo;
   }
   createKart(driver){
+    if(this.kartModel)return this.createBlenderKart(driver);
     const group=new THREE.Group(),body=new THREE.Group(),parts=new THREE.Group();
     const paint=new THREE.MeshPhysicalMaterial({color:driver.color,roughness:.28,metalness:.22,clearcoat:1,clearcoatRoughness:.2});
     const accent=material(driver.accent,{roughness:.36}),dark=material("#182735",{roughness:.86});
@@ -317,6 +331,39 @@ export class KartRacer3DRenderer {
       for(let tread=0;tread<20;tread++){const a=tread/20*TAU;const strip=this.box(pieces,dark,0,Math.sin(a)*.327,Math.cos(a)*.327,.22,.035,.045);strip.rotation.x=-a;}
       const wheel=this.bake(pieces);pivot.add(wheel);body.add(pivot);wheels.push({pivot,front:z>0,wheel});
     }
+    return this.addKartEffects({group,body,wheels});
+  }
+  createBlenderKart(driver){
+    const group=new THREE.Group(),body=new THREE.Group(),asset=this.kartModel.clone(true);
+    // Every scene owns its GPU resources; rebuilding a course cannot dispose the
+    // template or another kart's geometry/materials. Reuse within this one kart.
+    const geometries=new Map(),materials=new Map();
+    asset.traverse(mesh=>{
+      if(!mesh.isMesh)return;
+      if(!geometries.has(mesh.geometry))geometries.set(mesh.geometry,mesh.geometry.clone());
+      mesh.geometry=geometries.get(mesh.geometry);
+      const source=mesh.material;
+      if(!materials.has(source)){
+        const mat=source.clone();
+        if(source.name==="Paint")mat.color.set(driver.color);
+        if(source.name==="Accent")mat.color.set(driver.accent);
+        materials.set(source,mat);
+      }
+      mesh.material=materials.get(source);mesh.castShadow=true;mesh.receiveShadow=true;
+    });
+    body.add(asset);group.add(body);
+    const wheels=["FL","FR","RL","RR"].map(name=>{
+      const pivot=asset.getObjectByName(`Wheel_${name}`),wheel=new THREE.Group();
+      // Keep steering at the axle and spin in a separate local frame.
+      while(pivot.children.length)wheel.add(pivot.children[0]);
+      pivot.add(wheel);return {pivot,wheel,front:name.startsWith("F"),radius:.342};
+    });
+    const number=String(window.WutborgKartData.DRIVERS.indexOf(driver)+1).padStart(2,"0");
+    const plate=this.sign(number,driver.color,"#ffffff",.27,.18);
+    plate.position.set(0,.72,-.696);plate.rotation.y=Math.PI;body.add(plate);
+    return this.addKartEffects({group,body,wheels});
+  }
+  addKartEffects({group,body,wheels}){
     const flames=[];
     for(const side of [-1,1]){
       const flame=this.mesh(new THREE.ConeGeometry(.18,.95,10),new THREE.MeshBasicMaterial({color:"#7cecff"}),body,side*.43,.42,-1.70);
@@ -354,7 +401,7 @@ export class KartRacer3DRenderer {
       e.body.rotation.x=damp(e.body.rotation.x,THREE.MathUtils.clamp((k.longitudinalAcceleration||0)/440,-1,1)*.065,8,dt);
       e.body.rotation.z=damp(e.body.rotation.z,-THREE.MathUtils.clamp((k.lateralAcceleration||0)/760,-1,1)*.12,8,dt);
       e.body.position.y=(k.hop>0?Math.sin(k.hop/.25*Math.PI)*.25:0)+Math.sin(t*17+i)*Math.min(k.speed/18000,.02);
-      e.wheels.forEach(w=>{if(w.front)w.pivot.rotation.y=-(k.steeringAngle||0);w.wheel.rotation.x=(k.wheelTravel||0)*SCALE/.26;});
+      e.wheels.forEach(w=>{if(w.front)w.pivot.rotation.y=-(k.steeringAngle||0);w.wheel.rotation.x=(k.wheelTravel||0)*SCALE/(w.radius||.26);});
       e.flames.forEach(f=>{f.visible=k.boostTimer>0;f.scale.y=1+Math.sin(t*38)*.22;});
       e.shield.visible=k.starTimer>0||k.invincibleTimer>0;e.shield.rotation.y=t;
       e.shield.material.color.set(k.starTimer>0?"#ffe88f":"#a3e6ff");

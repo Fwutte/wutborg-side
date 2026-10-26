@@ -2,6 +2,29 @@
 
 The game at kart-racer.html uses local Three.js and procedural scenery. No new packages or remote assets are required.
 
+## Blender car artwork (October 26)
+
+The eight drivers now share an original Wutborg Sprint model built and exported
+in Blender. It adds a tapered nose and splitter, sculpted sidepods with air
+intakes, a rear diffuser and wing, six-spoke alloy wheels, wider rear tyres,
+an open cockpit with roll hoop, and a suited driver with a wraparound visor.
+Each driver keeps their paint and accent colors. Existing steering, wheel travel,
+body motion, boost flames and shield effects animate the new model.
+
+The editable `.blend`, local `.glb` and asset notes are in `assets/kart/blender/`.
+Rebuild with `scripts/build-kart-model.py` in Blender. One GLB is loaded before
+the first scene with an eight-second timeout; on failure the procedural kart
+continues to work. Scene instances own their GPU resources independently of the
+template. The model preview at `scripts/kart-racer-model-preview.html` supports
+dragging and eight driver swatches. Physics and record versions remain at 6.
+
+Validation: the complete `npm run validate` suite passed. The Blender browser
+scenario passed 104 checks with 11,068 triangles per model and 255 menu draw
+calls. The full six-race Grand Prix passed 52 browser checks (258 menu draw calls
+after rebuilding the cup), including GPU cleanup. Handling passed all 17 browser
+checks at 390 × 844. The close-up was visually checked at 1280 × 720 and 390 × 844;
+these checks do not establish physical phone performance.
+
 ## Play
 
 - Six courses: Kløversløjfen, Solskinsbugten, Midnatskronen, Vulkanpasset, Frosttinderne and Junglestien.

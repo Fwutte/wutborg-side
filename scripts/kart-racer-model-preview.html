@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Wutborg Sprint · Bilvisning</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#112b32;color:#f4f4db;font-family:Arial,sans-serif}canvas{display:block;width:100vw;height:100vh;touch-action:none}header{position:absolute;top:6vh;left:6vw;pointer-events:none}small{color:#a9cabb;letter-spacing:.23em;font-size:11px}h1{font-size:clamp(38px,6vw,84px);line-height:.9;letter-spacing:-.06em;margin:18px 0}h1 em{color:#e7f4ac;font-style:normal}header p{font-size:14px;line-height:1.7;color:#bbd1c8;max-width:245px}.tag{display:inline-block;margin-top:8px;border:1px solid #607b70;border-radius:30px;padding:8px 12px;font-size:10px;letter-spacing:.13em}footer{position:absolute;bottom:5vh;left:6vw;right:6vw;display:flex;justify-content:space-between;align-items:end;gap:20px}.drivers{display:flex;gap:8px;flex-wrap:wrap;max-width:320px}button{cursor:pointer;border:2px solid transparent;border-radius:50%;width:30px;height:30px;background:var(--paint);padding:0}button[aria-pressed=true]{border-color:white;outline:1px solid #a9cabb;outline-offset:4px}button:focus-visible{outline:3px solid white;outline-offset:4px}#driver-name{margin:0 0 18px;font-size:21px}a{color:#112b32;background:#e7f4ac;padding:17px 23px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:700}#status{font:11px monospace;color:#91b6ab;margin-top:18px}@media(max-width:600px){header{top:4vh}header p,.tag{display:none}footer{bottom:4vh}a{padding:13px}small{font-size:9px}#status{max-width:190px;font-size:9px}}
+</style>
+<script src="../js/kart-racer-data.js"></script>
+</head>
+<body>
+<canvas id="view" aria-label="Ny Wutborg-racerbil i 3D. Træk for at dreje bilen."></canvas>
+<header><small>WUTBORG MOTOR CLUB / 01</small><h1>MØD DIN<br><em>NYE KART.</em></h1><p>Formet til næste sving.<br>Lav snude, brede bagdæk og<br>din kørers egne farver.</p><span class="tag">WUTBORG SPRINT</span></header>
+<footer><div><p id="driver-name">Max · Allround</p><div class="drivers" role="group" aria-label="Vælg kører"></div><div id="status" role="status">Henter bilen…</div></div><a href="../kart-racer.html">Ud på banen ↗</a></footer>
+<script type="module">
+import * as T from '../js/vendor/three/three.module.js';
+import {KartRacer3DRenderer,loadKartModel} from '../js/kart-racer-3d.js?v=20261026-blender';
+import {reflectionEnvironment,glowTexture} from '../js/game-art-3d.js?v=20260911-art';
+const canvas=document.getElementById('view'),status=document.getElementById('status');
+try{
+ const template=await loadKartModel(),r=new KartRacer3DRenderer(canvas,template);
+ r.artGlow=glowTexture();r.scene=new T.Scene();r.scene.background=new T.Color('#112b32');r.scene.fog=new T.Fog('#112b32',12,40);
+ r.environmentTarget=reflectionEnvironment(r.renderer);r.scene.environment=r.environmentTarget.texture;
+ r.scene.add(new T.HemisphereLight('#e5f5ff','#314d40',1.5));
+ const sun=new T.DirectionalLight('#fff0d4',2.6);sun.position.set(-3,6,4);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-5;sun.shadow.camera.right=5;sun.shadow.camera.top=5;sun.shadow.camera.bottom=-5;sun.shadow.bias=-.001;r.scene.add(sun);
+ const rim=new T.DirectionalLight('#93e4ee',2.6);rim.position.set(3,3,-4);r.scene.add(rim);
+ const floor=new T.Mesh(new T.PlaneGeometry(200,200),new T.MeshStandardMaterial({color:'#193a3e',roughness:.82}));floor.rotation.x=-Math.PI/2;floor.position.y=-.03;floor.receiveShadow=true;r.scene.add(floor);
+ const dais=new T.Mesh(new T.CylinderGeometry(2.12,2.19,.12,96),new T.MeshStandardMaterial({color:'#294c4b',roughness:.57,metalness:.25}));dais.position.y=-.005;dais.receiveShadow=true;r.scene.add(dais);
+ const ring=new T.Mesh(new T.TorusGeometry(2.13,.014,6,96),new T.MeshBasicMaterial({color:'#d5ed9c'}));ring.rotation.x=Math.PI/2;ring.position.y=.06;r.scene.add(ring);
+ let visual,angle=-.64,drag=null;
+ function select(driver){
+  if(visual){r.scene.remove(visual.group);const geos=new Set(),mats=new Set();visual.group.traverse(m=>{if(m.isMesh)geos.add(m.geometry);if(m.material)mats.add(m.material);});geos.forEach(g=>g.dispose());mats.forEach(m=>{if(m.map&&m.map!==r.artGlow)m.map.dispose();m.dispose();});}
+  visual=r.createKart(driver);visual.group.position.y=.07;visual.group.rotation.y=angle;r.scene.add(visual.group);
+  document.getElementById('driver-name').textContent=driver.name+' · '+driver.className;
+  document.querySelectorAll('[data-driver]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.driver===driver.id)));
+ }
+ for(const driver of window.WutborgKartData.DRIVERS){const b=document.createElement('button');b.type='button';b.dataset.driver=driver.id;b.style.setProperty('--paint',driver.color);b.setAttribute('aria-label',driver.name);b.addEventListener('click',()=>select(driver));document.querySelector('.drivers').append(b);}
+ select(window.WutborgKartData.DRIVERS[0]);
+ canvas.addEventListener('pointerdown',e=>{drag={x:e.clientX,angle};canvas.setPointerCapture(e.pointerId);});
+ canvas.addEventListener('pointermove',e=>{if(drag){angle=drag.angle+(e.clientX-drag.x)*.009;visual.group.rotation.y=angle;}});
+ canvas.addEventListener('pointerup',()=>drag=null);canvas.addEventListener('pointercancel',()=>drag=null);
+ function resize(){const w=canvas.clientWidth,h=canvas.clientHeight;r.renderer.setSize(w,h,false);r.camera.aspect=w/h;r.camera.fov=w<600?40:34;const distance=w<600?Math.max(1,.95/r.camera.aspect):1;r.camera.position.set(4*distance,.7+1.95*distance,5.6*distance);r.camera.lookAt(w<600?0:-.75,.7,0);r.scene.fog.near=12*distance;r.scene.fog.far=40*distance;r.camera.updateProjectionMatrix();}
+ addEventListener('resize',resize);resize();
+ r.renderer.setAnimationLoop(()=>{r.renderer.render(r.scene,r.camera);});
+ status.textContent='Træk for at dreje · 8 kørerfarver';status.dataset.status='ready';
+}catch(error){status.textContent='Bilen kunne ikke vises: '+error.message;status.dataset.status='failed';console.error(error);}
+</script>
+</body></html>

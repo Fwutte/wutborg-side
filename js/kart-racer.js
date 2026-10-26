@@ -923,8 +923,9 @@
     let canvas=document.getElementById("kart-canvas");if(!canvas)return;
     let renderer;
     try{
-      const module=await import("./kart-racer-3d.js?v=20261007-ghost");
-      renderer=new module.KartRacer3DRenderer(canvas);
+      const module=await import("./kart-racer-3d.js?v=20261026-blender");
+      const kartModel=await module.loadKartModel().catch(error=>{console.warn("Blender-bilen kunne ikke hentes. Bruger standardbilen.",error);return null;});
+      renderer=new module.KartRacer3DRenderer(canvas,kartModel);
     }catch(error){
       console.warn("3D er ikke tilgængelig. Starter 2D-visningen.",error);
       const replacement=canvas.cloneNode();canvas.replaceWith(replacement);canvas=replacement;

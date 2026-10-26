@@ -30,6 +30,42 @@ async function ready(){
    },250);return;
   }
   check(g.renderer.constructor.name==='KartRacer3DRenderer','WebGL renderer initialized');
+  if(scenario==='blender'){
+   const T=await import('../js/vendor/three/three.module.js');
+   check(Boolean(g.renderer.kartModel),'Blender GLB loaded instead of fallback');
+   const template=g.renderer.kartModel,sourceGeometry=template.getObjectByName('Chassis').children.find(m=>m.material.name==='Paint').geometry;
+   const bounds=new T.Box3().setFromObject(template);
+   check(bounds.min.y>-.03&&bounds.max.y>1.7&&bounds.max.y<2,'upright chassis and grounded wheels');
+   g.mode='single';g.startRace();g.audio.enabled=false;g.togglePause(true);
+   g.renderer.draw(g.race,.016,{paused:true,driver:D.DRIVERS[0]});
+   check(g.renderer.karts.length===8,'all eight drivers use the Blender kart');
+   let triangles=0;
+   for(let i=0;i<8;i++){
+    const visual=g.renderer.karts[i],driver=g.race.karts[i].driver;
+    const asset=visual.body.children[0];
+    check(Boolean(asset.getObjectByName('Chassis')),'Blender chassis present for '+driver.name);
+    const paint=asset.getObjectByName('Chassis').children.find(m=>m.material.name==='Paint');
+    check(paint?.material.color.getHexString()===driver.color.slice(1),'driver paint retained for '+driver.name);
+    check(paint.geometry!==sourceGeometry,'scene geometry is independent for '+driver.name);
+    check(visual.wheels.length===4&&visual.wheels.filter(w=>w.front).length===2,'four independent wheel pivots for '+driver.name);
+    visual.wheels.forEach(({pivot,wheel,front})=>{
+     check(Math.abs(pivot.position.y-.35)<.001&&Math.abs(pivot.position.z-(front ? .77 : -.76))<.001,'wheel axle matches game coordinates');
+     const before=new T.Box3().setFromObject(wheel).getCenter(new T.Vector3());
+     wheel.rotation.x=2;visual.group.updateMatrixWorld(true);
+     const after=new T.Box3().setFromObject(wheel).getCenter(new T.Vector3());
+     check(before.distanceTo(after)<.025,'wheel spins about its axle without orbiting');
+    });
+    if(i===0)asset.traverse(m=>{if(m.isMesh)triangles+=(m.geometry.index?.count||m.geometry.attributes.position.count)/3;});
+   }
+   check(triangles<16000,'kart stays below 16000 triangles');
+   const first=g.renderer.karts[0].body.children[0].getObjectByName('Chassis').children[0];
+   const second=g.renderer.karts[1].body.children[0].getObjectByName('Chassis').children[0];
+   check(first.geometry!==second.geometry&&first.material!==second.material,'rivals own separate GPU resources');
+   g.showMenu();g.renderer.draw(g.race,.016,{driver:D.DRIVERS[0]});
+   check(g.renderer.renderer.info.render.calls<300,'menu remains below 300 draw calls');
+   check(errors.length===0,'no Blender model runtime errors');
+   out.textContent='PASS · '+checks.length+' Blender checks · '+triangles+' triangles · '+g.renderer.renderer.info.render.calls+' menu draw calls\n'+checks.join('\n');out.dataset.status='passed';return;
+  }
   g.autoGas=false;g.mode='single';g.startRace();g.audio.enabled=false;
   check(g.race.player.rank===8,'player starts eighth');
   const control=doc.querySelector('[data-kart-control="left"]');
