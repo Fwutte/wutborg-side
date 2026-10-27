@@ -33,7 +33,7 @@
     });
     const xs=samples.map(p=>p.x),ys=samples.map(p=>p.y),padding=config.halfWidth+160;
     const bounds={minX:Math.min(...xs)-padding,maxX:Math.max(...xs)+padding,minY:Math.min(...ys)-padding,maxY:Math.max(...ys)+padding};
-    const track = { ...config, revision:6, length, samples, bounds, step:length/segments,
+    const track = { ...config, revision:7, length, samples, bounds, step:length/segments,
       cx:(bounds.minX+bounds.maxX)/2,cy:(bounds.minY+bounds.maxY)/2,width:bounds.maxX-bounds.minX,height:bounds.maxY-bounds.minY };
     // Cosine hills join the start/finish seamlessly and keep every gradient driveable.
     track.elevationAt = function(s) {
@@ -71,12 +71,12 @@
     track.surfaceAt = s => track.theme === "frost" && s / length > .16 && s / length < .72 ? "ice" : "asphalt";
     track.shortcut = config.shortcut || null;
     track.isShortcut = road => Boolean(track.shortcut && road.s / length > track.shortcut[0] && road.s / length < track.shortcut[1] && Math.abs(road.lateral + track.halfWidth + 30) < 24);
-    track.ramps = (config.ramps || []).map(t => ({...track.at(t * length), fraction:t}));
+    track.ramps = (config.ramps || [.16,.64]).map(t => ({...track.at(t * length), fraction:t}));
     track.obstacles = (config.obstacles || []).map((t,i) => ({s:t*length, phase:i*2, radius:23, kind:track.theme === "frost" ? "snowball" : track.theme === "jungle" ? "log" : "boulder"}));
     track.obstacleAt = (o,time) => track.at(o.s, Math.sin(time * 1.3 + o.phase) * track.halfWidth * .7);
     track.start = track.at(0);
     track.heading = track.start.heading;
-    track.itemBoxes = [.09,.23,.38,.54,.69,.85].flatMap((t,i) => [-.55,0,.55].map((lane,n) => ({ ...track.at(t*length,lane*track.halfWidth), id: `box-${i}-${n}` })));
+    track.itemBoxes = [.09,.23,.38,.54,.69,.85].flatMap((t,i) => [-.55,0,.55].map((lane,n) => ({ ...track.at(t*length,lane*track.halfWidth), id: `box-${i}-${n}`, double:n===(i%2?0:2) })));
     track.coins = [.04,.17,.30,.44,.60,.76,.91].flatMap((t,i) => [0,1,2,3,4].map(n => ({ ...track.at(t*length+n*48,(i%2?1:-1)*track.halfWidth*.42), id: `coin-${i}-${n}` })));
     track.boostPads = [.14,.32,.48,.64,.80,.94].map((t,i) => track.at(t*length,(i%2?1:-1)*track.halfWidth*.35));
     return track;
@@ -98,6 +98,8 @@
     redShell:{ name:"Raket", icon:"➤", color:"#ff786b", help:"Følger en rival foran dig" },
     star:{ name:"Stjerneskjold", icon:"★", color:"#ffe27a", help:"Fart og beskyttelse i 5 sekunder" },
     lightning:{ name:"Lyn", icon:"ϟ", color:"#8bdfff", help:"Sæt rivalerne ud af spil" },
+    tripleTurbo:{ name:"Trippelturbo", icon:"»", color:"#ffc85f", help:"Tre turboer. Brug dem én ad gangen, også over græs" },
+    horn:{ name:"Trykbølge", icon:"◎", color:"#f5a0db", help:"Slå biler og raketter væk tæt på dig" },
   };
   const TRACKS = [
     makeTrack({ id:"clover-circuit", name:"Kløversløjfen", short:"Kløver", number:"01", theme:"garden", difficulty:"Let", subtitle:"Stadion · blomsterdal · slotsbakke", halfWidth:118,
@@ -130,7 +132,7 @@
   const DIFFICULTIES = {
     relaxed:{name:"Hyggelig",speed:.88,cornerGrip:.70,driftCharge:.65,itemDelay:2.2,startBoost:0},
     normal:{name:"Sport",speed:1.06,cornerGrip:.86,driftCharge:1.05,itemDelay:1.25,startBoost:.8},
-    expert:{name:"Ekspert",speed:1.17,cornerGrip:.90,driftCharge:1.05,itemDelay:.7,startBoost:1.25}
+    expert:{name:"Ekspert",speed:1.17,cornerGrip:.94,driftCharge:1.05,itemDelay:.7,startBoost:1.25}
   };
   const CUP_POINTS = [15,12,10,8,6,4,2,1];
   window.WutborgKartData = { DRIVERS, ITEM_TYPES, TRACKS, DIFFICULTIES, CUP_POINTS, TAU, clamp, mod, lerp, normalizeAngle, angleDelta };

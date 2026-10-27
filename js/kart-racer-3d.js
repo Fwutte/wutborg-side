@@ -179,6 +179,7 @@ export class KartRacer3DRenderer {
     }
     const boxMat=material("#8af6eb",{emissive:"#36bdb4",emissiveIntensity:.35,metalness:.4,roughness:.14});
     const boxFrame=material("#efffb8",{emissive:"#8bf4cd",emissiveIntensity:.6});
+    const doubleFrame=material("#fff0a2",{emissive:"#ffbf49",emissiveIntensity:.75});
     for(const box of race.itemBoxes.length?race.itemBoxes:race.state==="ready"?track.itemBoxes:[]){
       const g=new THREE.Group();this.mesh(this.roundedGeometry(.94,.94,.94,.10),boxMat,g);
       for(const x of [-.52,.52])for(const y of [-.52,.52])this.box(g,boxFrame,x,y,0,.055,.055,1.09);
@@ -188,7 +189,13 @@ export class KartRacer3DRenderer {
       for(let side=1;side<4;side++){const face=q.clone();face.rotation.y=side*Math.PI/2;face.position.set(Math.sin(side*Math.PI/2)*.483,0,Math.cos(side*Math.PI/2)*.483);g.add(face);}
       g.userData.baseY=(box.elevation||0)*SCALE;
       const baked=this.bake(g);baked.userData.baseY=g.userData.baseY;
-      baked.position.copy(world(box,1));const aura=softSprite(this.artGlow,0x8effee,2.2,.24);baked.add(aura);this.scene.add(baked);this.itemMeshes.push(baked);
+      let visual=baked;
+      if(box.double){
+        baked.traverse(mesh=>{if(mesh.isMesh){if(mesh.material===boxFrame)mesh.material=doubleFrame;mesh.castShadow=false;}});
+        baked.scale.setScalar(.76);baked.position.set(-.32,-.18,0);const twin=baked.clone(true);twin.position.set(.32,.35,0);
+        visual=new THREE.Group();visual.add(baked,twin);visual.userData.baseY=g.userData.baseY;
+      }
+      visual.position.copy(world(box,1));const aura=softSprite(this.artGlow,box.double?0xffde89:0x8effee,box.double?2.7:2.2,.24);visual.add(aura);this.scene.add(visual);this.itemMeshes.push(visual);
     }
     const coinMat=material("#ffda64",{metalness:.65,roughness:.25,emissive:"#b67c19",emissiveIntensity:.25});
     this.coinEntries=race.coins.length?race.coins:race.state==="ready"?track.coins:[];
@@ -373,7 +380,11 @@ export class KartRacer3DRenderer {
     const shield=this.mesh(new THREE.SphereGeometry(1.45,24,16),energyShieldMaterial("#ffe88f",.22),group,0,.8,0);shield.visible=false;shield.castShadow=false;
     const shadow=this.mesh(new THREE.PlaneGeometry(3.1,3.1),new THREE.MeshBasicMaterial({map:this.artGlow,color:"#071824",transparent:true,opacity:.5,depthWrite:false}),group,0,.018,0);
     shadow.rotation.x=-Math.PI/2;shadow.scale.y=1.35;shadow.castShadow=false;
-    return {group,body,wheels,flames,shield};
+    const guard=new THREE.Group();guard.position.set(0,.62,-52*SCALE);guard.visible=false;group.add(guard);
+    const held=this.mesh(new THREE.DodecahedronGeometry(.30,1),material("#89efbb",{metalness:.3,emissive:"#335847",emissiveIntensity:.5}),guard);held.castShadow=false;
+    const halo=this.mesh(new THREE.TorusGeometry(.43,.025,5,24),new THREE.MeshBasicMaterial({color:"#b2ffe4"}),guard);halo.rotation.x=Math.PI/2;halo.castShadow=false;
+    const wave=this.mesh(new THREE.TorusGeometry(1,.018,5,48),new THREE.MeshBasicMaterial({color:"#ffb1e7",transparent:true,opacity:.7,depthWrite:false}),group,0,.2,0);wave.rotation.x=Math.PI/2;wave.castShadow=false;wave.visible=false;
+    return {group,body,wheels,flames,shield,guard,held,wave};
   }
   emitParticle(position,color,vx=0,vz=0){
     const p=this.particleState[this.particleCursor++%this.particleState.length];
@@ -399,8 +410,11 @@ export class KartRacer3DRenderer {
       e.group.rotation.set(-Math.atan(k.slope||0),yaw(pose.heading),0,"YXZ");
       e.body.rotation.y=k.spinTimer>0?Math.sin(k.spinTimer*16)*Math.PI:0;
       e.body.rotation.x=damp(e.body.rotation.x,THREE.MathUtils.clamp((k.longitudinalAcceleration||0)/440,-1,1)*.065,8,dt);
-      e.body.rotation.z=damp(e.body.rotation.z,-THREE.MathUtils.clamp((k.lateralAcceleration||0)/760,-1,1)*.12,8,dt);
-      e.body.position.y=(k.hop>0?Math.sin(k.hop/.25*Math.PI)*.25:0)+Math.sin(t*17+i)*Math.min(k.speed/18000,.02);
+      e.body.userData.roll=damp(e.body.userData.roll||0,-THREE.MathUtils.clamp((k.lateralAcceleration||0)/760,-1,1)*.12,8,dt);
+      e.body.rotation.z=e.body.userData.roll+(k.trickTimer>0&&k.airHeight>0?(1-k.trickTimer/.8)*TAU:0);
+      e.body.position.y=(k.hop>0?Math.sin(k.hop/.25*Math.PI)*.25:0)+Math.sin(t*17+i)*Math.min(k.speed/18000,.02)-(k.landingTimer>0?Math.sin(k.landingTimer/.32*Math.PI)*.045:0);
+      e.guard.visible=Boolean(k.defending);e.held.rotation.set(t*2,t*3,0);e.held.material.color.set(k.item==="banana"?"#c798ff":k.item==="redShell"?"#ff8072":"#8cf1af");
+      e.wave.visible=k.waveTimer>0;e.wave.scale.setScalar(Math.max(.1,(1-(k.waveTimer||0)/.55)*240*SCALE));e.wave.material.opacity=(k.waveTimer||0)*1.3;
       e.wheels.forEach(w=>{if(w.front)w.pivot.rotation.y=-(k.steeringAngle||0);w.wheel.rotation.x=(k.wheelTravel||0)*SCALE/(w.radius||.26);});
       e.flames.forEach(f=>{f.visible=k.boostTimer>0;f.scale.y=1+Math.sin(t*38)*.22;});
       e.shield.visible=k.starTimer>0||k.invincibleTimer>0;e.shield.rotation.y=t;
@@ -436,7 +450,7 @@ export class KartRacer3DRenderer {
     while(this.shellMeshes.length<race.shells.length){
       const m=this.mesh(new THREE.IcosahedronGeometry(.38,1),material("#82ffb5",{emissive:"#37b985",emissiveIntensity:.8}),this.scene);this.shellMeshes.push(m);
     }
-    this.trapMeshes.forEach((m,i)=>{m.visible=Boolean(race.traps[i]);if(m.visible){const p=race.traps[i],road=race.track.nearest(p.x,p.y);m.position.copy(world({...p,elevation:road.elevation},.085));}});
+    this.trapMeshes.forEach((m,i)=>{m.visible=Boolean(race.traps[i]);if(m.visible){const p=race.traps[i],road=race.track.nearest(p.x,p.y);m.position.copy(world({...p,elevation:p.elevation??road.elevation},.085));}});
     this.shellMeshes.forEach((m,i)=>{
       const s=race.shells[i];m.visible=Boolean(s);if(!s)return;
       const road=race.track.nearest(s.x,s.y,s.roadIndex);m.position.copy(world({...s,elevation:road.elevation},.45));m.rotation.set(t*5,t*7,0);m.material.color.set(s.homing?"#ff8175":"#88efbd");
@@ -472,14 +486,14 @@ export class KartRacer3DRenderer {
       const viewHeading=this.cameraHeading+(lookBack?Math.PI:0),direction=lookBack?-1:1;
       const forward=new THREE.Vector3(Math.cos(viewHeading),0,Math.sin(viewHeading)),position=world(pose);
       const ratio=Math.min(1,Math.abs(p.speed)/400),boost=p.boostTimer>0;
-      desired=position.clone().addScaledVector(forward,-(portrait?8.8:8.2)-ratio*.8);
-      desired.y=position.y+(portrait?5.1:4.8)+ratio*.25;
+      desired=position.clone().addScaledVector(forward,-(portrait?7.3:6.5)-ratio*.65);
+      desired.y=position.y+(portrait?3.7:3.0)+ratio*.20;
       const behind=race.track.at(p.road.s-290*direction);desired.y=Math.max(desired.y,behind.elevation*SCALE+2.5);
-      look=position.clone().addScaledVector(forward,portrait?5.5:7.5);look.y=race.track.elevationAt(p.road.s+200*direction)*SCALE+.7;
+      look=position.clone().addScaledVector(forward,portrait?6.5:8);look.y=race.track.elevationAt(p.road.s+200*direction)*SCALE+.75;
       look.addScaledVector(new THREE.Vector3(-forward.z,0,forward.x),THREE.MathUtils.clamp(p.yawRate||0,-1.5,1.5)*.7);
-      fov=(portrait?69:60)+ratio*5+(boost?5:0);
+      fov=(portrait?66:57)+ratio*4+(boost?6:0);
     }
-    if(!this.cameraReady){this.camera.position.copy(desired);this.target.copy(look);this.cameraReady=true;}
+    if(!this.cameraReady){this.camera.position.copy(desired);this.target.copy(look);this.camera.fov=fov;this.cameraReady=true;}
     else{
       this.camera.position.lerp(desired,1-Math.exp(-10*dt));this.target.lerp(look,1-Math.exp(-14*dt));
     }
@@ -491,7 +505,7 @@ export class KartRacer3DRenderer {
     if(!this.scene||race!==this.currentRace||(!race.player&&options.driver?.id!==this.previewDriver))this.createScene(race,options.driver);
     const w=Math.max(1,this.canvas.clientWidth),h=Math.max(1,this.canvas.clientHeight),pixel=this.renderer.getPixelRatio();
     if(this.canvas.width!==Math.round(w*pixel)||this.canvas.height!==Math.round(h*pixel)){
-      this.renderer.setSize(w,h,false);this.camera.aspect=w/h;this.camera.updateProjectionMatrix();
+      this.renderer.setSize(w,h,false);this.camera.aspect=w/h;this.cameraReady=false;this.camera.updateProjectionMatrix();
     }
     this.sync(race,options.paused?0:dt,options);
     this.updateCamera(race,options.paused?0:dt,options.alpha,Boolean(options.lookBack));

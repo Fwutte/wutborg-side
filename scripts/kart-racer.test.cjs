@@ -34,7 +34,7 @@ test("six closed, distinct tracks; pickups and grid stay on the road",()=>{
 });
 test("expanded roads and hills remain continuous, wide and within their maps",()=>{
   for(const t of TRACKS){
-    assert.equal(t.revision,6);assert.ok(t.bridge[0]<t.bridge[1]);
+    assert.equal(t.revision,7);assert.ok(t.bridge[0]<t.bridge[1]);
     assert.ok(Math.abs(t.elevationAt(-.01)-t.elevationAt(t.length+.01))<.01);
     assert.ok(Math.abs(t.slopeAt(-.01)-t.slopeAt(t.length+.01))<.001);
     let highest=0;
@@ -63,7 +63,7 @@ test("new course records are isolated while driver preferences are retained",()=
   const track=TRACKS[0],oldKey=track.id+":v5:normal";
   const saved=readSave({getItem:()=>JSON.stringify({records:{[oldKey]:{time:45}},settings:{driver:"luna",autoGas:true}})});
   const key=KartGame.prototype.recordKey.call({track,mode:"single",difficulty:"normal"});
-  assert.equal(key,track.id+":v6:normal");assert.notEqual(key,oldKey);assert.equal(saved.records[key],undefined);assert.equal(saved.records[oldKey].time,45);
+  assert.equal(key,track.id+":v7:normal");assert.notEqual(key,oldKey);assert.equal(saved.records[key],undefined);assert.equal(saved.records[oldKey].time,45);
   assert.equal(saved.settings.driver,"luna");assert.equal(saved.settings.autoGas,true);
 });
 test("countdown, correct rear grid position and start boost timing",()=>{

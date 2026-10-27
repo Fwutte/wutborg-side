@@ -79,6 +79,51 @@ async function ready(){
   check(g.race.player.speed>0,'keyboard accelerates');g.canvas.dispatchEvent(new w.KeyboardEvent('keyup',{code:'KeyW',bubbles:true}));g.input.reset();
   g.race.player.item='mushroom';doc.getElementById('kart-item').click();g.update(1/60);check(g.race.player.boostTimer>0&&doc.activeElement===g.canvas,'HUD item button uses turbo and restores driving focus');
   w.dispatchEvent(new w.Event('blur'));check(g.paused&&!g.input.enabled,'window blur pauses');g.togglePause(false);
+  if(scenario==='arcade'||scenario==='arcade-view'){
+   const r=g.race,p=r.player;r.itemBoxes=[];r.coins=[];
+   p.item=null;p.reserveItem=null;p.itemRoulette=0;
+   r.giveItem(p,'banana');r.giveItem(p,'horn');g.updateUI(w.performance.now());
+   check(doc.getElementById('item-name').textContent==='Oliespor'&&doc.getElementById('reserve-name').textContent==='Trykbølge','both item slots show their actual contents');
+   const defend=doc.querySelector('[data-kart-control="defend"]');
+   check(!defend.hidden&&!defend.disabled,'touch defence becomes available with a defensive item');
+   const threat={x:p.x-Math.cos(p.heading)*300,y:p.y-Math.sin(p.heading)*300,heading:p.heading,speed:0,owner:r.karts[1],life:4,homing:true,target:p,bounces:0};r.shells=[threat];
+   g.input.setControl('defend',true,10);g.update(1/60);g.updateUI(w.performance.now());
+   check(p.defending&&!doc.getElementById('incoming-warning').hidden,'held defence and incoming missile warning work together');
+   g.renderer.draw(r,.016,{paused:true,alpha:1});check(g.renderer.karts[0].guard.visible,'held defence is visible behind the kart');
+   Object.assign(threat,r.guardPosition(p),{homing:false});r.updateObjects(1/60);g.updateUI(w.performance.now());
+   check(p.blocks===1&&p.spinTimer===0&&r.shells.length===0,'defensive item actually intercepts a projectile');
+   check(p.item==='horn'&&p.reserveItem===null&&doc.getElementById('item-name').textContent==='Trykbølge','reserve promotes into the usable slot after blocking');
+   check(doc.getElementById('race-moment').textContent==='BLOKERET!','successful block gets immediate feedback');
+   p.item='shell';p.defending=true;g.togglePause(true);check(!p.defending&&!g.input.read().defend,'pause clears held defence');g.togglePause(false);
+   g.mode='time';g.startRace();g.audio.enabled=false;g.race.state='racing';g.updateUI(w.performance.now());
+   check(g.race.player.itemCharges===3&&!doc.getElementById('kart-item').hidden&&doc.getElementById('item-reserve').hidden,'time trial starts with three usable turbo charges');
+   for(let i=0;i<3;i++){doc.getElementById('kart-item').click();g.update(1/60);}g.updateUI(w.performance.now());
+   check(g.race.player.item===null&&doc.getElementById('item-name').textContent==='Turboerne er brugt','time trial cannot create a fourth turbo');
+   g.mode='single';g.selectedTrackId=D.TRACKS[3].id;g.startRace();g.audio.enabled=false;
+   const jump=g.race,driver=jump.player,ramp=g.track.ramps[0];jump.state='racing';jump.karts=[driver];
+   Object.assign(driver,ramp,{speed:250,velocityHeading:ramp.heading,road:g.track.nearest(ramp.x,ramp.y)});jump.updateObjects(1/60);
+   g.input.setControl('drift',true,11);g.update(1/60);g.input.reset();g.updateUI(w.performance.now());
+   check(driver.trickReady&&doc.getElementById('race-moment').textContent==='TRICK!','timed airborne press triggers trick feedback');
+   g.update(1/60);g.renderer.draw(jump,.08,{paused:false,alpha:1});check(Math.abs(g.renderer.karts[0].body.rotation.z)>.01,'airborne trick animates the kart');
+   for(let i=0;i<100&&driver.airHeight>0;i++)g.update(1/60);
+   check(driver.tricks===1&&driver.boostTimer>0&&driver.boostKind==='TRICK-TURBO','completed trick delivers its landing boost');
+   g.mode='single';g.selectedTrackId=D.TRACKS[0].id;g.startRace();g.race.state='racing';g.togglePause(true);
+   g.renderer.draw(g.race,.016,{paused:true,alpha:1});
+   const double=g.race.itemBoxes.findIndex(b=>b.double);
+   check(g.renderer.itemMeshes[double].children.filter(c=>c.isGroup).length===2,'double item box renders as a visible pair');
+   check(g.renderer.renderer.info.render.calls<650,'eight-driver racing scene remains within its draw budget');
+   check(D.TRACKS.every(t=>t.ramps.length>=2),'every course offers trick ramps');
+   check(errors.length===0,'no arcade integration runtime errors');
+   out.textContent='PASS · '+checks.length+' arcade integration checks\n'+checks.join('\n');out.dataset.status='passed';
+   if(scenario==='arcade-view'){
+    const race=g.race,s=g.track.length*.24;
+    race.karts.forEach((k,i)=>{const point=g.track.at(s+(i-2)*85,(i%3-1)*40);Object.assign(k,point,{road:g.track.nearest(point.x,point.y),velocityHeading:point.heading,speed:310,progress:s+(i-2)*85,previousPose:null});});race.updateRankings();
+    const kart=race.player;kart.item='shell';kart.itemCharges=1;kart.reserveItem='tripleTurbo';kart.reserveCharges=3;kart.defending=true;kart.drifting=true;kart.driftTimer=1.25;kart.boostTimer=.7;kart.boostKind='SUPER-TURBO';kart.steeringAngle=.15;
+    race.elapsed=28;race.shells=[{x:kart.x-Math.cos(kart.heading)*280,y:kart.y-Math.sin(kart.heading)*280,heading:kart.heading,speed:560,owner:race.karts[1],life:4,homing:true,target:kart,bounces:0}];
+    doc.getElementById('kart-pause').hidden=true;doc.body.classList.remove('kart-paused');doc.getElementById('kart-toast').classList.remove('visible');g.toastUntil=0;g.renderer.cameraReady=false;g.updateUI(w.performance.now());g.renderer.draw(race,.016,{paused:true,alpha:1});out.hidden=true;
+   }
+   return;
+  }
   if(scenario==='refinement'||scenario==='ghost-view'){
    const unlock=g.audio.unlock;g.audio.unlock=()=>{};
    doc.getElementById('kart-sound').focus();doc.getElementById('kart-sound').click();
@@ -116,7 +161,7 @@ async function ready(){
    g.updateUI(w.performance.now());g.renderer.draw(g.race,1/60,{alpha:1});
    check(g.renderer.ghostMesh?.visible&&g.renderer.ghostMesh.children.every(m=>!m.castShadow&&m.material.transparent&&!m.material.depthWrite),'translucent ghost renders without shadows');
    check(!doc.getElementById('ghost-status').hidden&&doc.getElementById('ghost-delta').textContent.includes('bagud'),'ghost HUD compares time at the same track progress');
-   check(doc.getElementById('kart-item').hidden&&doc.querySelector('[data-kart-control="item"]').hidden,'time trial hides unusable item controls');
+   check(!doc.getElementById('kart-item').hidden&&!doc.querySelector('[data-kart-control="item"]').hidden&&doc.getElementById('item-reserve').hidden,'time trial exposes turbo controls with no reserve slot');
    const before=JSON.stringify({x:p.x,y:p.y,coins:p.coins,progress:p.progress});g.renderer.draw(g.race,1/60,{alpha:.5});
    check(JSON.stringify({x:p.x,y:p.y,coins:p.coins,progress:p.progress})===before,'ghost rendering cannot affect player physics or pickups');
    g.renderer.draw(g.race,1/60,{alpha:1});g.togglePause(true);const clock=g.race.elapsed,ghostX=g.renderer.ghostMesh.position.x;g.update(10);g.renderer.draw(g.race,1/60,{alpha:1,paused:true});

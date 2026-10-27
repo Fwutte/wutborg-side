@@ -4,7 +4,7 @@
   if(!data)return;
   const {DRIVERS,ITEM_TYPES,TRACKS,DIFFICULTIES,CUP_POINTS,TAU,clamp,mod,lerp,angleDelta}=data;
   const STEP=1/60,STORAGE_KEY="wutborg.kart.v2";
-  const EMPTY={steer:0,accelerate:false,brake:false,drift:false,itemPressed:false,lookBack:false};
+  const EMPTY={steer:0,accelerate:false,brake:false,drift:false,itemPressed:false,lookBack:false,defend:false,launch:false};
   const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
   const formatTime=seconds=>{
     const cs=Math.round(Math.max(0,Number(seconds)||0)*100);
@@ -62,23 +62,24 @@
       const s=-38-Math.floor(slot/2)*65-(slot%2)*4,p=track.at(s,slot%2?38:-38);
       Object.assign(this,{x:p.x,y:p.y,elevation:p.elevation,slope:p.slope,heading:p.heading,velocityHeading:p.heading,speed:0,steer:0,visualSteer:0,
         spinTimer:0,boostTimer:0,starTimer:0,invincibleTimer:0,driftTimer:0,driftDirection:0,drifting:false,
-        coins:0,item:null,pendingItem:null,itemRoulette:0,finished:false,finishTime:0,lap:0,lapTimes:[],lapStarted:0,
+        coins:0,item:null,itemCharges:1,reserveItem:null,reserveCharges:1,pendingItem:null,pendingReserve:null,itemRoulette:0,defending:false,guardFlash:0,waveTimer:0,finished:false,finishTime:0,lap:0,lapTimes:[],lapStarted:0,
         progress:s,raceDistance:s,nextGate:track.length/12,gateCount:0,lastS:p.s,lastX:p.x,lastY:p.y,
         road:track.nearest(p.x,p.y),wrongWay:0,offroad:false,boosts:0,recoveries:0,stuckTime:0,hop:0,
         airHeight:0,airVelocity:0,rampCooldown:0,surface:"asphalt",shortcut:false,speedFactor:1,aiLane:(slot%3-1)*24,aiItemTime:2+slot*.37,
         yawRate:0,steeringAngle:0,reverseHold:0,slipAngle:0,longitudinalAcceleration:0,lateralAcceleration:0,wheelTravel:0,previousPose:null,
         aiProfile:DIFFICULTIES.normal,aiPlanTimer:0,aiPlanLane:0,aiTargetLane:slot%2?38:-38,aiDriftCooldown:0,aiHazardSpeed:Infinity,
-        slipstream:0,slipstreamTarget:null,gear:1,rpm:1200,shiftTimer:0,throttle:0});
+        slipstream:0,slipstreamTarget:null,gear:1,rpm:1200,shiftTimer:0,throttle:0,
+        driftHeld:false,trickWindow:0,trickReady:false,trickTimer:0,tricks:0,landingTimer:0,boostKind:"",overtakes:0,blocks:0});
     }
     cancelDrift(){this.drifting=false;this.driftTimer=0;this.driftDirection=0;}
     applySpin(duration=.85){
       if(this.starTimer>0||this.invincibleTimer>0||this.finished)return false;
-      this.cancelDrift();this.yawRate=0;this.spinTimer=duration;this.invincibleTimer=duration+1.3;this.speed*=.38;this.coins=Math.max(0,this.coins-2);
+      this.cancelDrift();this.defending=false;this.trickReady=false;this.yawRate=0;this.spinTimer=duration;this.invincibleTimer=duration+1.3;this.speed*=.38;this.coins=Math.max(0,this.coins-2);
       return true;
     }
     releaseDrift(){
       const charge=this.driftTimer,boost=charge>=1.8?1.4:charge>=1.05?.9:charge>=.5?.5:0;
-      if(this.drifting&&boost){this.boostTimer=Math.max(this.boostTimer,boost);this.boosts++;}
+      if(this.drifting&&boost){this.boostTimer=Math.max(this.boostTimer,boost);this.boostKind=charge>=1.8?"ULTRA-TURBO":charge>=1.05?"SUPER-TURBO":"MINI-TURBO";this.boosts++;}
       this.cancelDrift();return boost;
     }
     recover(track){
@@ -87,6 +88,7 @@
       this.x=p.x;this.y=p.y;this.elevation=p.elevation;this.slope=p.slope;this.heading=p.heading;this.velocityHeading=p.heading;
       this.lastS=p.s;this.lastX=p.x;this.lastY=p.y;this.road=track.nearest(p.x,p.y);
       this.airHeight=0;this.airVelocity=0;this.speed=50;this.yawRate=0;this.steer=0;this.visualSteer=0;this.steeringAngle=0;this.reverseHold=0;this.slipAngle=0;
+      this.defending=false;this.trickReady=false;this.trickWindow=0;this.trickTimer=0;this.landingTimer=0;this.driftHeld=false;
       this.previousPose=null;this.longitudinalAcceleration=0;this.lateralAcceleration=0;this.invincibleTimer=1.8;this.spinTimer=0;this.cancelDrift();this.slipstream=0;this.slipstreamTarget=null;this.gear=1;this.rpm=1200;this.shiftTimer=0;this.recoveries++;this.stuckTime=0;
     }
     velocity(){return {x:Math.cos(this.velocityHeading)*this.speed,y:Math.sin(this.velocityHeading)*this.speed};}
@@ -119,8 +121,11 @@
     }
     update(dt,input,track,assist=false){
       this.previousPose={x:this.x,y:this.y,elevation:this.elevation,heading:this.heading,airHeight:this.airHeight};
-      for(const key of ["spinTimer","boostTimer","starTimer","invincibleTimer","hop","rampCooldown"])this[key]=Math.max(0,this[key]-dt);
-      const throttle=clamp(Number(input.accelerate)||0,0,1),brake=clamp(Number(input.brake)||0,0,1),steer=clamp(Number(input.steer)||0,-1,1);
+      for(const key of ["spinTimer","boostTimer","starTimer","invincibleTimer","hop","rampCooldown","guardFlash","waveTimer","trickTimer","landingTimer"])this[key]=Math.max(0,this[key]-dt);
+      const driftPressed=Boolean(input.drift&&!this.driftHeld);this.driftHeld=Boolean(input.drift);
+      if(this.airHeight>0&&driftPressed&&this.trickWindow>0&&!this.trickReady&&!this.spinTimer){this.trickReady=true;this.trickTimer=.8;}
+      this.trickWindow=Math.max(0,this.trickWindow-dt);
+      const throttle=clamp(Number(input.accelerate)||0,0,1),brake=clamp(Number(input.brake)||0,0,1)*(this.drifting&&input.drift?.55:1),steer=clamp(Number(input.steer)||0,-1,1);
       const oldVelocity=this.velocity(),oldSpeed=this.speed,grounded=this.airHeight===0&&this.airVelocity<=0;
       this.surface=track.surfaceAt(this.road.s);
       this.shortcut=track.isShortcut(this.road);this.offroad=this.road.distance>track.halfWidth&&!this.shortcut;
@@ -135,7 +140,9 @@
       if(this.spinTimer>0){
         vx*=Math.exp(-1.8*dt);vy*=Math.exp(-1.8*dt);this.yawRate=0;
       }else{
-        const wants=grounded&&input.drift&&!brake&&!this.offroad&&this.speed>130&&(this.drifting||Math.abs(this.steer)>.22);
+        // A light brake tightens an established drift; it no longer cancels it.
+        const brakeDrift=this.drifting&&this.speed>150&&brake<.85;
+        const wants=grounded&&input.drift&&(!brake||brakeDrift)&&!this.offroad&&this.speed>130&&(this.drifting||Math.abs(this.steer)>.22);
         if(wants){
           if(!this.drifting){this.driftDirection=Math.sign(this.steer);this.hop=.25;}
           this.drifting=true;
@@ -198,7 +205,7 @@
           const remainingGrip=Math.sqrt(Math.max(0,traction*traction-Math.min(Math.abs(drive),traction*.9)**2));
           lateral+=clamp((targetLateral-lateral)*(1-Math.exp(-grip*dt)),-remainingGrip*dt,remainingGrip*dt);
           if(this.drifting)forward*=Math.exp(-.055*dt);
-          if(this.offroad) {const drag=Math.exp(-(this.starTimer>0?.15:2.1)*dt);forward*=drag;lateral*=drag;}
+          if(this.offroad) {const drag=Math.exp(-(boosting?.15:2.1)*dt);forward*=drag;lateral*=drag;}
         }
         const nc=Math.cos(this.heading),ns=Math.sin(this.heading);
         vx=forward*nc-lateral*ns;vy=forward*ns+lateral*nc;
@@ -206,8 +213,15 @@
       this.setVelocity(vx,vy);
       this.x+=vx*dt;this.y+=vy*dt;
       this.road=track.nearest(this.x,this.y,this.road?.index);this.elevation=this.road.elevation;this.slope=this.road.slope;this.shortcut=track.isShortcut(this.road);this.offroad=this.road.distance>track.halfWidth&&!this.shortcut;
-      if(this.shortcut)this.boostTimer=Math.max(this.boostTimer,.28);
-      if(this.airHeight>0||this.airVelocity>0){this.airVelocity-=280*dt;this.airHeight=Math.max(0,this.airHeight+this.airVelocity*dt);if(this.airHeight===0){this.airVelocity=0;if(input.drift&&this.speed>120){this.boostTimer=Math.max(this.boostTimer,.85);this.boosts++;}}}
+      if(this.shortcut){if(this.boostTimer<.28)this.boostKind="GENVEJ";this.boostTimer=Math.max(this.boostTimer,.28);}
+      if(this.airHeight>0||this.airVelocity>0){
+        this.airVelocity-=280*dt;this.airHeight=Math.max(0,this.airHeight+this.airVelocity*dt);
+        if(this.airHeight===0){
+          this.airVelocity=0;this.landingTimer=.32;
+          if((this.trickReady||input.drift)&&this.speed>120&&!this.spinTimer){this.boostTimer=Math.max(this.boostTimer,this.trickReady?1.1:.45);this.boostKind=this.trickReady?"TRICK-TURBO":"LANDINGSTURBO";if(this.trickReady)this.tricks++;this.boosts++;}
+          this.trickReady=false;this.trickWindow=0;
+        }
+      }
       const wall=track.halfWidth+62;
       if(this.road.distance>wall){
         const excess=this.road.distance-wall,side=Math.sign(this.road.lateral);
@@ -294,9 +308,10 @@
     }
     shouldUseItem(kart,race,cornerSpeed,cruise){
       if(!kart.item||kart.aiItemTime>0||kart.spinTimer>0||kart.airHeight>0)return false;
-      if(kart.item==="mushroom")return kart.boostTimer<.1&&cornerSpeed>cruise*.94&&!kart.offroad;
+      if(kart.item==="mushroom"||kart.item==="tripleTurbo")return kart.boostTimer<.1&&cornerSpeed>cruise*.94&&!kart.offroad;
       if(kart.item==="star")return kart.starTimer<.1;
       if(!race)return true;
+      if(kart.item==="horn")return Boolean(race.incoming(kart)||race.karts.some(k=>k!==kart&&distance(k,kart)<160));
       const rivals=race.karts.filter(k=>k!==kart&&!k.finished&&k.starTimer<=0&&k.invincibleTimer<=0);
       if(kart.item==="lightning")return rivals.length>0;
       if(kart.item==="redShell"){
@@ -351,15 +366,17 @@
         drift=!brake&&!unsafe&&!launchAhead&&Math.sign(bend)===kart.driftDirection&&Math.abs(bend)>.001&&kart.driftTimer<profile.driftCharge;
         if(!drift)kart.aiDriftCooldown=1.1;
       }
+      if(kart.airHeight>0&&kart.trickWindow>.22&&!kart.trickReady)drift=true;
+      const defend=Boolean(race?.incoming(kart)&&["banana","shell","redShell"].includes(kart.item));
       return {steer,accelerate:brake?false:clamp((targetSpeed-speed)/24+.35,0,1),brake,
-        drift,itemPressed:this.shouldUseItem(kart,race,cornerSpeed,cruise)};
+        drift,defend,itemPressed:!defend&&this.shouldUseItem(kart,race,cornerSpeed,cruise)};
     }
   }
   class Race {
     constructor(track,drivers=DRIVERS,options={}){
       this.track=track;this.drivers=drivers;this.options=options;this.ai=new RaceAI();this.lapTarget=3;
       this.state="ready";this.elapsed=0;this.countdown=3;this.karts=[];this.lastRankings=[];this.traps=[];this.shells=[];
-      this.itemBoxes=[];this.coins=[];this.player=null;this.result=null;this.events=[];this.startCharge=0;this.startTooEarly=false;this.lapFeedback=null;this.ghost=null;
+      this.itemBoxes=[];this.coins=[];this.player=null;this.result=null;this.events=[];this.startCharge=0;this.startTooEarly=false;this.startPressedAt=null;this.lastLightningAt=-30;this.lapFeedback=null;this.ghost=null;
     }
     start(driverId){
       const driver=this.drivers.find(d=>d.id===driverId)||this.drivers[0];
@@ -372,21 +389,26 @@
         k.aiItemTime=k.aiProfile.itemDelay+i*.13;
       });
       this.player=this.karts[0];this.state="countdown";this.elapsed=0;this.countdown=3;this.result=null;this.events=[];this.lapFeedback=null;
-      this.traps=[];this.shells=[];this.startCharge=0;this.startTooEarly=false;
+      this.traps=[];this.shells=[];this.startCharge=0;this.startTooEarly=false;this.startPressedAt=null;this.lastLightningAt=-30;
       this.itemBoxes=this.options.mode==="time"?[]:this.track.itemBoxes.map(p=>({...p,cooldown:0}));
       this.coins=this.track.coins.map(p=>({...p,cooldown:0}));this.updateRankings();
       this.ghost=this.options.mode==="time"?new RaceGhost(this.options.ghost):null;this.ghost?.capture(0,this.player);
+      if(this.options.mode==="time")this.giveItem(this.player,"tripleTurbo");
     }
     update(dt,input=EMPTY){
       if(this.state!=="countdown"&&this.state!=="racing")return;
       if(this.state==="countdown"){
-        if(input.accelerate&&!this.options.autoGas){if(this.countdown>1.15)this.startTooEarly=true;else this.startCharge+=dt;}
-        else if(!input.accelerate){this.startTooEarly=false;this.startCharge=0;}
+        const launch=this.options.autoGas?Boolean(input.launch):Boolean(input.accelerate);
+        if(launch){
+          if(this.startPressedAt===null){this.startPressedAt=this.countdown;this.startTooEarly=this.countdown>2.15;}
+          this.startCharge+=dt;
+        }else{this.startTooEarly=false;this.startCharge=0;this.startPressedAt=null;}
         this.countdown=Math.max(0,this.countdown-dt);
         if(this.countdown===0){
           this.state="racing";
           for(const kart of this.karts)if(kart.isAI)kart.boostTimer=kart.aiProfile.startBoost;
-          if(!this.startTooEarly&&this.startCharge>.18){this.player.boostTimer=1.35;this.events.push("Perfekt start!");}
+          if(!this.startTooEarly&&this.startCharge>.18){this.player.boostTimer=clamp(1.65-Math.abs(this.startPressedAt-1.95)*.5,.65,1.65);this.player.boostKind="STARTTURBO";this.events.push("Startturbo! Find din linje");}
+          if(this.startTooEarly){this.player.spinTimer=.65;this.events.push("For tidligt! Giv gas ved 2 næste gang");}
         }
         return;
       }
@@ -398,10 +420,13 @@
         k.aiItemTime-=dt;
         const controls=k.isAI?this.ai.inputFor(k,this.track,this,dt):input;
         k.update(dt,controls,this.track,!k.isAI&&this.options.assist);
-        if(k.itemRoulette>0){k.itemRoulette=Math.max(0,k.itemRoulette-dt);if(!k.itemRoulette){k.item=k.pendingItem;k.pendingItem=null;}}
-        if(controls.itemPressed&&this.useItem(k))k.aiItemTime=k.aiProfile.itemDelay;
+        if(k.itemRoulette>0){k.itemRoulette=Math.max(0,k.itemRoulette-dt);if(!k.itemRoulette){this.giveItem(k,k.pendingItem);this.giveItem(k,k.pendingReserve);k.pendingItem=null;k.pendingReserve=null;}}
+        if(controls.itemPressed&&this.useItem(k,Boolean(!k.isAI&&(controls.lookBack||controls.brake))))k.aiItemTime=k.aiProfile.itemDelay;
+        k.defending=Boolean(controls.defend&&["banana","shell","redShell"].includes(k.item)&&!k.spinTimer&&k.airHeight<22);
       });
+      const previousRank=this.player.rank;
       this.resolveKartCollisions();this.updateObjects(dt);this.karts.forEach(k=>this.updateKartProgress(k));this.updateRankings();
+      if(this.player.rank<previousRank&&this.elapsed>2)this.player.overtakes+=previousRank-this.player.rank;
       this.ghost?.capture(this.elapsed,this.player,this.player.finished);
       if(this.player.finished)this.finish();
     }
@@ -467,34 +492,66 @@
         if(a.starTimer>0)b.applySpin();if(b.starTimer>0)a.applySpin();
       }
     }
-    itemForRank(rank){
-      const pool=rank>=6?["mushroom","star","redShell","lightning"]:rank>=3?["mushroom","redShell","shell","star"]:["banana","shell","mushroom","banana"];
+    itemForRank(rank,kart=null){
+      const leader=this.lastRankings[0],gap=kart&&leader?Math.max(0,leader.progress-kart.progress):0;
+      const chasing=rank>=6||rank>1&&gap>1200;
+      const pool=chasing?["tripleTurbo","tripleTurbo","tripleTurbo","star","star","redShell","mushroom"]:rank>=3?["mushroom","mushroom","redShell","redShell","shell","tripleTurbo","horn","star"]:["banana","banana","shell","shell","mushroom","horn"];
+      if(chasing&&rank>=5&&this.elapsed>12&&this.elapsed-this.lastLightningAt>18)pool.push("lightning");
       return pool[Math.floor(Math.random()*pool.length)];
     }
-    useItem(k){
+    giveItem(k,item){
+      if(!ITEM_TYPES[item])return false;
+      const charges=item==="tripleTurbo"?3:1;
+      if(!k.item){k.item=item;k.itemCharges=charges;return true;}
+      if(!k.reserveItem){k.reserveItem=item;k.reserveCharges=charges;return true;}
+      return false;
+    }
+    consumeItem(k){
+      k.defending=false;
+      if(k.itemCharges>1){k.itemCharges--;return;}
+      k.item=k.reserveItem;k.itemCharges=k.reserveItem?k.reserveCharges:1;k.reserveItem=null;k.reserveCharges=1;
+    }
+    guardPosition(k){return {x:k.x-Math.cos(k.heading)*52,y:k.y-Math.sin(k.heading)*52,elevation:k.elevation};}
+    incoming(k=this.player){
+      if(!k||k.finished)return null;
+      return this.shells.filter(s=>s.homing&&s.target===k&&s.life>0&&distance(s,k)<850).sort((a,b)=>distance(a,k)-distance(b,k))[0]||null;
+    }
+    useItem(k,backwards=false){
       if(this.state!=="racing"||!k.item||k.spinTimer>0||k.finished)return false;
-      const item=k.item;k.item=null;
-      if(item==="mushroom")k.boostTimer=Math.max(k.boostTimer,1.7);
-      if(item==="star"){k.starTimer=5.5;k.boostTimer=5.5;}
-      if(item==="lightning")this.karts.filter(v=>v!==k).forEach(v=>v.applySpin(1.1));
-      if(item==="banana")this.traps.push({x:k.x-Math.cos(k.heading)*42,y:k.y-Math.sin(k.heading)*42,owner:k,life:18});
+      const item=k.item;this.consumeItem(k);
+      if(item==="mushroom"||item==="tripleTurbo"){k.boostTimer=Math.max(k.boostTimer,1.7);k.boostKind="ITEM-TURBO";}
+      if(item==="star"){k.starTimer=5.5;k.boostTimer=5.5;k.boostKind="STJERNESKJOLD";}
+      if(item==="lightning"){this.lastLightningAt=this.elapsed;this.karts.filter(v=>v!==k).forEach(v=>v.applySpin(1.1));}
+      if(item==="horn"){
+        k.waveTimer=.55;
+        this.shells=this.shells.filter(s=>distance(s,k)>240||Math.abs((s.elevation??this.track.nearest(s.x,s.y).elevation)-k.elevation-k.airHeight)>28);
+        this.karts.filter(v=>v!==k&&distance(v,k)<210&&Math.abs(v.elevation+v.airHeight-k.elevation-k.airHeight)<28).forEach(v=>v.applySpin(.65));
+      }
+      if(item==="banana"){
+        const p={x:k.x-Math.cos(k.heading)*42,y:k.y-Math.sin(k.heading)*42};
+        this.traps.push({...p,elevation:this.track.nearest(p.x,p.y,k.road?.index).elevation,owner:k,life:18});
+      }
       if(item==="shell"||item==="redShell"){
         const target=this.lastRankings.filter(v=>v!==k&&!v.finished&&v.progress>k.progress).sort((a,b)=>a.progress-b.progress)[0]||null;
-        this.shells.push({x:k.x+Math.cos(k.heading)*42,y:k.y+Math.sin(k.heading)*42,heading:k.heading,speed:560,owner:k,life:7,homing:item==="redShell",target,bounces:0});
+        const heading=k.heading+(backwards?Math.PI:0);
+        this.shells.push({x:k.x+Math.cos(heading)*42,y:k.y+Math.sin(heading)*42,heading,speed:560,owner:k,life:7,homing:item==="redShell"&&!backwards,target:backwards?null:target,bounces:0,roadIndex:k.road?.index,elevation:k.elevation});
       }
       return true;
     }
     updateObjects(dt){
       for(const k of this.karts){
         if(k.finished)continue;
-        for(const box of this.itemBoxes)if(k.airHeight<32&&box.cooldown<=0&&!k.item&&!k.itemRoulette&&distance(k,box)<34){box.cooldown=4;k.pendingItem=this.itemForRank(k.rank);k.itemRoulette=.8;}
+        for(const box of this.itemBoxes)if(k.airHeight<32&&box.cooldown<=0&&(!k.item||!k.reserveItem)&&!k.itemRoulette&&distance(k,box)<34){
+          box.cooldown=2.6;k.pendingItem=this.itemForRank(k.rank,k);k.pendingReserve=box.double&&!k.item&&!k.reserveItem?this.itemForRank(k.rank,k):null;k.itemRoulette=.8;
+        }
         for(const coin of this.coins)if(k.airHeight<32&&coin.cooldown<=0&&distance(k,coin)<29){coin.cooldown=5;k.coins=Math.min(10,k.coins+1);}
-        for(const ramp of this.track.ramps)if(k.speed>150&&k.rampCooldown===0&&k.airHeight===0&&distance(k,ramp)<55){k.airVelocity=160;k.airHeight=.1;k.rampCooldown=2;if(k===this.player)this.events.push("Hop! Hold drift ved landing for turbo");}
+        for(const ramp of this.track.ramps)if(k.speed>150&&k.rampCooldown===0&&k.airHeight===0&&distance(k,ramp)<55){k.airVelocity=160;k.airHeight=.1;k.rampCooldown=2;k.trickWindow=.38;k.trickReady=false;if(k===this.player)this.events.push("Tryk drift nu · Trick giver landingsturbo!");}
         for(const obstacle of this.track.obstacles)if(k.airHeight<28&&distance(k,this.track.obstacleAt(obstacle,this.elapsed))<k.radius+obstacle.radius)k.applySpin(.6);
-        for(const pad of this.track.boostPads)if(k.airHeight<4&&distance(k,pad)<44)k.boostTimer=Math.max(k.boostTimer,.65);
+        for(const pad of this.track.boostPads)if(k.airHeight<4&&distance(k,pad)<44){if(k.boostTimer<.65)k.boostKind="TURBOFELT";k.boostTimer=Math.max(k.boostTimer,.65);}
       }
       this.traps=this.traps.filter(t=>{
-        t.life-=dt;const hit=this.karts.find(k=>k!==t.owner&&!k.finished&&k.airHeight<22&&distance(k,t)<k.radius+17);
+        t.life-=dt;const elevation=t.elevation??this.track.nearest(t.x,t.y).elevation;
+        const hit=this.karts.find(k=>k!==t.owner&&!k.finished&&k.airHeight<22&&Math.abs(k.elevation-elevation)<24&&distance(k,t)<k.radius+17);
         if(hit)hit.applySpin();return t.life>0&&!hit;
       });
       for(const s of this.shells){
@@ -505,7 +562,7 @@
           s.heading+=clamp(angleDelta(s.heading,Math.atan2(target.y-s.y,target.x-s.x)),-dt*5,dt*5);
         }
         s.x+=Math.cos(s.heading)*s.speed*dt;s.y+=Math.sin(s.heading)*s.speed*dt;
-        const road=this.track.nearest(s.x,s.y,s.roadIndex);s.roadIndex=road.index;
+        const road=this.track.nearest(s.x,s.y,s.roadIndex);s.roadIndex=road.index;s.elevation=road.elevation;
         if(road.distance>this.track.halfWidth){
           s.heading=2*road.heading-s.heading;
           const p=this.track.at(road.s,Math.sign(road.lateral)*(this.track.halfWidth-3));s.x=p.x;s.y=p.y;
@@ -513,7 +570,9 @@
         }
       }
       this.shells=this.shells.filter(s=>{
-        const hit=this.karts.find(k=>k!==s.owner&&!k.finished&&k.airHeight<28&&distance(k,s)<k.radius+15);
+        const defender=this.karts.find(k=>k!==s.owner&&!k.finished&&k.defending&&["banana","shell","redShell"].includes(k.item)&&k.airHeight<22&&Math.abs(k.elevation-s.elevation)<24&&distance(this.guardPosition(k),s)<35);
+        if(defender){this.consumeItem(defender);defender.guardFlash=.45;defender.blocks++;if(defender===this.player)this.events.push("BLOKERET! Dit item tog raketten");return false;}
+        const hit=this.karts.find(k=>k!==s.owner&&!k.finished&&k.airHeight<28&&Math.abs(k.elevation-s.elevation)<24&&distance(k,s)<k.radius+15);
         if(hit)hit.applySpin(.9);return s.life>0&&!hit;
       });
     }
@@ -529,7 +588,7 @@
       if(typeof document==="undefined")return;
       window.addEventListener("keydown",e=>{
         if(!this.enabled||/INPUT|SELECT|TEXTAREA|BUTTON/.test(e.target?.tagName))return;
-        if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space","ShiftLeft","ShiftRight","KeyW","KeyA","KeyS","KeyD","KeyX","KeyZ","KeyC"].includes(e.code)){
+        if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space","ShiftLeft","ShiftRight","KeyW","KeyA","KeyS","KeyD","KeyX","KeyZ","KeyC","KeyV"].includes(e.code)){
           e.preventDefault();if((e.code==="Space"||e.code==="KeyZ")&&!this.keys.has(e.code))this.itemPressed=true;this.keys.add(e.code);
         }
       });
@@ -551,6 +610,7 @@
       const held=(...names)=>names.some(n=>this.keys.has(n)||[...this.pointers.values()].includes(n));
       let steer=Number(held("ArrowRight","KeyD","right"))-Number(held("ArrowLeft","KeyA","left"));
       let accelerate=autoGas||held("ArrowUp","KeyW","accelerate"),brake=held("ArrowDown","KeyS","brake"),drift=held("ShiftLeft","ShiftRight","KeyX","drift"),lookBack=held("KeyC","lookBack");
+      let defend=held("KeyV","defend"),launch=held("ArrowUp","KeyW","accelerate","ShiftLeft","ShiftRight","KeyX","drift");
       const pad=typeof navigator!=="undefined"?Array.from(navigator.getGamepads?.()||[]).find(p=>p&&p.connected!==false):null;
       if(pad){
         const axis=clamp(Number(pad.axes[0])||0,-1,1),deadzone=.12;
@@ -561,9 +621,10 @@
         const trigger=index=>clamp(Number(pad.buttons[index]?.value??Number(Boolean(pad.buttons[index]?.pressed)))||0,0,1);
         accelerate=Math.max(Number(accelerate),trigger(7),Number(Boolean(pad.buttons[0]?.pressed)));
         brake=Math.max(Number(brake),trigger(6));drift ||= pad.buttons[5]?.pressed;lookBack ||= pad.buttons[3]?.pressed;
+        defend ||= pad.buttons[4]?.pressed;launch ||= trigger(7)>.1||pad.buttons[0]?.pressed||pad.buttons[5]?.pressed;
         const item=Boolean(pad.buttons[2]?.pressed);if(item&&!this.previousItem)this.itemPressed=true;this.previousItem=item;
       }else this.previousItem=false;
-      const input={steer,accelerate:brake?false:accelerate,brake,drift,itemPressed:this.itemPressed,lookBack:Boolean(lookBack)};
+      const input={steer,accelerate:brake?false:accelerate,brake,drift,itemPressed:this.itemPressed,lookBack:Boolean(lookBack),defend:Boolean(defend),launch:Boolean(launch)};
       this.itemPressed=false;return input;
     }
     reset(){this.keys.clear();this.pointers.clear();this.itemPressed=false;this.previousItem=false;this.recoveryPressed=false;}
@@ -596,7 +657,7 @@
       o.type=type;o.frequency.setValueAtTime(frequency,t);g.gain.setValueAtTime(volume,t);g.gain.exponentialRampToValueAtTime(.001,t+duration);
       o.connect(g);g.connect(this.master);o.start();o.stop(t+duration);o.onended=()=>{o.disconnect();g.disconnect();};
     }
-    update(player,active){
+    update(player,active,race=null){
       if(!this.context)return;
       const t=this.context.currentTime,speed=Math.abs(player?.speed||0);
       const audible=active&&this.enabled,load=player?.throttle||0;
@@ -606,6 +667,16 @@
       const sliding=player&&player.airHeight===0&&speed>80?clamp((Math.abs(player.slipAngle)-.08)*2+Math.abs(player.lateralAcceleration)/1800,0,1):0;
       this.tyreGain.gain.setTargetAtTime(audible?sliding*.085:0,t,.06);
       this.tyreFilter.frequency.setTargetAtTime(player?.offroad?550:player?.surface==="ice"?1900:1100+sliding*750,t,.1);
+      // Original short race theme. The simulation clock freezes its rhythm on pause.
+      if(race&&active&&this.enabled){
+        if(this.musicRace!==race){this.musicRace=race;this.musicStep=-1;}
+        const step=Math.floor(race.elapsed*(player.lap===2?5.5:4.7));
+        if(step!==this.musicStep){
+          this.musicStep=step;const notes=[0,4,7,12,7,4,2,7,4,7,11,14,12,7,4,2],root=race.track.theme==="night"?196:race.track.theme==="frost"?220:261.63;
+          this.tone(root*2**(notes[step%16]/12),.14,"triangle",.026);
+          if(step%4===0)this.tone(root*.5,.18,"sine",.05);
+        }
+      }
     }
   }
   class FallbackRenderer {
@@ -685,7 +756,7 @@
       this.$("stat-handling").style.width=`${(d.handling-1.7)/1.2*100}%`;
       this.$("track-name").textContent=this.track.name;this.$("track-subtitle").textContent=this.track.subtitle;
       this.$("kart-start").innerHTML=this.mode==="cup"?'Start Grand Prix <span>↗</span>':'Ud på banen <span>↗</span>';
-      this.$("mode-description").textContent=this.mode==="cup"?"Seks baner. Saml point og vind pokalen.":this.mode==="time"?"Kør mod din egen ghost. Gennemfør tre omgange uden at bruge Tilbage for at gemme dit bedste løb.":"Tre omgange. Syv rivaler. Ét målflag.";
+      this.$("mode-description").textContent=this.mode==="cup"?"Seks baner. To items. Kæmp om point og pokalen.":this.mode==="time"?"Tre omgange og tre turboer. Find genvejene, og slå din egen ghost.":"Tre omgange. Syv rivaler. To items kan vende alt.";
       this.$("kart-difficulty").disabled=this.mode==="time";
       const record=this.save.records[this.recordKey()];
       this.$("kart-best").textContent=Number.isFinite(record?.time)&&record.time>0?`Din rekord · ${formatTime(record.time)}`:"Din første rekord venter";
@@ -695,7 +766,7 @@
     recordKey(){return `${this.track.id}:v${this.track.revision}:${this.mode==="time"?"time":this.difficulty}`;}
     ghostKey(){return `${this.track.id}:v${this.track.revision}:time:${this.selectedDriver}`;}
     focusDriving(){if(this.input.enabled&&!this.paused)this.canvas.focus({preventScroll:true});}
-    clearControls(){this.input.reset();this.lookBack=false;document.querySelectorAll("[data-kart-control].pressed").forEach(button=>button.classList.remove("pressed"));}
+    clearControls(){this.input.reset();this.lookBack=false;if(this.race.player)this.race.player.defending=false;document.querySelectorAll("[data-kart-control].pressed").forEach(button=>button.classList.remove("pressed"));}
     recoverPlayer(){if(this.input.enabled&&this.race.state==="racing"){this.race.player.recover(this.track);this.showToast("Tilbage på banen");this.focusDriving();}}
     handleCommands(){
       const commands=this.input.readCommands();
@@ -766,7 +837,7 @@
       this.$("race-label").textContent=this.cup?`GRAND PRIX · ${this.cup.round+1}/${TRACKS.length} · ${this.track.name}`:this.track.name;
       this.$("kart-pause-button").textContent="Pause";this.$("kart-pause-button").disabled=false;
       this.$("kart-touch-gas").hidden=this.autoGas;
-      this.canvas.focus({preventScroll:true});this.updateUI(performance.now());this.showToast(this.autoGas?"Autogas er til · Du styrer og drifter":"Giv gas ved 1 for startturbo");
+      this.canvas.focus({preventScroll:true});this.updateUI(performance.now());this.showToast(this.autoGas?"Autogas · Hold drift ved 2 for startturbo":"Hold gas, når 2 vises · Startturbo!");
     }
     showMenu(){
       this.paused=false;this.cup=null;this.clearControls();this.input.enabled=false;
@@ -807,6 +878,7 @@
       this.$("result-medal").textContent=cupDone?String(cupRank):String(result.position);
       this.$("kart-result-copy").textContent=`${this.track.name} · ${this.race.player.driver.name}`;
       this.$("result-time").textContent=formatTime(result.time);this.$("result-lap").textContent=formatTime(result.bestLap);
+      this.$("race-achievements").innerHTML=[[this.race.player.boosts,"TURBOER"],[this.race.player.tricks,"TRICKS"],[this.race.player.blocks,"BLOKERINGER"],[this.race.player.overtakes,"OVERHALINGER"]].map(([value,label])=>`<span><b>${value}</b>${label}</span>`).join("");
       this.$("result-laps").innerHTML=this.race.player.lapTimes.map((time,i)=>`<li${time===result.bestLap?' class="best-lap"':""}><span>Omgang ${i+1}</span><b>${formatTime(time)}</b>${time===result.bestLap?"<small>BEDST</small>":""}</li>`).join("");
       const rows=this.cup?standings.map((d,i)=>({driver:d,rank:i+1,value:`${this.cup.points[d.id]} point`})):this.race.lastRankings.map(k=>({driver:k.driver,rank:k.rank,value:k.finished?formatTime(k.finishTime):"På banen"}));
       this.$("result-standings").innerHTML=rows.map(r=>`<li class="${r.driver.id===this.selectedDriver?"is-player":""}"><span>${r.rank.toString().padStart(2,"0")}</span><i style="--driver:${r.driver.color}"></i><strong>${r.driver.name}${r.driver.id===this.selectedDriver?" · dig":""}</strong><b>${r.value}</b></li>`).join("");
@@ -821,7 +893,7 @@
     }
     update(dt){
       if(this.paused)return;
-      const player=this.race.player,coins=player?.coins||0,boosts=player?.boosts||0,spin=player?.spinTimer||0,state=this.race.state;
+      const player=this.race.player,coins=player?.coins||0,boosts=player?.boosts||0,spin=player?.spinTimer||0,charge=player?.driftTimer||0,item=player?.item,state=this.race.state,lap=player?.lap;
       const controls=this.input.enabled?this.input.read(this.autoGas):EMPTY;this.lookBack=controls.lookBack;
       this.race.update(dt,controls);
       if(this.race.state==="countdown"){
@@ -829,7 +901,10 @@
       }
       if(state==="countdown"&&this.race.state==="racing")this.audio.tone(840,.3,"triangle");
       if(player?.coins>coins)this.audio.tone(1200,.08);
-      if(player?.boosts>boosts){this.audio.tone(720,.2,"triangle");this.showToast(player.boostTimer>=1.2?"Super-turbo!":"Mini-turbo!");}
+      if(player?.boosts>boosts){this.audio.tone(720,.2,"triangle");this.showToast(player.boostKind||"TURBO!");}
+      for(const [threshold,pitch] of [[.5,660],[1.05,880],[1.8,1100]])if(charge<threshold&&player?.driftTimer>=threshold)this.audio.tone(pitch,.09,"triangle",.15);
+      if(player?.item&&player.item!==item)this.audio.tone(990,.12,"triangle",.14);
+      if(player?.lap===2&&lap!==2){this.audio.tone(880,.18);this.audio.tone(1320,.3,"triangle",.12);}
       if(player?.spinTimer>spin)this.audio.tone(120,.2,"sawtooth",.08);
       while(this.race.events.length)this.showToast(this.race.events.shift());
       if(this.race.state==="finished"&&!this.resultSaved)this.showResult();
@@ -871,12 +946,31 @@
       this.$("rival-name").textContent=ahead?`${ahead.rank} · ${ahead.driver.name}`:"Du fører løbet";
       this.$("rival-distance").textContent=ahead?(ahead.finished?"Har krydset målet":`≈ ${Math.max(0,(ahead.progress-p.progress)/Math.max(100,p.speed,ahead.speed)).toFixed(1)} s foran`):"Hold din linje";
       this.drawRadar();
-      const roulette=p.itemRoulette>0,item=roulette?Object.values(ITEM_TYPES)[Math.floor(now/85)%6]:ITEM_TYPES[p.item];
-      this.$("kart-item").hidden=this.mode==="time";document.querySelector('[data-kart-control="item"]').hidden=this.mode==="time";
-      this.$("item-icon").textContent=item?.icon||"?";this.$("item-name").textContent=roulette?"Finder item…":item?.name||"Saml en itemboks";
+      const roulette=p.itemRoulette>0,rouletteFront=roulette&&!p.item,types=Object.values(ITEM_TYPES),item=rouletteFront?types[Math.floor(now/85)%types.length]:ITEM_TYPES[p.item];
+      this.$("kart-item").hidden=false;document.querySelector('[data-kart-control="item"]').hidden=false;
+      this.$("item-icon").textContent=item?.icon||"?";this.$("item-name").textContent=rouletteFront?"Finder item…":item?.name||(this.mode==="time"?"Turboerne er brugt":"Saml en itemboks");
       this.$("kart-item").style.setProperty("--item",item?.color||"#a3b4bf");this.$("kart-item").classList.toggle("has-item",Boolean(p.item));
-      this.$("item-hint").textContent=p.item?"SPACE / TRYK":roulette?"…":"PÅ BANEN";
-      this.$("kart-item").setAttribute("aria-label",item?`Brug ${item.name}: ${item.help}`:"Ingen item. Saml en itemboks på banen.");
+      this.$("item-hint").textContent=p.defending?"BESKYTTER BAG DIG":p.item?(p.itemCharges>1?`${p.itemCharges} TILBAGE · SPACE` : "SPACE / TRYK"):roulette?"…":"PÅ BANEN";
+      this.$("item-charges").hidden=!p.item||p.itemCharges<2;this.$("item-charges").textContent=String(p.itemCharges);
+      const reserve=ITEM_TYPES[p.reserveItem],reserveRoulette=roulette&&Boolean(p.item||p.pendingReserve);
+      this.$("reserve-icon").textContent=reserveRoulette?types[Math.floor(now/85)%types.length].icon:reserve?.icon||"+";
+      this.$("reserve-name").textContent=reserveRoulette?"Finder item…":reserve?.name||"RESERVE";
+      this.$("item-reserve").style.setProperty("--item",reserve?.color||"#91b5b6");
+      this.$("item-reserve").setAttribute("aria-label",reserve?`Næste item: ${reserve.name}`:"Tom reserveplads");
+      this.$("item-reserve").hidden=this.mode==="time";
+      this.$("kart-item").classList.toggle("defending",p.defending);
+      const canDefend=["banana","shell","redShell"].includes(p.item);
+      this.$("defend-hint").hidden=!canDefend;this.$("defend-hint").textContent=p.defending?"FORSVAR AKTIVT":"HOLD V / LB · BESKYT";
+      const threat=this.race.incoming(p),warning=canDefend?"↯ RAKET BAG DIG · HOLD V / BESKYT":p.item==="horn"?"↯ RAKET BAG DIG · BRUG TRYKBØLGE":"↯ RAKET BAG DIG!";
+      this.$("incoming-warning").hidden=!threat;if(this.$("incoming-warning").textContent!==warning)this.$("incoming-warning").textContent=warning;
+      this.$("kart-touch-defend").hidden=this.mode==="time";this.$("kart-touch-defend").disabled=!canDefend;
+      const moment=this.$("race-moment");
+      moment.hidden=!(p.trickReady||p.guardFlash>0||p.waveTimer>0||p.boostTimer>0);
+      moment.textContent=p.guardFlash>0?"BLOKERET!":p.waveTimer>0?"TRYKBØLGE!":p.trickReady?"TRICK!":p.boostKind||"TURBO!";
+      moment.dataset.kind=p.trickReady?"trick":p.guardFlash>0?"guard":"boost";
+      this.$("launch-hint").hidden=this.race.state!=="countdown";
+      this.$("launch-hint").textContent=this.race.startTooEarly?"SLIP · Vent på 2":this.race.startCharge>.18?"HOLD!":this.race.countdown<=2.15&&this.race.countdown>1?"GIV GAS NU!":this.autoGas?"Hold DRIFT ved 2":"Hold GAS ved 2";
+      this.$("kart-item").setAttribute("aria-label",item?`Brug ${item.name}: ${item.help}`:this.mode==="time"?"Alle tre turboer er brugt":"Ingen item. Saml en itemboks på banen.");
       this.$("touch-item-icon").textContent=item?.icon||"◆";
       const charge=p.drifting?p.driftTimer/1.8:0,level=charge>=1?3:charge>=.58?2:1;
       this.$("drift-fill").style.width=`${Math.min(1,charge)*100}%`;this.$("drift-meter").dataset.level=String(level);
@@ -911,7 +1005,7 @@
       this.handleCommands();
       const dt=Math.min(.1,Math.max(0,(timestamp-(this.lastTime||timestamp))/1000));this.lastTime=timestamp;
       if(!this.paused){this.accumulator=Math.min(this.accumulator+dt,.1);while(this.accumulator>=STEP){this.update(STEP);this.accumulator-=STEP;}}
-      this.audio.update(this.race.player,!this.paused&&this.race.state==="racing");
+      this.audio.update(this.race.player,!this.paused&&this.race.state==="racing",this.race);
       this.renderer.draw(this.race,dt,{paused:this.paused,lookBack:Boolean(this.lookBack&&!this.paused&&this.race.state==="racing"),alpha:this.paused?1:this.accumulator/STEP,driver:DRIVERS.find(d=>d.id===this.selectedDriver)});
       if(timestamp-this.lastUI>65){this.updateUI(timestamp);this.lastUI=timestamp;}
       if(this.toastUntil&&timestamp>this.toastUntil){this.$("kart-toast").classList.remove("visible");this.toastUntil=0;}
@@ -923,7 +1017,7 @@
     let canvas=document.getElementById("kart-canvas");if(!canvas)return;
     let renderer;
     try{
-      const module=await import("./kart-racer-3d.js?v=20261026-blender");
+      const module=await import("./kart-racer-3d.js?v=20261026-arcade");
       const kartModel=await module.loadKartModel().catch(error=>{console.warn("Blender-bilen kunne ikke hentes. Bruger standardbilen.",error);return null;});
       renderer=new module.KartRacer3DRenderer(canvas,kartModel);
     }catch(error){

@@ -1,6 +1,61 @@
-# Wutborg Kart, version 6
+# Wutborg Kart, version 7
 
 The game at kart-racer.html uses local Three.js and procedural scenery. No new packages or remote assets are required.
+
+## Drift & Dyst: arcade racing (October 27)
+
+Version 7 develops the driving/item loop around short, readable decisions. The
+reference for those decisions was Nintendo's official driving-technique guide:
+https://www.nintendo.com/jp/ichikara/aabpa/index_en.html. Wutborg retains its own
+drivers, artwork and six courses. This is a single-player browser interpretation,
+not a claim of feature or feel parity with Mario Kart; split-screen, online play,
+gliding and wall-driving physics are outside this update.
+
+- Two item slots with automatic reserve promotion. Golden double boxes award two
+  items after the same roulette. A full inventory leaves the box for another kart.
+  Using an item while the reserve roulette runs does not duplicate its award.
+- Item supply considers both rank and distance behind the leader. Leaders receive
+  defensive/ordinary weapons; distant chasers get more turbo and protection.
+  Lightning is excluded from the first 12 seconds and from supply for 18 seconds
+  after a use. Rivals receive the same item system and no adaptive speed bonus.
+- Trippelturbo has three separate uses. Trykbølge clears nearby projectiles and
+  spins nearby opponents on the same road height. Boosting reduces grass drag,
+  allowing deliberate cuts through the existing run-off areas.
+- Hold V, gamepad LB or the BESKYT touch button with Oliespor, Puls or Raket to
+  trail the item behind the kart. It can intercept one projectile, consume the
+  item and promote the reserve. Side/front hits still reach the kart. Incoming
+  targeted rockets get a warning. C or brake plus item fires projectiles backward;
+  AI braking does not inadvertently reverse its shots. Pause/recovery clears defence.
+- Established drifts survive braking while enough speed remains. Three spark
+  levels have their own sound cues. Press drift during the first 0.38 seconds
+  after a ramp launches the kart to latch a trick, animate a roll, and earn a
+  1.1-second landing boost. Holding drift at landing gives a smaller 0.45-second
+  boost. Every course now has at least two ramps, and rivals can perform tricks.
+- Start turbo uses the visible 2 cue; early holding briefly stalls the engine.
+  With auto-accelerate, use the drift button for the same timing challenge.
+- Time trial begins with exactly three turbo uses, no reserve or item pickups.
+  Records and ghosts use revision 7; earlier records remain in storage.
+- A closer, lower chase camera gives the player and nearby rivals more screen
+  space. Resizing also resets a paused camera. The HUD shows reserve, stock,
+  defence and trick/boost feedback. Results count boosts, tricks, blocks and
+  overtakes. A short original synthesized race melody accelerates on the final
+  lap, follows simulation time, and uses the existing sound switch.
+
+Validation: `npm run test:kart-arcade` covers inventory order, double-box awards,
+in-flight roulette changes, three-use stock, physical defence, side hits, backward
+shots, elevation separation, shockwaves, comeback supply, lightning cooldown,
+start timing with/without auto-accelerate, brake drifting, timed tricks, off-road
+turbo, time-trial stock and held defence controls. The browser's `?scenario=arcade`
+exercises those controls, HUD and 3D effects together. `?scenario=arcade-view`
+provides a paused, constructed racing scene for visual inspection. All browser
+QA suppresses score submissions and persistence.
+
+The complete validation suite passed, including 18 eight-driver races over all
+six courses and difficulties. Arcade has 18 targeted behavior checks. Browser QA
+passed 26 arcade checks, 52 full Grand Prix checks and 33 refinement/ghost checks.
+The rebuilt desktop menu used 280 draw calls against its existing 300-call
+budget. The constructed race view was inspected at 1280 × 720 and 390 × 844.
+These browser checks do not establish physical phone or controller performance.
 
 ## Blender car artwork (October 26)
 
