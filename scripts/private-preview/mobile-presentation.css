@@ -1,0 +1,37 @@
+/* Mobile reading and article navigation; preserve the existing desktop layout. */
+.article-toc>summary{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:48px;font-size:16px;font-weight:600;line-height:1.5}
+.article-toc>summary span{font-size:24px;font-weight:400;line-height:1}
+.article-toc[open]>summary span{transform:rotate(45deg)}
+@media(min-width:651px){.article-toc>summary{display:none}}
+@media(max-width:650px){
+  body{font-size:16px;line-height:1.7}
+  .header-inner{gap:12px}
+  .header-inner .brand{flex:0 1 220px;min-width:0}
+  .hero .lead,.age-copy p,.nature p,.film-card p,.practical-card p,.visit p,
+  .section-heading>p,.page-heading .page-description,.article-body,
+  .source-home-content .article-body,.context-box,.contact-map p,
+  .price-highlight p,.search-results p{font-size:16px;line-height:1.7}
+  .button,.hero-actions .button,.page-end .button,.text-link,
+  .age-copy .text-link,.nature .text-link,.document-link,
+  .search-dialog input{font-size:16px}
+  .button,.text-link,.document-link{min-height:44px}
+  .icon-button,.round-play,.pause-hero,.video-close{min-width:44px;min-height:44px}
+  .hero-actions .button{flex:1 1 145px}
+  .practical-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .practical-card,.footer-top>div{min-width:0;overflow-wrap:anywhere}
+  .article-body .person p,.article-film figcaption,.media-message,.media-error,
+  .price-highlight .amount small,.breadcrumb,.page-end,.search-status,
+  .footer h2,.footer-top>div>p,.footer-top>div>a:not(.footer-brand),
+  .footer-bottom,.sitemap>div{font-size:14px;line-height:1.6}
+  .footer-top>div>a:not(.footer-brand),.sitemap summary,.sitemap a{min-height:44px;display:flex;align-items:center}
+  .footer-top>div>a:not(.footer-brand){margin-bottom:4px}
+  .footer-top>div>p a{display:inline-flex;align-items:center;min-height:44px;overflow-wrap:anywhere}
+  .article-sidebar{padding:0 16px;margin-bottom:24px}
+  .article-toc>summary{padding:8px 0}
+  .article-toc[open]>summary{border-bottom:1px solid var(--line);margin-bottom:4px}
+  .article-sidebar .toc-links{display:block;max-height:none;overflow:visible;padding-bottom:8px}
+  .article-sidebar .toc-links a{font-size:16px;min-height:44px;padding:12px 0}
+  .article-sidebar .toc-links a:last-child{border-bottom:0}
+  .article-body{overflow-wrap:anywhere}
+  .table-scroll table{font-size:16px}
+}
