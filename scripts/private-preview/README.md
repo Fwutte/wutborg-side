@@ -1,27 +1,38 @@
 # Protected presentation preview
 
-Simplified administration (2026-10-31): packaging appends `admin-simple.js/css`
-after the model/editor upgrades. Navigation has four destinations: pages, people,
-files and settings, with a bottom navigation bar on mobile. The initial view
-shows frequently edited pages and practical information; page content opens one
-recognisable section at a time. Contact details, logos, menu and footer have
-separate editors. Advanced settings remain available behind explicit choices.
-The original content model and protected APIs remain authoritative.
+Visual administration rebuild (2026-10-31): `admin/index.html`, `admin/admin.js`
+and `admin/admin.css` are a standalone client, replacing the original generated
+admin and the previous extension layers. The data model and protected backend
+are retained. The default view shows the actual website in a same-origin,
+administrator-only draft frame. Edit buttons map visible sections to their
+authoritative fields. Homepage teaser headings, text and images can be edited
+from the homepage, including text sourced from other pages. Editing an excerpt
+preserves all subsequent source paragraphs. A searchable content list offers
+another way to find text without knowing where it is stored.
 
-Draft changes save after 2.5 seconds of inactivity. Saving preserves the mounted
-editor and any edits made while a request is in flight. Preview and publication
-wait for the draft save; publication still requires a separate review and Udgiv
-action. Revision conflicts and expired sessions preserve local edits. A failed
-save is visible and can be retried. An unfinished document requires a PDF before
-the draft can be saved. Usage warnings remain visible when a cap is approached.
-CMS integration checks cover autosave isolation, slow saves, editor preservation,
-all navigation destinations, contextual preview and publication. Visual review
-uses `preview-admin.mjs --live-content` with isolated storage, never production
-writes, at 320, 390 and 1280 px.
+`admin/frame.css` is protected by the administrator role and loaded only into
+the editor's draft frame. No edit controls or styles are included in public
+rendering. The frame intercepts internal navigation so page selection remains
+visible in the editor. Native dialogs provide focused editors on desktop and
+mobile. People, documents, media, navigation, shared information, page creation,
+aliases, sorting, file lifecycle, usage, history and backup remain accessible.
 
-Published as `https://031ec363.wutborg-side.pages.dev`: 940 presentation checks,
-Workers login verification, 127 CMS checks, 84 model/media checks and 45 live
-checks passed. Online revision 6 was retained and `seededNow` was false.
+Drafts save after 2.5 seconds of inactivity, retaining the active editor and newer
+edits during slow requests. Gem og luk waits for persistence; Udgiv reviews and
+publishes changes separately. Fortryd denne rettelse restores the fields of the
+active editor, including changes already autosaved. Network failures, revision
+conflicts and expired login retain local edits. `check-admin-client.mjs` tests
+the actual new client against the isolated Workers API. Visual review uses
+`preview-admin.mjs --live-content` with isolated D1/R2, never production writes.
+
+Published visual editor: `https://c3eaab60.wutborg-side.pages.dev`. Passed 942
+presentation/isolation checks, Workers login verification, 130 CMS/client checks,
+84 model/media checks and 48 live checks. Online revision 6 was retained and no
+content was seeded. Browser checks at 320, 390 and 1280 px covered the exact
+homepage nature excerpt, line breaks, draft rendering, publication, media
+selection, people, PDFs, modal scroll position and absence of horizontal overflow.
+Homepage excerpts use a single paragraph with hard line breaks so every line
+entered in the editor is shown by the existing first-paragraph presentation.
 
 The original project is in `C:/Codex/oenskelandet`. Never copy that directory into the public website, commit its content, or deploy it as static assets.
 

@@ -14,8 +14,15 @@ const Reference = Node.create({
   addNodeView() { return ({ node }) => { const dom = document.createElement('div'); dom.className = 'cms-chip'; dom.contentEditable = 'false'; dom.textContent = node.attrs.label; return { dom }; }; },
 });
 const PreservedImage = Image.extend({ addAttributes() { return { ...this.parent?.(), class: { default: 'content-image' }, loading: { default: 'lazy' } }; } });
+const SingleParagraph = Node.create({
+  name: 'doc', topNode: true, content: 'paragraph',
+  addKeyboardShortcuts() { return { Enter: () => this.editor.commands.setHardBreak() }; },
+});
 window.OenskelandetEditor = {
-  mount(element, html, onUpdate) {
-    return new Editor({ element, extensions: [StarterKit.configure({ heading: { levels: [2, 3, 4] }, link: { openOnClick: false } }), PreservedImage, Table.configure({ resizable: false }), TableRow, TableCell, TableHeader, Reference], content: html || '<p></p>', editorProps: { attributes: { class: 'block-rich-editor', role: 'textbox', 'aria-label': element.dataset.editorLabel || 'Tekstafsnit', 'aria-multiline': 'true' } }, onUpdate: ({ editor }) => onUpdate(editor.getHTML()) });
+  mount(element, html, onUpdate, { singleParagraph = false } = {}) {
+    const extensions = singleParagraph
+      ? [StarterKit.configure({ document: false, heading: false, blockquote: false, codeBlock: false, bulletList: false, orderedList: false, listItem: false, horizontalRule: false, trailingNode: false, link: { openOnClick: false } }), SingleParagraph]
+      : [StarterKit.configure({ heading: { levels: [2, 3, 4] }, link: { openOnClick: false } }), PreservedImage, Table.configure({ resizable: false }), TableRow, TableCell, TableHeader, Reference];
+    return new Editor({ element, extensions, content: html || '<p></p>', editorProps: { attributes: { class: 'block-rich-editor', role: 'textbox', 'aria-label': element.dataset.editorLabel || 'Tekstafsnit', 'aria-multiline': 'true' } }, onUpdate: ({ editor }) => onUpdate(editor.getHTML()) });
   },
 };

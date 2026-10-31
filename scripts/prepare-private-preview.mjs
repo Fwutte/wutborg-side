@@ -80,29 +80,12 @@ if (online) {
   assets['admin/editor.js'] = { type: 'text/javascript; charset=utf-8', body: editorBuild.outputFiles[0].text };
   await fs.copyFile(path.join(repo, 'scripts/private-preview/cms.mjs'), path.join(library, 'cms.mjs'));
   await fs.copyFile(path.join(repo, 'scripts/private-preview/media-library.mjs'), path.join(library, 'media-library.mjs'));
-  let adminHtml = await fs.readFile(path.join(source, 'admin/index.html'), 'utf8');
-  adminHtml = adminHtml.replaceAll('/admin/', '/oenskelandet/admin/').replaceAll('href="/"', 'href="/oenskelandet/"').replaceAll('Vis på hjemmesiden ↗', 'Publicér på hjemmesiden ↗');
-  adminHtml = adminHtml.replace('<script defer', '<script defer src="/oenskelandet/admin/editor.js"></script><script defer');
-  let adminJs = await fs.readFile(path.join(source, 'admin/admin.js'), 'utf8');
-  adminJs = adminJs.replaceAll('/api/admin/', '/oenskelandet/api/admin/').replace("const url='/?preview=1'", "const url='/oenskelandet/?preview=1'")
-    .replace('if(localMode&&retry&&path', 'if(retry&&path').replace('renewed.authenticated&&renewed.localMode', 'renewed.authenticated')
-    .replace("'Beskyttet administration'", "'Online administration · ændringer gemmes fælles'")
-    .replaceAll('150 MB', '100 MB')
-    .replace("$('#publish').addEventListener('click',()=>ask('Vis ændringerne på hjemmesiden?','Alle dine ændringer bliver gemt og synlige på hjemmesiden. Den tidligere version bliver bevaret i historikken.'", "$('#publish').addEventListener('click',()=>ask('Publicér ændringerne på hjemmesiden?','Ændringerne bliver synlige på wutborg.dk/oenskelandet for de godkendte besøgende. Den tidligere version bevares i historikken.'");
-  adminJs = adminJs.replace("await api('logout',{method:'POST',body:'{}'});$('#workspace').hidden=true;$('#login').hidden=false;", "await api('logout',{method:'POST',body:'{}'});location.href='/cdn-cgi/access/logout';");
-  adminJs = adminJs.replace("const url='/oenskelandet/?preview=1'+(id?'&side='+encodeURIComponent(id):'')", "const url='/oenskelandet/'+id+'?preview=1'");
-  adminJs = adminJs.replace('+`<div class="stats">', '+`${usagePanel()}<div class="stats">')
-    .replace("state.media.unshift(record);notice('Filen er uploadet.", "state.media.unshift(record);state.usage=await api('usage');notice('Filen er uploadet.");
-  adminJs += '\nfunction usagePanel(){if(!state?.usage)return "";const u=state.usage;return `<div class="panel"><h2>Forbrug og gratis grænser</h2><p>${esc(u.note)}</p>${u.warning?"<p role=\\"alert\\"><strong>Du nærmer dig en sikkerhedsgrænse. Systemet stopper automatisk ved grænsen. Kontakt os, før du øger forbruget.</strong></p>":""}<div class="stats">${u.metrics.map(m=>`<div class="stat"><strong>${m.unit==="bytes"?(m.used/1000000).toFixed(1)+" / "+(m.limit/1000000).toFixed(0)+" MB":m.used.toLocaleString("da-DK")+" / "+m.limit.toLocaleString("da-DK")}</strong><span>${esc(m.label)}</span></div>`).join("")}</div></div>`;}\n';
-  adminJs = adminJs.replace(/^\$\('#publish'\)\.addEventListener\([^\n]+/m, "$('#publish').addEventListener('click',()=>reviewPublication());");
-  adminJs = adminJs.replace("$('#preview').addEventListener('click',preview)", "$('#preview').addEventListener('click',()=>preview())");
-  adminJs = adminJs.replace("load().catch(error=>", "Promise.resolve().then(()=>load()).catch(error=>");
-  adminJs += '\n' + await fs.readFile(path.join(repo, 'scripts/private-preview/admin-upgrade.js'), 'utf8');
-  adminJs += '\n' + await fs.readFile(path.join(repo, 'scripts/private-preview/admin-simple.js'), 'utf8');
-  assets['admin/'] = { type: 'text/html; charset=utf-8', body: adminHtml };
+  const adminSource = path.join(repo, 'scripts/private-preview/admin');
+  assets['admin/'] = { type: 'text/html; charset=utf-8', body: await fs.readFile(path.join(adminSource, 'index.html'), 'utf8') };
   assets['admin/index.html'] = assets['admin/'];
-  assets['admin/admin.js'] = { type: 'text/javascript; charset=utf-8', body: adminJs };
-  assets['admin/admin.css'] = { type: 'text/css; charset=utf-8', body: await fs.readFile(path.join(source, 'admin/admin.css'), 'utf8') + '\n' + await fs.readFile(path.join(repo, 'scripts/private-preview/admin-upgrade.css'), 'utf8') + '\n' + await fs.readFile(path.join(repo, 'scripts/private-preview/admin-simple.css'), 'utf8') };
+  assets['admin/admin.js'] = { type: 'text/javascript; charset=utf-8', body: await fs.readFile(path.join(adminSource, 'admin.js'), 'utf8') };
+  assets['admin/admin.css'] = { type: 'text/css; charset=utf-8', body: await fs.readFile(path.join(adminSource, 'admin.css'), 'utf8') };
+  assets['admin/frame.css'] = { type: 'text/css; charset=utf-8', body: await fs.readFile(path.join(adminSource, 'frame.css'), 'utf8') };
   assets['content.js'].body = 'window.SITE_CONTENT=[];';
   assets['app.js'].body = assets['app.js'].body.replaceAll('href="/admin"', 'href="/oenskelandet/admin/"');
   await fs.writeFile(path.join(output, 'cms-initial-state.json'), JSON.stringify(state));

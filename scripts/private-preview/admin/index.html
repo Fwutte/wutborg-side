@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Rediger hjemmeside · Ønskelandet</title>
+  <link rel="stylesheet" href="/oenskelandet/admin/admin.css">
+  <script defer src="/oenskelandet/admin/editor.js"></script>
+  <script defer src="/oenskelandet/admin/admin.js"></script>
+</head>
+<body>
+  <div id="workspace" hidden>
+    <header class="app-header">
+      <button id="menu-button" class="icon-button" aria-label="Åbn menu"><span aria-hidden="true">☰</span></button>
+      <a class="brand" href="#home"><strong>Ønskelandet</strong><span>Rediger hjemmeside</span></a>
+      <span id="save-state" role="status" aria-live="polite">Henter indhold…</span>
+      <button id="publish" class="primary" disabled>Udgiv</button>
+    </header>
+    <div id="notice" role="status" aria-live="polite" hidden></div>
+    <main id="view" tabindex="-1"></main>
+  </div>
+  <div id="startup" role="status"><h1>Et øjeblik…</h1><p>Vi henter din hjemmeside.</p></div>
+  <dialog id="menu-dialog" class="menu-dialog" aria-labelledby="menu-title">
+    <div class="dialog-heading"><h2 id="menu-title">Hvad vil du ændre?</h2><button class="icon-button" data-close="menu-dialog" aria-label="Luk menu">✕</button></div>
+    <nav aria-label="Administration">
+      <a href="#home"><strong>Hjemmesiden</strong><span>Find en tekst eller et billede på selve siden</span></a>
+      <a href="#people"><strong>Medarbejdere</strong><span>Navne, billeder og placering</span></a>
+      <a href="#documents"><strong>Dokumenter</strong><span>Tilføj eller udskift en PDF</span></a>
+      <a href="#files"><strong>Billeder og filer</strong><span>Upload og genbrug dine filer</span></a>
+      <a href="#settings"><strong>Menu og oplysninger</strong><span>Kontakt, logoer, sider og fælles tekster</span></a>
+      <a href="#history"><strong>Tidligere versioner</strong><span>Gendan en tidligere kladde eller hent backup</span></a>
+    </nav>
+    <div class="menu-footer"><a href="/oenskelandet/" target="_blank" rel="noopener">Åbn hjemmesiden ↗</a><button id="logout" class="text-button">Log ud</button></div>
+  </dialog>
+  <dialog id="edit-dialog" class="edit-dialog" aria-labelledby="edit-title">
+    <div class="dialog-heading"><div><p class="eyebrow" id="edit-context"></p><h2 id="edit-title"></h2></div><button class="icon-button" id="edit-close" aria-label="Luk redigering">✕</button></div>
+    <p id="edit-explanation" class="hint"></p>
+    <div id="edit-fields"></div>
+    <p id="edit-error" role="alert" hidden></p>
+    <div class="edit-footer"><button id="edit-revert" class="text-button">Fortryd denne rettelse</button><button id="edit-done" class="primary">Gem og luk</button></div>
+  </dialog>
+  <dialog id="content-dialog" class="content-dialog" aria-labelledby="content-title">
+    <div class="dialog-heading"><h2 id="content-title">Find det, du vil ændre</h2><button class="icon-button" data-close="content-dialog" aria-label="Luk indhold">✕</button></div>
+    <label class="search"><span class="sr-only">Søg i sidens indhold</span><input id="content-search" type="search" placeholder="Søg efter ord fra hjemmesiden…"></label>
+    <div id="content-results"></div>
+  </dialog>
+  <dialog id="media-dialog" class="media-dialog" aria-labelledby="media-title">
+    <div class="dialog-heading"><h2 id="media-title">Vælg et billede</h2><button class="icon-button" data-close="media-dialog" aria-label="Luk filer">✕</button></div>
+    <div class="media-tools"><label class="secondary upload">Upload ny fil<input id="picker-upload" type="file" hidden></label><label class="search"><span class="sr-only">Søg efter fil</span><input id="picker-search" type="search" placeholder="Find en fil…"></label></div>
+    <p id="picker-status" role="status"></p><div id="picker-list" class="file-grid"></div>
+  </dialog>
+  <dialog id="confirm-dialog" class="confirm-dialog" aria-labelledby="confirm-title">
+    <div class="dialog-heading"><h2 id="confirm-title"></h2><button class="icon-button" data-close="confirm-dialog" aria-label="Luk">✕</button></div>
+    <div id="confirm-content"></div><p id="confirm-error" role="alert" hidden></p>
+    <div class="dialog-actions"><button class="secondary" data-close="confirm-dialog">Tilbage</button><button id="confirm-action" class="primary"></button></div>
+  </dialog>
+  <input id="backup-import" type="file" accept="application/json,.json" hidden>
+</body>
+</html>

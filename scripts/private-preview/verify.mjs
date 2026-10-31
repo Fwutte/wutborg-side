@@ -7,7 +7,7 @@ const audience = '5ba625328a13cdb9e9bde5b76debbea6948d2a5b9ae7672fb62c7a93947f69
 const deployment = process.argv.find(arg => /^https:\/\/[a-f0-9]+\.wutborg-side\.pages\.dev$/.test(arg));
 assert.match(deployment || '', /^https:\/\/[a-f0-9]+\.wutborg-side\.pages\.dev$/);
 let checks = 0;
-for (const suffix of ['', '/', '/vuggestue', '/boernehave', '/praktisk/aabningstider', '/vuggestue?preview=1', '/index.html', '/styles.css', '/app.js', '/content.js', '/api/content', '/data/content-state.json', '/admin', '/admin/', '/admin/admin.js', '/admin/admin.css', '/admin/editor.js', '/api/admin/media-info', '/api/admin/media-update', '/api/admin/media-import', '/api/admin/media-trash', '/api/admin/media-purge', '/api/admin/session', '/api/admin/state', '/api/admin/usage', '/api/admin/upload']) {
+for (const suffix of ['', '/', '/vuggestue', '/boernehave', '/praktisk/aabningstider', '/vuggestue?preview=1', '/index.html', '/styles.css', '/app.js', '/content.js', '/api/content', '/data/content-state.json', '/admin', '/admin/', '/admin/admin.js', '/admin/admin.css', '/admin/editor.js', '/admin/frame.css', '/api/admin/media-info', '/api/admin/media-update', '/api/admin/media-import', '/api/admin/media-trash', '/api/admin/media-purge', '/api/admin/session', '/api/admin/state', '/api/admin/usage', '/api/admin/upload']) {
   const url = 'https://wutborg.dk/oenskelandet' + suffix;
   const response = await fetch(url, { redirect: 'manual', signal: AbortSignal.timeout(15000) });
   assert.equal(response.status, 302, url);
@@ -18,7 +18,7 @@ for (const suffix of ['', '/', '/vuggestue', '/boernehave', '/praktisk/aabningst
   checks++;
 }
 for (const host of [deployment, 'https://wutborg-side.pages.dev']) {
-  for (const suffix of ['/', '/vuggestue', '/boernehave', '/praktisk/aabningstider', '/app.js', '/api/content', '/admin/', '/api/admin/state', '/uploads/missing.png']) {
+  for (const suffix of ['/', '/vuggestue', '/boernehave', '/praktisk/aabningstider', '/app.js', '/api/content', '/admin/', '/admin/frame.css', '/api/admin/state', '/uploads/missing.png']) {
     const response = await fetch(host + '/oenskelandet' + suffix, { redirect: 'manual', signal: AbortSignal.timeout(15000) });
     assert.equal(response.status, 404, host + suffix);
     assert.equal(response.headers.get('referrer-policy'), 'no-referrer');
