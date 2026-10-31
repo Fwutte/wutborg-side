@@ -23,6 +23,19 @@ sample.blocks.push({id:'new-heading',type:'heading',level:'2',text:'Ny sektion'}
 model.home.blocks=[{id:'home-docs',type:'documents',ids:[model.documents[0].id]}];
 const blocks=publicContent(model,11);const body=blocks.pages.find(page=>page.id==='vuggestue').body;
 check(body.includes('Ny sektion'),true);check(body.includes('alt="En beskrivelse"'),true);check(body.includes(model.documents[0].label),true);check(body.includes(model.settings.email),true);check(blocks.home.extraHtml.includes(model.documents[0].label),true);
+// Both inline and standalone image sizes survive sanitization and public rendering.
+const sizedBlock=sample.blocks.find(block=>block.id==='new-image');
+const inlineBlock={id:'sized-inline',type:'text',html:''};sample.blocks.push(inlineBlock);
+for(const size of ['small','medium','large','full']){
+  sizedBlock.size=size;
+  inlineBlock.html=`<p>Teksten før billedet.</p><img class="content-image cms-image-size-${size}" src="https://onskelandet.dk/wp-content/uploads/resize-test.png" alt="Billedet bevares"><p>Teksten efter billedet.</p>`;
+  const result=publicContent(model,12),document=dom(result.pages.find(page=>page.id===sample.id).body);
+  check(document.querySelector('img[src$="/test.png"]').classList.contains('cms-image-size-'+size),true);
+  check(document.querySelector('img[src$="/resize-test.png"]').classList.contains('cms-image-size-'+size),true);
+  check(document.querySelector('img[src$="/resize-test.png"]').getAttribute('alt'),'Billedet bevares');
+  check(document.body.textContent.includes('Teksten efter billedet.'),true);
+}
+for(const size of ['huge','50%','medium" onclick="alert(1)']){sizedBlock.size=size;assert.throws(()=>validateModel(model));checks++;}delete sizedBlock.size;
 for(const bad of ['admin','api/content','vuggestue','/evil','x?y']){const invalid=structuredClone(migrated);const page=invalid.pages.find(page=>page.id==='boernehave');page.id=bad;assert.throws(()=>validateModel(invalid));checks++;}
 const png=new Uint8Array([137,80,78,71,13,10,26,10,0,0,0,0,0,0,0,0,1,2,3,4]);
 const test=await fixture(output,seed,async request=>{
@@ -41,6 +54,14 @@ try{
   state.draft.home.videoPages=state.draft.home.videoPages.map(remap);
   let response=await call('api/admin/publish',{expectedRevision:state.revision,model:state.draft});check(response.status,200,await response.clone().text());state=await response.json();
   check((await call('vuggestue')).headers.get('location'),'/oenskelandet/den-nye-vuggestue');check((await call('den-nye-vuggestue')).status,200);
+  const resizePage=state.draft.pages.find(item=>item.id==='den-nye-vuggestue');
+  resizePage.blocks.push({id:'saved-sized-image',type:'text',html:'<img class="content-image cms-image-size-medium" src="https://onskelandet.dk/wp-content/uploads/resize-roundtrip.png" alt="Bevar beskrivelsen">'});
+  response=await call('api/admin/save',{expectedRevision:state.revision,model:state.draft});check(response.status,200);state=await response.json();
+  check(state.draft.pages.find(item=>item.id===resizePage.id).blocks.at(-1).html.includes('cms-image-size-medium'),true);
+  check((await(await call('api/content')).json()).pages.find(item=>item.id===resizePage.id).body.includes('resize-roundtrip.png'),false,'A draft resize must not be published early.');
+  response=await call('api/admin/publish',{expectedRevision:state.revision,model:state.draft});check(response.status,200);state=await response.json();
+  const publishedImage=dom((await(await call('api/content')).json()).pages.find(item=>item.id===resizePage.id).body).querySelector('img[src$="resize-roundtrip.png"]');
+  check(publishedImage.classList.contains('cms-image-size-medium'),true);check(publishedImage.getAttribute('alt'),'Bevar beskrivelsen');
   const put=await test.worker.dispatchFetch('https://wutborg.dk/oenskelandet/api/admin/upload',{method:'POST',headers:{'Cf-Access-Jwt-Assertion':test.token,cookie,origin:'https://wutborg.dk','x-csrf-token':csrf,'content-type':'image/png','content-length':String(png.length)},body:png});check(put.status,201);const file=await put.json();
   response=await call('api/admin/media-update',{id:file.id,name:'Nyt navn',alt:'Beskrivelse'});check(response.status,200);check((await response.json()).name,'Nyt navn');
   check((await call('api/admin/media-update',{id:file.id,name:'Nyt navn',alt:'Beskrivelse'},{headers:{'x-csrf-token':'wrong'}})).status,403);

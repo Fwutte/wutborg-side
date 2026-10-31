@@ -13,7 +13,21 @@ const Reference = Node.create({
   renderHTML({ node }) { const div = document.createElement('div'); div.innerHTML = node.attrs.html; return div.firstElementChild || ['div']; },
   addNodeView() { return ({ node }) => { const dom = document.createElement('div'); dom.className = 'cms-chip'; dom.contentEditable = 'false'; dom.textContent = node.attrs.label; return { dom }; }; },
 });
-const PreservedImage = Image.extend({ addAttributes() { return { ...this.parent?.(), class: { default: 'content-image' }, loading: { default: 'lazy' } }; } });
+const imageSizes = ['small', 'medium', 'large', 'full'];
+const PreservedImage = Image.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      class: { default: 'content-image', parseHTML: element => [...element.classList].filter(name => !name.startsWith('cms-image-size-')).join(' ') || 'content-image' },
+      loading: { default: 'lazy' },
+      size: {
+        default: null,
+        parseHTML: element => imageSizes.find(size => element.classList.contains('cms-image-size-' + size)) || null,
+        renderHTML: attributes => imageSizes.includes(attributes.size) ? { class: 'cms-image-size-' + attributes.size } : {},
+      },
+    };
+  },
+});
 const SingleParagraph = Node.create({
   name: 'doc', topNode: true, content: 'paragraph',
   addKeyboardShortcuts() { return { Enter: () => this.editor.commands.setHardBreak() }; },

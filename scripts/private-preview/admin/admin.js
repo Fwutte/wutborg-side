@@ -150,7 +150,7 @@ function blockFields(item){
   const block=at(state.draft,item.path),path=item.path;
   if(block.type==='text')return rich('Tekst',path+'.html');
   if(block.type==='heading')return field('Overskrift',path+'.text')+select('Størrelse',path+'.level',[['2','Overskrift'],['3','Underoverskrift']]);
-  if(block.type==='image')return asset('Billede',path+'.url')+field('Beskriv billedet',path+'.alt',{hint:'Beskrivelsen hjælper besøgende, der ikke kan se billedet.'})+field('Tekst under billedet',path+'.caption');
+  if(block.type==='image')return asset('Billede',path+'.url')+select('Billedstørrelse',path+'.size',[['','Automatisk'],['small','Lille (25 %)'],['medium','Mellem (50 %)'],['large','Stor (75 %)'],['full','Fuld bredde (100 %)']])+field('Beskriv billedet',path+'.alt',{hint:'Beskrivelsen hjælper besøgende, der ikke kan se billedet.'})+field('Tekst under billedet',path+'.caption');
   if(block.type==='video')return asset('Video',path+'.url','video')+field('Tekst under videoen',path+'.caption');
   if(block.type==='shared')return sharedFields(block.key);
   if(block.type==='contact')return field('Overskrift',path+'.title')+contactFields();
@@ -175,10 +175,21 @@ function descriptorFields(item,imageOnly=false){
   return '';
 }
 function editError(text){$('#edit-error').textContent=text;$('#edit-error').hidden=!text;}
+function syncImageSize(){
+  const tools=$('#image-size-tools'),selected=Boolean(editor?.isActive('image'));tools.hidden=!selected;
+  if(!selected)return;const size=editor.getAttributes('image').size||'auto';
+  tools.querySelectorAll('[data-image-size]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.imageSize===size)));
+}
+function setImageSize(size){
+  if(!editor?.isActive('image'))return false;
+  if(!['auto','small','medium','large','full'].includes(size))return false;
+  return editor.chain().focus().updateAttributes('image',{size:size==='auto'?null:size,width:null,height:null}).run();
+}
 function openEdit(title,html,{context='',explanation='Dine rettelser gemmes som kladde. Tryk Udgiv for at vise dem på hjemmesiden.',paths=[],onDone=null,onRevert=null}={}){
   editor?.destroy();editor=null;activeEdit={paths,onDone,onRevert,revision:state.revision};editInitial=paths.map(path=>[path,clone(at(state.draft,path)??null)]);editInitialModel=clone(state.draft);
   $('#edit-title').textContent=title;$('#edit-context').textContent=context;$('#edit-explanation').textContent=explanation;$('#edit-fields').innerHTML=html;editError('');$('#edit-revert').hidden=!paths.length&&!onRevert;
   const mount=$('#rich-editor');if(mount&&window.OenskelandetEditor){const path=mount.dataset.richPath,fragment=mount.dataset.fragment==='firstParagraph',original=at(state.draft,path);editor=window.OenskelandetEditor.mount(mount,fragment?fragmentHtml(original):original,html=>{put(path,fragment?replaceFragment(original,html):html);markDirty();},{singleParagraph:fragment});}
+  if(editor){editor.on('selectionUpdate',syncImageSize);editor.on('transaction',syncImageSize);}syncImageSize();
   if($('#new-block-shared'))$('#new-block-shared').closest('label').hidden=$('#new-block-type').value!=='shared';
   if(!$('#edit-dialog').open)$('#edit-dialog').showModal();$('#edit-dialog').scrollTop=0;
 }
@@ -304,6 +315,7 @@ document.addEventListener('click',async event=>{
   try{
     const nav=event.target.closest('#menu-dialog a[href^="#"]');if(nav){$('#menu-dialog').close();return;}
     if(!button)return;
+    if(d.imageSize){setImageSize(d.imageSize);return;}
     if(d.close){$('#'+d.close).close();return;}
     if(button.id==='menu-button'){$('#menu-dialog').showModal();return;}
     if(button.id==='publish'){await reviewPublication();return;}

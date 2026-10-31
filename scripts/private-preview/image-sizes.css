@@ -1,0 +1,5 @@
+/* Relative widths are shared by the text editor and the published article. */
+:is(.article-body,.block-rich-editor) img.cms-image-size-small{width:25%;max-width:100%;height:auto}
+:is(.article-body,.block-rich-editor) img.cms-image-size-medium{width:50%;max-width:100%;height:auto}
+:is(.article-body,.block-rich-editor) img.cms-image-size-large{width:75%;max-width:100%;height:auto}
+:is(.article-body,.block-rich-editor) img.cms-image-size-full{width:100%;max-width:100%;height:auto}

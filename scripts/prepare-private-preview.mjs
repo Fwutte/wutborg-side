@@ -36,6 +36,8 @@ app = app.replace("fetch('/api/content'", "fetch('/oenskelandet/api/content'");
 const mobile = await mobilePresentation(app, assets['styles.css'].body);
 app = contentPresentation(cleanRoutes(mobile.app));
 assets['styles.css'].body = mobile.styles;
+const imageSizesCss = await fs.readFile(path.join(repo, 'scripts/private-preview/image-sizes.css'), 'utf8');
+assets['styles.css'].body += '\n' + imageSizesCss;
 assets['app.js'] = { type: 'text/javascript; charset=utf-8', body: app };
 assets['api/content'] = { type: 'application/json; charset=utf-8', body: content };
 const mime = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.gif': 'image/gif', '.webp': 'image/webp', '.pdf': 'application/pdf', '.mp4': 'video/mp4', '.webm': 'video/webm' };
@@ -84,7 +86,7 @@ if (online) {
   assets['admin/'] = { type: 'text/html; charset=utf-8', body: await fs.readFile(path.join(adminSource, 'index.html'), 'utf8') };
   assets['admin/index.html'] = assets['admin/'];
   assets['admin/admin.js'] = { type: 'text/javascript; charset=utf-8', body: await fs.readFile(path.join(adminSource, 'admin.js'), 'utf8') };
-  assets['admin/admin.css'] = { type: 'text/css; charset=utf-8', body: await fs.readFile(path.join(adminSource, 'admin.css'), 'utf8') };
+  assets['admin/admin.css'] = { type: 'text/css; charset=utf-8', body: await fs.readFile(path.join(adminSource, 'admin.css'), 'utf8') + '\n' + imageSizesCss };
   assets['admin/frame.css'] = { type: 'text/css; charset=utf-8', body: await fs.readFile(path.join(adminSource, 'frame.css'), 'utf8') };
   assets['content.js'].body = 'window.SITE_CONTENT=[];';
   assets['app.js'].body = assets['app.js'].body.replaceAll('href="/admin"', 'href="/oenskelandet/admin/"');

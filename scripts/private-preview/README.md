@@ -1,5 +1,22 @@
 # Protected presentation preview
 
+Image sizing: selecting an image inside the rich-text editor exposes Lille (25%),
+Mellem (50%), Stor (75%) and Fuld bredde (100%) in the sticky editor footer.
+Automatisk clears the explicit sizing. Tiptap serializes the selected size as a
+validated enum class while preserving the source, alt text and other classes;
+switching sizes removes the previous size class. Intrinsic width/height overrides
+are cleared on an explicit size change. `image-sizes.css` is shared by the admin
+and presentation so images keep their aspect ratio and relative width on mobile.
+Standalone image blocks expose the same sizes. Existing images remain unchanged
+until edited. Model/API tests verify sanitization, draft isolation and publication.
+
+Published image controls: `https://38ab1364.wutborg-side.pages.dev`. Passed 942
+presentation/isolation checks, Workers login verification, 130 CMS/client checks,
+109 model/media checks and 48 live checks; online revision 9 was retained.
+Browser verification covered the user's Venteliste image, changing sizes and
+reopening the editor, publication, aspect ratio and layouts at 320/390/1280 px.
+Medium measured 167.5 of 335 px on mobile and 434.5 of 869 px on desktop.
+
 Visual administration rebuild (2026-10-31): `admin/index.html`, `admin/admin.js`
 and `admin/admin.css` are a standalone client, replacing the original generated
 admin and the previous extension layers. The data model and protected backend

@@ -72,6 +72,7 @@ function renderShared(model, key, original = '') {
   return (record.title ? `<h2>${esc(record.title)}</h2>` : '') + cleanBody(record.html);
 }
 function mediaLink(value) { const url = safeUrl(value || ''); if (url && !/^(https?:\/\/|\/uploads\/)/.test(url)) throw new Error('Vælg et billede, en video eller et dokument.'); return url; }
+function imageSizeClass(size) { if (size === undefined || size === null || size === '') return ''; if (!['small','medium','large','full'].includes(size)) throw new Error('Billedstørrelsen er ugyldig.'); return ' cms-image-size-' + size; }
 export function renderBlocks(blocks, model) {
   if (!Array.isArray(blocks) || blocks.length > 300) throw new Error('Der er for mange indholdsafsnit.');
   const ids = new Set();
@@ -86,7 +87,7 @@ export function renderBlocks(blocks, model) {
       return document.body.innerHTML;
     }
     if (block.type === 'heading') return `<h${block.level === '3' ? '3' : '2'}>${esc(text(block.text, 500))}</h${block.level === '3' ? '3' : '2'}>`;
-    if (block.type === 'image') return `<figure><img class="content-image" src="${esc(mediaLink(block.url))}" alt="${esc(text(block.alt || '', 1000))}" loading="lazy">${block.caption ? `<figcaption>${esc(text(block.caption, 1000))}</figcaption>` : ''}</figure>`;
+    if (block.type === 'image') return `<figure><img class="content-image${imageSizeClass(block.size)}" src="${esc(mediaLink(block.url))}" alt="${esc(text(block.alt || '', 1000))}" loading="lazy">${block.caption ? `<figcaption>${esc(text(block.caption, 1000))}</figcaption>` : ''}</figure>`;
     if (block.type === 'video') return `<figure><video controls playsinline preload="metadata" src="${esc(mediaLink(block.url))}"></video>${block.caption ? `<figcaption>${esc(text(block.caption, 1000))}</figcaption>` : ''}</figure>`;
     if (block.type === 'documents') { if (!Array.isArray(block.ids) || block.ids.length > 1000 || block.ids.some(id => !model.documents.some(doc => doc.id === id && doc.active !== false))) throw new Error('Dokumentlisten er ugyldig.'); return block.ids.map(id => `<div data-cms-document="${esc(id)}"></div>`).join(''); }
     if (block.type === 'contact') return `<div class="contact-map"><h2>${esc(block.title || 'Kontakt os')}</h2><p>${esc(model.settings.address)}<br>${esc(model.settings.postcode)}</p><p><a href="mailto:${esc(model.settings.email)}">${esc(model.settings.email)}</a><br><a href="tel:${esc(model.settings.phone.replace(/[^+\d]/g, ''))}">${esc(model.settings.phone)}</a></p></div>`;
