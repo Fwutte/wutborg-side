@@ -1,5 +1,28 @@
 # Protected presentation preview
 
+Simplified administration (2026-10-31): packaging appends `admin-simple.js/css`
+after the model/editor upgrades. Navigation has four destinations: pages, people,
+files and settings, with a bottom navigation bar on mobile. The initial view
+shows frequently edited pages and practical information; page content opens one
+recognisable section at a time. Contact details, logos, menu and footer have
+separate editors. Advanced settings remain available behind explicit choices.
+The original content model and protected APIs remain authoritative.
+
+Draft changes save after 2.5 seconds of inactivity. Saving preserves the mounted
+editor and any edits made while a request is in flight. Preview and publication
+wait for the draft save; publication still requires a separate review and Udgiv
+action. Revision conflicts and expired sessions preserve local edits. A failed
+save is visible and can be retried. An unfinished document requires a PDF before
+the draft can be saved. Usage warnings remain visible when a cap is approached.
+CMS integration checks cover autosave isolation, slow saves, editor preservation,
+all navigation destinations, contextual preview and publication. Visual review
+uses `preview-admin.mjs --live-content` with isolated storage, never production
+writes, at 320, 390 and 1280 px.
+
+Published as `https://031ec363.wutborg-side.pages.dev`: 940 presentation checks,
+Workers login verification, 127 CMS checks, 84 model/media checks and 45 live
+checks passed. Online revision 6 was retained and `seededNow` was false.
+
 The original project is in `C:/Codex/oenskelandet`. Never copy that directory into the public website, commit its content, or deploy it as static assets.
 
 Current user instruction: retain email login. The request to remove email control was revoked on 2026-10-25. Keep Cloudflare Access enabled for `wutborg.dk/oenskelandet` and every descendant, with an exact-email Allow policy and One-time PIN. The approved address is `Frederik.wutborg@live.dk`. Do not add a Bypass/Everyone policy or remove the Access application. The retired remove-edge-login.mjs helper is disabled.
